@@ -1,0 +1,28 @@
+[project]
+name = "nm-api"
+version = "0.1.0"
+requires-python = ">=3.14"
+dependencies = [
+    "cachecontrol==0.14.4",
+    "fastapi==0.143.0",
+    "google-auth==2.61.0",
+    "requests==2.34.2",
+    "uvicorn[standard]==0.54.0",
+]
+
+[dependency-groups]
+dev = [
+    "httpx2==2.13.1",
+    "pytest==9.1.1",
+    "ruff==0.17.0",
+]
+
+[tool.ruff]
+line-length = 110
+target-version = "py314"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

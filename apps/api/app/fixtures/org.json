@@ -1,0 +1,15 @@
+{
+  "id": "org_hp01",
+  "name": "Harbor & Pine Supply Co.",
+  "short": "Harbor & Pine",
+  "plan": "Pro",
+  "monthlyCap": {
+    "amountMinor": 25000,
+    "currency": "USD"
+  },
+  "monthSpent": {
+    "amountMinor": 6194,
+    "currency": "USD"
+  },
+  "region": "us-central1"
+}

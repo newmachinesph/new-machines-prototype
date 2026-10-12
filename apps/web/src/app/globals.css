@@ -1,0 +1,187 @@
+@import "../design-system/brand-tokens.css";
+@import "@xyflow/react/dist/base.css";
+
+/* App-level roles built on the brand neutrals and the three accent roles
+   (machine = cobalt, human = amber, blocked = red). Policy uses blocked when it
+   denies and ink when it permits; verified is ink, never green. */
+@theme {
+  --color-stage: #f4f5f6;
+  --color-rule: #e4e5e8;
+  --color-muted: #62636c;
+  --color-policy: #3f3f46;
+  --color-policy-soft: #ececef;
+  --color-ok: #111111;
+  --color-sim: #6d28d9;
+  --color-sim-soft: #f1ecfd;
+}
+
+@layer base {
+  body {
+    background: var(--color-stage);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-machine);
+    outline-offset: 2px;
+  }
+  ::selection {
+    background: var(--color-machine-soft);
+  }
+}
+
+@layer components {
+  .panel {
+    background: var(--color-paper);
+    border: 1px solid var(--color-rule);
+    border-radius: 12px;
+  }
+  .tnum {
+    font-variant-numeric: tabular-nums;
+  }
+  .h-page {
+    font-size: 1.625rem;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    font-weight: 600;
+  }
+  .h-section {
+    font-size: 0.9375rem;
+    line-height: 1.4;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+  }
+  .label {
+    font-size: 0.75rem;
+    line-height: 1.35;
+    color: var(--color-muted);
+  }
+  .link {
+    text-decoration: underline;
+    text-decoration-color: var(--color-grey-300);
+    text-underline-offset: 3px;
+  }
+  .link:hover {
+    text-decoration-color: currentColor;
+  }
+  .redact {
+    letter-spacing: -0.06em;
+    color: var(--color-grey-500);
+  }
+}
+
+/* React Flow: keep the canvas quiet; nodes carry the colour. */
+/* The canvas opens on the step that matters; faded edges show there is more to pan to. */
+.react-flow__renderer {
+  mask-image: linear-gradient(to right, transparent, #000 56px, #000 calc(100% - 56px), transparent);
+}
+.react-flow__attribution {
+  background: transparent;
+  font-size: 10px;
+  opacity: 0.6;
+}
+.react-flow__edge-path {
+  stroke: var(--color-grey-300);
+  stroke-width: 1.5;
+}
+.react-flow__edge.taken .react-flow__edge-path {
+  stroke: var(--color-ink);
+  stroke-width: 1.75;
+}
+.react-flow__edge.revision .react-flow__edge-path {
+  stroke-dasharray: 5 4;
+}
+.react-flow__edge.taken.revision .react-flow__edge-path {
+  stroke: var(--color-human);
+}
+.react-flow__edge-textbg {
+  fill: var(--color-stage);
+}
+.react-flow__edge-text {
+  font-size: 11px;
+  fill: var(--color-muted);
+}
+.react-flow__handle {
+  opacity: 0;
+  width: 6px;
+  height: 6px;
+  min-width: 0;
+  min-height: 0;
+  border: 0;
+}
+.react-flow__controls {
+  box-shadow: none;
+  border: 1px solid var(--color-rule);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.react-flow__controls-button {
+  background: var(--color-paper);
+  border-bottom: 1px solid var(--color-rule);
+  width: 28px;
+  height: 28px;
+}
+.react-flow__controls-button svg {
+  fill: var(--color-ink);
+  max-width: 11px;
+  max-height: 11px;
+}
+
+@keyframes nm-breathe {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+.live-dot {
+  animation: nm-breathe 1.8s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .live-dot {
+    animation: none;
+  }
+}
+
+/* Landing: the one motion moment. Each stage arrives armed and plays once in view.
+   Hiding applies only on screen with scripting on and motion allowed, so no-JS, reduced motion and
+   print always show the record complete. --d is the delay inside a stage, --s the stage's offset. */
+@keyframes nm-rail {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+@keyframes nm-arrive {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.rail-fill {
+  transform-origin: left;
+}
+@media screen and (scripting: enabled) and (prefers-reduced-motion: no-preference) {
+  [data-armed]:not([data-play]) .rail-fill {
+    transform: scaleX(0);
+  }
+  [data-armed]:not([data-play]) .rail-arrive {
+    opacity: 0;
+  }
+  [data-play] .rail-fill {
+    animation: nm-rail 700ms cubic-bezier(0.22, 1, 0.36, 1) var(--d, 0s) both;
+  }
+  [data-play] .rail-arrive {
+    animation: nm-arrive 360ms ease-out var(--d, 0s) both;
+  }
+}
+@media screen and (scripting: enabled) and (prefers-reduced-motion: no-preference) and (min-width: 64rem) {
+  [data-play] .rail-fill,
+  [data-play] .rail-arrive {
+    animation-delay: calc(var(--d, 0s) + var(--s, 0s));
+  }
+}

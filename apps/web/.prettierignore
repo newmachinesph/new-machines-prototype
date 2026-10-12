@@ -1,0 +1,8 @@
+.next
+.next-e2e
+test-results
+playwright-report
+node_modules
+src/lib/api/gen
+pnpm-lock.yaml
+src/design-system/logo/*.data.ts

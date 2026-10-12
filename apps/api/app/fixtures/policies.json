@@ -1,0 +1,22 @@
+[
+  {
+    "ref": "tool_actions@3",
+    "summary": "Reads are permitted. Writes need your approval. Deleting data is denied.",
+    "updated": "Oct 2"
+  },
+  {
+    "ref": "refunds@2",
+    "summary": "Agents can propose refunds but never issue one. A refunds specialist issues them.",
+    "updated": "Sep 30"
+  },
+  {
+    "ref": "human_review@4",
+    "summary": "Any payment mismatch must be reviewed by a person before acceptance.",
+    "updated": "Sep 28"
+  },
+  {
+    "ref": "region_us@1",
+    "summary": "Customer data is processed in us-central1. Reviewers may be in the US or the Philippines.",
+    "updated": "Sep 12"
+  }
+]

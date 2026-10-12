@@ -1,0 +1,50 @@
+# Secrets
+.env
+.env.*
+!.env.example
+
+
+# Dependencies and builds
+node_modules/
+.next/
+.next-e2e/
+test-results/
+playwright-report/
+out/
+dist/
+build/
+.turbo/
+*.tsbuildinfo
+# Written by next dev/build/typegen with paths for whichever dist dir ran last (.next or .next-e2e).
+next-env.d.ts
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Logs and OS files
+*.log
+.DS_Store
+Thumbs.db
+
+# Local scratch
+.scratch/
+
+# Local editor and assistant config (never committed)
+.claude/
+CLAUDE.md
+AGENTS.md
+.agents/
+skills-lock.json
+.superpowers/
+docs/superpowers/
+.design/
+.hallmark/
+.mcp.json
+.cursor/

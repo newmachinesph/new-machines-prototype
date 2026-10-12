@@ -1,0 +1,58 @@
+[
+  {
+    "id": "mem_221",
+    "text": "Stripe pays out weekend orders on Tuesday. Treat a missing Monday payout for a Saturday or Sunday order as pending, not missing.",
+    "scope": "Agent installation",
+    "scopeName": "Finance Agent in Order & Payment Reconciliation",
+    "state": "CANDIDATE",
+    "source": "Reviewer 204's correction on task ht_009",
+    "sourceRun": "run_1042",
+    "proposedBy": "Memory step",
+    "createdAt": "2026-10-11T14:39:31Z",
+    "conflictsWith": "mem_212"
+  },
+  {
+    "id": "mem_212",
+    "text": "Payout batches post the next business day after the order.",
+    "scope": "Organization",
+    "scopeName": "Harbor & Pine",
+    "state": "APPROVED",
+    "source": "Finance onboarding notes, Sep 2",
+    "proposedBy": "You",
+    "createdAt": "2026-09-02T17:00:00Z",
+    "usedIn": 9
+  },
+  {
+    "id": "mem_219",
+    "text": "A difference of $1.50 or less on a Shopify Payments order is the processing fee, not a mismatch.",
+    "scope": "Agent installation",
+    "scopeName": "Finance Agent in Order & Payment Reconciliation",
+    "state": "APPROVED",
+    "source": "Reviewer 204's correction on task ht_006",
+    "sourceRun": "run_1031",
+    "proposedBy": "Memory step",
+    "createdAt": "2026-09-21T15:31:00Z",
+    "usedIn": 3
+  },
+  {
+    "id": "mem_215",
+    "text": "Cedarline Home pays by ACH about 5 business days after a reminder.",
+    "scope": "Organization",
+    "scopeName": "Harbor & Pine",
+    "state": "APPROVED",
+    "source": "Gmail thread with Cedarline Home, Sep 18",
+    "proposedBy": "Finance Agent",
+    "createdAt": "2026-09-18T20:10:00Z",
+    "usedIn": 2
+  },
+  {
+    "id": "mem_208",
+    "text": "Ignore orders under $5 when reconciling.",
+    "scope": "Agent installation",
+    "scopeName": "Finance Agent in Order & Payment Reconciliation",
+    "state": "REJECTED",
+    "source": "Finance Agent suggestion, run_1027",
+    "proposedBy": "Finance Agent",
+    "createdAt": "2026-09-14T15:00:00Z"
+  }
+]

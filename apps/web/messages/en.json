@@ -1,0 +1,946 @@
+{
+  "common": {
+    "language": "Language",
+    "skipToContent": "Skip to content",
+    "meta": {
+      "description": "Hire AI agents and expert reviewers, and get verified results with the evidence behind them."
+    },
+    "notifications": "Notifications",
+    "dismiss": "Dismiss",
+    "cancel": "Cancel",
+    "close": "Close",
+    "retry": "Retry",
+    "goToOverview": "Go to overview",
+    "simulated": "Simulated",
+    "sandboxMock": "Sandbox mock",
+    "actor": {
+      "machine": "Agent or tool",
+      "human": "Human reviewer",
+      "policy": "Policy",
+      "system": "Platform",
+      "buyer": "You"
+    },
+    "time": {
+      "justNow": "just now",
+      "minAgo": "{n} min ago",
+      "hAgo": "{n} h ago",
+      "yesterday": "yesterday",
+      "daysAgo": "{n} days ago",
+      "overdue": "overdue",
+      "minLeft": "{n} min left",
+      "hLeft": "{n} h left",
+      "hMinLeft": "{h} h {m} min left"
+    },
+    "readOnly": "Read only",
+    "reviewerPay": "Reviewer pay",
+    "agentsModelsTools": "Agents, models and tools"
+  },
+  "nav": {
+    "overview": "Overview",
+    "runs": "Runs",
+    "approvals": "Approvals",
+    "marketplace": "Marketplace",
+    "memory": "Memory",
+    "connections": "Connections",
+    "usage": "Usage and billing",
+    "settings": "Settings",
+    "availableTasks": "Available tasks",
+    "earnings": "Earnings",
+    "crumbDeliverable": "Deliverable",
+    "crumbHire": "Hire",
+    "crumbStartRun": "Start a run",
+    "breadcrumb": "Breadcrumb",
+    "main": "Main",
+    "openNavigation": "Open navigation",
+    "closeNavigation": "Close navigation",
+    "navigation": "Navigation",
+    "find": "Find",
+    "reviewerName": "Reviewer 204",
+    "switchWorkspace": "{name}, switch workspace",
+    "signedInAs": "Signed in as the demo operator",
+    "current": "Current",
+    "reviewerPortal": "Reviewer portal",
+    "businessWorkspace": "Business workspace",
+    "signOut": "Sign out",
+    "signOutFailed": "Sign out did not finish",
+    "tryAgain": "Try again.",
+    "demoOperator": "Demo operator",
+    "owner": "Owner",
+    "reviewerRole": "Philippines, invoice review",
+    "home": "New Machines home",
+    "demoTooltip": "Orders and customers are synthetic, billing and payouts are simulated, and Shopify and Stripe are sandbox mocks.",
+    "demoBadge": "Demo workspace: synthetic data, simulated billing",
+    "browsePacks": "Browse packs",
+    "startRun": "Start a run",
+    "choosePack": "Choose a hired pack",
+    "hireAnother": "Hire another pack",
+    "startHelp": "Choose a pack, then the data it should work on.",
+    "palette": {
+      "title": "Find anything",
+      "placeholder": "Find pages, runs, packs and tasks",
+      "empty": "Nothing matches. Try a run ID such as run_1047, or a pack name.",
+      "goToPage": "Go to page",
+      "approval": "Approval",
+      "hired": "Hired",
+      "toMove": "to move",
+      "toOpen": "to open",
+      "loading": "Loading runs, packs and tasks",
+      "demoOnly": "Search covers demo data only",
+      "groups": {
+        "pages": "Pages",
+        "runs": "Runs",
+        "needsYou": "Needs you",
+        "packs": "Workflow Packs",
+        "tasks": "Reviewer tasks"
+      }
+    }
+  },
+  "status": {
+    "RUNNING": "Running",
+    "WAITING_FOR_HUMAN": "Waiting for a reviewer",
+    "WAITING_FOR_EVENT": "Waiting for your approval",
+    "VERIFYING": "Verifying",
+    "COMPLETED": "Completed",
+    "FAILED": "Failed",
+    "CANCELLED": "Cancelled",
+    "NEEDS_ATTENTION": "Needs attention"
+  },
+  "node": {
+    "CREATED": "Not started",
+    "READY": "Ready",
+    "RUNNING": "Running",
+    "WAITING": "Waiting",
+    "VALIDATING": "Validating",
+    "COMPLETED": "Done",
+    "FAILED": "Failed",
+    "REJECTED": "Rejected",
+    "TIMED_OUT": "Timed out",
+    "CANCELLED": "Cancelled",
+    "COMPENSATING": "Undoing",
+    "ESCALATED": "Escalated",
+    "BLOCKED": "Blocked by policy",
+    "SKIPPED": "Skipped"
+  },
+  "stage": {
+    "executed": "Executed",
+    "verified": "Verified",
+    "accepted": "Accepted",
+    "settlement": "Settlement eligible",
+    "railLabel": "Outcome stages",
+    "withState": "{stage}: {state}",
+    "state": {
+      "done": "Yes",
+      "pending": "Not yet",
+      "failed": "Failed",
+      "blocked": "On hold",
+      "not_required": "Not required"
+    }
+  },
+  "run": {
+    "inspector": {
+      "threeRecords": "Three separate records. The evaluator only recommends; policy decides what is allowed; a person or approval signs off.",
+      "evaluatorTitle": "What the evaluator recommends",
+      "rules": "Rules",
+      "chainVerdict": ": {verdict}",
+      "verdict": {
+        "APPROVED": "Approved",
+        "REJECTED": "Rejected",
+        "REVISION_REQUIRED": "Revision required",
+        "HUMAN_REVIEW": "Needs a person",
+        "ESCALATED": "Escalated",
+        "ERROR": "Error",
+        "TIMED_OUT": "Timed out",
+        "BLOCKED": "Blocked",
+        "PASS": "Pass"
+      },
+      "noScore": "No confidence score is shown. Scores never authorize an action.",
+      "policyTitle": "What policy allows",
+      "policy": {
+        "PERMIT": "Permit",
+        "DENY": "Deny",
+        "REQUIRE_APPROVAL": "Person required"
+      },
+      "decision": "Decision",
+      "signOffTitle": "Who signs off",
+      "waitingOn": "Waiting for a reviewer on <link>{id}</link>.",
+      "grantedBy": "{by}.",
+      "notRequired": "Not required.",
+      "reviewerTask": "Reviewer task",
+      "task": "Task",
+      "pay": "Pay",
+      "simulatedNote": "(simulated)",
+      "due": "Due",
+      "dueLine": "{when}, {left}",
+      "openAsReviewer": "Open it as the reviewer",
+      "doneBy": "Done by",
+      "details": "Details",
+      "attempts": "Attempts",
+      "attemptsOf": "{n} of 3",
+      "took": "Took",
+      "cost": "Cost",
+      "result": "Result",
+      "toolCalls": "Tool calls",
+      "toolStatus": {
+        "PLANNED": "Planned",
+        "AUTHORIZED": "Authorized",
+        "SENT": "Sent",
+        "CONFIRMED": "Confirmed",
+        "DENIED": "Denied",
+        "FAILED": "Failed",
+        "UNCONFIRMED": "Unconfirmed",
+        "CANCELLED": "Cancelled"
+      },
+      "policyLine": "Policy: {verdict}"
+    },
+    "canvas": {
+      "nodeType": {
+        "trigger": "Trigger",
+        "connector": "Connector",
+        "parallel": "Parallel",
+        "join": "Join",
+        "agent": "Agent",
+        "decision": "Decision",
+        "human_workforce": "Human workforce",
+        "approval": "Approval",
+        "verification": "Verification",
+        "memory": "Memory",
+        "end": "End"
+      },
+      "attempt": "Attempt {n}",
+      "nodeAria": "{label}, {status}",
+      "nodeHelp": "Press Enter to see this step's details beside the canvas.",
+      "edgeHelp": "Connection between two steps.",
+      "zoomControls": "Canvas zoom controls",
+      "zoomIn": "Zoom in",
+      "zoomOut": "Zoom out",
+      "fitView": "Fit the workflow in view"
+    },
+    "list": {
+      "search": "Search runs",
+      "searchPlaceholder": "Search runs by title, pack, ID or result",
+      "filterStatus": "Filter by status",
+      "filterPack": "Filter by pack",
+      "allPacks": "All packs",
+      "filters": {
+        "all": "All",
+        "needs": "Needs you",
+        "active": "In progress",
+        "done": "Completed",
+        "failed": "Failed"
+      },
+      "outcomeTooltip": "Four separate marks, in order: executed, verified, accepted, settlement eligible. One can be done while another is not.",
+      "outcome": "Outcome",
+      "run": "Run",
+      "status": "Status",
+      "result": "Result",
+      "agentsAndTools": "Agents and tools",
+      "reviewers": "Reviewers",
+      "total": "Total",
+      "started": "Started",
+      "open": "Open",
+      "by": "by {name}",
+      "soFar": "{duration} so far",
+      "noMatch": "No runs match.",
+      "clearFilters": "Clear filters",
+      "footer": "Outcome marks, in order: executed, verified, accepted, settlement eligible. One can be done while another is not. Costs are simulated."
+    },
+    "view": {
+      "recovered": "Recovered after a worker restart",
+      "workflow": "Workflow",
+      "steps": "Steps",
+      "reviewer": "Reviewer",
+      "revisionLoop": "Revision loop",
+      "canvasHelp": "Select a step, or an event in the timeline, to see who did it, what it cost and the records behind it. Drag to see the rest of the workflow.",
+      "timeline": "Timeline",
+      "pacificTime": "Times in Pacific time",
+      "selectedStep": "Selected step",
+      "cost": "Cost",
+      "agentsAndModels": "Agents and models",
+      "tools": "Tools",
+      "reviewerPay": "Reviewer pay",
+      "totalSoFar": "Total so far",
+      "budget": "Budget",
+      "upTo": "up to {amount}",
+      "runDetails": "Run details",
+      "run": "Run",
+      "started": "Started",
+      "startedBy": "{when} by {name}",
+      "input": "Input",
+      "workflowRef": "Workflow",
+      "contract": "Contract",
+      "openDeliverable": "Open the deliverable and evidence",
+      "deliverablePending": "The deliverable appears here once the run is verified. <example>See a finished example</example>."
+    },
+    "evidence": {
+      "pageTitle": "Deliverable and evidence",
+      "fromRun": "From the run",
+      "deliverable": "The deliverable",
+      "requested": "What was requested",
+      "input": "Input",
+      "contract": "Contract",
+      "contractValue": "<mono>{ref}</mono>: every order matched to a payout, exceptions reviewed by a person, totals verified to the cent.",
+      "requestedBy": "Requested by",
+      "whoDid": "Who did each part",
+      "permitted": "What was permitted, and what changed outside New Machines",
+      "permittedBody": "Google Sheets was read twice, read-only. No sheet, email or file was changed by this run.",
+      "permittedNote": "The report is a draft in New Machines. Filing it to Drive needs your approval.",
+      "evidence": "Evidence",
+      "open": "Still open",
+      "limitations": "Limitations",
+      "billable": "Why this is billable",
+      "agentsTools": "Agents and tools",
+      "total": "Total",
+      "basis": "Basis",
+      "basisValue": "Verified by the independent check and accepted by you. Reviewer pay was owed from the moment the submission was accepted."
+    }
+  },
+  "errors": {
+    "unreachable": "Can't reach New Machines. Check your connection and retry.",
+    "generic": "Something went wrong.",
+    "contract": "New Machines sent data this page did not expect. Reload to try again.",
+    "pageCouldNotLoad": "This page could not load",
+    "notFound": {
+      "title": "There is nothing at this address",
+      "body": "The run, pack or task may have a different ID, or the link is incomplete.",
+      "overview": "Go to overview",
+      "allRuns": "See all runs"
+    },
+    "signIn": {
+      "mismatch": "That email and password did not match. Check them and try again.",
+      "tooManyAttempts": "Too many attempts. Wait a minute and try again.",
+      "offline": "Can't reach the sign-in service. Check your connection and try again.",
+      "googleIncomplete": "Google sign-in did not finish. Try again."
+    }
+  },
+  "landing": {
+    "private": "Private demo with synthetic data",
+    "headline": "Work you can check before you pay for it.",
+    "lede": "Agents handle routine operations such as order reconciliation and refund triage. When a call needs judgement, a vetted reviewer makes it. An independent check verifies the result, and nothing is paid until you accept it.",
+    "recordSummary": "Yesterday’s reconciliation of 31 orders",
+    "strip": {
+      "executed": "Executed",
+      "verified": "Verified",
+      "accepted": "Accepted",
+      "settled": "Settled"
+    },
+    "recordLink": "See each step and who took it",
+    "signInTitle": "Sign in to the demo workspace",
+    "signInHelp": "Use the login you were given, or any Google account.",
+    "footerNote": "Not indexed. Customers, orders and reviewers here are made up, and no money moves.",
+    "footerBuilt": "Built for the <cup>AI Builder Cup</cup>, December 2026.",
+    "signIn": {
+      "mockNote": "Sign-in is simulated. No credentials are checked.",
+      "signingIn": "Signing in…",
+      "google": "Continue with Google",
+      "orDemoLogin": "or use the demo login",
+      "email": "Email",
+      "emailPlaceholder": "you@company.com",
+      "password": "Password",
+      "submit": "Sign in",
+      "joinNote": "You join Harbor & Pine Supply Co. as a paying member. Reviewers sign in here too and switch to the reviewer portal from the workspace menu."
+    },
+    "record": {
+      "title": "Yesterday’s reconciliation at Harbor & Pine",
+      "intro": "{title}. 38 minutes of work, {total} all in. Every line below comes from the run’s record.",
+      "openRun": "Open this run",
+      "whoDidWhat": "Who did what",
+      "afterVerified": "The agent’s own claim of success was not used.",
+      "afterAccepted": "One order waits on Tuesday’s payout. It stays tracked, not hidden."
+    }
+  },
+  "overview": {
+    "budget": "Budget",
+    "daysLeft": "{n, plural, one {# day left in October} other {# days left in October}}",
+    "billing": "Billing",
+    "spent": "Spent this month",
+    "cap": "Monthly cap",
+    "shareLabel": "Plan, agents and reviewer pay as a share of the monthly cap",
+    "plan": "Pro plan",
+    "capNote": "Runs stop before passing the cap.",
+    "needsYou": "Needs you",
+    "hiredPacks": "Hired packs",
+    "findMore": "Find more",
+    "packMeta": "{version}, {n, plural, one {# run} other {# runs}} in 30 days",
+    "runs": "Runs",
+    "viewAll": "View all",
+    "outcomeMarks": "Outcome marks: executed, verified, accepted, settlement eligible",
+    "ask": {
+      "label": "What work do you want done?",
+      "placeholder": "What work do you want done? Describe the outcome, for example “reconcile orders and payouts every week”",
+      "suggest": "Suggest a pack",
+      "clear": "Clear",
+      "finding": "Finding a pack...",
+      "simulated": "Simulated suggestion",
+      "startThis": "Start this run",
+      "hireThis": "Hire this pack",
+      "failed": "Could not get a suggestion",
+      "suggestions": {
+        "reconcile": "Match last week's orders to Stripe payouts",
+        "invoices": "Chase wholesale invoices that are past due",
+        "refunds": "Handle refund requests from support email",
+        "reorder": "Tell me what to reorder every Monday",
+        "translate": "Translate our catalog for a Japanese store"
+      }
+    }
+  },
+  "approvals": {
+    "title": "Approvals",
+    "lede": "When policy needs your sign-off, you approve one exact action. If anything in it changes, the approval no longer applies and you are asked again.",
+    "earlier": "Earlier",
+    "pastLine": "{status}, {when}",
+    "past": {
+      "PENDING": "Waiting",
+      "GRANTED": "Approved by you",
+      "DECLINED": "Declined by you",
+      "EXPIRED": "Expired"
+    },
+    "card": {
+      "approvedToast": "Approved and queued to send",
+      "approvedToastBody": "One email to {to}. Simulated: nothing leaves the demo.",
+      "approveFailed": "Could not approve",
+      "declinedToast": "Declined",
+      "declinedToastBody": "Nothing was sent. The run closes this invoice as skipped.",
+      "declineFailed": "Could not decline",
+      "expires": "Expires {when}, {left}",
+      "approved": "Approved",
+      "declined": "Declined",
+      "emailHeading": "The email, exactly as it will be sent",
+      "to": "To",
+      "subject": "Subject",
+      "digestHeading": "What you are approving",
+      "pendingNote": "Approving sends this one email once. Editing the draft or the recipient would need a new approval.",
+      "decline": "Decline",
+      "approve": "Approve and send",
+      "approvedTitle": "Approved. The run will send the email and confirm it in Gmail's Sent folder.",
+      "recorded": "Recorded as approval <mono>{id}</mono> for content <mono>{hash}</mono>.",
+      "backToRun": "Back to the run",
+      "declinedTitle": "Declined. Nothing was sent.",
+      "declinedBody": "The run will close this invoice as skipped."
+    }
+  },
+  "connections": {
+    "title": "Connections",
+    "lede": "Connect an app once. Each hired pack then gets only the access you grant it. The app's own sign-in permissions and the grants below are separate, and you can revoke either one.",
+    "connect": {
+      "title": "Connect an app",
+      "titleApp": "Connect {app}",
+      "description": "New Machines sends you to the app's own sign-in page through Composio. You approve the permissions there, and we never see your password.",
+      "liveOnly": "Available in the live product",
+      "demoNote": "This demo workspace cannot connect real accounts. Google Sheets, Gmail and Drive are already connected to a test account."
+    },
+    "status": {
+      "connected": "Connected",
+      "not_connected": "Not connected",
+      "sandbox": "Sandbox",
+      "needs_reauth": "Reconnect"
+    },
+    "disconnectedToast": "{app} disconnected",
+    "disconnectedToastBody": "Packs that used it will ask before running again. Simulated in this demo.",
+    "disconnectFailed": "Could not disconnect {app}",
+    "revokedToast": "Access revoked",
+    "revokedToastBody": "{install} can no longer use {app}.",
+    "revokeFailed": "Could not revoke access",
+    "notConnectedNote": "Not connected. Packs that need {app} will ask before they use it.",
+    "connectApp": "Connect {app}",
+    "account": "Account",
+    "scopes": "Permissions the app granted",
+    "used": "Used {when}",
+    "viaMock": "Via a sandbox mock",
+    "viaComposio": "Via Composio",
+    "disconnectApp": "Disconnect {app}",
+    "disconnectTitle": "Disconnect {app}?",
+    "disconnectDescription": "Every hired pack loses access to {app} at once. Runs that need it will stop and ask you before going on.",
+    "grantsHeading": "What each hired pack may do",
+    "denied": "Denied by policy",
+    "writesWithApproval": "Writes with approval",
+    "revoke": "Revoke",
+    "revokeTitle": "Revoke this access?",
+    "revokeDescription": "{install} will no longer be able to use {capability} on {app}. You can grant it again from the pack's settings.",
+    "revokeConfirm": "Revoke access",
+    "noPack": "No pack uses this connection."
+  },
+  "memory": {
+    "title": "Memory",
+    "lede": "What your agents have learned about how your business works. Nothing becomes memory until a person approves it, and your systems of record always win over memory.",
+    "inUse": "In use",
+    "count": "{n, plural, one {# memory} other {# memories}}",
+    "none": "No memories in use. Agents rely only on your systems of record.",
+    "past": "Rejected, retracted or expired",
+    "retractedToast": "Memory retracted",
+    "retractedToastBody": "Agents stop using it from their next run.",
+    "retractFailed": "Could not retract memory",
+    "candidate": {
+      "title": "Waiting for your decision",
+      "approvedToast": "Memory approved",
+      "approvedToastBody": "The Finance Agent will use it from its next run.",
+      "rejectedToast": "Memory rejected",
+      "rejectedToastBody": "Agents will not use it. It stays in the history.",
+      "approveFailed": "Could not approve memory",
+      "rejectFailed": "Could not reject memory",
+      "proposed": "Proposed, not in use",
+      "inUse": "In use",
+      "rejected": "Rejected",
+      "edited": "Edited by you before approving.",
+      "from": "From {source}",
+      "appliesTo": "Would apply to: {name}",
+      "conflict": "Conflicts with a memory already in use",
+      "conflictNote": "Approving the new one marks <mono>{id}</mono> as corrected for weekend orders.",
+      "pendingNote": "Until you decide, agents can see this proposal but may not act on it. <run>run_1047</run> sent a weekend order to a reviewer for exactly this reason.",
+      "reject": "Reject",
+      "edit": "Edit before approving",
+      "editDescription": "Agents follow the wording exactly. Keep it to one rule, and say when it applies.",
+      "textLabel": "Memory text",
+      "approveEdited": "Approve edited memory",
+      "approve": "Approve",
+      "approvedTitle": "Approved. The Finance Agent will use this from its next run.",
+      "approvedBody": "You can retract it from the list of memories in use.",
+      "rejectedTitle": "Rejected. Agents will not use it.",
+      "rejectedBody": "It stays in the history."
+    },
+    "row": {
+      "scope": {
+        "Organization": "Organization",
+        "Department": "Department",
+        "Agent installation": "Agent installation",
+        "User": "User",
+        "Task": "Task"
+      },
+      "scopeLine": "{scope}: {name}",
+      "usedIn": "Used in {n, plural, one {# run} other {# runs}}",
+      "state": {
+        "CANDIDATE": "Proposed",
+        "APPROVED": "In use",
+        "CORRECTED": "Corrected",
+        "REJECTED": "Rejected",
+        "EXPIRED": "Expired",
+        "CONTRADICTION": "Conflict",
+        "RETRACTED": "Retracted"
+      },
+      "retract": "Retract",
+      "retractTitle": "Retract this memory?",
+      "retractDescription": "Agents stop using it from their next run. Runs already finished keep the record of what they used.",
+      "retractConfirm": "Retract memory"
+    }
+  },
+  "marketplace": {
+    "grid": {
+      "all": "All packs",
+      "hired": "Hired",
+      "intro": "Workflow Packs bundle agents, the reviewers they need and the checks that prove the work. Try any pack on sample data before you hire it.",
+      "filterLabel": "Filter packs",
+      "priceNote": "Prices are estimates per run. You only pay reviewers when a run needs one.",
+      "search": "Search packs",
+      "searchPlaceholder": "Search packs by outcome, publisher or category",
+      "noMatch": "No pack matches.",
+      "showAll": "Show all packs",
+      "publisherVersion": "{publisher}, version {version}",
+      "notCertified": "Not yet certified",
+      "reviewerWhenNeeded": "Reviewer when needed",
+      "perRun": "{min}–{max} per run"
+    },
+    "trial": {
+      "title": "Try it in the sandbox",
+      "badge": "Sample data, no live effects",
+      "intro": "Runs the pack on synthetic data. Your real connections are not used, and any write is stopped before it leaves the sandbox.",
+      "running": "Running…",
+      "again": "Run the trial again",
+      "start": "Run a free trial",
+      "finished": "Trial finished in 4.6s. No charge.",
+      "script": {
+        "recon": {
+          "read": "Read 20 synthetic orders and 19 payout lines (sample sheet, read-only)",
+          "retail": "Retail Agent: 20 orders inspected, 1 refund noted",
+          "finance": "Finance Agent: 18 matched, 2 exceptions",
+          "decision": "Decision: 2 records need a person (reference mismatch, payout not found)",
+          "reviewer": "Sandbox reviewer (simulated): corrected both records",
+          "check": "Independent check: 9 of 9 criteria passed",
+          "blocked": "Blocked in sandbox: “File report to Drive”. Writes are inert in trials"
+        },
+        "generic": {
+          "loaded": "Loaded sample data (synthetic)",
+          "done": "Agents completed the task on the sample",
+          "check": "Independent check passed",
+          "inert": "All writes were inert. Nothing left the sandbox"
+        }
+      }
+    },
+    "pack": {
+      "seeRuns": "See its runs",
+      "reviewHire": "Review and hire",
+      "publisherVersion": "{publisher}, version {version}",
+      "hired": "Hired",
+      "notCertified": "Not yet certified",
+      "whoWorks": "Who does the work",
+      "humanReviewers": "Human reviewers",
+      "passport": "Trust Passport",
+      "passportBadge": "Demo sample, not a guarantee",
+      "passportIntro": "Tested on {date} by {by}, on {n} record batches from: {cohort}. These numbers describe that sample only.",
+      "outOf": "{value} of {total}",
+      "limitations": "Known limitations",
+      "retested": "Retested after",
+      "refreshing": "The evaluation report for this pack is being refreshed.",
+      "uncertifiedNote": "Not yet certified. The publisher's own claims have not been tested by New Machines. Try it in the sandbox first.",
+      "costs": "What it costs",
+      "agentsTools": "Agents and tools",
+      "perRun": "{min}–{max} per run",
+      "upTo": "up to {amount} per run",
+      "noneByDefault": "None by default",
+      "basis": "Basis",
+      "basisValue": "Charged only for verified work. Reviewer pay is owed once a submission is accepted.",
+      "touches": "What it can touch",
+      "access": {
+        "read": "Read only",
+        "write (approval)": "Writes with your approval",
+        "write": "Writes"
+      },
+      "dataRisk": "Data and risk",
+      "processedIn": "Processed in",
+      "riskClass": "Risk class",
+      "risk": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High"
+      },
+      "publisherSees": "Publisher sees",
+      "publisherSeesValue": "Aggregate quality numbers only. Never your data or runs."
+    },
+    "install": {
+      "hire": "Hire {name}",
+      "lede": "Check what this pack will be allowed to do before you hire it. You can change any of this later, and nothing runs until you start it.",
+      "hiredToast": "{name} hired",
+      "hireFailed": "Could not hire this pack",
+      "hiredTitle": "{name} {version} is hired",
+      "goHome": "Go to home",
+      "hiredBody": "Pinned to version {version}. It will not update without asking you. Start a run from home, or let it run on a schedule.",
+      "access": "Access it gets",
+      "writeWithApproval": "Can write, but only after you approve each action",
+      "capabilities": "Capabilities requested",
+      "capabilitiesNote": "Requesting a capability does not grant it. Each action is checked against your policies when it happens.",
+      "capTitle": "Spending cap per run",
+      "capNote": "A run stops and asks you before it would go past this amount, including reviewer pay.",
+      "reviewers": "Human reviewers",
+      "poolLabel": "Use the New Machines invoice reviewer pool (US and Philippines). Reviewers see only the records they are asked about, with customer names and emails hidden, for the length of the task.",
+      "poolNote": "Policy human_review@4 still requires a person for payment mismatches, whatever you choose here.",
+      "summary": "Summary",
+      "pack": "Pack",
+      "version": "Version",
+      "pinned": "Pinned. Updates need your approval.",
+      "perRunLabel": "Per run",
+      "perRunValue": "{min}–{max} plus reviewer pay",
+      "cap": "Cap",
+      "capPerRun": "{amount} per run",
+      "region": "Data region",
+      "agree": "I agree to the work contract and pay terms for this pack.",
+      "readContract": "Read the contract",
+      "contractTitle": "Work contract for {name} {version}",
+      "contractDescription": "The short version. The full contract is versioned and pinned with the pack.",
+      "contract": {
+        "pay": "You pay for agent and tool use as it happens, up to the cap you set per run.",
+        "delivered": "A result counts as delivered only after an independent check passes. If the check fails, the run is not charged for the result.",
+        "reviewers": "Reviewers are paid for accepted submissions even when a later step fails. New Machines covers that pay when the failure is ours.",
+        "data": "Your data stays in {regions}. Reviewers see only redacted records, only during their task.",
+        "updates": "Updates to the pack never apply until you approve them. You can stop using it at any time."
+      }
+    }
+  },
+  "runs": {
+    "new": {
+      "title": "Start a run",
+      "lede": "Choose a hired pack and the data it should work on. You can stop the run at any time.",
+      "pack": "Pack",
+      "input": "Data to work on",
+      "needInput": "Connect an app with this data first.",
+      "goConnections": "Go to connections",
+      "budget": "Spend up to",
+      "note": "Note for the agents (optional)",
+      "start": "Start run",
+      "starting": "Starting…",
+      "failed": "Could not start the run",
+      "notHired": "{name} isn't hired yet, so it can't start a run.",
+      "unknownPack": "There is no pack called {slug}.",
+      "hireThis": "Hire this pack",
+      "seeAllPacks": "See all packs"
+    }
+  },
+  "forms": {
+    "startRun": {
+      "choosePack": "Choose a pack.",
+      "needInput": "Connect an app with this data first.",
+      "noteTooLong": "Keep the note under 500 characters."
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "lede": "Who can use this workspace, the rules every run follows, and access for AI tools like Claude.",
+    "policies": {
+      "title": "Policies",
+      "aside": "Checked on every action",
+      "updated": "Updated {when}",
+      "note": "A blocked action has no override button. To allow it, change the policy here, and the change is recorded."
+    },
+    "workspace": {
+      "title": "Workspace",
+      "name": "Name",
+      "cap": "Monthly cap",
+      "capValue": "{amount} (simulated)",
+      "region": "Data region",
+      "reviewerLocations": "Reviewer locations",
+      "reviewerLocationsValue": "United States, Philippines"
+    },
+    "members": {
+      "title": "Members",
+      "invite": "Invite",
+      "inviteTitle": "Invite someone",
+      "inviteDescription": "They get an email link and sign in with Google or an email and password.",
+      "email": "Email",
+      "emailPlaceholder": "name@company.com",
+      "taken": "This person is already in the workspace or invited.",
+      "role": "Role",
+      "roles": {
+        "Member": "Member",
+        "Admin": "Admin"
+      },
+      "roleHelp": {
+        "Member": "Starts runs and approves actions their policy allows.",
+        "Admin": "Also changes policies, connections and billing."
+      },
+      "send": "Send invite",
+      "sentToast": "Invite sent",
+      "sentToastBody": "{address} can join as {role} once they accept. Simulated in this demo.",
+      "sendFailed": "Could not send the invite",
+      "pendingNote": "Invite sent, not accepted yet",
+      "signsInWith": "{email}, signs in with {via}",
+      "invited": "Invited",
+      "rolesLower": {
+        "Member": "member",
+        "Admin": "admin"
+      }
+    },
+    "tokens": {
+      "title": "Access for AI tools (MCP)",
+      "create": "Create token",
+      "createTitle": "Create a token for an AI tool",
+      "createDescription": "The token works for 30 days. It can never approve or decline anything, whatever you choose here.",
+      "name": "Name",
+      "namePlaceholder": "For example, Claude Desktop",
+      "scopes": "What it can do",
+      "scope": {
+        "agents:read": "See hired packs and agents",
+        "runs:read": "See runs and their results",
+        "runs:start": "Start runs of hired packs",
+        "approvals:list": "See what is waiting for approval"
+      },
+      "lede": "Let Claude or another AI tool list your packs, start runs and see what is waiting. Tokens can never approve or decline anything.",
+      "createdToast": "Token created",
+      "createdToastBody": "In the live product you copy the full token once, right here. Demo tokens do not work.",
+      "createFailed": "Could not create the token",
+      "revokedToast": "Token revoked",
+      "revokedToastBody": "{name} can no longer reach this workspace.",
+      "revokeFailed": "Could not revoke the token",
+      "revoke": "Revoke",
+      "revokeTitle": "Revoke the {name} token?",
+      "revokeDescription": "The tool loses access at once. Runs it already started keep going.",
+      "revokeConfirm": "Revoke token",
+      "expires": "Expires {date}",
+      "lastUsed": "Last used {when}",
+      "neverUsed": "Not used yet",
+      "none": "No tokens. Create one to connect Claude or another AI tool."
+    }
+  },
+  "usage": {
+    "title": "Usage and billing",
+    "lede": "Every charge comes from a recorded run step and is posted twice: once against your account and once against where the money goes. In this demo no money moves.",
+    "simulated": "Simulated billing",
+    "spent": "Spent in October",
+    "ofCap": "{pct}% of the {cap} monthly cap",
+    "held": "Held for runs in progress",
+    "heldNote": "Released when <run>run_1047</run> finishes. Only what it uses is charged.",
+    "agentsToolsNote": "Metered per run step. The {plan} plan and reviewer pay are counted separately.",
+    "reviewerPay": "Reviewer pay this month",
+    "reviewerPayNote": "{n} tasks. {absorbed} of it was absorbed by New Machines after a failed verification.",
+    "ledger": "Ledger",
+    "ledgerNote": "Each entry balances: debits equal credits",
+    "account": "Account",
+    "debit": "Debit",
+    "credit": "Credit",
+    "status": {
+      "POSTED": "Posted",
+      "ELIGIBLE": "Eligible",
+      "PENDING": "Pending",
+      "HELD": "Held"
+    },
+    "plan": "Plan",
+    "planValue": "{plan}, {price} a month (simulated)",
+    "includes": "Includes",
+    "includesValue": "Unlimited hired packs, 5 members, 30-day run history",
+    "payment": "Payment method",
+    "paymentValue": "None. This demo workspace never charges a card."
+  },
+  "work": {
+    "lede": "Paid review work that matches your skills. You see the pay, the time it should take and the data rules before you claim anything.",
+    "simulatedPay": "Pay is simulated in this demo",
+    "backToTasks": "Back to available tasks",
+    "mode": {
+      "APPROVAL": "Approval",
+      "EVALUATION": "Evaluation",
+      "NATURAL_FEEDBACK": "Written feedback",
+      "CORRECTION": "Correction",
+      "EXECUTION": "Execution",
+      "EXPERT_REVIEW": "Expert review",
+      "QUALITY_AUDIT": "Quality audit"
+    },
+    "byline": "{buyer}, {pack}. Needs: {skill}.",
+    "fields": {
+      "type": "Type",
+      "time": "Time",
+      "due": "Due",
+      "data": "Data"
+    },
+    "aboutMin": "About {n} min",
+    "due": "{when} Manila time ({utc}), {until}",
+    "dataConfidential": "Confidential, redacted",
+    "dataNone": "No customer data",
+    "paidOnAccept": "Paid once your submission is accepted",
+    "readTask": "Read the task",
+    "yourWork": "Your work",
+    "openOffers": "Open offers",
+    "worth": "Worth",
+    "notYetPaid": "Not yet paid",
+    "acceptedSubmissions": "Accepted submissions",
+    "seeEarnings": "See earnings",
+    "how": {
+      "title": "How claiming works",
+      "body": "Claiming gives you a lease on the task. If the lease runs out before you submit, the task goes back to the queue. Buyer names stay hidden, and confidential records arrive redacted."
+    },
+    "earnings": {
+      "lede": "You are paid for every accepted submission, including when you reject the agent's work or a later step fails.",
+      "simulated": "No real payouts in this demo",
+      "owed": "Owed to you",
+      "paid": "Paid so far",
+      "tasks": "Tasks",
+      "failedCheck": "The run failed its independent check after your review. Your pay is unaffected.",
+      "status": {
+        "OWED": "Owed",
+        "ELIGIBLE": "Ready to pay",
+        "PAID_SIMULATED": "Paid (simulated)",
+        "IN_REVIEW": "In review"
+      },
+      "verdict": {
+        "APPROVED": "Approved",
+        "REVISION_REQUIRED": "Sent back with corrections",
+        "REJECTED": "Rejected",
+        "ESCALATED": "Escalated"
+      }
+    }
+  },
+  "task": {
+    "byline": "{buyer}, {pack}",
+    "simulatedPay": "Simulated pay, {terms}",
+    "holdRanOutLive": "Your hold ran out. The task went back to the queue so another reviewer can claim it. You can no longer submit this review.",
+    "lessThanFive": "Less than 5 minutes left on your hold.",
+    "expired": {
+      "title": "Your hold ran out, so the task went back to the queue",
+      "body": "Another reviewer can claim it now, and this review can no longer be submitted. Claim it again to start a fresh hold if it is still open. In this demo it always is.",
+      "claimAgain": "Claim again"
+    },
+    "claimed": {
+      "title": "Claimed",
+      "body": "Your hold lasts up to {n} min from when you claimed it. Submit before it ends."
+    },
+    "closed": {
+      "title": "This task is no longer available",
+      "body": "It was closed or cancelled, so it cannot be claimed or submitted."
+    },
+    "validating": {
+      "title": "Submitted. Checking that it is complete…",
+      "body": "Your answers are being validated against the task’s form.",
+      "simulatedCheck": "Simulated check"
+    },
+    "submitted": {
+      "title": "Submitted. Waiting for the check to finish",
+      "body": "Your review is in. Pay is owed once it is accepted."
+    },
+    "accepted": {
+      "title": "Accepted. {pay} is owed to you.",
+      "body": "Your pay is owed now, whatever happens in later steps. The run resumes from its checkpoint with your corrections, and the steps that already finished do not run again.",
+      "runNote": "In the business workspace, this shows up on <run>{id}</run>. Your access to the records has ended."
+    },
+    "offer": {
+      "before": "Before you claim",
+      "willDo": "What you will do",
+      "skill": "Skill",
+      "time": "Time",
+      "timeValue": "About {est} minutes. You hold the task for up to {lease} minutes.",
+      "due": "Due",
+      "data": "Data",
+      "dataConfidential": "Confidential order and payment records, with customer details hidden",
+      "dataProduct": "Product data only",
+      "openTo": "Open to reviewers in",
+      "obligations": "Your obligations",
+      "willBePaid": "You will be paid",
+      "owedNote": "Owed as soon as your submission is accepted, even if a later step fails.",
+      "claim": "Claim this task",
+      "demoOnly": "Only the reconciliation task can be claimed in this demo.",
+      "claimFailed": "Could not claim this task"
+    },
+    "lease": {
+      "endedLabel": "Your hold has ended",
+      "label": "{mm} minutes {ss} seconds left on your hold",
+      "ended": "hold ended",
+      "warn": "left on your hold, submit soon",
+      "left": "left on your hold"
+    },
+    "verdict": {
+      "title": "Your verdict",
+      "label": "Verdict",
+      "APPROVED": {
+        "label": "Approve as is",
+        "help": "The agent's result is right."
+      },
+      "REVISION_REQUIRED": {
+        "label": "Send back with corrections",
+        "help": "The agent should apply your notes and try again."
+      },
+      "REJECTED": {
+        "label": "Reject",
+        "help": "The result is wrong and should not be retried."
+      },
+      "ESCALATED": {
+        "label": "Escalate",
+        "help": "This needs someone with more authority or context."
+      }
+    },
+    "feedback": {
+      "label": "Feedback for the agent",
+      "help": "Plain language. If it holds in general, it may be proposed as a memory for the business to approve.",
+      "placeholder": "For example: weekend orders are paid out on Tuesday, so a missing Monday payout is pending, not missing.",
+      "submit": "Submit review",
+      "expired": "Your hold ran out. Claim the task again to submit.",
+      "incomplete": "Decide on every record and write at least a sentence of feedback.",
+      "submitFailed": "Could not submit"
+    },
+    "record": {
+      "label": "Record {index}, order {id}",
+      "heading": "Record {index} of {total}",
+      "order": "Order",
+      "placed": "Placed",
+      "customer": "Customer",
+      "amount": "Amount",
+      "paymentRef": "Payment ref",
+      "payout": "Payout line",
+      "reference": "Reference",
+      "paidOut": "Paid out",
+      "source": "Source",
+      "batch": "Batch",
+      "noticed": "Finance Agent noticed:",
+      "yourCall": "Your call on {id}",
+      "calls": {
+        "match": "Same payment",
+        "mismatch": "Real mismatch",
+        "pending": "Pending, check later"
+      },
+      "notePlaceholder": "Correction for this record (optional)",
+      "noteLabel": "Correction for {id}"
+    }
+  }
+}

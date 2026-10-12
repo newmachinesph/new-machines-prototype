@@ -1,0 +1,21 @@
+{
+  "apphosting": [
+    {
+      "backendId": "app-157kih4j",
+      "rootDir": ".",
+      "ignore": [
+        "node_modules",
+        ".git",
+        ".next",
+        ".next-e2e",
+        "test-results",
+        "playwright-report",
+        "*.tsbuildinfo",
+        ".env",
+        ".env.*",
+        "firebase-debug.log",
+        "firebase-debug.*.log"
+      ]
+    }
+  ]
+}

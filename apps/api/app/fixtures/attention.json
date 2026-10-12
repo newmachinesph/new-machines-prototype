@@ -1,0 +1,30 @@
+[
+  {
+    "actor": "buyer",
+    "title": "Approve one outgoing email",
+    "detail": "Reminder to Cedarline Home, INV-3307, $2,480.00",
+    "href": "/app/approvals",
+    "when": "2026-10-12T15:30:46Z"
+  },
+  {
+    "actor": "policy",
+    "title": "Refund blocked, specialist assigned",
+    "detail": "HP-20877, $184.00. Agents may not move money.",
+    "href": "/app/runs/run_1044",
+    "when": "2026-10-12T13:18:21Z"
+  },
+  {
+    "actor": "machine",
+    "title": "Check an unconfirmed Drive write",
+    "detail": "“Reorder list, week 42” may not exist",
+    "href": "/app/runs/run_1039",
+    "when": "2026-10-12T13:09:40Z"
+  },
+  {
+    "actor": "human",
+    "title": "Approve a memory from a reviewer",
+    "detail": "Stripe pays out weekend orders on Tuesday. Treat a missing Monday payout for a Saturday or Sunday order as pending, not missing.",
+    "href": "/app/memory",
+    "when": "2026-10-11T14:39:31Z"
+  }
+]

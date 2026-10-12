@@ -1,0 +1,14 @@
+[
+  {
+    "name": "Demo operator",
+    "email": "Shared demo login",
+    "role": "Owner",
+    "via": "Email and password"
+  },
+  {
+    "name": "Reviewer guest",
+    "email": "Any Google account",
+    "role": "Member",
+    "via": "Google"
+  }
+]

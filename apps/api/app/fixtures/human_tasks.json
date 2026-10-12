@@ -1,0 +1,156 @@
+[
+  {
+    "id": "ht_011",
+    "buyer": "A US home goods retailer",
+    "version": 3,
+    "runId": "run_1047",
+    "packName": "Order & Payment Reconciliation",
+    "title": "Correct 3 order-to-payout exceptions",
+    "mode": "CORRECTION",
+    "skill": "Invoice review",
+    "state": "OFFERED",
+    "pay": {
+      "amountMinor": 750,
+      "currency": "USD"
+    },
+    "payTerms": "human_terms@3",
+    "estMinutes": 20,
+    "deadline": "2026-10-12T20:07:44Z",
+    "postedAt": "2026-10-12T16:07:44Z",
+    "dataClass": "CONFIDENTIAL",
+    "regions": [
+      "PH",
+      "US"
+    ],
+    "obligations": [
+      "Customer names and emails are hidden. Do not try to find them.",
+      "The data is shown only while you hold this task, for up to 45 minutes.",
+      "No copying, screenshots or downloads."
+    ],
+    "instructions": "For each record, decide whether the order and the payout are the same payment. If they are, say why. If not, say what should happen next. Write as you would to a colleague; the agent will apply your corrections.",
+    "question": "Are these three records real mismatches, and what should the agent do with each?",
+    "leaseMinutes": 45,
+    "records": [
+      {
+        "id": "HP-21044",
+        "order": {
+          "ref": "HP-21044",
+          "date": "Oct 11, 2:14 PM",
+          "customer": "M████ R█████",
+          "amount": "$312.00",
+          "paymentRef": "REF-5521"
+        },
+        "payment": {
+          "ref": "REF-5512",
+          "date": "Oct 12",
+          "payer": "Stripe payout po_██████4Q",
+          "amount": "$312.00",
+          "batch": "Batch 1012-A"
+        },
+        "flag": "Reference mismatch",
+        "agentNote": "Same amount and day. The last two digits of the reference are swapped."
+      },
+      {
+        "id": "HP-21051",
+        "order": {
+          "ref": "HP-21051",
+          "date": "Oct 11, 5:40 PM",
+          "customer": "J███ T██",
+          "amount": "$58.25",
+          "paymentRef": "REF-5534"
+        },
+        "payment": {
+          "ref": "REF-5534",
+          "date": "Oct 12",
+          "payer": "Stripe payout po_██████4Q",
+          "amount": "$40.25",
+          "batch": "Batch 1012-A"
+        },
+        "flag": "Amount $18.00 short",
+        "agentNote": "A partial refund of $18.00 exists on a different order, HP-21058."
+      },
+      {
+        "id": "HP-21063",
+        "order": {
+          "ref": "HP-21063",
+          "date": "Oct 11, 11:52 PM",
+          "customer": "A██ K█████",
+          "amount": "$144.00",
+          "paymentRef": "REF-5549"
+        },
+        "payment": {
+          "ref": "—",
+          "date": "—",
+          "payer": "No payout line found",
+          "amount": "—",
+          "batch": "—"
+        },
+        "flag": "Payout not found",
+        "agentNote": "Placed late Sunday. A candidate memory says weekend payouts land Tuesday, but it is not approved, so it was not used."
+      }
+    ]
+  },
+  {
+    "id": "ht_014",
+    "buyer": "A US home goods retailer",
+    "version": 1,
+    "runId": "run_1044",
+    "packName": "Refund Triage",
+    "title": "Issue or decline a $184.00 refund",
+    "mode": "EXPERT_REVIEW",
+    "skill": "Refunds specialist",
+    "state": "OFFERED",
+    "pay": {
+      "amountMinor": 1200,
+      "currency": "USD"
+    },
+    "payTerms": "human_terms@3",
+    "estMinutes": 15,
+    "deadline": "2026-10-12T19:18:22Z",
+    "postedAt": "2026-10-12T13:18:22Z",
+    "dataClass": "CONFIDENTIAL",
+    "regions": [
+      "US"
+    ],
+    "obligations": [
+      "You will issue the refund yourself in the store's admin, using a time-limited login.",
+      "Record the refund ID so the run can confirm it."
+    ],
+    "instructions": "Check the photo and the order. If the refund is due, issue it and record the refund ID. If not, explain why.",
+    "question": "Should this order be refunded in full?",
+    "leaseMinutes": 30,
+    "records": []
+  },
+  {
+    "id": "ht_016",
+    "buyer": "A Japanese-language storefront",
+    "version": 1,
+    "runId": "run_ext_2201",
+    "packName": "Catalog Localization, English to Japanese",
+    "title": "Review 12 product titles in Japanese",
+    "mode": "QUALITY_AUDIT",
+    "skill": "Japanese, native",
+    "state": "OFFERED",
+    "pay": {
+      "amountMinor": 900,
+      "currency": "USD"
+    },
+    "payTerms": "human_terms@3",
+    "estMinutes": 25,
+    "deadline": "2026-10-13T02:00:00Z",
+    "postedAt": "2026-10-12T14:00:00Z",
+    "dataClass": "INTERNAL",
+    "regions": [
+      "JP",
+      "PH",
+      "US"
+    ],
+    "obligations": [
+      "Product data only. No customer data."
+    ],
+    "instructions": "Mark each title as natural, needs edit, or wrong, and suggest a fix.",
+    "question": "Do these titles read naturally to a Japanese shopper?",
+    "leaseMinutes": 60,
+    "records": []
+  }
+]
