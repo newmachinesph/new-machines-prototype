@@ -1,0 +1,155 @@
+[
+  {
+    "id": "txn_5512",
+    "at": "2026-10-12T16:05:12Z",
+    "kind": "hold",
+    "description": "Budget hold for run_1047",
+    "runId": "run_1047",
+    "amount": {
+      "amountMinor": 5000,
+      "currency": "USD"
+    },
+    "status": "HELD",
+    "lines": [
+      {
+        "account": "Buyer available budget",
+        "debit": 5000
+      },
+      {
+        "account": "Run holds",
+        "credit": 5000
+      }
+    ]
+  },
+  {
+    "id": "txn_5498",
+    "at": "2026-10-11T16:12:31Z",
+    "kind": "ai_usage",
+    "description": "Agent and model usage, run_1042",
+    "runId": "run_1042",
+    "amount": {
+      "amountMinor": 190,
+      "currency": "USD"
+    },
+    "status": "ELIGIBLE",
+    "lines": [
+      {
+        "account": "Buyer charges",
+        "debit": 190
+      },
+      {
+        "account": "Platform revenue: usage",
+        "credit": 190
+      }
+    ]
+  },
+  {
+    "id": "txn_5497",
+    "at": "2026-10-11T16:12:31Z",
+    "kind": "human_pay",
+    "description": "Reviewer pay, task ht_009",
+    "runId": "run_1042",
+    "amount": {
+      "amountMinor": 750,
+      "currency": "USD"
+    },
+    "status": "ELIGIBLE",
+    "lines": [
+      {
+        "account": "Buyer charges",
+        "debit": 750
+      },
+      {
+        "account": "Worker payable: Reviewer 204",
+        "credit": 750
+      }
+    ]
+  },
+  {
+    "id": "txn_5460",
+    "at": "2026-10-05T16:02:00Z",
+    "kind": "ai_usage",
+    "description": "Agent and model usage, run_1028",
+    "runId": "run_1028",
+    "amount": {
+      "amountMinor": 43,
+      "currency": "USD"
+    },
+    "status": "POSTED",
+    "lines": [
+      {
+        "account": "Buyer charges",
+        "debit": 43
+      },
+      {
+        "account": "Platform revenue: usage",
+        "credit": 43
+      }
+    ]
+  },
+  {
+    "id": "txn_5421",
+    "at": "2026-10-01T15:58:21Z",
+    "kind": "refund",
+    "description": "Hold released, run_1036 failed verification",
+    "runId": "run_1036",
+    "amount": {
+      "amountMinor": -117,
+      "currency": "USD"
+    },
+    "status": "POSTED",
+    "lines": [
+      {
+        "account": "Run holds",
+        "debit": 117
+      },
+      {
+        "account": "Buyer available budget",
+        "credit": 117
+      }
+    ]
+  },
+  {
+    "id": "txn_5420",
+    "at": "2026-10-01T15:57:41Z",
+    "kind": "human_pay",
+    "description": "Reviewer pay, task ht_010 (owed even though the run failed)",
+    "runId": "run_1036",
+    "amount": {
+      "amountMinor": 400,
+      "currency": "USD"
+    },
+    "status": "POSTED",
+    "lines": [
+      {
+        "account": "Platform absorbed cost",
+        "debit": 400
+      },
+      {
+        "account": "Worker payable: Reviewer 204",
+        "credit": 400
+      }
+    ]
+  },
+  {
+    "id": "txn_5400",
+    "at": "2026-10-01T00:00:00Z",
+    "kind": "plan",
+    "description": "Pro plan, October",
+    "amount": {
+      "amountMinor": 4900,
+      "currency": "USD"
+    },
+    "status": "POSTED",
+    "lines": [
+      {
+        "account": "Buyer charges",
+        "debit": 4900
+      },
+      {
+        "account": "Platform revenue: subscription",
+        "credit": 4900
+      }
+    ]
+  }
+]

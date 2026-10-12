@@ -1,0 +1,120 @@
+[
+  {
+    "app": "Google Sheets",
+    "account": "ops@harborandpine.example",
+    "status": "connected",
+    "provider": "Composio",
+    "oauthScopes": [
+      "spreadsheets.readonly"
+    ],
+    "grants": [
+      {
+        "install": "Order & Payment Reconciliation",
+        "capability": "orders.read, payment.read",
+        "access": "read"
+      },
+      {
+        "install": "Overdue Invoice Follow-up",
+        "capability": "invoice.read",
+        "access": "read"
+      },
+      {
+        "install": "Weekly Inventory Report",
+        "capability": "inventory.read",
+        "access": "read"
+      }
+    ],
+    "lastUsed": "2026-10-12T16:05:24Z",
+    "health": "Healthy"
+  },
+  {
+    "app": "Gmail",
+    "account": "accounts@harborandpine.example",
+    "status": "connected",
+    "provider": "Composio",
+    "oauthScopes": [
+      "gmail.readonly",
+      "gmail.send"
+    ],
+    "grants": [
+      {
+        "install": "Overdue Invoice Follow-up",
+        "capability": "message.send",
+        "access": "write (approval)"
+      },
+      {
+        "install": "Refund Triage",
+        "capability": "message.read",
+        "access": "read"
+      }
+    ],
+    "lastUsed": "2026-10-12T13:17:40Z",
+    "health": "Healthy"
+  },
+  {
+    "app": "Google Drive",
+    "account": "ops@harborandpine.example",
+    "status": "connected",
+    "provider": "Composio",
+    "oauthScopes": [
+      "drive.file"
+    ],
+    "grants": [
+      {
+        "install": "Weekly Inventory Report",
+        "capability": "drive.file.create (Ops / Weekly reports)",
+        "access": "write (approval)"
+      },
+      {
+        "install": "Order & Payment Reconciliation",
+        "capability": "drive.file.create",
+        "access": "write (approval)"
+      }
+    ],
+    "lastUsed": "2026-10-12T13:09:31Z",
+    "health": "1 write unconfirmed"
+  },
+  {
+    "app": "Slack",
+    "account": "",
+    "status": "not_connected",
+    "provider": "Composio",
+    "oauthScopes": [],
+    "grants": []
+  },
+  {
+    "app": "Shopify",
+    "account": "harbor-and-pine (sandbox)",
+    "status": "sandbox",
+    "provider": "Mock",
+    "oauthScopes": [
+      "read_orders",
+      "write_orders"
+    ],
+    "grants": [
+      {
+        "install": "Refund Triage",
+        "capability": "orders.read",
+        "access": "read"
+      },
+      {
+        "install": "Refund Triage",
+        "capability": "refund.issue",
+        "access": "denied"
+      }
+    ],
+    "lastUsed": "2026-10-12T13:17:44Z",
+    "health": "Mock data, no live effects"
+  },
+  {
+    "app": "Stripe",
+    "account": "acct_test_hp (sandbox)",
+    "status": "sandbox",
+    "provider": "Mock",
+    "oauthScopes": [
+      "read_only"
+    ],
+    "grants": [],
+    "health": "Mock data, no live effects"
+  }
+]

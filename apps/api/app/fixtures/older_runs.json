@@ -1,0 +1,92 @@
+[
+  {
+    "id": "run_1033",
+    "packSlug": "weekly-inventory-report",
+    "title": "Weekly inventory report, week 41",
+    "status": "COMPLETED",
+    "startedAt": "2026-10-05T13:00:00Z",
+    "endedAt": "2026-10-05T13:06:12Z",
+    "startedBy": "Schedule",
+    "spent": {
+      "ai": {
+        "amountMinor": 66,
+        "currency": "USD"
+      },
+      "human": {
+        "amountMinor": 0,
+        "currency": "USD"
+      },
+      "tools": {
+        "amountMinor": 3,
+        "currency": "USD"
+      }
+    },
+    "stages": {
+      "executed": "done",
+      "verified": "done",
+      "accepted": "done",
+      "settlement": "done"
+    },
+    "summary": "14 SKUs to reorder."
+  },
+  {
+    "id": "run_1031",
+    "packSlug": "order-payment-reconciliation",
+    "title": "Reconcile Sep 11–20 orders",
+    "status": "COMPLETED",
+    "startedAt": "2026-09-21T15:00:00Z",
+    "endedAt": "2026-09-21T15:31:00Z",
+    "startedBy": "You",
+    "spent": {
+      "ai": {
+        "amountMinor": 171,
+        "currency": "USD"
+      },
+      "human": {
+        "amountMinor": 750,
+        "currency": "USD"
+      },
+      "tools": {
+        "amountMinor": 6,
+        "currency": "USD"
+      }
+    },
+    "stages": {
+      "executed": "done",
+      "verified": "done",
+      "accepted": "done",
+      "settlement": "done"
+    },
+    "summary": "39 of 39 orders reconciled after 2 corrections."
+  },
+  {
+    "id": "run_1028",
+    "packSlug": "overdue-invoice-follow-up",
+    "title": "Follow up on overdue wholesale invoices",
+    "status": "COMPLETED",
+    "startedAt": "2026-10-05T15:30:00Z",
+    "endedAt": "2026-10-05T16:02:00Z",
+    "startedBy": "Schedule",
+    "spent": {
+      "ai": {
+        "amountMinor": 41,
+        "currency": "USD"
+      },
+      "human": {
+        "amountMinor": 0,
+        "currency": "USD"
+      },
+      "tools": {
+        "amountMinor": 2,
+        "currency": "USD"
+      }
+    },
+    "stages": {
+      "executed": "done",
+      "verified": "done",
+      "accepted": "not_required",
+      "settlement": "done"
+    },
+    "summary": "2 reminders approved and sent."
+  }
+]

@@ -1,0 +1,5113 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "New Machines API",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/v1/workflow-packs": {
+      "get": {
+        "tags": [
+          "catalog"
+        ],
+        "summary": "List Workflow Packs",
+        "operationId": "listWorkflowPacks",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Pack"
+                  },
+                  "type": "array",
+                  "title": "Response Listworkflowpacks"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v1/workflow-packs/{slug}": {
+      "get": {
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Get Workflow Pack",
+        "operationId": "getWorkflowPack",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slug"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Pack"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/agents": {
+      "get": {
+        "tags": [
+          "catalog"
+        ],
+        "summary": "List Agents",
+        "operationId": "listAgents",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Agent"
+                  },
+                  "type": "array",
+                  "title": "Response Listagents"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v1/workflow-packs:suggest": {
+      "post": {
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Suggest Workflow Pack",
+        "description": "Keyword match for the static API. The dynamic backend asks Gemini and keeps this response shape.",
+        "operationId": "suggestWorkflowPack",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SuggestRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Suggestion"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v1/organizations/{org_id}/agent-installations": {
+      "post": {
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Install Workflow Pack",
+        "operationId": "installWorkflowPack",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Org Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InstallRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Installation"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/workflow-runs": {
+      "get": {
+        "tags": [
+          "runs"
+        ],
+        "summary": "List Workflow Runs",
+        "operationId": "listWorkflowRuns",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RunSummary"
+                  },
+                  "title": "Response Listworkflowruns"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "runs"
+        ],
+        "summary": "Start Workflow Run",
+        "description": "Returns 202: the run is registered and started, not finished (API.md section 3).",
+        "operationId": "startWorkflowRun",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartRunRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Run"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/workflow-runs/{run_id}": {
+      "get": {
+        "tags": [
+          "runs"
+        ],
+        "summary": "Get Workflow Run",
+        "operationId": "getWorkflowRun",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Run"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/approvals": {
+      "get": {
+        "tags": [
+          "approvals"
+        ],
+        "summary": "List Approvals",
+        "operationId": "listApprovals",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Approval"
+                  },
+                  "type": "array",
+                  "title": "Response Listapprovals"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v1/approvals/{approval_id}:approve": {
+      "post": {
+        "tags": [
+          "approvals"
+        ],
+        "summary": "Approve Approval",
+        "operationId": "approveApproval",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "approval_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Approval Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Approval"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/approvals/{approval_id}:decline": {
+      "post": {
+        "tags": [
+          "approvals"
+        ],
+        "summary": "Decline Approval",
+        "operationId": "declineApproval",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "approval_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Approval Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Approval"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/human-tasks/eligible": {
+      "get": {
+        "tags": [
+          "reviewers"
+        ],
+        "summary": "List Eligible Human Tasks",
+        "operationId": "listEligibleHumanTasks",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/HumanTask"
+                  },
+                  "type": "array",
+                  "title": "Response Listeligiblehumantasks"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v1/human-tasks/{task_id}": {
+      "get": {
+        "tags": [
+          "reviewers"
+        ],
+        "summary": "Get Human Task",
+        "operationId": "getHumanTask",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Task Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HumanTask"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/reviewer/earnings": {
+      "get": {
+        "tags": [
+          "reviewers"
+        ],
+        "summary": "List Earnings",
+        "operationId": "listEarnings",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Earning"
+                  },
+                  "type": "array",
+                  "title": "Response Listearnings"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v1/human-tasks/{task_id}:claim": {
+      "post": {
+        "tags": [
+          "reviewers"
+        ],
+        "summary": "Claim Human Task",
+        "operationId": "claimHumanTask",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Task Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HumanTask"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/human-tasks/{task_id}:submit": {
+      "post": {
+        "tags": [
+          "reviewers"
+        ],
+        "summary": "Submit Human Task",
+        "operationId": "submitHumanTask",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Task Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitReviewRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HumanTask"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/memory": {
+      "get": {
+        "tags": [
+          "memory"
+        ],
+        "summary": "List Memory",
+        "operationId": "listMemory",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MemoryItem"
+                  },
+                  "type": "array",
+                  "title": "Response Listmemory"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v1/memory-candidates/{memory_id}:review": {
+      "post": {
+        "tags": [
+          "memory"
+        ],
+        "summary": "Review Memory Candidate",
+        "operationId": "reviewMemoryCandidate",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "memory_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Memory Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MemoryReviewRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemoryItem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/memory/{memory_id}:retract": {
+      "post": {
+        "tags": [
+          "memory"
+        ],
+        "summary": "Retract Memory",
+        "operationId": "retractMemory",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "memory_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Memory Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemoryItem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/connections": {
+      "get": {
+        "tags": [
+          "connections"
+        ],
+        "summary": "List Connections",
+        "operationId": "listConnections",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Connection"
+                  },
+                  "type": "array",
+                  "title": "Response Listconnections"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v1/connections/{app_name}:disconnect": {
+      "post": {
+        "tags": [
+          "connections"
+        ],
+        "summary": "Disconnect Connection",
+        "operationId": "disconnectConnection",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "app_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "App Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Connection"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/grants": {
+      "delete": {
+        "tags": [
+          "connections"
+        ],
+        "summary": "Revoke Grant",
+        "operationId": "revokeGrant",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "app",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "App"
+            }
+          },
+          {
+            "name": "install",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Install"
+            }
+          },
+          {
+            "name": "capability",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Capability"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/organizations/{org_id}": {
+      "get": {
+        "tags": [
+          "organization"
+        ],
+        "summary": "Get Organization",
+        "operationId": "getOrganization",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Org Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Organization"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/organizations/{org_id}/policies": {
+      "get": {
+        "tags": [
+          "organization"
+        ],
+        "summary": "List Policies",
+        "operationId": "listPolicies",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Org Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Policy"
+                  },
+                  "title": "Response Listpolicies"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/organizations/{org_id}/members": {
+      "get": {
+        "tags": [
+          "organization"
+        ],
+        "summary": "List Members",
+        "operationId": "listMembers",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Org Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Member"
+                  },
+                  "title": "Response Listmembers"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/organizations/{org_id}/usage": {
+      "get": {
+        "tags": [
+          "organization"
+        ],
+        "summary": "Get Usage",
+        "operationId": "getUsage",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Org Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Usage"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/organizations/{org_id}/attention": {
+      "get": {
+        "tags": [
+          "organization"
+        ],
+        "summary": "List Attention",
+        "operationId": "listAttention",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Org Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AttentionItem"
+                  },
+                  "title": "Response Listattention"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tokens": {
+      "get": {
+        "tags": [
+          "organization"
+        ],
+        "summary": "List Tokens",
+        "operationId": "listTokens",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/McpToken"
+                  },
+                  "type": "array",
+                  "title": "Response Listtokens"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "organization"
+        ],
+        "summary": "Create Token",
+        "operationId": "createToken",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTokenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatedToken"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v1/organizations/{org_id}/invitations": {
+      "post": {
+        "tags": [
+          "organization"
+        ],
+        "summary": "Invite Member",
+        "operationId": "inviteMember",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Org Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InviteRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Member"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tokens/{token_id}": {
+      "delete": {
+        "tags": [
+          "organization"
+        ],
+        "summary": "Revoke Token",
+        "operationId": "revokeToken",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "token_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Token Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Agent": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "publisher": {
+            "type": "string",
+            "title": "Publisher"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "capabilities": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Capabilities"
+          },
+          "regions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Regions"
+          },
+          "certified": {
+            "type": "boolean",
+            "title": "Certified"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "version",
+          "name",
+          "publisher",
+          "summary",
+          "capabilities",
+          "regions",
+          "certified"
+        ],
+        "title": "Agent"
+      },
+      "Approval": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "runId": {
+            "type": "string",
+            "title": "Runid"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "requestedBy": {
+            "type": "string",
+            "title": "Requestedby"
+          },
+          "requestedAt": {
+            "type": "string",
+            "title": "Requestedat"
+          },
+          "expiresAt": {
+            "type": "string",
+            "title": "Expiresat"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "GRANTED",
+              "DECLINED",
+              "EXPIRED"
+            ],
+            "title": "Status"
+          },
+          "policyRef": {
+            "type": "string",
+            "title": "Policyref"
+          },
+          "reasonCodes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Reasoncodes"
+          },
+          "digest": {
+            "items": {
+              "$ref": "#/components/schemas/DigestRow"
+            },
+            "type": "array",
+            "title": "Digest"
+          },
+          "preview": {
+            "$ref": "#/components/schemas/EmailPreview"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "runId",
+          "title",
+          "requestedBy",
+          "requestedAt",
+          "expiresAt",
+          "status",
+          "policyRef",
+          "reasonCodes",
+          "digest",
+          "preview"
+        ],
+        "title": "Approval"
+      },
+      "ApprovalRef": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "GRANTED",
+              "NOT_REQUIRED"
+            ],
+            "title": "Status"
+          },
+          "by": {
+            "type": "string",
+            "title": "By"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "status"
+        ],
+        "title": "ApprovalRef"
+      },
+      "Attention": {
+        "properties": {
+          "tone": {
+            "type": "string",
+            "enum": [
+              "human",
+              "blocked",
+              "warn"
+            ],
+            "title": "Tone"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "body": {
+            "type": "string",
+            "title": "Body"
+          },
+          "href": {
+            "type": "string",
+            "title": "Href"
+          },
+          "cta": {
+            "type": "string",
+            "title": "Cta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tone",
+          "title",
+          "body"
+        ],
+        "title": "Attention"
+      },
+      "AttentionItem": {
+        "properties": {
+          "actor": {
+            "type": "string",
+            "enum": [
+              "machine",
+              "human",
+              "policy",
+              "system",
+              "buyer"
+            ],
+            "title": "Actor"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          },
+          "href": {
+            "type": "string",
+            "title": "Href"
+          },
+          "when": {
+            "type": "string",
+            "title": "When"
+          }
+        },
+        "type": "object",
+        "required": [
+          "actor",
+          "title",
+          "detail",
+          "href",
+          "when"
+        ],
+        "title": "AttentionItem"
+      },
+      "ChainStep": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "rules",
+              "gemini",
+              "jev"
+            ],
+            "title": "Kind"
+          },
+          "verdict": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "APPROVED",
+                  "REJECTED",
+                  "REVISION_REQUIRED",
+                  "HUMAN_REVIEW",
+                  "ESCALATED",
+                  "ERROR",
+                  "TIMED_OUT",
+                  "BLOCKED"
+                ]
+              },
+              {
+                "type": "string",
+                "const": "PASS"
+              }
+            ],
+            "title": "Verdict"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "verdict",
+          "note"
+        ],
+        "title": "ChainStep"
+      },
+      "Connection": {
+        "properties": {
+          "app": {
+            "type": "string",
+            "title": "App"
+          },
+          "account": {
+            "type": "string",
+            "title": "Account"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "connected",
+              "not_connected",
+              "sandbox",
+              "needs_reauth"
+            ],
+            "title": "Status"
+          },
+          "provider": {
+            "type": "string",
+            "enum": [
+              "Composio",
+              "Mock"
+            ],
+            "title": "Provider"
+          },
+          "oauthScopes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Oauthscopes"
+          },
+          "grants": {
+            "items": {
+              "$ref": "#/components/schemas/Grant"
+            },
+            "type": "array",
+            "title": "Grants"
+          },
+          "lastUsed": {
+            "type": "string",
+            "title": "Lastused"
+          },
+          "health": {
+            "type": "string",
+            "title": "Health"
+          }
+        },
+        "type": "object",
+        "required": [
+          "app",
+          "account",
+          "status",
+          "provider",
+          "oauthScopes",
+          "grants"
+        ],
+        "title": "Connection"
+      },
+      "CreateTokenRequest": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "scopes": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "agents:read",
+                "runs:read",
+                "runs:start",
+                "approvals:list"
+              ]
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Scopes"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "scopes"
+        ],
+        "title": "CreateTokenRequest"
+      },
+      "CreatedToken": {
+        "properties": {
+          "token": {
+            "$ref": "#/components/schemas/McpToken"
+          },
+          "secret": {
+            "type": "string",
+            "title": "Secret"
+          }
+        },
+        "type": "object",
+        "required": [
+          "token",
+          "secret"
+        ],
+        "title": "CreatedToken"
+      },
+      "DecisionRecord": {
+        "properties": {
+          "question": {
+            "type": "string",
+            "title": "Question"
+          },
+          "evaluator": {
+            "$ref": "#/components/schemas/Evaluator"
+          },
+          "chain": {
+            "items": {
+              "$ref": "#/components/schemas/ChainStep"
+            },
+            "type": "array",
+            "title": "Chain"
+          },
+          "verdict": {
+            "type": "string",
+            "enum": [
+              "APPROVED",
+              "REJECTED",
+              "REVISION_REQUIRED",
+              "HUMAN_REVIEW",
+              "ESCALATED",
+              "ERROR",
+              "TIMED_OUT",
+              "BLOCKED"
+            ],
+            "title": "Verdict"
+          },
+          "reasonCodes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Reasoncodes"
+          },
+          "explanation": {
+            "type": "string",
+            "title": "Explanation"
+          },
+          "evidenceRefs": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Evidencerefs"
+          },
+          "route": {
+            "type": "string",
+            "title": "Route"
+          },
+          "evaluatedAt": {
+            "type": "string",
+            "title": "Evaluatedat"
+          },
+          "policy": {
+            "$ref": "#/components/schemas/PolicyDecision"
+          },
+          "approval": {
+            "$ref": "#/components/schemas/ApprovalRef",
+            "title": "Approval"
+          }
+        },
+        "type": "object",
+        "required": [
+          "question",
+          "evaluator",
+          "chain",
+          "verdict",
+          "reasonCodes",
+          "explanation",
+          "evidenceRefs",
+          "route",
+          "evaluatedAt",
+          "policy"
+        ],
+        "title": "DecisionRecord"
+      },
+      "Deliverable": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/DeliverableRow"
+            },
+            "type": "array",
+            "title": "Rows"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Limitations"
+          },
+          "unresolved": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Unresolved"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceItem"
+            },
+            "type": "array",
+            "title": "Evidence"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "kind",
+          "summary",
+          "rows",
+          "limitations",
+          "unresolved",
+          "evidence"
+        ],
+        "title": "Deliverable"
+      },
+      "DeliverableRow": {
+        "properties": {
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "value": {
+            "type": "string",
+            "title": "Value"
+          }
+        },
+        "type": "object",
+        "required": [
+          "label",
+          "value"
+        ],
+        "title": "DeliverableRow"
+      },
+      "DigestRow": {
+        "properties": {
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "value": {
+            "type": "string",
+            "title": "Value"
+          },
+          "mono": {
+            "type": "boolean",
+            "title": "Mono"
+          }
+        },
+        "type": "object",
+        "required": [
+          "label",
+          "value"
+        ],
+        "title": "DigestRow"
+      },
+      "Earning": {
+        "properties": {
+          "taskId": {
+            "type": "string",
+            "title": "Taskid"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "at": {
+            "type": "string",
+            "title": "At"
+          },
+          "amount": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "verdict": {
+            "type": "string",
+            "enum": [
+              "APPROVED",
+              "REVISION_REQUIRED",
+              "REJECTED",
+              "ESCALATED"
+            ],
+            "title": "Verdict"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "OWED",
+              "ELIGIBLE",
+              "PAID_SIMULATED",
+              "IN_REVIEW"
+            ],
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "taskId",
+          "title",
+          "at",
+          "amount",
+          "verdict",
+          "status"
+        ],
+        "title": "Earning"
+      },
+      "EmailPreview": {
+        "properties": {
+          "subject": {
+            "type": "string",
+            "title": "Subject"
+          },
+          "to": {
+            "type": "string",
+            "title": "To"
+          },
+          "body": {
+            "type": "string",
+            "title": "Body"
+          }
+        },
+        "type": "object",
+        "required": [
+          "subject",
+          "to",
+          "body"
+        ],
+        "title": "EmailPreview"
+      },
+      "Evaluator": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "rules",
+              "gemini",
+              "human",
+              "jev"
+            ],
+            "title": "Kind"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "configVersion": {
+            "type": "string",
+            "title": "Configversion"
+          },
+          "modelId": {
+            "type": "string",
+            "title": "Modelid"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "label",
+          "configVersion"
+        ],
+        "title": "Evaluator"
+      },
+      "EvidenceItem": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "by": {
+            "type": "string",
+            "enum": [
+              "machine",
+              "human",
+              "policy",
+              "system",
+              "buyer"
+            ],
+            "title": "By"
+          },
+          "who": {
+            "type": "string",
+            "title": "Who"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "label",
+          "by",
+          "who"
+        ],
+        "title": "EvidenceItem"
+      },
+      "Grant": {
+        "properties": {
+          "install": {
+            "type": "string",
+            "title": "Install"
+          },
+          "capability": {
+            "type": "string",
+            "title": "Capability"
+          },
+          "access": {
+            "type": "string",
+            "enum": [
+              "read",
+              "write (approval)",
+              "denied"
+            ],
+            "title": "Access"
+          }
+        },
+        "type": "object",
+        "required": [
+          "install",
+          "capability",
+          "access"
+        ],
+        "title": "Grant"
+      },
+      "HumanTask": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "runId": {
+            "type": "string",
+            "title": "Runid"
+          },
+          "packName": {
+            "type": "string",
+            "title": "Packname"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "APPROVAL",
+              "EVALUATION",
+              "NATURAL_FEEDBACK",
+              "CORRECTION",
+              "EXECUTION",
+              "EXPERT_REVIEW",
+              "QUALITY_AUDIT"
+            ],
+            "title": "Mode"
+          },
+          "skill": {
+            "type": "string",
+            "title": "Skill"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "OFFERED",
+              "CLAIMED",
+              "SUBMITTED",
+              "VALIDATING",
+              "ACCEPTED",
+              "EXPIRED",
+              "CANCELLED"
+            ],
+            "title": "State"
+          },
+          "pay": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "payTerms": {
+            "type": "string",
+            "title": "Payterms"
+          },
+          "estMinutes": {
+            "type": "integer",
+            "title": "Estminutes"
+          },
+          "deadline": {
+            "type": "string",
+            "title": "Deadline"
+          },
+          "postedAt": {
+            "type": "string",
+            "title": "Postedat"
+          },
+          "dataClass": {
+            "type": "string",
+            "enum": [
+              "INTERNAL",
+              "CONFIDENTIAL"
+            ],
+            "title": "Dataclass"
+          },
+          "regions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Regions"
+          },
+          "obligations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Obligations"
+          },
+          "instructions": {
+            "type": "string",
+            "title": "Instructions"
+          },
+          "question": {
+            "type": "string",
+            "title": "Question"
+          },
+          "records": {
+            "items": {
+              "$ref": "#/components/schemas/RedactedRecord"
+            },
+            "type": "array",
+            "title": "Records"
+          },
+          "leaseMinutes": {
+            "type": "integer",
+            "title": "Leaseminutes"
+          },
+          "buyer": {
+            "type": "string",
+            "title": "Buyer"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "version",
+          "runId",
+          "packName",
+          "title",
+          "mode",
+          "skill",
+          "state",
+          "pay",
+          "payTerms",
+          "estMinutes",
+          "deadline",
+          "postedAt",
+          "dataClass",
+          "regions",
+          "obligations",
+          "instructions",
+          "question",
+          "records",
+          "leaseMinutes",
+          "buyer"
+        ],
+        "title": "HumanTask"
+      },
+      "InstallRequest": {
+        "properties": {
+          "capMinor": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Capminor"
+          },
+          "reviewerPool": {
+            "type": "boolean",
+            "title": "Reviewerpool"
+          },
+          "packSlug": {
+            "type": "string",
+            "title": "Packslug"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "capMinor",
+          "reviewerPool",
+          "packSlug"
+        ],
+        "title": "InstallRequest"
+      },
+      "Installation": {
+        "properties": {
+          "packSlug": {
+            "type": "string",
+            "title": "Packslug"
+          },
+          "capMinor": {
+            "type": "integer",
+            "title": "Capminor"
+          },
+          "reviewerPool": {
+            "type": "boolean",
+            "title": "Reviewerpool"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          }
+        },
+        "type": "object",
+        "required": [
+          "packSlug",
+          "capMinor",
+          "reviewerPool",
+          "summary"
+        ],
+        "title": "Installation"
+      },
+      "InviteRequest": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "pattern": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$",
+            "title": "Email"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "Member",
+              "Admin"
+            ],
+            "title": "Role"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "email",
+          "role"
+        ],
+        "title": "InviteRequest"
+      },
+      "LedgerLine": {
+        "properties": {
+          "account": {
+            "type": "string",
+            "title": "Account"
+          },
+          "debit": {
+            "type": "integer",
+            "title": "Debit"
+          },
+          "credit": {
+            "type": "integer",
+            "title": "Credit"
+          }
+        },
+        "type": "object",
+        "required": [
+          "account"
+        ],
+        "title": "LedgerLine"
+      },
+      "LedgerTxn": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "at": {
+            "type": "string",
+            "title": "At"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "plan",
+              "ai_usage",
+              "tool_usage",
+              "human_pay",
+              "refund",
+              "hold"
+            ],
+            "title": "Kind"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "runId": {
+            "type": "string",
+            "title": "Runid"
+          },
+          "amount": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "POSTED",
+              "PENDING",
+              "ELIGIBLE",
+              "HELD"
+            ],
+            "title": "Status"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/LedgerLine"
+            },
+            "type": "array",
+            "title": "Lines"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "at",
+          "kind",
+          "description",
+          "amount",
+          "status",
+          "lines"
+        ],
+        "title": "LedgerTxn"
+      },
+      "McpToken": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "last4": {
+            "type": "string",
+            "title": "Last4"
+          },
+          "scopes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Scopes"
+          },
+          "createdAt": {
+            "type": "string",
+            "title": "Createdat"
+          },
+          "expiresAt": {
+            "type": "string",
+            "title": "Expiresat"
+          },
+          "lastUsed": {
+            "type": "string",
+            "title": "Lastused"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "last4",
+          "scopes",
+          "createdAt",
+          "expiresAt",
+          "lastUsed"
+        ],
+        "title": "McpToken"
+      },
+      "Member": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role"
+          },
+          "via": {
+            "type": "string",
+            "title": "Via"
+          },
+          "pending": {
+            "type": "boolean",
+            "title": "Pending"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "email",
+          "role",
+          "via"
+        ],
+        "title": "Member"
+      },
+      "MemoryItem": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "Organization",
+              "Department",
+              "Agent installation",
+              "User",
+              "Task"
+            ],
+            "title": "Scope"
+          },
+          "scopeName": {
+            "type": "string",
+            "title": "Scopename"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "CANDIDATE",
+              "APPROVED",
+              "CORRECTED",
+              "REJECTED",
+              "EXPIRED",
+              "CONTRADICTION"
+            ],
+            "title": "State"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "sourceRun": {
+            "type": "string",
+            "title": "Sourcerun"
+          },
+          "proposedBy": {
+            "type": "string",
+            "title": "Proposedby"
+          },
+          "createdAt": {
+            "type": "string",
+            "title": "Createdat"
+          },
+          "usedIn": {
+            "type": "integer",
+            "title": "Usedin"
+          },
+          "conflictsWith": {
+            "type": "string",
+            "title": "Conflictswith"
+          },
+          "retracted": {
+            "type": "boolean",
+            "title": "Retracted"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "text",
+          "scope",
+          "scopeName",
+          "state",
+          "source",
+          "proposedBy",
+          "createdAt"
+        ],
+        "title": "MemoryItem"
+      },
+      "MemoryReviewRequest": {
+        "properties": {
+          "decision": {
+            "type": "string",
+            "enum": [
+              "approve",
+              "reject"
+            ],
+            "title": "Decision"
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 1000,
+            "title": "Text"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "decision"
+        ],
+        "title": "MemoryReviewRequest"
+      },
+      "Money": {
+        "properties": {
+          "amountMinor": {
+            "type": "integer",
+            "title": "Amountminor"
+          },
+          "currency": {
+            "type": "string",
+            "const": "USD",
+            "title": "Currency",
+            "default": "USD"
+          }
+        },
+        "type": "object",
+        "required": [
+          "amountMinor"
+        ],
+        "title": "Money"
+      },
+      "OrderSide": {
+        "properties": {
+          "ref": {
+            "type": "string",
+            "title": "Ref"
+          },
+          "date": {
+            "type": "string",
+            "title": "Date"
+          },
+          "customer": {
+            "type": "string",
+            "title": "Customer"
+          },
+          "amount": {
+            "type": "string",
+            "title": "Amount"
+          },
+          "paymentRef": {
+            "type": "string",
+            "title": "Paymentref"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ref",
+          "date",
+          "customer",
+          "amount",
+          "paymentRef"
+        ],
+        "title": "OrderSide"
+      },
+      "Organization": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "short": {
+            "type": "string",
+            "title": "Short"
+          },
+          "plan": {
+            "type": "string",
+            "title": "Plan"
+          },
+          "monthlyCap": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "monthSpent": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "region": {
+            "type": "string",
+            "title": "Region"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "short",
+          "plan",
+          "monthlyCap",
+          "monthSpent",
+          "region"
+        ],
+        "title": "Organization"
+      },
+      "Pack": {
+        "properties": {
+          "slug": {
+            "type": "string",
+            "title": "Slug"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          },
+          "publisher": {
+            "type": "string",
+            "title": "Publisher"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "outcome": {
+            "type": "string",
+            "title": "Outcome"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "agents": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Agents"
+          },
+          "connectors": {
+            "items": {
+              "$ref": "#/components/schemas/PackConnector"
+            },
+            "type": "array",
+            "title": "Connectors"
+          },
+          "humanReview": {
+            "type": "string",
+            "title": "Humanreview"
+          },
+          "estimate": {
+            "$ref": "#/components/schemas/PackEstimate"
+          },
+          "installed": {
+            "type": "boolean",
+            "title": "Installed"
+          },
+          "certified": {
+            "type": "boolean",
+            "title": "Certified"
+          },
+          "passport": {
+            "$ref": "#/components/schemas/TrustPassport",
+            "title": "Passport"
+          },
+          "riskClass": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ],
+            "title": "Riskclass"
+          },
+          "regions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Regions"
+          },
+          "runs30d": {
+            "type": "integer",
+            "title": "Runs30D"
+          }
+        },
+        "type": "object",
+        "required": [
+          "slug",
+          "name",
+          "version",
+          "publisher",
+          "category",
+          "outcome",
+          "description",
+          "agents",
+          "connectors",
+          "humanReview",
+          "estimate",
+          "installed",
+          "certified",
+          "riskClass",
+          "regions"
+        ],
+        "title": "Pack"
+      },
+      "PackConnector": {
+        "properties": {
+          "app": {
+            "type": "string",
+            "title": "App"
+          },
+          "access": {
+            "type": "string",
+            "enum": [
+              "read",
+              "write (approval)",
+              "write"
+            ],
+            "title": "Access"
+          },
+          "mocked": {
+            "type": "boolean",
+            "title": "Mocked"
+          }
+        },
+        "type": "object",
+        "required": [
+          "app",
+          "access"
+        ],
+        "title": "PackConnector"
+      },
+      "PackEstimate": {
+        "properties": {
+          "aiMin": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "aiMax": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "humanMax": {
+            "$ref": "#/components/schemas/Money"
+          }
+        },
+        "type": "object",
+        "required": [
+          "aiMin",
+          "aiMax",
+          "humanMax"
+        ],
+        "title": "PackEstimate"
+      },
+      "PassportResult": {
+        "properties": {
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "value": {
+            "type": "number",
+            "title": "Value"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "label",
+          "value"
+        ],
+        "title": "PassportResult"
+      },
+      "PaymentSide": {
+        "properties": {
+          "ref": {
+            "type": "string",
+            "title": "Ref"
+          },
+          "date": {
+            "type": "string",
+            "title": "Date"
+          },
+          "payer": {
+            "type": "string",
+            "title": "Payer"
+          },
+          "amount": {
+            "type": "string",
+            "title": "Amount"
+          },
+          "batch": {
+            "type": "string",
+            "title": "Batch"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ref",
+          "date",
+          "payer",
+          "amount",
+          "batch"
+        ],
+        "title": "PaymentSide"
+      },
+      "Policy": {
+        "properties": {
+          "ref": {
+            "type": "string",
+            "title": "Ref"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "updated": {
+            "type": "string",
+            "title": "Updated"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ref",
+          "summary",
+          "updated"
+        ],
+        "title": "Policy"
+      },
+      "PolicyDecision": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "ref": {
+            "type": "string",
+            "title": "Ref"
+          },
+          "verdict": {
+            "type": "string",
+            "enum": [
+              "PERMIT",
+              "DENY",
+              "REQUIRE_APPROVAL"
+            ],
+            "title": "Verdict"
+          },
+          "reasonCodes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Reasoncodes"
+          },
+          "actor": {
+            "type": "string",
+            "title": "Actor"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "ref",
+          "verdict",
+          "reasonCodes",
+          "actor"
+        ],
+        "title": "PolicyDecision"
+      },
+      "Problem": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "title": "Type",
+            "default": "about:blank"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "status": {
+            "type": "integer",
+            "title": "Status"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "status",
+          "code",
+          "detail"
+        ],
+        "title": "Problem",
+        "description": "RFC 9457 problem details with a stable machine code (API.md section 2)."
+      },
+      "RedactedRecord": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "order": {
+            "$ref": "#/components/schemas/OrderSide"
+          },
+          "payment": {
+            "$ref": "#/components/schemas/PaymentSide"
+          },
+          "flag": {
+            "type": "string",
+            "title": "Flag"
+          },
+          "agentNote": {
+            "type": "string",
+            "title": "Agentnote"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "order",
+          "payment",
+          "flag",
+          "agentNote"
+        ],
+        "title": "RedactedRecord"
+      },
+      "Run": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "packSlug": {
+            "type": "string",
+            "title": "Packslug"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "RUNNING",
+              "WAITING_FOR_HUMAN",
+              "WAITING_FOR_EVENT",
+              "VERIFYING",
+              "COMPLETED",
+              "FAILED",
+              "CANCELLED",
+              "NEEDS_ATTENTION"
+            ],
+            "title": "Status"
+          },
+          "startedAt": {
+            "type": "string",
+            "title": "Startedat"
+          },
+          "endedAt": {
+            "type": "string",
+            "title": "Endedat"
+          },
+          "startedBy": {
+            "type": "string",
+            "title": "Startedby"
+          },
+          "input": {
+            "type": "string",
+            "title": "Input"
+          },
+          "workflowRef": {
+            "type": "string",
+            "title": "Workflowref"
+          },
+          "contractRef": {
+            "type": "string",
+            "title": "Contractref"
+          },
+          "budget": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "spent": {
+            "$ref": "#/components/schemas/Spent"
+          },
+          "stages": {
+            "$ref": "#/components/schemas/Stages"
+          },
+          "stageNotes": {
+            "$ref": "#/components/schemas/StageNotes",
+            "title": "Stagenotes"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "nodes": {
+            "items": {
+              "$ref": "#/components/schemas/RunNode"
+            },
+            "type": "array",
+            "title": "Nodes"
+          },
+          "edges": {
+            "items": {
+              "$ref": "#/components/schemas/RunEdge"
+            },
+            "type": "array",
+            "title": "Edges"
+          },
+          "timeline": {
+            "items": {
+              "$ref": "#/components/schemas/TimelineEvent"
+            },
+            "type": "array",
+            "title": "Timeline"
+          },
+          "attention": {
+            "$ref": "#/components/schemas/Attention"
+          },
+          "deliverable": {
+            "$ref": "#/components/schemas/Deliverable"
+          },
+          "recovered": {
+            "type": "string",
+            "title": "Recovered"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "packSlug",
+          "title",
+          "status",
+          "startedAt",
+          "startedBy",
+          "input",
+          "workflowRef",
+          "contractRef",
+          "budget",
+          "spent",
+          "stages",
+          "summary",
+          "nodes",
+          "edges",
+          "timeline"
+        ],
+        "title": "Run"
+      },
+      "RunEdge": {
+        "properties": {
+          "from": {
+            "type": "string",
+            "title": "From"
+          },
+          "to": {
+            "type": "string",
+            "title": "To"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "taken": {
+            "type": "boolean",
+            "title": "Taken"
+          },
+          "revision": {
+            "type": "boolean",
+            "title": "Revision"
+          }
+        },
+        "type": "object",
+        "required": [
+          "from",
+          "to"
+        ],
+        "title": "RunEdge"
+      },
+      "RunNode": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "trigger",
+              "connector",
+              "parallel",
+              "join",
+              "agent",
+              "decision",
+              "human_workforce",
+              "approval",
+              "verification",
+              "memory",
+              "end"
+            ],
+            "title": "Type"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "actor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "machine",
+                  "human",
+                  "policy",
+                  "system",
+                  "buyer"
+                ]
+              },
+              {
+                "type": "string",
+                "const": "system"
+              }
+            ],
+            "title": "Actor"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "CREATED",
+              "READY",
+              "RUNNING",
+              "WAITING",
+              "VALIDATING",
+              "COMPLETED",
+              "FAILED",
+              "REJECTED",
+              "TIMED_OUT",
+              "CANCELLED",
+              "COMPENSATING",
+              "ESCALATED",
+              "BLOCKED",
+              "SKIPPED"
+            ],
+            "title": "Status"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          },
+          "subtitle": {
+            "type": "string",
+            "title": "Subtitle"
+          },
+          "attempts": {
+            "type": "integer",
+            "title": "Attempts"
+          },
+          "durationS": {
+            "type": "integer",
+            "title": "Durations"
+          },
+          "cost": {
+            "$ref": "#/components/schemas/Money",
+            "title": "Cost"
+          },
+          "x": {
+            "type": "number",
+            "title": "X"
+          },
+          "y": {
+            "type": "number",
+            "title": "Y"
+          },
+          "decision": {
+            "$ref": "#/components/schemas/DecisionRecord",
+            "title": "Decision"
+          },
+          "humanTaskId": {
+            "type": "string",
+            "title": "Humantaskid"
+          },
+          "toolCalls": {
+            "items": {
+              "$ref": "#/components/schemas/ToolCall"
+            },
+            "type": "array",
+            "title": "Toolcalls"
+          },
+          "output": {
+            "type": "string",
+            "title": "Output"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "type",
+          "label",
+          "actor",
+          "status",
+          "x",
+          "y"
+        ],
+        "title": "RunNode"
+      },
+      "RunSummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "packSlug": {
+            "type": "string",
+            "title": "Packslug"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "RUNNING",
+              "WAITING_FOR_HUMAN",
+              "WAITING_FOR_EVENT",
+              "VERIFYING",
+              "COMPLETED",
+              "FAILED",
+              "CANCELLED",
+              "NEEDS_ATTENTION"
+            ],
+            "title": "Status"
+          },
+          "startedAt": {
+            "type": "string",
+            "title": "Startedat"
+          },
+          "endedAt": {
+            "type": "string",
+            "title": "Endedat"
+          },
+          "startedBy": {
+            "type": "string",
+            "title": "Startedby"
+          },
+          "spent": {
+            "$ref": "#/components/schemas/Spent"
+          },
+          "stages": {
+            "$ref": "#/components/schemas/Stages"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "hasDetail": {
+            "type": "boolean",
+            "title": "Hasdetail",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "packSlug",
+          "title",
+          "status",
+          "startedAt",
+          "startedBy",
+          "spent",
+          "stages",
+          "summary"
+        ],
+        "title": "RunSummary"
+      },
+      "Spent": {
+        "properties": {
+          "ai": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "human": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "tools": {
+            "$ref": "#/components/schemas/Money"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ai",
+          "human",
+          "tools"
+        ],
+        "title": "Spent"
+      },
+      "StageNotes": {
+        "properties": {
+          "executed": {
+            "type": "string",
+            "title": "Executed"
+          },
+          "verified": {
+            "type": "string",
+            "title": "Verified"
+          },
+          "accepted": {
+            "type": "string",
+            "title": "Accepted"
+          },
+          "settlement": {
+            "type": "string",
+            "title": "Settlement"
+          }
+        },
+        "type": "object",
+        "title": "StageNotes"
+      },
+      "Stages": {
+        "properties": {
+          "executed": {
+            "type": "string",
+            "enum": [
+              "done",
+              "pending",
+              "failed",
+              "blocked",
+              "not_required"
+            ],
+            "title": "Executed"
+          },
+          "verified": {
+            "type": "string",
+            "enum": [
+              "done",
+              "pending",
+              "failed",
+              "blocked",
+              "not_required"
+            ],
+            "title": "Verified"
+          },
+          "accepted": {
+            "type": "string",
+            "enum": [
+              "done",
+              "pending",
+              "failed",
+              "blocked",
+              "not_required"
+            ],
+            "title": "Accepted"
+          },
+          "settlement": {
+            "type": "string",
+            "enum": [
+              "done",
+              "pending",
+              "failed",
+              "blocked",
+              "not_required"
+            ],
+            "title": "Settlement"
+          }
+        },
+        "type": "object",
+        "required": [
+          "executed",
+          "verified",
+          "accepted",
+          "settlement"
+        ],
+        "title": "Stages"
+      },
+      "StartRunRequest": {
+        "properties": {
+          "packSlug": {
+            "type": "string",
+            "title": "Packslug"
+          },
+          "input": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Input"
+          },
+          "budgetMinor": {
+            "type": "integer",
+            "maximum": 100000.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Budgetminor"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 500,
+            "title": "Note"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "packSlug",
+          "input",
+          "budgetMinor"
+        ],
+        "title": "StartRunRequest"
+      },
+      "SubmitReviewRequest": {
+        "properties": {
+          "verdict": {
+            "type": "string",
+            "enum": [
+              "APPROVED",
+              "REVISION_REQUIRED",
+              "REJECTED",
+              "ESCALATED"
+            ],
+            "title": "Verdict"
+          },
+          "feedbackText": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Feedbacktext"
+          },
+          "recordCalls": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Recordcalls"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "verdict",
+          "feedbackText",
+          "recordCalls"
+        ],
+        "title": "SubmitReviewRequest"
+      },
+      "SuggestRequest": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 3,
+            "title": "Text"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "title": "SuggestRequest"
+      },
+      "Suggestion": {
+        "properties": {
+          "pack": {
+            "$ref": "#/components/schemas/Pack"
+          },
+          "steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Steps"
+          },
+          "simulated": {
+            "type": "boolean",
+            "title": "Simulated"
+          }
+        },
+        "type": "object",
+        "required": [
+          "steps",
+          "simulated"
+        ],
+        "title": "Suggestion"
+      },
+      "TimelineEvent": {
+        "properties": {
+          "at": {
+            "type": "string",
+            "title": "At"
+          },
+          "actor": {
+            "type": "string",
+            "enum": [
+              "machine",
+              "human",
+              "policy",
+              "system",
+              "buyer"
+            ],
+            "title": "Actor"
+          },
+          "who": {
+            "type": "string",
+            "title": "Who"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          },
+          "nodeId": {
+            "type": "string",
+            "title": "Nodeid"
+          },
+          "ref": {
+            "type": "string",
+            "title": "Ref"
+          },
+          "tone": {
+            "type": "string",
+            "enum": [
+              "default",
+              "warn",
+              "blocked",
+              "ok"
+            ],
+            "title": "Tone"
+          }
+        },
+        "type": "object",
+        "required": [
+          "at",
+          "actor",
+          "who",
+          "title"
+        ],
+        "title": "TimelineEvent"
+      },
+      "ToolCall": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "app": {
+            "type": "string",
+            "title": "App"
+          },
+          "action": {
+            "type": "string",
+            "title": "Action"
+          },
+          "capability": {
+            "type": "string",
+            "title": "Capability"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PLANNED",
+              "AUTHORIZED",
+              "SENT",
+              "CONFIRMED",
+              "DENIED",
+              "FAILED",
+              "UNCONFIRMED",
+              "CANCELLED"
+            ],
+            "title": "Status"
+          },
+          "policy": {
+            "type": "string",
+            "enum": [
+              "PERMIT",
+              "DENY",
+              "REQUIRE_APPROVAL"
+            ],
+            "title": "Policy"
+          },
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          },
+          "mocked": {
+            "type": "boolean",
+            "title": "Mocked"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "app",
+          "action",
+          "capability",
+          "status",
+          "policy",
+          "detail"
+        ],
+        "title": "ToolCall"
+      },
+      "TrustPassport": {
+        "properties": {
+          "testedOn": {
+            "type": "string",
+            "title": "Testedon"
+          },
+          "testedBy": {
+            "type": "string",
+            "title": "Testedby"
+          },
+          "cohort": {
+            "type": "string",
+            "title": "Cohort"
+          },
+          "sampleSize": {
+            "type": "integer",
+            "title": "Samplesize"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/PassportResult"
+            },
+            "type": "array",
+            "title": "Results"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Limitations"
+          },
+          "retestTriggers": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Retesttriggers"
+          }
+        },
+        "type": "object",
+        "required": [
+          "testedOn",
+          "testedBy",
+          "cohort",
+          "sampleSize",
+          "results",
+          "limitations",
+          "retestTriggers"
+        ],
+        "title": "TrustPassport"
+      },
+      "Usage": {
+        "properties": {
+          "org": {
+            "$ref": "#/components/schemas/Organization"
+          },
+          "ledger": {
+            "items": {
+              "$ref": "#/components/schemas/LedgerTxn"
+            },
+            "type": "array",
+            "title": "Ledger"
+          }
+        },
+        "type": "object",
+        "required": [
+          "org",
+          "ledger"
+        ],
+        "title": "Usage"
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "type": "http",
+        "description": "Firebase ID token.",
+        "scheme": "bearer"
+      }
+    }
+  }
+}

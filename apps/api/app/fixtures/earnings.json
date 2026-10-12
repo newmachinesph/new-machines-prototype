@@ -1,0 +1,46 @@
+[
+  {
+    "taskId": "ht_009",
+    "title": "Correct 3 order-to-payout exceptions",
+    "at": "2026-10-11T14:38:03Z",
+    "amount": {
+      "amountMinor": 750,
+      "currency": "USD"
+    },
+    "verdict": "REVISION_REQUIRED",
+    "status": "ELIGIBLE"
+  },
+  {
+    "taskId": "ht_010",
+    "title": "Quality audit, 5 reconciled orders",
+    "at": "2026-10-01T15:57:40Z",
+    "amount": {
+      "amountMinor": 400,
+      "currency": "USD"
+    },
+    "verdict": "APPROVED",
+    "status": "OWED"
+  },
+  {
+    "taskId": "ht_006",
+    "title": "Correct 2 order-to-payout exceptions",
+    "at": "2026-09-21T15:20:00Z",
+    "amount": {
+      "amountMinor": 750,
+      "currency": "USD"
+    },
+    "verdict": "REVISION_REQUIRED",
+    "status": "PAID_SIMULATED"
+  },
+  {
+    "taskId": "ht_003",
+    "title": "Approve a supplier credit note",
+    "at": "2026-09-14T09:02:00Z",
+    "amount": {
+      "amountMinor": 500,
+      "currency": "USD"
+    },
+    "verdict": "APPROVED",
+    "status": "PAID_SIMULATED"
+  }
+]

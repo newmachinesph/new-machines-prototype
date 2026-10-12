@@ -1,0 +1,1909 @@
+[
+  {
+    "id": "run_1047",
+    "packSlug": "order-payment-reconciliation",
+    "title": "Reconcile Oct 11 orders",
+    "status": "RUNNING",
+    "startedAt": "2026-10-12T16:05:12Z",
+    "startedBy": "You",
+    "input": "Orders for Oct 11 and the Stripe payout sheet for Oct 12",
+    "workflowRef": "wf_order_reconciliation@1.0.0",
+    "contractRef": "contract_recon@2",
+    "budget": {
+      "amountMinor": 5000,
+      "currency": "USD"
+    },
+    "spent": {
+      "ai": {
+        "amountMinor": 97,
+        "currency": "USD"
+      },
+      "human": {
+        "amountMinor": 0,
+        "currency": "USD"
+      },
+      "tools": {
+        "amountMinor": 4,
+        "currency": "USD"
+      }
+    },
+    "stages": {
+      "executed": "pending",
+      "verified": "pending",
+      "accepted": "pending",
+      "settlement": "pending"
+    },
+    "summary": "25 of 28 orders matched. 3 exceptions are with a reviewer; the independent check is already running on the matched 25.",
+    "attention": {
+      "tone": "human",
+      "title": "One step is waiting for a reviewer",
+      "body": "3 exceptions were offered to the invoice reviewer pool 33 minutes ago. The rest of the run keeps going.",
+      "href": "/work/tasks/ht_011",
+      "cta": "Open the reviewer task"
+    },
+    "nodes": [
+      {
+        "id": "start",
+        "type": "trigger",
+        "label": "Start",
+        "subtitle": "Started by you",
+        "actor": "buyer",
+        "status": "COMPLETED",
+        "x": 0,
+        "y": 170,
+        "durationS": 1
+      },
+      {
+        "id": "read",
+        "type": "connector",
+        "label": "Read orders and payouts",
+        "subtitle": "Google Sheets, read-only",
+        "actor": "machine",
+        "status": "COMPLETED",
+        "x": 210,
+        "y": 170,
+        "version": "sheets@2",
+        "durationS": 9,
+        "cost": {
+          "amountMinor": 4,
+          "currency": "USD"
+        },
+        "output": "2 tabs, 28 orders, 26 payout lines",
+        "toolCalls": [
+          {
+            "id": "tool_8811",
+            "app": "Google Sheets",
+            "action": "Read range Orders!A1:K29",
+            "capability": "orders.read",
+            "status": "CONFIRMED",
+            "policy": "PERMIT",
+            "detail": "Read-only. 28 rows."
+          },
+          {
+            "id": "tool_8812",
+            "app": "Google Sheets",
+            "action": "Read range Payouts!A1:H27",
+            "capability": "payment.read",
+            "status": "CONFIRMED",
+            "policy": "PERMIT",
+            "detail": "Read-only. 26 rows."
+          }
+        ]
+      },
+      {
+        "id": "retail",
+        "type": "agent",
+        "label": "Inspect orders",
+        "subtitle": "Retail Agent 1.2.0",
+        "actor": "machine",
+        "status": "COMPLETED",
+        "x": 460,
+        "y": 40,
+        "durationS": 31,
+        "cost": {
+          "amountMinor": 22,
+          "currency": "USD"
+        },
+        "output": "28 orders inspected. 1 partial refund on HP-21058."
+      },
+      {
+        "id": "finance",
+        "type": "agent",
+        "label": "Reconcile payments",
+        "subtitle": "Finance Agent 1.0.0",
+        "actor": "machine",
+        "status": "COMPLETED",
+        "x": 460,
+        "y": 300,
+        "durationS": 44,
+        "cost": {
+          "amountMinor": 41,
+          "currency": "USD"
+        },
+        "output": "25 matched, 3 exceptions."
+      },
+      {
+        "id": "decide",
+        "type": "decision",
+        "label": "Can this be accepted?",
+        "subtitle": "Rules, then Gemini",
+        "actor": "machine",
+        "status": "COMPLETED",
+        "x": 720,
+        "y": 170,
+        "durationS": 7,
+        "cost": {
+          "amountMinor": 30,
+          "currency": "USD"
+        },
+        "decision": {
+          "question": "Can this reconciliation be accepted?",
+          "evaluator": {
+            "kind": "gemini",
+            "label": "Rules, then Gemini",
+            "configVersion": "3"
+          },
+          "chain": [
+            {
+              "kind": "rules",
+              "verdict": "HUMAN_REVIEW",
+              "note": "25 of 28 records inside tolerance. 3 failed checks."
+            },
+            {
+              "kind": "gemini",
+              "verdict": "HUMAN_REVIEW",
+              "note": "HP-21063 may be a weekend payout, but that memory is not approved yet, so it was not used."
+            }
+          ],
+          "verdict": "HUMAN_REVIEW",
+          "reasonCodes": [
+            "REFERENCE_MISMATCH",
+            "AMOUNT_DELTA",
+            "PAYOUT_NOT_FOUND"
+          ],
+          "explanation": "HP-21044 reference digits differ from its payout line. HP-21051 is $18.00 short. HP-21063 has no payout line yet.",
+          "evidenceRefs": [
+            "artifact_orders_1047",
+            "artifact_payouts_1047",
+            "artifact_rules_run_1047"
+          ],
+          "route": "human_review",
+          "evaluatedAt": "2026-10-12T16:07:41Z",
+          "policy": {
+            "id": "poldec_101",
+            "ref": "human_review@4",
+            "verdict": "REQUIRE_APPROVAL",
+            "reasonCodes": [
+              "PAYMENT_ACTION"
+            ],
+            "actor": "service_decider"
+          },
+          "approval": {
+            "id": "ht_011",
+            "status": "PENDING"
+          }
+        }
+      },
+      {
+        "id": "human",
+        "type": "human_workforce",
+        "label": "Reviewer correction",
+        "subtitle": "Invoice reviewer, $7.50",
+        "actor": "human",
+        "status": "WAITING",
+        "x": 980,
+        "y": 330,
+        "humanTaskId": "ht_011",
+        "note": "Offered to 6 eligible reviewers. Nobody has claimed it yet."
+      },
+      {
+        "id": "verify",
+        "type": "verification",
+        "label": "Independent check",
+        "subtitle": "reconcile_rules@1",
+        "actor": "machine",
+        "status": "RUNNING",
+        "x": 1240,
+        "y": 170,
+        "note": "Checking the 25 matched records now. The 3 exceptions join when the reviewer finishes."
+      },
+      {
+        "id": "memory",
+        "type": "memory",
+        "label": "Save what we learned",
+        "subtitle": "Needs your approval",
+        "actor": "machine",
+        "status": "CREATED",
+        "x": 1490,
+        "y": 170
+      },
+      {
+        "id": "report",
+        "type": "agent",
+        "label": "Write report",
+        "subtitle": "Operations Agent 1.1.0",
+        "actor": "machine",
+        "status": "CREATED",
+        "x": 1740,
+        "y": 170
+      },
+      {
+        "id": "done",
+        "type": "end",
+        "label": "Done",
+        "actor": "system",
+        "status": "CREATED",
+        "x": 1990,
+        "y": 170
+      }
+    ],
+    "edges": [
+      {
+        "from": "start",
+        "to": "read",
+        "taken": true
+      },
+      {
+        "from": "read",
+        "to": "retail",
+        "taken": true
+      },
+      {
+        "from": "read",
+        "to": "finance",
+        "taken": true
+      },
+      {
+        "from": "retail",
+        "to": "decide",
+        "taken": true
+      },
+      {
+        "from": "finance",
+        "to": "decide",
+        "taken": true
+      },
+      {
+        "from": "decide",
+        "to": "verify",
+        "label": "approved",
+        "taken": true
+      },
+      {
+        "from": "decide",
+        "to": "human",
+        "label": "human review",
+        "taken": true
+      },
+      {
+        "from": "human",
+        "to": "verify",
+        "label": "accepted",
+        "taken": false
+      },
+      {
+        "from": "human",
+        "to": "finance",
+        "label": "revision required",
+        "revision": true,
+        "taken": false
+      },
+      {
+        "from": "verify",
+        "to": "memory",
+        "label": "verified",
+        "taken": false
+      },
+      {
+        "from": "memory",
+        "to": "report",
+        "taken": false
+      },
+      {
+        "from": "report",
+        "to": "done",
+        "taken": false
+      }
+    ],
+    "timeline": [
+      {
+        "at": "2026-10-12T16:05:12Z",
+        "actor": "buyer",
+        "who": "You",
+        "title": "Started the run",
+        "detail": "Orders for Oct 11, payouts for Oct 12. Budget up to $50.00.",
+        "nodeId": "start"
+      },
+      {
+        "at": "2026-10-12T16:05:13Z",
+        "actor": "system",
+        "who": "Workflow engine",
+        "title": "Pinned workflow 1.0.0 and contract 2",
+        "ref": "wf_order_reconciliation@1.0.0"
+      },
+      {
+        "at": "2026-10-12T16:05:15Z",
+        "actor": "policy",
+        "who": "Policy engine",
+        "title": "Permitted read-only Sheets access",
+        "ref": "poldec_1188",
+        "tone": "ok",
+        "nodeId": "read"
+      },
+      {
+        "at": "2026-10-12T16:05:24Z",
+        "actor": "machine",
+        "who": "Google Sheets",
+        "title": "Read 28 orders and 26 payout lines",
+        "detail": "Read-only. Nothing was written.",
+        "nodeId": "read"
+      },
+      {
+        "at": "2026-10-12T16:05:55Z",
+        "actor": "machine",
+        "who": "Retail Agent",
+        "title": "Inspected 28 orders",
+        "detail": "Found a partial refund on HP-21058.",
+        "nodeId": "retail"
+      },
+      {
+        "at": "2026-10-12T16:06:08Z",
+        "actor": "machine",
+        "who": "Finance Agent",
+        "title": "Matched 25 orders, flagged 3",
+        "nodeId": "finance"
+      },
+      {
+        "at": "2026-10-12T16:07:41Z",
+        "actor": "machine",
+        "who": "Decision step",
+        "title": "Sent 3 exceptions to human review",
+        "detail": "Rules and Gemini agree. Reason codes: reference mismatch, amount delta, payout not found.",
+        "nodeId": "decide",
+        "ref": "dec_1047_1"
+      },
+      {
+        "at": "2026-10-12T16:07:41Z",
+        "actor": "policy",
+        "who": "Policy engine",
+        "title": "Requires a person for payment mismatches",
+        "ref": "poldec_1191",
+        "tone": "warn",
+        "nodeId": "decide"
+      },
+      {
+        "at": "2026-10-12T16:07:44Z",
+        "actor": "system",
+        "who": "Human workforce",
+        "title": "Offered task ht_011 to 6 invoice reviewers",
+        "detail": "$7.50, due in 4 hours.",
+        "nodeId": "human",
+        "ref": "ht_011"
+      },
+      {
+        "at": "2026-10-12T16:07:44Z",
+        "actor": "system",
+        "who": "Workflow engine",
+        "title": "Saved a checkpoint for the reviewer step",
+        "detail": "Finished steps will not run again when the reviewer submits.",
+        "nodeId": "human"
+      },
+      {
+        "at": "2026-10-12T16:07:50Z",
+        "actor": "machine",
+        "who": "Independent check",
+        "title": "Started on the 25 matched records",
+        "nodeId": "verify"
+      }
+    ]
+  },
+  {
+    "id": "run_1045",
+    "packSlug": "overdue-invoice-follow-up",
+    "title": "Follow up on overdue wholesale invoices",
+    "status": "WAITING_FOR_EVENT",
+    "startedAt": "2026-10-12T15:30:00Z",
+    "startedBy": "Schedule, Mondays 8:30 AM",
+    "input": "Wholesale invoices sheet, due before Oct 5",
+    "workflowRef": "wf_invoice_followup@1.0.2",
+    "contractRef": "contract_followup@1",
+    "budget": {
+      "amountMinor": 1000,
+      "currency": "USD"
+    },
+    "spent": {
+      "ai": {
+        "amountMinor": 38,
+        "currency": "USD"
+      },
+      "human": {
+        "amountMinor": 0,
+        "currency": "USD"
+      },
+      "tools": {
+        "amountMinor": 2,
+        "currency": "USD"
+      }
+    },
+    "stages": {
+      "executed": "pending",
+      "verified": "pending",
+      "accepted": "not_required",
+      "settlement": "pending"
+    },
+    "summary": "1 invoice is 31 days overdue. The reminder is drafted and waiting for your approval. Nothing has been sent.",
+    "attention": {
+      "tone": "warn",
+      "title": "Your approval is needed to send one email",
+      "body": "The Finance Agent drafted a reminder to Cedarline Home about invoice INV-3307 ($2,480.00). Policy requires your sign-off for any outgoing email.",
+      "href": "/app/approvals",
+      "cta": "Review the exact email"
+    },
+    "nodes": [
+      {
+        "id": "start",
+        "type": "trigger",
+        "label": "Start",
+        "subtitle": "Mondays 8:30 AM",
+        "actor": "system",
+        "status": "COMPLETED",
+        "x": 0,
+        "y": 120
+      },
+      {
+        "id": "read",
+        "type": "connector",
+        "label": "Read invoices",
+        "subtitle": "Google Sheets, read-only",
+        "actor": "machine",
+        "status": "COMPLETED",
+        "x": 220,
+        "y": 120,
+        "durationS": 6,
+        "output": "42 invoices, 3 past due"
+      },
+      {
+        "id": "finance",
+        "type": "agent",
+        "label": "Find overdue and draft",
+        "subtitle": "Finance Agent 1.0.0",
+        "actor": "machine",
+        "status": "COMPLETED",
+        "x": 470,
+        "y": 120,
+        "durationS": 38,
+        "cost": {
+          "amountMinor": 38,
+          "currency": "USD"
+        },
+        "output": "1 reminder drafted. 2 skipped: payment already scheduled."
+      },
+      {
+        "id": "approve",
+        "type": "approval",
+        "label": "Approve the email",
+        "subtitle": "You, before it sends",
+        "actor": "buyer",
+        "status": "WAITING",
+        "x": 730,
+        "y": 120,
+        "note": "Waiting on apr_311. Expires 3:00 PM."
+      },
+      {
+        "id": "send",
+        "type": "connector",
+        "label": "Send with Gmail",
+        "subtitle": "Allowlisted recipient only",
+        "actor": "machine",
+        "status": "CREATED",
+        "x": 990,
+        "y": 120
+      },
+      {
+        "id": "verify",
+        "type": "verification",
+        "label": "Confirm it was sent",
+        "subtitle": "Checks Gmail Sent folder",
+        "actor": "machine",
+        "status": "CREATED",
+        "x": 1240,
+        "y": 120
+      },
+      {
+        "id": "done",
+        "type": "end",
+        "label": "Done",
+        "actor": "system",
+        "status": "CREATED",
+        "x": 1480,
+        "y": 120
+      }
+    ],
+    "edges": [
+      {
+        "from": "start",
+        "to": "read",
+        "taken": true
+      },
+      {
+        "from": "read",
+        "to": "finance",
+        "taken": true
+      },
+      {
+        "from": "finance",
+        "to": "approve",
+        "taken": true
+      },
+      {
+        "from": "approve",
+        "to": "send",
+        "label": "granted"
+      },
+      {
+        "from": "send",
+        "to": "verify"
+      },
+      {
+        "from": "verify",
+        "to": "done"
+      }
+    ],
+    "timeline": [
+      {
+        "at": "2026-10-12T15:30:00Z",
+        "actor": "system",
+        "who": "Schedule",
+        "title": "Started the weekly follow-up",
+        "nodeId": "start"
+      },
+      {
+        "at": "2026-10-12T15:30:07Z",
+        "actor": "machine",
+        "who": "Google Sheets",
+        "title": "Read 42 wholesale invoices",
+        "detail": "Read-only.",
+        "nodeId": "read"
+      },
+      {
+        "at": "2026-10-12T15:30:45Z",
+        "actor": "machine",
+        "who": "Finance Agent",
+        "title": "Drafted 1 reminder, skipped 2",
+        "detail": "Used memory: “Cedarline Home pays by ACH about 5 business days after a reminder.”",
+        "nodeId": "finance"
+      },
+      {
+        "at": "2026-10-12T15:30:46Z",
+        "actor": "policy",
+        "who": "Policy engine",
+        "title": "Requires your approval to send email",
+        "detail": "Reason: EXTERNAL_MESSAGE.",
+        "ref": "poldec_1176",
+        "tone": "warn",
+        "nodeId": "approve"
+      },
+      {
+        "at": "2026-10-12T15:30:46Z",
+        "actor": "system",
+        "who": "Workflow engine",
+        "title": "Paused until you decide",
+        "nodeId": "approve"
+      }
+    ]
+  },
+  {
+    "id": "run_1044",
+    "packSlug": "refund-triage",
+    "title": "Refund request for order HP-20877",
+    "status": "NEEDS_ATTENTION",
+    "startedAt": "2026-10-12T13:17:40Z",
+    "startedBy": "New support email",
+    "input": "Ticket #5521: “The ceramic canister lid arrived cracked.”",
+    "workflowRef": "wf_refund_triage@0.8.1",
+    "contractRef": "contract_refunds@1",
+    "budget": {
+      "amountMinor": 2000,
+      "currency": "USD"
+    },
+    "spent": {
+      "ai": {
+        "amountMinor": 26,
+        "currency": "USD"
+      },
+      "human": {
+        "amountMinor": 0,
+        "currency": "USD"
+      },
+      "tools": {
+        "amountMinor": 1,
+        "currency": "USD"
+      }
+    },
+    "stages": {
+      "executed": "blocked",
+      "verified": "pending",
+      "accepted": "pending",
+      "settlement": "pending"
+    },
+    "stageNotes": {
+      "executed": "Refund blocked by policy"
+    },
+    "summary": "The request qualifies for a $184.00 refund, but agents may not move money. A refunds specialist has been asked to issue it.",
+    "attention": {
+      "tone": "blocked",
+      "title": "Refund blocked: agents cannot move money",
+      "body": "The policy refunds@2 denies any refund issued by an agent. There is no override. The case went to a refunds specialist instead.",
+      "href": "/work/tasks/ht_014",
+      "cta": "See the specialist task"
+    },
+    "nodes": [
+      {
+        "id": "start",
+        "type": "trigger",
+        "label": "Start",
+        "subtitle": "Support email",
+        "actor": "system",
+        "status": "COMPLETED",
+        "x": 0,
+        "y": 140
+      },
+      {
+        "id": "read",
+        "type": "connector",
+        "label": "Read order",
+        "subtitle": "Shopify (sandbox mock)",
+        "actor": "machine",
+        "status": "COMPLETED",
+        "x": 220,
+        "y": 140,
+        "durationS": 3,
+        "output": "Order HP-20877, delivered Oct 8, $184.00"
+      },
+      {
+        "id": "retail",
+        "type": "agent",
+        "label": "Assess the request",
+        "subtitle": "Retail Agent 1.2.0",
+        "actor": "machine",
+        "status": "COMPLETED",
+        "x": 470,
+        "y": 140,
+        "durationS": 29,
+        "cost": {
+          "amountMinor": 14,
+          "currency": "USD"
+        },
+        "output": "Proposes a full refund of $184.00."
+      },
+      {
+        "id": "decide",
+        "type": "decision",
+        "label": "Meets refund policy?",
+        "subtitle": "Rules, then Gemini",
+        "actor": "machine",
+        "status": "COMPLETED",
+        "x": 720,
+        "y": 140,
+        "durationS": 6,
+        "cost": {
+          "amountMinor": 12,
+          "currency": "USD"
+        },
+        "decision": {
+          "question": "Does this request meet the refund policy?",
+          "evaluator": {
+            "kind": "gemini",
+            "label": "Rules, then Gemini",
+            "configVersion": "2"
+          },
+          "chain": [
+            {
+              "kind": "rules",
+              "verdict": "PASS",
+              "note": "Within 30 days of delivery. Item is not final sale."
+            },
+            {
+              "kind": "gemini",
+              "verdict": "APPROVED",
+              "note": "Photo shows a cracked lid, matching the customer's description."
+            }
+          ],
+          "verdict": "APPROVED",
+          "reasonCodes": [
+            "WITHIN_RETURN_WINDOW",
+            "DAMAGE_DESCRIBED"
+          ],
+          "explanation": "The request meets the written refund policy. A full refund of $184.00 is recommended.",
+          "evidenceRefs": [
+            "artifact_ticket_5521",
+            "artifact_order_hp20877"
+          ],
+          "route": "approved",
+          "evaluatedAt": "2026-10-12T13:18:20Z",
+          "policy": {
+            "id": "poldec_1162",
+            "ref": "refunds@2",
+            "verdict": "DENY",
+            "reasonCodes": [
+              "MONEY_MOVEMENT_BY_AGENT"
+            ],
+            "actor": "inst_retail_01"
+          }
+        }
+      },
+      {
+        "id": "refund",
+        "type": "connector",
+        "label": "Issue refund",
+        "subtitle": "Shopify (sandbox mock)",
+        "actor": "policy",
+        "status": "BLOCKED",
+        "x": 980,
+        "y": 40,
+        "toolCalls": [
+          {
+            "id": "tool_8790",
+            "app": "Shopify",
+            "action": "Refund $184.00 on HP-20877",
+            "capability": "refund.issue",
+            "status": "DENIED",
+            "policy": "DENY",
+            "detail": "refunds@2: agents may not move money.",
+            "mocked": true
+          }
+        ],
+        "note": "Denied before anything was sent. No retry, no override."
+      },
+      {
+        "id": "human",
+        "type": "human_workforce",
+        "label": "Refunds specialist",
+        "subtitle": "Expert review, $12.00",
+        "actor": "human",
+        "status": "WAITING",
+        "x": 980,
+        "y": 250,
+        "humanTaskId": "ht_014",
+        "note": "Offered to 3 refunds specialists."
+      },
+      {
+        "id": "done",
+        "type": "end",
+        "label": "Done",
+        "actor": "system",
+        "status": "CREATED",
+        "x": 1240,
+        "y": 140
+      }
+    ],
+    "edges": [
+      {
+        "from": "start",
+        "to": "read",
+        "taken": true
+      },
+      {
+        "from": "read",
+        "to": "retail",
+        "taken": true
+      },
+      {
+        "from": "retail",
+        "to": "decide",
+        "taken": true
+      },
+      {
+        "from": "decide",
+        "to": "refund",
+        "label": "approved",
+        "taken": true
+      },
+      {
+        "from": "refund",
+        "to": "human",
+        "label": "blocked",
+        "taken": true
+      },
+      {
+        "from": "human",
+        "to": "done",
+        "label": "accepted"
+      }
+    ],
+    "timeline": [
+      {
+        "at": "2026-10-12T13:17:40Z",
+        "actor": "system",
+        "who": "Gmail",
+        "title": "New support email started the run",
+        "detail": "Ticket #5521.",
+        "nodeId": "start"
+      },
+      {
+        "at": "2026-10-12T13:17:44Z",
+        "actor": "machine",
+        "who": "Shopify (mock)",
+        "title": "Read order HP-20877",
+        "nodeId": "read"
+      },
+      {
+        "at": "2026-10-12T13:18:13Z",
+        "actor": "machine",
+        "who": "Retail Agent",
+        "title": "Proposed a full refund of $184.00",
+        "nodeId": "retail"
+      },
+      {
+        "at": "2026-10-12T13:18:20Z",
+        "actor": "machine",
+        "who": "Decision step",
+        "title": "Approved: the request meets the refund policy",
+        "nodeId": "decide",
+        "tone": "ok"
+      },
+      {
+        "at": "2026-10-12T13:18:21Z",
+        "actor": "policy",
+        "who": "Policy engine",
+        "title": "Denied the refund: agents may not move money",
+        "detail": "The decision step can recommend. Only policy grants. Nothing was sent to Shopify.",
+        "ref": "poldec_1162",
+        "nodeId": "refund",
+        "tone": "blocked"
+      },
+      {
+        "at": "2026-10-12T13:18:22Z",
+        "actor": "system",
+        "who": "Human workforce",
+        "title": "Offered task ht_014 to 3 refunds specialists",
+        "detail": "$12.00, due in 6 hours.",
+        "nodeId": "human",
+        "ref": "ht_014"
+      }
+    ]
+  },
+  {
+    "id": "run_1039",
+    "packSlug": "weekly-inventory-report",
+    "title": "Weekly inventory report, week 42",
+    "status": "NEEDS_ATTENTION",
+    "startedAt": "2026-10-12T13:00:00Z",
+    "endedAt": "2026-10-12T13:09:40Z",
+    "startedBy": "Schedule, Mondays 6:00 AM",
+    "input": "Stock levels and the last 4 weeks of sales",
+    "workflowRef": "wf_weekly_inventory@1.1.0",
+    "contractRef": "contract_inventory@1",
+    "budget": {
+      "amountMinor": 1500,
+      "currency": "USD"
+    },
+    "spent": {
+      "ai": {
+        "amountMinor": 71,
+        "currency": "USD"
+      },
+      "human": {
+        "amountMinor": 0,
+        "currency": "USD"
+      },
+      "tools": {
+        "amountMinor": 3,
+        "currency": "USD"
+      }
+    },
+    "stages": {
+      "executed": "blocked",
+      "verified": "done",
+      "accepted": "pending",
+      "settlement": "blocked"
+    },
+    "stageNotes": {
+      "executed": "1 write unconfirmed",
+      "settlement": "Held until the Drive write is confirmed"
+    },
+    "recovered": "A worker restarted at 6:04 AM while the Operations Agent was running. The run resumed from its last checkpoint on another worker. The Sheets read did not run again.",
+    "summary": "The reorder list is verified. Filing it to Drive timed out, and we can't tell if the file was created, so the outcome is on hold.",
+    "attention": {
+      "tone": "warn",
+      "title": "A Drive write could not be confirmed",
+      "body": "We sent “Create file” to Google Drive and the connection timed out before a reply. The file may or may not exist. An operator needs to check Drive and record what happened. We will not retry on our own, to avoid a duplicate."
+    },
+    "nodes": [
+      {
+        "id": "start",
+        "type": "trigger",
+        "label": "Start",
+        "subtitle": "Mondays 6:00 AM",
+        "actor": "system",
+        "status": "COMPLETED",
+        "x": 0,
+        "y": 120
+      },
+      {
+        "id": "read",
+        "type": "connector",
+        "label": "Read stock and sales",
+        "subtitle": "Google Sheets, read-only",
+        "actor": "machine",
+        "status": "COMPLETED",
+        "x": 220,
+        "y": 120,
+        "durationS": 12,
+        "output": "312 SKUs, 4 weeks of sales"
+      },
+      {
+        "id": "ops",
+        "type": "agent",
+        "label": "Work out reorders",
+        "subtitle": "Operations Agent 1.1.0",
+        "actor": "machine",
+        "status": "COMPLETED",
+        "x": 470,
+        "y": 120,
+        "attempts": 2,
+        "durationS": 96,
+        "cost": {
+          "amountMinor": 71,
+          "currency": "USD"
+        },
+        "output": "17 SKUs to reorder, $6,420 at cost.",
+        "note": "Attempt 1 was interrupted by a worker restart. Attempt 2 resumed from the checkpoint."
+      },
+      {
+        "id": "verify",
+        "type": "verification",
+        "label": "Independent check",
+        "subtitle": "inventory_rules@2",
+        "actor": "machine",
+        "status": "COMPLETED",
+        "x": 720,
+        "y": 120,
+        "durationS": 8,
+        "output": "6 of 6 criteria passed."
+      },
+      {
+        "id": "file",
+        "type": "connector",
+        "label": "File report in Drive",
+        "subtitle": "Ops / Weekly reports",
+        "actor": "machine",
+        "status": "TIMED_OUT",
+        "x": 970,
+        "y": 120,
+        "toolCalls": [
+          {
+            "id": "tool_8744",
+            "app": "Google Drive",
+            "action": "Create “Reorder list, week 42”",
+            "capability": "drive.file.create",
+            "status": "UNCONFIRMED",
+            "policy": "PERMIT",
+            "detail": "Sent at 6:09:31 AM. No reply after 30s. Quarantined for an operator."
+          }
+        ],
+        "note": "Unconfirmed. Not retried, to avoid a duplicate file."
+      },
+      {
+        "id": "done",
+        "type": "end",
+        "label": "Needs attention",
+        "actor": "system",
+        "status": "FAILED",
+        "x": 1220,
+        "y": 120
+      }
+    ],
+    "edges": [
+      {
+        "from": "start",
+        "to": "read",
+        "taken": true
+      },
+      {
+        "from": "read",
+        "to": "ops",
+        "taken": true
+      },
+      {
+        "from": "ops",
+        "to": "verify",
+        "taken": true
+      },
+      {
+        "from": "verify",
+        "to": "file",
+        "label": "verified",
+        "taken": true
+      },
+      {
+        "from": "file",
+        "to": "done",
+        "label": "unconfirmed",
+        "taken": true
+      }
+    ],
+    "timeline": [
+      {
+        "at": "2026-10-12T13:00:00Z",
+        "actor": "system",
+        "who": "Schedule",
+        "title": "Started the weekly report",
+        "nodeId": "start"
+      },
+      {
+        "at": "2026-10-12T13:00:12Z",
+        "actor": "machine",
+        "who": "Google Sheets",
+        "title": "Read 312 SKUs and 4 weeks of sales",
+        "nodeId": "read"
+      },
+      {
+        "at": "2026-10-12T13:04:05Z",
+        "actor": "system",
+        "who": "Workflow engine",
+        "title": "Worker restarted during the Operations Agent step",
+        "detail": "The step was interrupted. Its checkpoint was safe.",
+        "nodeId": "ops",
+        "tone": "warn"
+      },
+      {
+        "at": "2026-10-12T13:04:19Z",
+        "actor": "system",
+        "who": "Workflow engine",
+        "title": "Resumed on another worker from the checkpoint",
+        "detail": "The Sheets read was not repeated.",
+        "nodeId": "ops",
+        "tone": "ok"
+      },
+      {
+        "at": "2026-10-12T13:09:02Z",
+        "actor": "machine",
+        "who": "Operations Agent",
+        "title": "Listed 17 SKUs to reorder",
+        "nodeId": "ops"
+      },
+      {
+        "at": "2026-10-12T13:09:10Z",
+        "actor": "machine",
+        "who": "Independent check",
+        "title": "Verified 6 of 6 criteria",
+        "nodeId": "verify",
+        "tone": "ok"
+      },
+      {
+        "at": "2026-10-12T13:09:31Z",
+        "actor": "machine",
+        "who": "Google Drive",
+        "title": "Sent “Create file”",
+        "nodeId": "file"
+      },
+      {
+        "at": "2026-10-12T13:09:40Z",
+        "actor": "system",
+        "who": "Tool gateway",
+        "title": "No reply. Marked the write unconfirmed and quarantined it",
+        "detail": "Not retried, to avoid a duplicate file.",
+        "nodeId": "file",
+        "tone": "blocked",
+        "ref": "tool_8744"
+      }
+    ]
+  },
+  {
+    "id": "run_1042",
+    "packSlug": "order-payment-reconciliation",
+    "title": "Reconcile Oct 1–10 orders",
+    "status": "COMPLETED",
+    "startedAt": "2026-10-11T14:02:10Z",
+    "endedAt": "2026-10-11T14:40:03Z",
+    "startedBy": "You",
+    "input": "Orders for Oct 1–10 and the Stripe payout sheet for October",
+    "workflowRef": "wf_order_reconciliation@1.0.0",
+    "contractRef": "contract_recon@2",
+    "budget": {
+      "amountMinor": 5000,
+      "currency": "USD"
+    },
+    "spent": {
+      "ai": {
+        "amountMinor": 184,
+        "currency": "USD"
+      },
+      "human": {
+        "amountMinor": 750,
+        "currency": "USD"
+      },
+      "tools": {
+        "amountMinor": 6,
+        "currency": "USD"
+      }
+    },
+    "stages": {
+      "executed": "done",
+      "verified": "done",
+      "accepted": "done",
+      "settlement": "done"
+    },
+    "stageNotes": {
+      "accepted": "Accepted by you, Oct 11 9:12 AM",
+      "settlement": "Simulated. $9.40 charge, $7.50 reviewer pay"
+    },
+    "summary": "30 of 31 orders reconciled after a reviewer corrected 3 exceptions. 1 payout is pending and tracked.",
+    "nodes": [
+      {
+        "id": "start",
+        "type": "trigger",
+        "label": "Start",
+        "subtitle": "Started by you",
+        "actor": "buyer",
+        "status": "COMPLETED",
+        "x": 0,
+        "y": 170
+      },
+      {
+        "id": "read",
+        "type": "connector",
+        "label": "Read orders and payouts",
+        "subtitle": "Google Sheets, read-only",
+        "actor": "machine",
+        "status": "COMPLETED",
+        "x": 210,
+        "y": 170,
+        "version": "sheets@2",
+        "durationS": 11,
+        "cost": {
+          "amountMinor": 6,
+          "currency": "USD"
+        },
+        "output": "2 tabs, 31 orders, 29 payout lines"
+      },
+      {
+        "id": "retail",
+        "type": "agent",
+        "label": "Inspect orders",
+        "subtitle": "Retail Agent 1.2.0",
+        "actor": "machine",
+        "status": "COMPLETED",
+        "x": 460,
+        "y": 40,
+        "durationS": 34,
+        "cost": {
+          "amountMinor": 24,
+          "currency": "USD"
+        },
+        "output": "31 orders inspected. 2 refunds noted."
+      },
+      {
+        "id": "finance",
+        "type": "agent",
+        "label": "Reconcile payments",
+        "subtitle": "Finance Agent 1.0.0",
+        "actor": "machine",
+        "status": "COMPLETED",
+        "x": 460,
+        "y": 300,
+        "durationS": 43,
+        "cost": {
+          "amountMinor": 78,
+          "currency": "USD"
+        },
+        "attempts": 2,
+        "output": "Attempt 2: 30 matched, 1 pending payout."
+      },
+      {
+        "id": "decide",
+        "type": "decision",
+        "label": "Can this be accepted?",
+        "subtitle": "Rules, then Gemini",
+        "actor": "machine",
+        "status": "COMPLETED",
+        "x": 720,
+        "y": 170,
+        "durationS": 9,
+        "cost": {
+          "amountMinor": 48,
+          "currency": "USD"
+        },
+        "attempts": 2,
+        "decision": {
+          "question": "Can this reconciliation be accepted?",
+          "evaluator": {
+            "kind": "gemini",
+            "label": "Rules, then Gemini",
+            "configVersion": "3"
+          },
+          "chain": [
+            {
+              "kind": "rules",
+              "verdict": "HUMAN_REVIEW",
+              "note": "28 of 31 records inside tolerance. 3 failed: reference, amount, missing payout."
+            },
+            {
+              "kind": "gemini",
+              "verdict": "HUMAN_REVIEW",
+              "note": "Agrees the 3 records need a person. No pattern strong enough to clear them."
+            }
+          ],
+          "verdict": "HUMAN_REVIEW",
+          "reasonCodes": [
+            "REFERENCE_MISMATCH",
+            "AMOUNT_DELTA",
+            "PAYOUT_NOT_FOUND"
+          ],
+          "explanation": "Invoice reference differs from the payment record on HP-20931. HP-20957 is $1.00 short. HP-20988 has no payout line yet.",
+          "evidenceRefs": [
+            "artifact_inv_redacted_01",
+            "artifact_payment_01",
+            "artifact_rules_run_1042"
+          ],
+          "route": "human_review",
+          "evaluatedAt": "2026-10-11T14:04:09Z",
+          "policy": {
+            "id": "poldec_101",
+            "ref": "human_review@4",
+            "verdict": "REQUIRE_APPROVAL",
+            "reasonCodes": [
+              "PAYMENT_ACTION"
+            ],
+            "actor": "service_decider"
+          },
+          "approval": {
+            "id": "ht_009",
+            "status": "GRANTED",
+            "by": "Reviewer 204 (task accepted)"
+          }
+        },
+        "output": "Attempt 2 approved after correction."
+      },
+      {
+        "id": "human",
+        "type": "human_workforce",
+        "label": "Reviewer correction",
+        "subtitle": "Invoice reviewer, $7.50",
+        "actor": "human",
+        "status": "COMPLETED",
+        "x": 980,
+        "y": 330,
+        "humanTaskId": "ht_009",
+        "durationS": 2030,
+        "cost": {
+          "amountMinor": 750,
+          "currency": "USD"
+        },
+        "output": "Revision required, with corrections for 3 records."
+      },
+      {
+        "id": "verify",
+        "type": "verification",
+        "label": "Independent check",
+        "subtitle": "reconcile_rules@1",
+        "actor": "machine",
+        "status": "COMPLETED",
+        "x": 1240,
+        "y": 170,
+        "durationS": 28,
+        "cost": {
+          "amountMinor": 12,
+          "currency": "USD"
+        },
+        "output": "9 of 9 criteria passed."
+      },
+      {
+        "id": "memory",
+        "type": "memory",
+        "label": "Save what we learned",
+        "subtitle": "Needs your approval",
+        "actor": "machine",
+        "status": "COMPLETED",
+        "x": 1490,
+        "y": 170,
+        "durationS": 4,
+        "cost": {
+          "amountMinor": 4,
+          "currency": "USD"
+        },
+        "output": "Proposed 1 memory: weekend payouts land Tuesday."
+      },
+      {
+        "id": "report",
+        "type": "agent",
+        "label": "Write report",
+        "subtitle": "Operations Agent 1.1.0",
+        "actor": "machine",
+        "status": "COMPLETED",
+        "x": 1740,
+        "y": 170,
+        "durationS": 27,
+        "cost": {
+          "amountMinor": 18,
+          "currency": "USD"
+        },
+        "output": "Reconciliation report, 2 pages."
+      },
+      {
+        "id": "done",
+        "type": "end",
+        "label": "Done",
+        "actor": "system",
+        "status": "COMPLETED",
+        "x": 1990,
+        "y": 170
+      }
+    ],
+    "edges": [
+      {
+        "from": "start",
+        "to": "read",
+        "taken": true
+      },
+      {
+        "from": "read",
+        "to": "retail",
+        "taken": true
+      },
+      {
+        "from": "read",
+        "to": "finance",
+        "taken": true
+      },
+      {
+        "from": "retail",
+        "to": "decide",
+        "taken": true
+      },
+      {
+        "from": "finance",
+        "to": "decide",
+        "taken": true
+      },
+      {
+        "from": "decide",
+        "to": "verify",
+        "label": "approved",
+        "taken": true
+      },
+      {
+        "from": "decide",
+        "to": "human",
+        "label": "human review",
+        "taken": true
+      },
+      {
+        "from": "human",
+        "to": "verify",
+        "label": "accepted",
+        "taken": false
+      },
+      {
+        "from": "human",
+        "to": "finance",
+        "label": "revision required",
+        "revision": true,
+        "taken": true
+      },
+      {
+        "from": "verify",
+        "to": "memory",
+        "label": "verified",
+        "taken": true
+      },
+      {
+        "from": "memory",
+        "to": "report",
+        "taken": true
+      },
+      {
+        "from": "report",
+        "to": "done",
+        "taken": true
+      }
+    ],
+    "timeline": [
+      {
+        "at": "2026-10-11T14:02:10Z",
+        "actor": "buyer",
+        "who": "You",
+        "title": "Started the run",
+        "detail": "Orders for Oct 1–10. Budget up to $50.00.",
+        "nodeId": "start"
+      },
+      {
+        "at": "2026-10-11T14:02:20Z",
+        "actor": "policy",
+        "who": "Policy engine",
+        "title": "Permitted read-only Sheets access",
+        "ref": "poldec_0991",
+        "tone": "ok",
+        "nodeId": "read"
+      },
+      {
+        "at": "2026-10-11T14:02:31Z",
+        "actor": "machine",
+        "who": "Google Sheets",
+        "title": "Read 31 orders and 29 payout lines",
+        "detail": "Read-only. Nothing was written.",
+        "nodeId": "read"
+      },
+      {
+        "at": "2026-10-11T14:03:05Z",
+        "actor": "machine",
+        "who": "Retail Agent",
+        "title": "Inspected 31 orders",
+        "nodeId": "retail"
+      },
+      {
+        "at": "2026-10-11T14:03:48Z",
+        "actor": "machine",
+        "who": "Finance Agent",
+        "title": "Matched 28 orders, flagged 3",
+        "nodeId": "finance"
+      },
+      {
+        "at": "2026-10-11T14:04:09Z",
+        "actor": "machine",
+        "who": "Decision step",
+        "title": "Sent 3 exceptions to human review",
+        "nodeId": "decide",
+        "ref": "dec_1042_1"
+      },
+      {
+        "at": "2026-10-11T14:04:09Z",
+        "actor": "policy",
+        "who": "Policy engine",
+        "title": "Requires a person for payment mismatches",
+        "ref": "poldec_101",
+        "tone": "warn",
+        "nodeId": "decide"
+      },
+      {
+        "at": "2026-10-11T14:04:12Z",
+        "actor": "system",
+        "who": "Workflow engine",
+        "title": "Paused the reviewer step and saved a checkpoint",
+        "nodeId": "human"
+      },
+      {
+        "at": "2026-10-11T14:21:40Z",
+        "actor": "human",
+        "who": "Reviewer 204",
+        "title": "Claimed the task",
+        "detail": "45-minute lease.",
+        "nodeId": "human",
+        "ref": "ht_009"
+      },
+      {
+        "at": "2026-10-11T14:38:02Z",
+        "actor": "human",
+        "who": "Reviewer 204",
+        "title": "Asked for a revision",
+        "detail": "“HP-20931 has transposed digits, same amount and date: treat as a match. HP-20957 is the $1.00 Shopify Payments fee. HP-20988 is a weekend order; Stripe pays it out Tuesday, so it is pending, not missing.”",
+        "nodeId": "human",
+        "tone": "warn"
+      },
+      {
+        "at": "2026-10-11T14:38:03Z",
+        "actor": "system",
+        "who": "Human workforce",
+        "title": "Accepted the submission. $7.50 is owed to the reviewer",
+        "detail": "Pay is owed whatever happens to later steps.",
+        "nodeId": "human",
+        "tone": "ok"
+      },
+      {
+        "at": "2026-10-11T14:38:04Z",
+        "actor": "system",
+        "who": "Workflow engine",
+        "title": "Resumed from the checkpoint",
+        "detail": "5 finished steps were not run again.",
+        "nodeId": "human"
+      },
+      {
+        "at": "2026-10-11T14:38:40Z",
+        "actor": "machine",
+        "who": "Finance Agent",
+        "title": "Applied the corrections (attempt 2 of 3)",
+        "detail": "30 matched, 1 pending payout.",
+        "nodeId": "finance"
+      },
+      {
+        "at": "2026-10-11T14:38:52Z",
+        "actor": "machine",
+        "who": "Decision step",
+        "title": "Approved",
+        "detail": "Rules pass. Gemini approves.",
+        "nodeId": "decide",
+        "tone": "ok"
+      },
+      {
+        "at": "2026-10-11T14:39:20Z",
+        "actor": "machine",
+        "who": "Independent check",
+        "title": "Verified 9 of 9 criteria",
+        "detail": "Totals tie out to the cent. The agent's own success claim was not used.",
+        "nodeId": "verify",
+        "tone": "ok",
+        "ref": "ver_1042"
+      },
+      {
+        "at": "2026-10-11T14:39:31Z",
+        "actor": "machine",
+        "who": "Memory",
+        "title": "Proposed a memory from the reviewer's feedback",
+        "detail": "Waiting for your approval before agents can use it.",
+        "nodeId": "memory",
+        "ref": "mem_221"
+      },
+      {
+        "at": "2026-10-11T14:39:58Z",
+        "actor": "machine",
+        "who": "Operations Agent",
+        "title": "Wrote the reconciliation report",
+        "nodeId": "report"
+      },
+      {
+        "at": "2026-10-11T14:40:03Z",
+        "actor": "system",
+        "who": "Workflow engine",
+        "title": "Recorded the outcome: executed and verified",
+        "nodeId": "done",
+        "tone": "ok"
+      },
+      {
+        "at": "2026-10-11T16:12:30Z",
+        "actor": "buyer",
+        "who": "You",
+        "title": "Accepted the deliverable",
+        "tone": "ok"
+      },
+      {
+        "at": "2026-10-11T16:12:31Z",
+        "actor": "system",
+        "who": "Ledger",
+        "title": "Marked eligible for settlement (simulated)",
+        "detail": "$9.40 charge. $7.50 reviewer pay.",
+        "tone": "ok"
+      }
+    ],
+    "deliverable": {
+      "title": "October 1–10 reconciliation report",
+      "kind": "Google Doc draft, 2 pages",
+      "summary": "31 orders totalling $8,214.50 were checked against 29 Stripe payout lines. 30 orders reconcile to the cent. 1 order is waiting on Tuesday's payout and is tracked.",
+      "rows": [
+        {
+          "label": "Orders checked",
+          "value": "31"
+        },
+        {
+          "label": "Order value",
+          "value": "$8,214.50"
+        },
+        {
+          "label": "Reconciled",
+          "value": "30"
+        },
+        {
+          "label": "Pending payout",
+          "value": "1 (HP-20988, $112.00)"
+        },
+        {
+          "label": "Corrected by reviewer",
+          "value": "3"
+        },
+        {
+          "label": "Processor fees found",
+          "value": "$231.86"
+        }
+      ],
+      "limitations": [
+        "Only Stripe payouts were checked. PayPal orders (none this period) would not be covered.",
+        "Fee amounts come from the payout sheet, not from Stripe directly."
+      ],
+      "unresolved": [
+        "HP-20988: payout expected Tuesday, Oct 13. The next run will confirm it."
+      ],
+      "evidence": [
+        {
+          "id": "artifact_orders_1042",
+          "label": "Orders sheet snapshot (redacted)",
+          "by": "machine",
+          "who": "Google Sheets read"
+        },
+        {
+          "id": "dec_1042_1",
+          "label": "Decision record, attempt 1",
+          "by": "machine",
+          "who": "Rules + Gemini"
+        },
+        {
+          "id": "poldec_101",
+          "label": "Policy decision: person required",
+          "by": "policy",
+          "who": "Policy engine"
+        },
+        {
+          "id": "sub_009_1",
+          "label": "Reviewer submission with corrections",
+          "by": "human",
+          "who": "Reviewer 204"
+        },
+        {
+          "id": "ver_1042",
+          "label": "Verification record, 9 criteria",
+          "by": "machine",
+          "who": "Independent check"
+        },
+        {
+          "id": "acc_1042",
+          "label": "Your acceptance",
+          "by": "buyer",
+          "who": "You"
+        }
+      ]
+    }
+  },
+  {
+    "id": "run_1036",
+    "packSlug": "order-payment-reconciliation",
+    "title": "Reconcile Sep 21–30 orders",
+    "status": "FAILED",
+    "startedAt": "2026-10-01T15:10:00Z",
+    "endedAt": "2026-10-01T15:58:21Z",
+    "startedBy": "You",
+    "input": "Orders for Sep 21–30 and the September payout sheet",
+    "workflowRef": "wf_order_reconciliation@1.0.0",
+    "contractRef": "contract_recon@2",
+    "budget": {
+      "amountMinor": 5000,
+      "currency": "USD"
+    },
+    "spent": {
+      "ai": {
+        "amountMinor": 112,
+        "currency": "USD"
+      },
+      "human": {
+        "amountMinor": 400,
+        "currency": "USD"
+      },
+      "tools": {
+        "amountMinor": 5,
+        "currency": "USD"
+      }
+    },
+    "stages": {
+      "executed": "done",
+      "verified": "failed",
+      "accepted": "not_required",
+      "settlement": "blocked"
+    },
+    "stageNotes": {
+      "verified": "Totals differ by $412.60",
+      "settlement": "No charge for this run. The reviewer's $4.00 is still owed."
+    },
+    "summary": "The Finance Agent reported success, but the independent check found the totals $412.60 apart. Nothing was charged.",
+    "attention": {
+      "tone": "blocked",
+      "title": "Independent check failed",
+      "body": "The agent said it matched every order. The verifier recomputed the totals and they differ by $412.60, so the result was not accepted."
+    },
+    "nodes": [
+      {
+        "id": "start",
+        "type": "trigger",
+        "label": "Start",
+        "subtitle": "Started by you",
+        "actor": "buyer",
+        "status": "COMPLETED",
+        "x": 0,
+        "y": 170
+      },
+      {
+        "id": "read",
+        "type": "connector",
+        "label": "Read orders and payouts",
+        "subtitle": "Google Sheets, read-only",
+        "actor": "machine",
+        "status": "COMPLETED",
+        "x": 210,
+        "y": 170,
+        "version": "sheets@2"
+      },
+      {
+        "id": "retail",
+        "type": "agent",
+        "label": "Inspect orders",
+        "subtitle": "Retail Agent 1.2.0",
+        "actor": "machine",
+        "status": "COMPLETED",
+        "x": 460,
+        "y": 40
+      },
+      {
+        "id": "finance",
+        "type": "agent",
+        "label": "Reconcile payments",
+        "subtitle": "Finance Agent 1.0.0",
+        "actor": "machine",
+        "status": "COMPLETED",
+        "x": 460,
+        "y": 300
+      },
+      {
+        "id": "decide",
+        "type": "decision",
+        "label": "Can this be accepted?",
+        "subtitle": "Rules, then Gemini",
+        "actor": "machine",
+        "status": "COMPLETED",
+        "x": 720,
+        "y": 170
+      },
+      {
+        "id": "human",
+        "type": "human_workforce",
+        "label": "Reviewer correction",
+        "subtitle": "Quality audit, $4.00",
+        "actor": "human",
+        "status": "COMPLETED",
+        "x": 980,
+        "y": 330,
+        "humanTaskId": "ht_010"
+      },
+      {
+        "id": "verify",
+        "type": "verification",
+        "label": "Independent check",
+        "subtitle": "reconcile_rules@1",
+        "actor": "machine",
+        "status": "FAILED",
+        "x": 1240,
+        "y": 170,
+        "output": "7 of 9 criteria passed. Totals differ by $412.60; 2 payouts counted twice."
+      },
+      {
+        "id": "memory",
+        "type": "memory",
+        "label": "Save what we learned",
+        "subtitle": "Needs your approval",
+        "actor": "machine",
+        "status": "CANCELLED",
+        "x": 1490,
+        "y": 170
+      },
+      {
+        "id": "report",
+        "type": "agent",
+        "label": "Write report",
+        "subtitle": "Operations Agent 1.1.0",
+        "actor": "machine",
+        "status": "CANCELLED",
+        "x": 1740,
+        "y": 170
+      },
+      {
+        "id": "done",
+        "type": "end",
+        "label": "Needs attention",
+        "actor": "system",
+        "status": "FAILED",
+        "x": 1990,
+        "y": 170
+      }
+    ],
+    "edges": [
+      {
+        "from": "start",
+        "to": "read",
+        "taken": true
+      },
+      {
+        "from": "read",
+        "to": "retail",
+        "taken": true
+      },
+      {
+        "from": "read",
+        "to": "finance",
+        "taken": true
+      },
+      {
+        "from": "retail",
+        "to": "decide",
+        "taken": true
+      },
+      {
+        "from": "finance",
+        "to": "decide",
+        "taken": true
+      },
+      {
+        "from": "decide",
+        "to": "verify",
+        "label": "approved",
+        "taken": false
+      },
+      {
+        "from": "decide",
+        "to": "human",
+        "label": "human review",
+        "taken": true
+      },
+      {
+        "from": "human",
+        "to": "verify",
+        "label": "accepted",
+        "taken": true
+      },
+      {
+        "from": "human",
+        "to": "finance",
+        "label": "revision required",
+        "revision": true,
+        "taken": false
+      },
+      {
+        "from": "verify",
+        "to": "memory",
+        "label": "verified",
+        "taken": false
+      },
+      {
+        "from": "memory",
+        "to": "report",
+        "taken": false
+      },
+      {
+        "from": "report",
+        "to": "done",
+        "taken": false
+      }
+    ],
+    "timeline": [
+      {
+        "at": "2026-10-01T15:10:00Z",
+        "actor": "buyer",
+        "who": "You",
+        "title": "Started the run",
+        "nodeId": "start"
+      },
+      {
+        "at": "2026-10-01T15:11:30Z",
+        "actor": "machine",
+        "who": "Finance Agent",
+        "title": "Reported all 44 orders matched",
+        "nodeId": "finance"
+      },
+      {
+        "at": "2026-10-01T15:12:02Z",
+        "actor": "machine",
+        "who": "Decision step",
+        "title": "Sent a sample to quality audit",
+        "nodeId": "decide"
+      },
+      {
+        "at": "2026-10-01T15:57:40Z",
+        "actor": "human",
+        "who": "Reviewer 204",
+        "title": "Approved the sample of 5",
+        "nodeId": "human"
+      },
+      {
+        "at": "2026-10-01T15:58:20Z",
+        "actor": "machine",
+        "who": "Independent check",
+        "title": "Failed: totals differ by $412.60",
+        "detail": "Two payout lines were counted against two orders each.",
+        "nodeId": "verify",
+        "tone": "blocked"
+      },
+      {
+        "at": "2026-10-01T15:58:21Z",
+        "actor": "system",
+        "who": "Ledger",
+        "title": "Released the budget hold. No charge",
+        "tone": "ok"
+      }
+    ]
+  }
+]

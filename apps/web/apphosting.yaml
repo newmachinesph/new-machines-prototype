@@ -1,0 +1,23 @@
+# Firebase App Hosting config for backend app-157kih4j (asia-southeast1). Deploy: firebase deploy --only apphosting
+# Values are public client config, inlined into the browser bundle at build time.
+runConfig:
+  minInstances: 0
+  maxInstances: 2
+  cpu: 1
+  memoryMiB: 512
+env:
+  - variable: NEXT_PUBLIC_API_URL
+    value: "https://nm-api-820395529624.asia-south1.run.app"
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_API_KEY
+    value: "AIzaSyB2bkMZi1qecXBoUr3CxLVyV1YFn9rD0qQ"
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+    value: "nm-demo-iu7uo4.firebaseapp.com"
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+    value: "nm-demo-iu7uo4"
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_APP_ID
+    value: "1:820395529624:web:87816d8465f2d2747887ed"
+    availability: [BUILD, RUNTIME]

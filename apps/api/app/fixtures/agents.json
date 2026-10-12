@@ -1,0 +1,96 @@
+[
+  {
+    "id": "agent_retail",
+    "version": "1.2.0",
+    "name": "Retail Agent",
+    "publisher": "New Machines Labs",
+    "summary": "Reads orders and stock, spots anomalies and proposes customer actions.",
+    "capabilities": [
+      "orders.read",
+      "inventory.read",
+      "refund.propose"
+    ],
+    "regions": [
+      "us-central1"
+    ],
+    "certified": true
+  },
+  {
+    "id": "agent_finance",
+    "version": "1.0.0",
+    "name": "Finance Agent",
+    "publisher": "New Machines Labs",
+    "summary": "Matches invoices, orders and payouts, and drafts collection emails.",
+    "capabilities": [
+      "invoice.read",
+      "payment.read",
+      "message.create_draft"
+    ],
+    "regions": [
+      "us-central1"
+    ],
+    "certified": true
+  },
+  {
+    "id": "agent_ops",
+    "version": "1.1.0",
+    "name": "Operations Agent",
+    "publisher": "New Machines Labs",
+    "summary": "Turns verified results into reports and files them where your team works.",
+    "capabilities": [
+      "report.compose",
+      "drive.file.create"
+    ],
+    "regions": [
+      "us-central1"
+    ],
+    "certified": true
+  },
+  {
+    "id": "agent_shipping",
+    "version": "1.3.0",
+    "name": "Shipping Exceptions Agent",
+    "publisher": "Parcelwise",
+    "summary": "Finds late, lost and mis-scanned parcels and drafts carrier claims.",
+    "capabilities": [
+      "shipments.read",
+      "message.create_draft"
+    ],
+    "regions": [
+      "us-central1"
+    ],
+    "certified": true
+  },
+  {
+    "id": "agent_chargeback",
+    "version": "0.9.0",
+    "name": "Chargeback Evidence Agent",
+    "publisher": "Ledgerline",
+    "summary": "Assembles order, delivery and contact evidence for card disputes.",
+    "capabilities": [
+      "orders.read",
+      "shipments.read",
+      "dispute.draft"
+    ],
+    "regions": [
+      "us-central1"
+    ],
+    "certified": false
+  },
+  {
+    "id": "agent_catalog_ja",
+    "version": "0.4.0",
+    "name": "Catalog Localization Agent",
+    "publisher": "Kumo Commerce",
+    "summary": "Localizes product titles and descriptions from English to Japanese.",
+    "capabilities": [
+      "catalog.read",
+      "catalog.draft"
+    ],
+    "regions": [
+      "asia-northeast1",
+      "us-central1"
+    ],
+    "certified": false
+  }
+]
