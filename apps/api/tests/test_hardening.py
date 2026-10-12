@@ -85,9 +85,7 @@ def test_dev_auth_mode_accepts_any_or_no_token(client):
 
 
 def preflight(client: TestClient, origin: str):
-    return client.options(
-        "/v1/approvals", headers={"Origin": origin, "Access-Control-Request-Method": "GET"}
-    )
+    return client.options("/v1/approvals", headers={"Origin": origin, "Access-Control-Request-Method": "GET"})
 
 
 def test_cors_caches_preflight_and_refuses_other_origins(client):

@@ -1,0 +1,52 @@
+[
+  {
+    "id": "inc_0041",
+    "title": "Stripe reads timing out",
+    "severity": "sev2",
+    "status": "resolved",
+    "startedAt": "2026-10-01T16:20:00Z",
+    "resolvedAt": "2026-10-01T18:02:00Z",
+    "services": [
+      "composio"
+    ],
+    "updates": [
+      {
+        "at": "2026-10-01T16:20:00Z",
+        "by": "ops@newmachin.es",
+        "text": "Order reconciliation runs are failing on Stripe reads."
+      },
+      {
+        "at": "2026-10-01T17:10:00Z",
+        "by": "ops@newmachin.es",
+        "text": "Retries are succeeding. Watching the error rate."
+      },
+      {
+        "at": "2026-10-01T18:02:00Z",
+        "by": "ops@newmachin.es",
+        "text": "Stripe confirmed the fix on their side. Resolved."
+      }
+    ]
+  },
+  {
+    "id": "inc_0042",
+    "title": "Langfuse trace ingestion delayed",
+    "severity": "sev3",
+    "status": "monitoring",
+    "startedAt": "2026-10-12T13:40:00Z",
+    "services": [
+      "langfuse"
+    ],
+    "updates": [
+      {
+        "at": "2026-10-12T13:40:00Z",
+        "by": "hana.okada@newmachin.es",
+        "text": "Traces are arriving about 10 minutes late. Runs are not affected."
+      },
+      {
+        "at": "2026-10-12T15:15:00Z",
+        "by": "hana.okada@newmachin.es",
+        "text": "Vendor is scaling ingestion. Lag is shrinking."
+      }
+    ]
+  }
+]

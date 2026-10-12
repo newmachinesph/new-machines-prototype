@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "exclude": [
+    "node_modules",
+    ".next-e2e",
+    "e2e",
+    "scripts",
+    "src/test",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "playwright.config.ts",
+    "vitest.config.mts",
+    "openapi-ts.config.ts"
+  ]
+}

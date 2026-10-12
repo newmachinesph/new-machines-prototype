@@ -3,6 +3,15 @@
 import * as z from 'zod';
 
 /**
+ * AddConnectorRequest
+ */
+export const zAddConnectorRequest = z.object({
+    toolkitSlug: z.string().min(1).max(60).regex(/^[a-z0-9]+(-[a-z0-9]+)*$/),
+    status: z.enum(['enabled', 'beta']),
+    reason: z.string().min(1).max(500)
+});
+
+/**
  * Agent
  */
 export const zAgent = z.object({
@@ -62,6 +71,32 @@ export const zAttentionItem = z.object({
 });
 
 /**
+ * AuditEntry
+ */
+export const zAuditEntry = z.object({
+    id: z.string(),
+    at: z.string(),
+    actorEmail: z.string(),
+    actorRole: z.enum([
+        'owner',
+        'admin',
+        'support'
+    ]),
+    action: z.string(),
+    targetType: z.enum([
+        'tenant',
+        'pack',
+        'connector',
+        'reviewer',
+        'guardrail',
+        'incident'
+    ]),
+    targetId: z.string(),
+    reason: z.string(),
+    summary: z.string()
+});
+
+/**
  * ChainStep
  */
 export const zChainStep = z.object({
@@ -87,6 +122,51 @@ export const zChainStep = z.object({
 });
 
 /**
+ * ConnectorDefaults
+ */
+export const zConnectorDefaults = z.object({
+    read: z.enum([
+        'permit',
+        'require_approval',
+        'deny'
+    ]),
+    write: z.enum([
+        'permit',
+        'require_approval',
+        'deny'
+    ]),
+    delete: z.enum([
+        'permit',
+        'require_approval',
+        'deny'
+    ]),
+    money: z.enum([
+        'permit',
+        'require_approval',
+        'deny'
+    ])
+});
+
+/**
+ * CreateTenantRequest
+ */
+export const zCreateTenantRequest = z.object({
+    name: z.string().min(1).max(120),
+    short: z.string().min(1).max(40),
+    plan: z.enum([
+        'Starter',
+        'Pro',
+        'Enterprise'
+    ]),
+    region: z.string().min(1).max(40),
+    country: z.string().regex(/^[A-Z]{2}$/),
+    ownerEmail: z.string().max(254).regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/),
+    monthlyCapMinor: z.int().gte(0).lte(10000000),
+    trialDays: z.int().optional(),
+    reason: z.string().min(1).max(500)
+});
+
+/**
  * CreateTokenRequest
  */
 export const zCreateTokenRequest = z.object({
@@ -97,6 +177,20 @@ export const zCreateTokenRequest = z.object({
         'runs:start',
         'approvals:list'
     ])).min(1)
+});
+
+/**
+ * DeclareIncidentRequest
+ */
+export const zDeclareIncidentRequest = z.object({
+    title: z.string().min(1).max(120),
+    severity: z.enum([
+        'sev1',
+        'sev2',
+        'sev3'
+    ]),
+    services: z.array(z.string().min(1).max(40)).min(1).max(10),
+    reason: z.string().min(1).max(500)
 });
 
 /**
@@ -221,6 +315,107 @@ export const zConnection = z.object({
     grants: z.array(zGrant),
     lastUsed: z.string().optional(),
     health: z.string().optional()
+});
+
+/**
+ * Guardrail
+ */
+export const zGuardrail = z.object({
+    key: z.string(),
+    kind: z.enum([
+        'kill_switch',
+        'flag',
+        'limit'
+    ]),
+    label: z.string(),
+    description: z.string(),
+    enabled: z.boolean(),
+    value: z.int().optional(),
+    unit: z.string().optional(),
+    updatedAt: z.string(),
+    updatedBy: z.string(),
+    scope: z.literal('platform').optional().default('platform')
+});
+
+/**
+ * HealthCheck
+ */
+export const zHealthCheck = z.object({
+    at: z.string(),
+    ok: z.boolean(),
+    latencyMs: z.int(),
+    note: z.string().optional()
+});
+
+/**
+ * ConnectorEntry
+ */
+export const zConnectorEntry = z.object({
+    id: z.string(),
+    app: z.string(),
+    category: z.string(),
+    provider: z.enum([
+        'Composio',
+        'Native',
+        'Mock'
+    ]),
+    authType: z.enum([
+        'oauth_managed',
+        'oauth_own_app',
+        'api_key'
+    ]),
+    status: z.enum([
+        'enabled',
+        'beta',
+        'disabled'
+    ]),
+    tenantsConnected: z.int(),
+    callsToday: z.int(),
+    errorRate: z.number().gte(0).lte(1),
+    lastHealthCheck: zHealthCheck,
+    defaults: zConnectorDefaults,
+    scopes: z.array(z.string())
+});
+
+/**
+ * HourPoint
+ */
+export const zHourPoint = z.object({
+    hour: z.int().gte(0).lte(23),
+    completed: z.int(),
+    failed: z.int(),
+    waiting: z.int()
+});
+
+/**
+ * IncidentUpdate
+ */
+export const zIncidentUpdate = z.object({
+    at: z.string(),
+    by: z.string(),
+    text: z.string()
+});
+
+/**
+ * Incident
+ */
+export const zIncident = z.object({
+    id: z.string(),
+    title: z.string(),
+    severity: z.enum([
+        'sev1',
+        'sev2',
+        'sev3'
+    ]),
+    status: z.enum([
+        'investigating',
+        'monitoring',
+        'resolved'
+    ]),
+    startedAt: z.string(),
+    resolvedAt: z.string().optional(),
+    services: z.array(z.string()),
+    updates: z.array(zIncidentUpdate)
 });
 
 /**
@@ -361,6 +556,23 @@ export const zEarning = z.object({
 });
 
 /**
+ * Invoice
+ */
+export const zInvoice = z.object({
+    id: z.string(),
+    tenantId: z.string(),
+    tenantName: z.string(),
+    period: z.string(),
+    amount: zMoney,
+    status: z.enum([
+        'paid',
+        'open',
+        'overdue',
+        'void'
+    ])
+});
+
+/**
  * LedgerTxn
  */
 export const zLedgerTxn = z.object({
@@ -384,6 +596,111 @@ export const zLedgerTxn = z.object({
         'HELD'
     ]),
     lines: z.array(zLedgerLine)
+});
+
+/**
+ * OpsAttentionItem
+ */
+export const zOpsAttentionItem = z.object({
+    kind: z.enum([
+        'pack_review',
+        'reviewer_application',
+        'connector_error',
+        'tenant_cap',
+        'incident',
+        'tenant_at_risk'
+    ]),
+    title: z.string(),
+    detail: z.string(),
+    href: z.string(),
+    severity: z.enum([
+        'info',
+        'warn',
+        'critical'
+    ]),
+    at: z.string()
+});
+
+/**
+ * OpsKpis
+ */
+export const zOpsKpis = z.object({
+    activeTenants: z.int(),
+    trialTenants: z.int(),
+    runsToday: z.int(),
+    runSuccessRate7d: z.number().gte(0).lte(1),
+    openHumanTasks: z.int(),
+    pendingApprovals: z.int(),
+    aiSpendToday: zMoney,
+    platformDailyCap: zMoney,
+    incidentsOpen: z.int()
+});
+
+/**
+ * OpsMe
+ */
+export const zOpsMe = z.object({
+    userId: z.string(),
+    email: z.string(),
+    role: z.enum([
+        'owner',
+        'admin',
+        'support'
+    ])
+});
+
+/**
+ * OpsOverview
+ */
+export const zOpsOverview = z.object({
+    kpis: zOpsKpis,
+    attention: z.array(zOpsAttentionItem),
+    recentAudit: z.array(zAuditEntry),
+    runsByHour: z.array(zHourPoint),
+    simulatedFields: z.array(z.string())
+});
+
+/**
+ * OpsRun
+ */
+export const zOpsRun = z.object({
+    id: z.string(),
+    tenantId: z.string(),
+    tenantName: z.string(),
+    pack: z.string(),
+    status: z.enum([
+        'RUNNING',
+        'WAITING_FOR_HUMAN',
+        'WAITING_FOR_EVENT',
+        'VERIFYING',
+        'COMPLETED',
+        'FAILED',
+        'CANCELLED',
+        'NEEDS_ATTENTION'
+    ]),
+    startedAt: z.string(),
+    cost: zMoney,
+    waitingOn: z.enum([
+        'human',
+        'approval',
+        'policy'
+    ]).optional(),
+    durationSeconds: z.int().optional()
+});
+
+/**
+ * OpsTeamMember
+ */
+export const zOpsTeamMember = z.object({
+    email: z.string(),
+    name: z.string(),
+    role: z.enum([
+        'owner',
+        'admin',
+        'support'
+    ]),
+    lastActiveAt: z.string(),
+    mfa: z.boolean()
 });
 
 /**
@@ -424,12 +741,74 @@ export const zPackConnector = z.object({
 });
 
 /**
+ * CreatePackRequest
+ */
+export const zCreatePackRequest = z.object({
+    name: z.string().min(1).max(120),
+    slug: z.string().min(1).max(60).regex(/^[a-z0-9]+(-[a-z0-9]+)*$/),
+    publisher: z.string().min(1).max(120),
+    category: z.string().min(1).max(40),
+    outcome: z.string().min(1).max(1000),
+    description: z.string().min(1).max(1000),
+    riskClass: z.enum([
+        'low',
+        'medium',
+        'high'
+    ]),
+    connectors: z.array(zPackConnector).max(20),
+    humanReview: z.string().min(1).max(1000),
+    reason: z.string().min(1).max(500)
+});
+
+/**
  * PackEstimate
  */
 export const zPackEstimate = z.object({
     aiMin: zMoney,
     aiMax: zMoney,
     humanMax: zMoney
+});
+
+/**
+ * PackHistoryEntry
+ */
+export const zPackHistoryEntry = z.object({
+    at: z.string(),
+    by: z.string(),
+    action: z.string(),
+    note: z.string()
+});
+
+/**
+ * PackListing
+ */
+export const zPackListing = z.object({
+    slug: z.string(),
+    name: z.string(),
+    version: z.string(),
+    publisher: z.string(),
+    category: z.string(),
+    status: z.enum([
+        'draft',
+        'in_review',
+        'published',
+        'deprecated',
+        'rejected'
+    ]),
+    riskClass: z.enum([
+        'low',
+        'medium',
+        'high'
+    ]),
+    certified: z.boolean(),
+    installs: z.int(),
+    runs30d: z.int(),
+    successRate: z.number().gte(0).lte(1),
+    priceNote: z.string(),
+    submittedAt: z.string().optional(),
+    updatedAt: z.string(),
+    connectors: z.array(z.string()),
+    reviewNotes: z.string().optional()
 });
 
 /**
@@ -450,6 +829,35 @@ export const zPaymentSide = z.object({
     payer: z.string(),
     amount: z.string(),
     batch: z.string()
+});
+
+/**
+ * Payout
+ */
+export const zPayout = z.object({
+    id: z.string(),
+    reviewerId: z.string(),
+    reviewerName: z.string(),
+    amount: zMoney,
+    status: z.enum([
+        'scheduled',
+        'paid',
+        'held'
+    ])
+});
+
+/**
+ * BillingSummary
+ */
+export const zBillingSummary = z.object({
+    mrr: zMoney,
+    arr: zMoney,
+    aiCostMonth: zMoney,
+    grossMargin: z.number().gte(0).lte(1),
+    reviewerPayoutsMonth: zMoney,
+    invoices: z.array(zInvoice),
+    payouts: z.array(zPayout),
+    simulated: z.literal(true).optional().default(true)
 });
 
 /**
@@ -516,6 +924,13 @@ export const zProblem = z.object({
 });
 
 /**
+ * ReasonRequest
+ */
+export const zReasonRequest = z.object({
+    reason: z.string().min(1).max(500)
+});
+
+/**
  * RedactedRecord
  */
 export const zRedactedRecord = z.object({
@@ -570,6 +985,34 @@ export const zHumanTask = z.object({
 });
 
 /**
+ * Reviewer
+ */
+export const zReviewer = z.object({
+    id: z.string(),
+    name: z.string(),
+    email: z.string(),
+    country: z.string(),
+    languages: z.array(z.string()),
+    skills: z.array(z.string()),
+    level: z.enum([
+        'trainee',
+        'qualified',
+        'senior'
+    ]),
+    status: z.enum([
+        'applicant',
+        'active',
+        'suspended'
+    ]),
+    tasksDone30d: z.int(),
+    accuracy: z.number().gte(0).lte(1),
+    medianMinutes: z.int(),
+    earnings30d: zMoney,
+    joinedAt: z.string(),
+    queue: z.int()
+});
+
+/**
  * RunEdge
  */
 export const zRunEdge = z.object({
@@ -578,6 +1021,80 @@ export const zRunEdge = z.object({
     label: z.string().optional(),
     taken: z.boolean().optional(),
     revision: z.boolean().optional()
+});
+
+/**
+ * ServiceStatus
+ */
+export const zServiceStatus = z.object({
+    key: z.string(),
+    name: z.string(),
+    status: z.enum([
+        'operational',
+        'degraded',
+        'outage'
+    ]),
+    latencyP95Ms: z.int(),
+    uptime30d: z.number().gte(0).lte(1),
+    note: z.string().optional()
+});
+
+/**
+ * OpsHealth
+ */
+export const zOpsHealth = z.object({
+    services: z.array(zServiceStatus),
+    incidents: z.array(zIncident),
+    simulated: z.literal(true).optional().default(true)
+});
+
+/**
+ * SetDefaultsRequest
+ */
+export const zSetDefaultsRequest = z.object({
+    defaults: zConnectorDefaults,
+    reason: z.string().min(1).max(500)
+});
+
+/**
+ * SetGuardrailRequest
+ */
+export const zSetGuardrailRequest = z.object({
+    enabled: z.boolean().optional(),
+    value: z.int().optional(),
+    reason: z.string().min(1).max(500)
+});
+
+/**
+ * SetLevelRequest
+ */
+export const zSetLevelRequest = z.object({
+    level: z.enum([
+        'trainee',
+        'qualified',
+        'senior'
+    ]),
+    reason: z.string().min(1).max(500)
+});
+
+/**
+ * SetPlanRequest
+ */
+export const zSetPlanRequest = z.object({
+    plan: z.enum([
+        'Starter',
+        'Pro',
+        'Enterprise'
+    ]),
+    reason: z.string().min(1).max(500)
+});
+
+/**
+ * SetSpendCapRequest
+ */
+export const zSetSpendCapRequest = z.object({
+    monthlyCapMinor: z.int().gte(0).lte(10000000),
+    reason: z.string().min(1).max(500)
 });
 
 /**
@@ -688,6 +1205,60 @@ export const zSubmitReviewRequest = z.object({
  */
 export const zSuggestRequest = z.object({
     text: z.string().min(3).max(500)
+});
+
+/**
+ * Tenant
+ */
+export const zTenant = z.object({
+    id: z.string(),
+    name: z.string(),
+    short: z.string(),
+    plan: z.enum([
+        'Starter',
+        'Pro',
+        'Enterprise'
+    ]),
+    status: z.enum([
+        'active',
+        'trial',
+        'suspended',
+        'churned'
+    ]),
+    region: z.string(),
+    country: z.string(),
+    ownerEmail: z.string(),
+    seats: z.int(),
+    members: z.int(),
+    createdAt: z.string(),
+    monthlyCap: zMoney,
+    monthSpent: zMoney,
+    runs30d: z.int(),
+    successRate: z.number().gte(0).lte(1),
+    openHumanTasks: z.int(),
+    packsInstalled: z.int(),
+    connectors: z.int(),
+    health: z.enum([
+        'healthy',
+        'watch',
+        'at_risk'
+    ]),
+    notes: z.string(),
+    trialEndsAt: z.string().optional(),
+    suspendedReason: z.string().optional()
+});
+
+/**
+ * TenantConnection
+ */
+export const zTenantConnection = z.object({
+    app: z.string(),
+    status: z.enum([
+        'connected',
+        'not_connected',
+        'sandbox',
+        'needs_reauth'
+    ])
 });
 
 /**
@@ -838,6 +1409,22 @@ export const zRun = z.object({
 });
 
 /**
+ * Toolkit
+ *
+ * A Composio toolkit that can be added to the catalog (simulated discovery).
+ */
+export const zToolkit = z.object({
+    slug: z.string(),
+    name: z.string(),
+    category: z.string(),
+    authType: z.enum([
+        'oauth_managed',
+        'oauth_own_app',
+        'api_key'
+    ])
+});
+
+/**
  * TrustPassport
  */
 export const zTrustPassport = z.object({
@@ -878,6 +1465,40 @@ export const zPack = z.object({
 });
 
 /**
+ * PackListingDetail
+ */
+export const zPackListingDetail = z.object({
+    slug: z.string(),
+    name: z.string(),
+    version: z.string(),
+    publisher: z.string(),
+    category: z.string(),
+    status: z.enum([
+        'draft',
+        'in_review',
+        'published',
+        'deprecated',
+        'rejected'
+    ]),
+    riskClass: z.enum([
+        'low',
+        'medium',
+        'high'
+    ]),
+    certified: z.boolean(),
+    installs: z.int(),
+    runs30d: z.int(),
+    successRate: z.number().gte(0).lte(1),
+    priceNote: z.string(),
+    submittedAt: z.string().optional(),
+    updatedAt: z.string(),
+    connectors: z.array(z.string()),
+    reviewNotes: z.string().optional(),
+    pack: zPack,
+    history: z.array(zPackHistoryEntry)
+});
+
+/**
  * Suggestion
  */
 export const zSuggestion = z.object({
@@ -887,11 +1508,79 @@ export const zSuggestion = z.object({
 });
 
 /**
+ * UpdateIncidentRequest
+ */
+export const zUpdateIncidentRequest = z.object({
+    status: z.enum([
+        'investigating',
+        'monitoring',
+        'resolved'
+    ]),
+    text: z.string().min(1).max(1000),
+    reason: z.string().min(1).max(500)
+});
+
+/**
  * Usage
  */
 export const zUsage = z.object({
     org: zOrganization,
     ledger: z.array(zLedgerTxn)
+});
+
+/**
+ * UsagePoint
+ */
+export const zUsagePoint = z.object({
+    day: z.string(),
+    amountMinor: z.int()
+});
+
+/**
+ * TenantDetail
+ */
+export const zTenantDetail = z.object({
+    id: z.string(),
+    name: z.string(),
+    short: z.string(),
+    plan: z.enum([
+        'Starter',
+        'Pro',
+        'Enterprise'
+    ]),
+    status: z.enum([
+        'active',
+        'trial',
+        'suspended',
+        'churned'
+    ]),
+    region: z.string(),
+    country: z.string(),
+    ownerEmail: z.string(),
+    seats: z.int(),
+    members: z.int(),
+    createdAt: z.string(),
+    monthlyCap: zMoney,
+    monthSpent: zMoney,
+    runs30d: z.int(),
+    successRate: z.number().gte(0).lte(1),
+    openHumanTasks: z.int(),
+    packsInstalled: z.int(),
+    connectors: z.int(),
+    health: z.enum([
+        'healthy',
+        'watch',
+        'at_risk'
+    ]),
+    notes: z.string(),
+    trialEndsAt: z.string().optional(),
+    suspendedReason: z.string().optional(),
+    membersList: z.array(zMember),
+    installedPacks: z.array(z.string()),
+    connectorsList: z.array(zTenantConnection),
+    recentRuns: z.array(zOpsRun),
+    usageByDay: z.array(zUsagePoint),
+    simulated: z.literal(true)
 });
 
 /**
@@ -1168,3 +1857,405 @@ export const zRevokeTokenPath = z.object({
  * Successful Response
  */
 export const zRevokeTokenResponse = z.void();
+
+export const zOpsListPacksQuery = z.object({
+    status: z.enum([
+        'draft',
+        'in_review',
+        'published',
+        'deprecated',
+        'rejected'
+    ]).nullish()
+});
+
+/**
+ * Response Opslistpacks
+ *
+ * Successful Response
+ */
+export const zOpsListPacksResponse = z.array(zPackListing);
+
+export const zOpsCreatePackBody = zCreatePackRequest;
+
+/**
+ * Successful Response
+ */
+export const zOpsCreatePackResponse = zPackListingDetail;
+
+export const zOpsGetPackPath = z.object({
+    slug: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zOpsGetPackResponse = zPackListingDetail;
+
+export const zOpsSubmitPackBody = zReasonRequest;
+
+export const zOpsSubmitPackPath = z.object({
+    slug: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zOpsSubmitPackResponse = zPackListingDetail;
+
+export const zOpsApprovePackBody = zReasonRequest;
+
+export const zOpsApprovePackPath = z.object({
+    slug: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zOpsApprovePackResponse = zPackListingDetail;
+
+export const zOpsRejectPackBody = zReasonRequest;
+
+export const zOpsRejectPackPath = z.object({
+    slug: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zOpsRejectPackResponse = zPackListingDetail;
+
+export const zOpsDeprecatePackBody = zReasonRequest;
+
+export const zOpsDeprecatePackPath = z.object({
+    slug: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zOpsDeprecatePackResponse = zPackListingDetail;
+
+export const zOpsRepublishPackBody = zReasonRequest;
+
+export const zOpsRepublishPackPath = z.object({
+    slug: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zOpsRepublishPackResponse = zPackListingDetail;
+
+export const zOpsCertifyPackBody = zReasonRequest;
+
+export const zOpsCertifyPackPath = z.object({
+    slug: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zOpsCertifyPackResponse = zPackListingDetail;
+
+/**
+ * Response Opslistconnectors
+ *
+ * Successful Response
+ */
+export const zOpsListConnectorsResponse = z.array(zConnectorEntry);
+
+export const zOpsAddConnectorBody = zAddConnectorRequest;
+
+/**
+ * Successful Response
+ */
+export const zOpsAddConnectorResponse = zConnectorEntry;
+
+/**
+ * Response Opslistavailabletoolkits
+ *
+ * Successful Response
+ */
+export const zOpsListAvailableToolkitsResponse = z.array(zToolkit);
+
+export const zOpsEnableConnectorBody = zReasonRequest;
+
+export const zOpsEnableConnectorPath = z.object({
+    connector_id: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zOpsEnableConnectorResponse = zConnectorEntry;
+
+export const zOpsDisableConnectorBody = zReasonRequest;
+
+export const zOpsDisableConnectorPath = z.object({
+    connector_id: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zOpsDisableConnectorResponse = zConnectorEntry;
+
+export const zOpsSetConnectorDefaultsBody = zSetDefaultsRequest;
+
+export const zOpsSetConnectorDefaultsPath = z.object({
+    connector_id: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zOpsSetConnectorDefaultsResponse = zConnectorEntry;
+
+export const zOpsHealthCheckConnectorPath = z.object({
+    connector_id: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zOpsHealthCheckConnectorResponse = zConnectorEntry;
+
+/**
+ * Successful Response
+ */
+export const zOpsGetHealthResponse = zOpsHealth;
+
+export const zOpsDeclareIncidentBody = zDeclareIncidentRequest;
+
+/**
+ * Successful Response
+ */
+export const zOpsDeclareIncidentResponse = zIncident;
+
+export const zOpsUpdateIncidentBody = zUpdateIncidentRequest;
+
+export const zOpsUpdateIncidentPath = z.object({
+    incident_id: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zOpsUpdateIncidentResponse = zIncident;
+
+/**
+ * Successful Response
+ */
+export const zOpsGetOverviewResponse = zOpsOverview;
+
+export const zOpsListReviewersQuery = z.object({
+    status: z.enum([
+        'applicant',
+        'active',
+        'suspended'
+    ]).nullish()
+});
+
+/**
+ * Response Opslistreviewers
+ *
+ * Successful Response
+ */
+export const zOpsListReviewersResponse = z.array(zReviewer);
+
+export const zOpsApproveReviewerBody = zReasonRequest;
+
+export const zOpsApproveReviewerPath = z.object({
+    reviewer_id: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zOpsApproveReviewerResponse = zReviewer;
+
+export const zOpsSuspendReviewerBody = zReasonRequest;
+
+export const zOpsSuspendReviewerPath = z.object({
+    reviewer_id: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zOpsSuspendReviewerResponse = zReviewer;
+
+export const zOpsReinstateReviewerBody = zReasonRequest;
+
+export const zOpsReinstateReviewerPath = z.object({
+    reviewer_id: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zOpsReinstateReviewerResponse = zReviewer;
+
+export const zOpsSetReviewerLevelBody = zSetLevelRequest;
+
+export const zOpsSetReviewerLevelPath = z.object({
+    reviewer_id: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zOpsSetReviewerLevelResponse = zReviewer;
+
+export const zOpsListRunsQuery = z.object({
+    status: z.enum([
+        'RUNNING',
+        'WAITING_FOR_HUMAN',
+        'WAITING_FOR_EVENT',
+        'VERIFYING',
+        'COMPLETED',
+        'FAILED',
+        'CANCELLED',
+        'NEEDS_ATTENTION'
+    ]).nullish(),
+    tenant: z.string().max(100).nullish()
+});
+
+/**
+ * Response Opslistruns
+ *
+ * Successful Response
+ */
+export const zOpsListRunsResponse = z.array(zOpsRun);
+
+/**
+ * Response Opslistguardrails
+ *
+ * Successful Response
+ */
+export const zOpsListGuardrailsResponse = z.array(zGuardrail);
+
+export const zOpsSetGuardrailBody = zSetGuardrailRequest;
+
+export const zOpsSetGuardrailPath = z.object({
+    key: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zOpsSetGuardrailResponse = zGuardrail;
+
+/**
+ * Successful Response
+ */
+export const zOpsGetBillingResponse = zBillingSummary;
+
+/**
+ * Successful Response
+ */
+export const zOpsGetMeResponse = zOpsMe;
+
+/**
+ * Response Opslistteam
+ *
+ * Successful Response
+ */
+export const zOpsListTeamResponse = z.array(zOpsTeamMember);
+
+export const zOpsListAuditQuery = z.object({
+    targetType: z.enum([
+        'tenant',
+        'pack',
+        'connector',
+        'reviewer',
+        'guardrail',
+        'incident'
+    ]).nullish(),
+    targetId: z.string().max(100).nullish(),
+    limit: z.int().gte(1).lte(500).optional().default(100)
+});
+
+/**
+ * Response Opslistaudit
+ *
+ * Successful Response
+ */
+export const zOpsListAuditResponse = z.array(zAuditEntry);
+
+export const zOpsListTenantsQuery = z.object({
+    status: z.enum([
+        'active',
+        'trial',
+        'suspended',
+        'churned'
+    ]).nullish(),
+    q: z.string().max(100).nullish()
+});
+
+/**
+ * Response Opslisttenants
+ *
+ * Successful Response
+ */
+export const zOpsListTenantsResponse = z.array(zTenant);
+
+export const zOpsCreateTenantBody = zCreateTenantRequest;
+
+/**
+ * Successful Response
+ */
+export const zOpsCreateTenantResponse = zTenant;
+
+export const zOpsGetTenantPath = z.object({
+    tenant_id: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zOpsGetTenantResponse = zTenantDetail;
+
+export const zOpsSuspendTenantBody = zReasonRequest;
+
+export const zOpsSuspendTenantPath = z.object({
+    tenant_id: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zOpsSuspendTenantResponse = zTenant;
+
+export const zOpsReactivateTenantBody = zReasonRequest;
+
+export const zOpsReactivateTenantPath = z.object({
+    tenant_id: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zOpsReactivateTenantResponse = zTenant;
+
+export const zOpsSetTenantPlanBody = zSetPlanRequest;
+
+export const zOpsSetTenantPlanPath = z.object({
+    tenant_id: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zOpsSetTenantPlanResponse = zTenant;
+
+export const zOpsSetTenantSpendCapBody = zSetSpendCapRequest;
+
+export const zOpsSetTenantSpendCapPath = z.object({
+    tenant_id: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zOpsSetTenantSpendCapResponse = zTenant;

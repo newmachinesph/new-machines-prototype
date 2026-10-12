@@ -26,6 +26,8 @@ def find_run(run_id: str) -> Run:
 
 def _new_run(body: StartRunRequest) -> Run:
     with locked_store() as store:
+        if store.guardrails["pause_all_runs"].enabled:
+            raise ApiProblem(409, "PLATFORM_PAUSED", "New Machines has paused all new runs. Try again later.")
         pack = find_pack(body.pack_slug)
         if not pack.installed:
             raise ApiProblem(403, "POLICY_DENIED", f"Hire {pack.name} before starting a run.")

@@ -36,9 +36,37 @@ def create_app() -> FastAPI:
     def healthz() -> dict[str, str]:
         return {"status": "ok"}
 
-    from app.routers import approvals, catalog, connections, memory, org, runs, tasks
+    from app.routers import (
+        approvals,
+        catalog,
+        connections,
+        memory,
+        ops_catalog,
+        ops_health,
+        ops_overview,
+        ops_people,
+        ops_platform,
+        ops_tenants,
+        org,
+        runs,
+        tasks,
+    )
 
-    for module in (catalog, runs, approvals, tasks, memory, connections, org):
+    for module in (
+        catalog,
+        runs,
+        approvals,
+        tasks,
+        memory,
+        connections,
+        org,
+        ops_catalog,
+        ops_health,
+        ops_overview,
+        ops_people,
+        ops_platform,
+        ops_tenants,
+    ):
         app.include_router(module.router)
 
     return app

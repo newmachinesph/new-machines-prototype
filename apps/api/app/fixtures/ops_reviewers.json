@@ -1,0 +1,248 @@
+[
+  {
+    "id": "rev_ph_003",
+    "name": "Maria Santos",
+    "email": "maria.santos@reviewers.example",
+    "country": "PH",
+    "languages": [
+      "English",
+      "Filipino"
+    ],
+    "skills": [
+      "Invoice review",
+      "Refund triage"
+    ],
+    "level": "senior",
+    "status": "active",
+    "tasksDone30d": 142,
+    "accuracy": 0.982,
+    "medianMinutes": 11,
+    "earnings30d": {
+      "amountMinor": 184200,
+      "currency": "USD"
+    },
+    "joinedAt": "2026-02-10T03:00:00Z",
+    "queue": 3
+  },
+  {
+    "id": "rev_ph_011",
+    "name": "Joel Reyes",
+    "email": "joel.reyes@reviewers.example",
+    "country": "PH",
+    "languages": [
+      "English",
+      "Filipino"
+    ],
+    "skills": [
+      "Refund triage",
+      "Email tone check"
+    ],
+    "level": "qualified",
+    "status": "active",
+    "tasksDone30d": 96,
+    "accuracy": 0.961,
+    "medianMinutes": 14,
+    "earnings30d": {
+      "amountMinor": 112800,
+      "currency": "USD"
+    },
+    "joinedAt": "2026-05-21T02:30:00Z",
+    "queue": 2
+  },
+  {
+    "id": "rev_ph_017",
+    "name": "Angela Cruz",
+    "email": "angela.cruz@reviewers.example",
+    "country": "PH",
+    "languages": [
+      "English",
+      "Filipino"
+    ],
+    "skills": [
+      "Refund triage"
+    ],
+    "level": "trainee",
+    "status": "active",
+    "tasksDone30d": 18,
+    "accuracy": 0.944,
+    "medianMinutes": 19,
+    "earnings30d": {
+      "amountMinor": 19400,
+      "currency": "USD"
+    },
+    "joinedAt": "2026-09-27T04:10:00Z",
+    "queue": 1
+  },
+  {
+    "id": "rev_jp_004",
+    "name": "Kenji Mori",
+    "email": "kenji.mori@reviewers.example",
+    "country": "JP",
+    "languages": [
+      "Japanese",
+      "English"
+    ],
+    "skills": [
+      "Japanese translation review",
+      "Invoice review"
+    ],
+    "level": "senior",
+    "status": "active",
+    "tasksDone30d": 118,
+    "accuracy": 0.989,
+    "medianMinutes": 16,
+    "earnings30d": {
+      "amountMinor": 206500,
+      "currency": "USD"
+    },
+    "joinedAt": "2026-01-15T01:00:00Z",
+    "queue": 2
+  },
+  {
+    "id": "rev_jp_009",
+    "name": "Aiko Tanaka",
+    "email": "aiko.tanaka@reviewers.example",
+    "country": "JP",
+    "languages": [
+      "Japanese",
+      "English"
+    ],
+    "skills": [
+      "Japanese translation review",
+      "Customs paperwork"
+    ],
+    "level": "qualified",
+    "status": "active",
+    "tasksDone30d": 74,
+    "accuracy": 0.972,
+    "medianMinutes": 18,
+    "earnings30d": {
+      "amountMinor": 98600,
+      "currency": "USD"
+    },
+    "joinedAt": "2026-06-03T00:45:00Z",
+    "queue": 1
+  },
+  {
+    "id": "rev_us_006",
+    "name": "Dana Whitfield",
+    "email": "dana.whitfield@reviewers.example",
+    "country": "US",
+    "languages": [
+      "English"
+    ],
+    "skills": [
+      "Invoice review",
+      "Inventory audit"
+    ],
+    "level": "qualified",
+    "status": "active",
+    "tasksDone30d": 63,
+    "accuracy": 0.955,
+    "medianMinutes": 15,
+    "earnings30d": {
+      "amountMinor": 86300,
+      "currency": "USD"
+    },
+    "joinedAt": "2026-04-12T15:20:00Z",
+    "queue": 0
+  },
+  {
+    "id": "rev_sg_002",
+    "name": "Wei Lim",
+    "email": "wei.lim@reviewers.example",
+    "country": "SG",
+    "languages": [
+      "English",
+      "Mandarin"
+    ],
+    "skills": [
+      "Customs paperwork",
+      "Invoice review"
+    ],
+    "level": "qualified",
+    "status": "suspended",
+    "tasksDone30d": 9,
+    "accuracy": 0.812,
+    "medianMinutes": 27,
+    "earnings30d": {
+      "amountMinor": 11200,
+      "currency": "USD"
+    },
+    "joinedAt": "2026-07-30T06:00:00Z",
+    "queue": 0
+  },
+  {
+    "id": "rev_ph_024",
+    "name": "Paolo Mercado",
+    "email": "paolo.mercado@reviewers.example",
+    "country": "PH",
+    "languages": [
+      "English",
+      "Filipino"
+    ],
+    "skills": [
+      "Invoice review",
+      "Email tone check"
+    ],
+    "level": "trainee",
+    "status": "applicant",
+    "tasksDone30d": 0,
+    "accuracy": 0.0,
+    "medianMinutes": 0,
+    "earnings30d": {
+      "amountMinor": 0,
+      "currency": "USD"
+    },
+    "joinedAt": "2026-10-09T08:15:00Z",
+    "queue": 0
+  },
+  {
+    "id": "rev_au_003",
+    "name": "Chloe Bennett",
+    "email": "chloe.bennett@reviewers.example",
+    "country": "AU",
+    "languages": [
+      "English"
+    ],
+    "skills": [
+      "Refund triage",
+      "Inventory audit"
+    ],
+    "level": "trainee",
+    "status": "applicant",
+    "tasksDone30d": 0,
+    "accuracy": 0.0,
+    "medianMinutes": 0,
+    "earnings30d": {
+      "amountMinor": 0,
+      "currency": "USD"
+    },
+    "joinedAt": "2026-10-11T22:40:00Z",
+    "queue": 0
+  },
+  {
+    "id": "rev_jp_015",
+    "name": "Yuki Sato",
+    "email": "yuki.sato@reviewers.example",
+    "country": "JP",
+    "languages": [
+      "Japanese",
+      "English"
+    ],
+    "skills": [
+      "Japanese translation review"
+    ],
+    "level": "trainee",
+    "status": "applicant",
+    "tasksDone30d": 0,
+    "accuracy": 0.0,
+    "medianMinutes": 0,
+    "earnings30d": {
+      "amountMinor": 0,
+      "currency": "USD"
+    },
+    "joinedAt": "2026-10-12T05:05:00Z",
+    "queue": 0
+  }
+]

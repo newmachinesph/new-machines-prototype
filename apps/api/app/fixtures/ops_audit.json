@@ -1,0 +1,134 @@
+[
+  {
+    "id": "aud_0001",
+    "at": "2026-09-14T02:12:00Z",
+    "actorEmail": "hana.okada@newmachin.es",
+    "actorRole": "admin",
+    "action": "tenant.set_plan",
+    "targetType": "tenant",
+    "targetId": "org_k7m2",
+    "reason": "Signed the annual Enterprise order form.",
+    "summary": "Plan Pro → Enterprise"
+  },
+  {
+    "id": "aud_0002",
+    "at": "2026-09-18T07:30:00Z",
+    "actorEmail": "marco.dizon@newmachin.es",
+    "actorRole": "admin",
+    "action": "connector.disable",
+    "targetType": "connector",
+    "targetId": "smarthr",
+    "reason": "Vendor API returning 500s on employee reads.",
+    "summary": "Status beta → disabled"
+  },
+  {
+    "id": "aud_0003",
+    "at": "2026-09-22T05:05:00Z",
+    "actorEmail": "ops@newmachin.es",
+    "actorRole": "owner",
+    "action": "guardrail.set",
+    "targetType": "guardrail",
+    "targetId": "platform_daily_ai_cap",
+    "reason": "Raised for the Japan catalog season.",
+    "summary": "Limit $400.00 → $600.00"
+  },
+  {
+    "id": "aud_0004",
+    "at": "2026-09-26T23:41:00Z",
+    "actorEmail": "hana.okada@newmachin.es",
+    "actorRole": "admin",
+    "action": "tenant.suspend",
+    "targetType": "tenant",
+    "targetId": "org_a3wc",
+    "reason": "Card payment failed three times; owner asked to pause until a new card is on file.",
+    "summary": "Status active → suspended"
+  },
+  {
+    "id": "aud_0005",
+    "at": "2026-09-29T08:15:00Z",
+    "actorEmail": "marco.dizon@newmachin.es",
+    "actorRole": "admin",
+    "action": "reviewer.approve",
+    "targetType": "reviewer",
+    "targetId": "rev_ph_017",
+    "reason": "Passed the refund triage test set at 96%.",
+    "summary": "Status applicant → active (trainee)"
+  },
+  {
+    "id": "aud_0006",
+    "at": "2026-10-01T16:20:00Z",
+    "actorEmail": "ops@newmachin.es",
+    "actorRole": "owner",
+    "action": "incident.declare",
+    "targetType": "incident",
+    "targetId": "inc_0041",
+    "reason": "Order reconciliation runs failing on Stripe reads.",
+    "summary": "Declared sev2: Stripe reads timing out"
+  },
+  {
+    "id": "aud_0007",
+    "at": "2026-10-01T18:02:00Z",
+    "actorEmail": "ops@newmachin.es",
+    "actorRole": "owner",
+    "action": "incident.update",
+    "targetType": "incident",
+    "targetId": "inc_0041",
+    "reason": "Stripe confirmed the fix on their side.",
+    "summary": "Status monitoring → resolved"
+  },
+  {
+    "id": "aud_0008",
+    "at": "2026-10-02T03:50:00Z",
+    "actorEmail": "hana.okada@newmachin.es",
+    "actorRole": "admin",
+    "action": "tenant.create",
+    "targetType": "tenant",
+    "targetId": "org_p4ld",
+    "reason": "Partner referral from the Manila SME program.",
+    "summary": "Created Lucena Fresh Produce Trading on Starter, trial 28 days, cap $50.00"
+  },
+  {
+    "id": "aud_0009",
+    "at": "2026-10-06T10:30:00Z",
+    "actorEmail": "marco.dizon@newmachin.es",
+    "actorRole": "admin",
+    "action": "pack.approve",
+    "targetType": "pack",
+    "targetId": "chargeback-evidence",
+    "reason": "Passport results meet the medium-risk bar.",
+    "summary": "Status in_review → published"
+  },
+  {
+    "id": "aud_0010",
+    "at": "2026-10-08T06:45:00Z",
+    "actorEmail": "hana.okada@newmachin.es",
+    "actorRole": "admin",
+    "action": "tenant.set_spend_cap",
+    "targetType": "tenant",
+    "targetId": "org_s9tq",
+    "reason": "Owner asked for a lower cap after a surprise bill.",
+    "summary": "Monthly cap $300.00 → $200.00"
+  },
+  {
+    "id": "aud_0011",
+    "at": "2026-10-10T01:12:00Z",
+    "actorEmail": "marco.dizon@newmachin.es",
+    "actorRole": "admin",
+    "action": "connector.set_defaults",
+    "targetType": "connector",
+    "targetId": "line-works",
+    "reason": "Outbound messages need a human until the beta ends.",
+    "summary": "Write permit → require_approval"
+  },
+  {
+    "id": "aud_0012",
+    "at": "2026-10-12T14:55:00Z",
+    "actorEmail": "ops@newmachin.es",
+    "actorRole": "owner",
+    "action": "tenant.set_spend_cap",
+    "targetType": "tenant",
+    "targetId": "org_hp01",
+    "reason": "Demo workspace reset to the standard Pro cap.",
+    "summary": "Monthly cap $300.00 → $250.00"
+  }
+]

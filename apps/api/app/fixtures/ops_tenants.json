@@ -1,0 +1,260 @@
+[
+  {
+    "id": "org_hp01",
+    "name": "Harbor & Pine Supply Co.",
+    "short": "Harbor & Pine",
+    "plan": "Pro",
+    "status": "active",
+    "region": "us-central1",
+    "country": "US",
+    "ownerEmail": "ops@harborandpine.example",
+    "seats": 5,
+    "members": 2,
+    "createdAt": "2026-03-02T17:20:00Z",
+    "monthlyCap": { "amountMinor": 25000, "currency": "USD" },
+    "monthSpent": { "amountMinor": 6194, "currency": "USD" },
+    "runs30d": 46,
+    "successRate": 0.91,
+    "openHumanTasks": 3,
+    "packsInstalled": 4,
+    "connectors": 6,
+    "health": "healthy",
+    "notes": "Demo workspace. Home goods wholesaler, ships from Oakland."
+  },
+  {
+    "id": "org_k7m2",
+    "name": "Sakura Kitchenware K.K.",
+    "short": "Sakura Kitchenware",
+    "plan": "Enterprise",
+    "status": "active",
+    "region": "asia-northeast1",
+    "country": "JP",
+    "ownerEmail": "kenji.mori@sakura-kitchen.example",
+    "seats": 25,
+    "members": 3,
+    "createdAt": "2025-11-18T02:10:00Z",
+    "monthlyCap": { "amountMinor": 120000, "currency": "USD" },
+    "monthSpent": { "amountMinor": 48210, "currency": "USD" },
+    "runs30d": 312,
+    "successRate": 0.96,
+    "openHumanTasks": 5,
+    "packsInstalled": 3,
+    "connectors": 4,
+    "health": "healthy",
+    "notes": "Catalog localization is their biggest workload. Invoices in JPY, billed in USD.",
+    "detail": {
+      "membersList": [
+        { "name": "Kenji Mori", "email": "kenji.mori@sakura-kitchen.example", "role": "Owner", "via": "Google" },
+        { "name": "Aya Tanaka", "email": "aya.tanaka@sakura-kitchen.example", "role": "Admin", "via": "Google" },
+        { "name": "Ren Ishii", "email": "ren.ishii@sakura-kitchen.example", "role": "Member", "via": "Invite link" }
+      ],
+      "installedPacks": ["catalog-localization-en-ja", "order-payment-reconciliation", "weekly-inventory-report"],
+      "connectorsList": [
+        { "app": "Shopify", "status": "connected" },
+        { "app": "Google Sheets", "status": "connected" },
+        { "app": "Slack", "status": "connected" },
+        { "app": "Stripe", "status": "needs_reauth" }
+      ]
+    }
+  },
+  {
+    "id": "org_p4ld",
+    "name": "Lucena Fresh Produce Trading",
+    "short": "Lucena Fresh",
+    "plan": "Starter",
+    "status": "trial",
+    "region": "asia-southeast1",
+    "country": "PH",
+    "ownerEmail": "maria.santos@lucenafresh.example",
+    "seats": 3,
+    "members": 2,
+    "createdAt": "2026-10-02T03:45:00Z",
+    "monthlyCap": { "amountMinor": 5000, "currency": "USD" },
+    "monthSpent": { "amountMinor": 820, "currency": "USD" },
+    "runs30d": 9,
+    "successRate": 0.89,
+    "openHumanTasks": 0,
+    "packsInstalled": 1,
+    "connectors": 2,
+    "health": "watch",
+    "notes": "Trial started from a partner referral. Wants invoice follow-up in Tagalog and English.",
+    "trialEndsAt": "2026-10-30T00:00:00Z",
+    "detail": {
+      "membersList": [
+        { "name": "Maria Santos", "email": "maria.santos@lucenafresh.example", "role": "Owner", "via": "Google" },
+        { "name": "Jose Reyes", "email": "jose.reyes@lucenafresh.example", "role": "Member", "via": "Invite link", "pending": true }
+      ],
+      "installedPacks": ["overdue-invoice-follow-up"],
+      "connectorsList": [
+        { "app": "Gmail", "status": "connected" },
+        { "app": "Google Sheets", "status": "connected" }
+      ]
+    }
+  },
+  {
+    "id": "org_s9tq",
+    "name": "Marina Bay Print Studio Pte. Ltd.",
+    "short": "Marina Bay Print",
+    "plan": "Pro",
+    "status": "active",
+    "region": "asia-southeast1",
+    "country": "SG",
+    "ownerEmail": "wei.lim@marinabayprint.example",
+    "seats": 8,
+    "members": 2,
+    "createdAt": "2026-01-12T06:00:00Z",
+    "monthlyCap": { "amountMinor": 20000, "currency": "USD" },
+    "monthSpent": { "amountMinor": 19340, "currency": "USD" },
+    "runs30d": 141,
+    "successRate": 0.78,
+    "openHumanTasks": 9,
+    "packsInstalled": 2,
+    "connectors": 3,
+    "health": "at_risk",
+    "notes": "At 97% of the monthly cap with two weeks left. Refund triage failures rising since the Stripe change.",
+    "detail": {
+      "membersList": [
+        { "name": "Lim Wei", "email": "wei.lim@marinabayprint.example", "role": "Owner", "via": "Email and password" },
+        { "name": "Priya Nair", "email": "priya.nair@marinabayprint.example", "role": "Admin", "via": "Google" }
+      ],
+      "installedPacks": ["refund-triage", "chargeback-evidence"],
+      "connectorsList": [
+        { "app": "Stripe", "status": "connected" },
+        { "app": "Gmail", "status": "connected" },
+        { "app": "Shopify", "status": "needs_reauth" }
+      ]
+    }
+  },
+  {
+    "id": "org_a3wc",
+    "name": "Wattle & Gum Outdoor Co.",
+    "short": "Wattle & Gum",
+    "plan": "Pro",
+    "status": "suspended",
+    "region": "australia-southeast1",
+    "country": "AU",
+    "ownerEmail": "liam.walker@wattleandgum.example",
+    "seats": 6,
+    "members": 2,
+    "createdAt": "2025-12-03T23:30:00Z",
+    "monthlyCap": { "amountMinor": 15000, "currency": "USD" },
+    "monthSpent": { "amountMinor": 2210, "currency": "USD" },
+    "runs30d": 37,
+    "successRate": 0.92,
+    "openHumanTasks": 0,
+    "packsInstalled": 2,
+    "connectors": 2,
+    "health": "watch",
+    "notes": "Card declined three times in September. Owner asked us to pause until the new card is on file.",
+    "suspendedReason": "Card payment failed three times; owner asked to pause until a new card is on file.",
+    "detail": {
+      "membersList": [
+        { "name": "Liam Walker", "email": "liam.walker@wattleandgum.example", "role": "Owner", "via": "Google" },
+        { "name": "Chloe Nguyen", "email": "chloe.nguyen@wattleandgum.example", "role": "Member", "via": "Google" }
+      ],
+      "installedPacks": ["shipping-exceptions", "order-payment-reconciliation"],
+      "connectorsList": [
+        { "app": "Shopify", "status": "connected" },
+        { "app": "Gmail", "status": "connected" }
+      ]
+    }
+  },
+  {
+    "id": "org_u6rn",
+    "name": "Redwood Bike Repair LLC",
+    "short": "Redwood Bike",
+    "plan": "Starter",
+    "status": "churned",
+    "region": "us-central1",
+    "country": "US",
+    "ownerEmail": "dana.cole@redwoodbike.example",
+    "seats": 2,
+    "members": 1,
+    "createdAt": "2026-02-20T19:00:00Z",
+    "monthlyCap": { "amountMinor": 3000, "currency": "USD" },
+    "monthSpent": { "amountMinor": 0, "currency": "USD" },
+    "runs30d": 0,
+    "successRate": 0.84,
+    "openHumanTasks": 0,
+    "packsInstalled": 0,
+    "connectors": 1,
+    "health": "at_risk",
+    "notes": "Cancelled in August: too few invoices to justify a plan. Open to a usage-only tier.",
+    "detail": {
+      "membersList": [
+        { "name": "Dana Cole", "email": "dana.cole@redwoodbike.example", "role": "Owner", "via": "Email and password" }
+      ],
+      "installedPacks": [],
+      "connectorsList": [{ "app": "Gmail", "status": "not_connected" }]
+    }
+  },
+  {
+    "id": "org_j2hb",
+    "name": "Hakata Tea Merchants",
+    "short": "Hakata Tea",
+    "plan": "Starter",
+    "status": "active",
+    "region": "asia-northeast1",
+    "country": "JP",
+    "ownerEmail": "yui.nakamura@hakatatea.example",
+    "seats": 3,
+    "members": 2,
+    "createdAt": "2026-05-09T01:15:00Z",
+    "monthlyCap": { "amountMinor": 8000, "currency": "USD" },
+    "monthSpent": { "amountMinor": 3115, "currency": "USD" },
+    "runs30d": 58,
+    "successRate": 0.94,
+    "openHumanTasks": 1,
+    "packsInstalled": 2,
+    "connectors": 3,
+    "health": "healthy",
+    "notes": "Sells to cafes in Fukuoka and Singapore. Asked about freee for bookkeeping.",
+    "detail": {
+      "membersList": [
+        { "name": "Yui Nakamura", "email": "yui.nakamura@hakatatea.example", "role": "Owner", "via": "Google" },
+        { "name": "Sota Fujii", "email": "sota.fujii@hakatatea.example", "role": "Member", "via": "Google" }
+      ],
+      "installedPacks": ["catalog-localization-en-ja", "weekly-inventory-report"],
+      "connectorsList": [
+        { "app": "Shopify", "status": "connected" },
+        { "app": "Google Sheets", "status": "connected" },
+        { "app": "Google Drive", "status": "sandbox" }
+      ]
+    }
+  },
+  {
+    "id": "org_c8vz",
+    "name": "Cebu Island Travel Desk Inc.",
+    "short": "Cebu Travel Desk",
+    "plan": "Pro",
+    "status": "active",
+    "region": "asia-southeast1",
+    "country": "PH",
+    "ownerEmail": "andrea.cruz@cebutravel.example",
+    "seats": 10,
+    "members": 3,
+    "createdAt": "2026-04-01T04:00:00Z",
+    "monthlyCap": { "amountMinor": 30000, "currency": "USD" },
+    "monthSpent": { "amountMinor": 11870, "currency": "USD" },
+    "runs30d": 96,
+    "successRate": 0.9,
+    "openHumanTasks": 4,
+    "packsInstalled": 2,
+    "connectors": 3,
+    "health": "healthy",
+    "notes": "Refund triage peaks after typhoon cancellations. Reviewer pool on for refunds over $200.",
+    "detail": {
+      "membersList": [
+        { "name": "Andrea Cruz", "email": "andrea.cruz@cebutravel.example", "role": "Owner", "via": "Google" },
+        { "name": "Paolo Garcia", "email": "paolo.garcia@cebutravel.example", "role": "Admin", "via": "Google" },
+        { "name": "Bea Villanueva", "email": "bea.villanueva@cebutravel.example", "role": "Member", "via": "Invite link" }
+      ],
+      "installedPacks": ["refund-triage", "overdue-invoice-follow-up"],
+      "connectorsList": [
+        { "app": "Stripe", "status": "connected" },
+        { "app": "Gmail", "status": "connected" },
+        { "app": "Slack", "status": "connected" }
+      ]
+    }
+  }
+]

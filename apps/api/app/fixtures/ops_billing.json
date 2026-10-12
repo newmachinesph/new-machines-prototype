@@ -1,0 +1,194 @@
+{
+  "mrr": {
+    "amountMinor": 426000,
+    "currency": "USD"
+  },
+  "arr": {
+    "amountMinor": 5112000,
+    "currency": "USD"
+  },
+  "aiCostMonth": {
+    "amountMinor": 98400,
+    "currency": "USD"
+  },
+  "grossMargin": 0.672,
+  "reviewerPayoutsMonth": {
+    "amountMinor": 41200,
+    "currency": "USD"
+  },
+  "invoices": [
+    {
+      "id": "inv_0212",
+      "tenantId": "org_k7m2",
+      "tenantName": "Sakura Kitchenware K.K.",
+      "period": "2026-10",
+      "amount": {
+        "amountMinor": 149900,
+        "currency": "USD"
+      },
+      "status": "open"
+    },
+    {
+      "id": "inv_0211",
+      "tenantId": "org_k7m2",
+      "tenantName": "Sakura Kitchenware K.K.",
+      "period": "2026-09",
+      "amount": {
+        "amountMinor": 149900,
+        "currency": "USD"
+      },
+      "status": "paid"
+    },
+    {
+      "id": "inv_0210",
+      "tenantId": "org_hp01",
+      "tenantName": "Harbor & Pine Supply Co.",
+      "period": "2026-10",
+      "amount": {
+        "amountMinor": 29900,
+        "currency": "USD"
+      },
+      "status": "open"
+    },
+    {
+      "id": "inv_0209",
+      "tenantId": "org_hp01",
+      "tenantName": "Harbor & Pine Supply Co.",
+      "period": "2026-09",
+      "amount": {
+        "amountMinor": 29900,
+        "currency": "USD"
+      },
+      "status": "paid"
+    },
+    {
+      "id": "inv_0208",
+      "tenantId": "org_s9tq",
+      "tenantName": "Marina Bay Print Studio Pte. Ltd.",
+      "period": "2026-10",
+      "amount": {
+        "amountMinor": 29900,
+        "currency": "USD"
+      },
+      "status": "open"
+    },
+    {
+      "id": "inv_0207",
+      "tenantId": "org_s9tq",
+      "tenantName": "Marina Bay Print Studio Pte. Ltd.",
+      "period": "2026-09",
+      "amount": {
+        "amountMinor": 29900,
+        "currency": "USD"
+      },
+      "status": "paid"
+    },
+    {
+      "id": "inv_0206",
+      "tenantId": "org_a3wc",
+      "tenantName": "Wattle & Gum Outdoor Co.",
+      "period": "2026-09",
+      "amount": {
+        "amountMinor": 29900,
+        "currency": "USD"
+      },
+      "status": "overdue"
+    },
+    {
+      "id": "inv_0205",
+      "tenantId": "org_j2hb",
+      "tenantName": "Hakata Tea Merchants",
+      "period": "2026-09",
+      "amount": {
+        "amountMinor": 9900,
+        "currency": "USD"
+      },
+      "status": "paid"
+    },
+    {
+      "id": "inv_0204",
+      "tenantId": "org_c8vz",
+      "tenantName": "Cebu Island Travel Desk Inc.",
+      "period": "2026-09",
+      "amount": {
+        "amountMinor": 29900,
+        "currency": "USD"
+      },
+      "status": "paid"
+    },
+    {
+      "id": "inv_0203",
+      "tenantId": "org_u6rn",
+      "tenantName": "Redwood Bike Repair LLC",
+      "period": "2026-08",
+      "amount": {
+        "amountMinor": 9900,
+        "currency": "USD"
+      },
+      "status": "void"
+    }
+  ],
+  "payouts": [
+    {
+      "id": "pay_0091",
+      "reviewerId": "rev_jp_004",
+      "reviewerName": "Kenji Mori",
+      "amount": {
+        "amountMinor": 206500,
+        "currency": "USD"
+      },
+      "status": "scheduled"
+    },
+    {
+      "id": "pay_0090",
+      "reviewerId": "rev_ph_003",
+      "reviewerName": "Maria Santos",
+      "amount": {
+        "amountMinor": 184200,
+        "currency": "USD"
+      },
+      "status": "scheduled"
+    },
+    {
+      "id": "pay_0089",
+      "reviewerId": "rev_ph_011",
+      "reviewerName": "Joel Reyes",
+      "amount": {
+        "amountMinor": 112800,
+        "currency": "USD"
+      },
+      "status": "scheduled"
+    },
+    {
+      "id": "pay_0088",
+      "reviewerId": "rev_jp_009",
+      "reviewerName": "Aiko Tanaka",
+      "amount": {
+        "amountMinor": 98600,
+        "currency": "USD"
+      },
+      "status": "paid"
+    },
+    {
+      "id": "pay_0087",
+      "reviewerId": "rev_us_006",
+      "reviewerName": "Dana Whitfield",
+      "amount": {
+        "amountMinor": 86300,
+        "currency": "USD"
+      },
+      "status": "paid"
+    },
+    {
+      "id": "pay_0086",
+      "reviewerId": "rev_sg_002",
+      "reviewerName": "Wei Lim",
+      "amount": {
+        "amountMinor": 11200,
+        "currency": "USD"
+      },
+      "status": "held"
+    }
+  ],
+  "simulated": true
+}

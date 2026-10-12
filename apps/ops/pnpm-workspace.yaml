@@ -1,0 +1,8 @@
+allowBuilds:
+  unrs-resolver: true
+  sharp: true
+  esbuild: false
+  "@firebase/util": false
+  protobufjs: false
+  "@parcel/watcher": false
+  "@swc/core": false

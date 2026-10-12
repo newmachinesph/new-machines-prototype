@@ -1,6 +1,6 @@
 import os
 from dataclasses import dataclass
-from typing import Annotated
+from typing import Annotated, Any
 
 import requests
 from cachecontrol import CacheControl
@@ -11,6 +11,8 @@ from google.auth.transport.requests import Request
 from google.oauth2 import id_token
 
 from app.errors import ApiProblem
+from app.models.ops import OpsRole
+from app.store import get_store
 
 
 @dataclass(frozen=True)
@@ -55,7 +57,8 @@ class _CertsRequest(Request):
 _certs_request = _CertsRequest(session=CacheControl(requests.Session()))
 
 
-def _verified_user_id(token: str) -> str:
+def _verified_claims(token: str) -> dict[str, Any]:
+    """The token's claims, once its signature, audience, expiry and issuer check out and it names a user."""
     project_id = os.environ["FIREBASE_PROJECT_ID"]
     try:
         # Checks the signature against Google's certificates, the audience (our project) and expiry.
@@ -72,17 +75,106 @@ def _verified_user_id(token: str) -> str:
     user_id = claims.get("sub")
     if claims.get("iss") != f"https://securetoken.google.com/{project_id}" or not user_id:
         raise ApiProblem(401, "AUTHENTICATION_REQUIRED", "Sign in again to continue.")
-    return user_id
+    return claims
+
+
+def _verified_user_id(token: str) -> str:
+    return _verified_claims(token)["sub"]
+
+
+def _bearer_token(credentials: HTTPAuthorizationCredentials | None) -> str:
+    if credentials is None or credentials.scheme.lower() != "bearer":
+        raise ApiProblem(401, "AUTHENTICATION_REQUIRED", "Sign in to continue.")
+    return credentials.credentials
+
+
+def _signed_in_actor(credentials: HTTPAuthorizationCredentials | None) -> Actor:
+    if is_dev_mode():
+        return DEMO_ACTOR
+    return Actor(user_id=_verified_user_id(_bearer_token(credentials)), org_id=DEMO_ORG_ID)
 
 
 def get_actor(credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer)]) -> Actor:
-    """Swappable auth seam. AUTH_MODE=dev accepts any token or none; otherwise Firebase ID tokens are
-    verified. Every signed-in user works in the one seeded demo workspace."""
-    if is_dev_mode():
-        return DEMO_ACTOR
-    if credentials is None or credentials.scheme.lower() != "bearer":
-        raise ApiProblem(401, "AUTHENTICATION_REQUIRED", "Sign in to continue.")
-    return Actor(user_id=_verified_user_id(credentials.credentials), org_id=DEMO_ORG_ID)
+    """Swappable auth seam for customer routes. AUTH_MODE=dev accepts any token or none; otherwise Firebase
+    ID tokens are verified. Every signed-in user works in the one seeded demo workspace, and a workspace an
+    operator has suspended is locked out of every customer route."""
+    actor = _signed_in_actor(credentials)
+    tenant = get_store().tenants.get(actor.org_id)
+    if tenant is not None and tenant.status == "suspended":
+        raise ApiProblem(
+            403, "TENANT_SUSPENDED", "This workspace is suspended. Contact New Machines support."
+        )
+    return actor
 
 
 CurrentActor = Annotated[Actor, Depends(get_actor)]
+
+
+# Operators ---------------------------------------------------------------------------------------------
+# Staff sign in with the same Firebase project; an operator is a verified email on an allow list. The ops
+# routes depend on `get_ops_actor` only, never `get_actor`, so a suspended tenant cannot lock staff out.
+
+
+@dataclass(frozen=True)
+class OpsActor:
+    user_id: str
+    email: str
+    role: OpsRole
+
+
+DEV_OPS_ACTOR = OpsActor(user_id="ops_demo", email="ops@newmachin.es", role="owner")
+OPS_WRITER_ROLES: frozenset[OpsRole] = frozenset({"owner", "admin"})
+# Staff sign in with Google or email and password. Anonymous, phone and custom-token sessions never qualify.
+OPS_SIGN_IN_PROVIDERS = frozenset({"google.com", "password"})
+
+
+def _email_list(name: str) -> frozenset[str]:
+    """A comma-separated env var as lower-case emails. Unset or blank entries admit nobody."""
+    return frozenset(e.strip().lower() for e in os.environ.get(name, "").split(",") if e.strip())
+
+
+def ops_role_for(email: str) -> OpsRole | None:
+    """Nobody is an owner outside dev mode; an email on both lists is an admin."""
+    email = email.strip().lower()
+    if email in _email_list("OPS_ADMIN_EMAILS"):
+        return "admin"
+    if email in _email_list("OPS_SUPPORT_EMAILS"):
+        return "support"
+    return None
+
+
+def _ops_forbidden() -> ApiProblem:
+    return ApiProblem(403, "OPS_FORBIDDEN", "This account is not on the New Machines operator team.")
+
+
+def get_ops_actor(credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer)]) -> OpsActor:
+    """AUTH_MODE=dev is an owner operator. Otherwise the Firebase ID token must carry a verified email that
+    is on OPS_ADMIN_EMAILS or OPS_SUPPORT_EMAILS; anyone else gets 403."""
+    if is_dev_mode():
+        return DEV_OPS_ACTOR
+    claims = _verified_claims(_bearer_token(credentials))
+    email = claims.get("email")
+    # `is not True`: only a real boolean true counts; a string "true" or a missing claim does not.
+    if claims.get("email_verified") is not True or not isinstance(email, str) or not email.strip():
+        raise _ops_forbidden()
+    firebase = claims.get("firebase")
+    provider = firebase.get("sign_in_provider") if isinstance(firebase, dict) else None
+    if provider not in OPS_SIGN_IN_PROVIDERS:
+        raise _ops_forbidden()
+    role = ops_role_for(email)
+    if role is None:
+        raise _ops_forbidden()
+    return OpsActor(user_id=claims["sub"], email=email.strip().lower(), role=role)
+
+
+CurrentOps = Annotated[OpsActor, Depends(get_ops_actor)]
+
+
+def require_ops_writer(actor: CurrentOps) -> OpsActor:
+    """Mutations need admin or owner; support is read-only."""
+    if actor.role not in OPS_WRITER_ROLES:
+        raise ApiProblem(403, "OPS_FORBIDDEN", "Your operator role is read-only.")
+    return actor
+
+
+OpsWriter = Annotated[OpsActor, Depends(require_ops_writer)]
