@@ -243,7 +243,7 @@ export const LEDGER: LedgerTxn[] = [
 export const MCP_TOKENS = [
   {
     id: "pat_07",
-    name: "model Desktop",
+    name: "Antigravity CLI",
     last4: "7Q2K",
     scopes: ["agents:read", "runs:read", "runs:start", "approvals:list"],
     createdAt: "2026-10-10T18:00:00Z",
