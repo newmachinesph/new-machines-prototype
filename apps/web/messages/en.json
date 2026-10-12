@@ -671,7 +671,7 @@
   },
   "settings": {
     "title": "Settings",
-    "lede": "Who can use this workspace, the rules every run follows, and access for AI tools like Claude.",
+    "lede": "Who can use this workspace, the rules every run follows, and access for AI tools like Gemini and Antigravity CLI.",
     "policies": {
       "title": "Policies",
       "aside": "Checked on every action",
@@ -722,7 +722,7 @@
       "createTitle": "Create a token for an AI tool",
       "createDescription": "The token works for 30 days. It can never approve or decline anything, whatever you choose here.",
       "name": "Name",
-      "namePlaceholder": "For example, Claude Desktop",
+      "namePlaceholder": "For example, Antigravity CLI",
       "scopes": "What it can do",
       "scope": {
         "agents:read": "See hired packs and agents",
@@ -730,7 +730,7 @@
         "runs:start": "Start runs of hired packs",
         "approvals:list": "See what is waiting for approval"
       },
-      "lede": "Let Claude or another AI tool list your packs, start runs and see what is waiting. Tokens can never approve or decline anything.",
+      "lede": "Let Gemini, Antigravity CLI or another AI tool list your packs, start runs and see what is waiting. Tokens can never approve or decline anything.",
       "createdToast": "Token created",
       "createdToastBody": "In the live product you copy the full token once, right here. Demo tokens do not work.",
       "createFailed": "Could not create the token",
@@ -744,7 +744,7 @@
       "expires": "Expires {date}",
       "lastUsed": "Last used {when}",
       "neverUsed": "Not used yet",
-      "none": "No tokens. Create one to connect Claude or another AI tool."
+      "none": "No tokens. Create one to connect Gemini or another AI tool."
     }
   },
   "usage": {

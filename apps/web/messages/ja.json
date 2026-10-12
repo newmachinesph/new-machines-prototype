@@ -671,7 +671,7 @@
   },
   "settings": {
     "title": "設定",
-    "lede": "このワークスペースを使える人、すべての実行が従うルール、ClaudeなどのAIツールのアクセスを管理します。",
+    "lede": "このワークスペースを使える人、すべての実行が従うルール、GeminiやAntigravity CLIなどのAIツールのアクセスを管理します。",
     "policies": {
       "title": "ポリシー",
       "aside": "すべての操作で確認されます",
@@ -722,7 +722,7 @@
       "createTitle": "AIツール用のトークンを作成",
       "createDescription": "トークンは30日間有効です。ここでの選択にかかわらず、承認や却下は一切できません。",
       "name": "名前",
-      "namePlaceholder": "例：Claude Desktop",
+      "namePlaceholder": "例：Antigravity CLI",
       "scopes": "できること",
       "scope": {
         "agents:read": "採用済みのパックとエージェントを見る",
@@ -730,7 +730,7 @@
         "runs:start": "採用済みのパックの実行を開始する",
         "approvals:list": "承認待ちの項目を見る"
       },
-      "lede": "ClaudeなどのAIツールが、パックの一覧表示、実行の開始、待機中の項目の確認をできるようにします。トークンで承認や却下をすることはできません。",
+      "lede": "Gemini、Antigravity CLIなどのAIツールが、パックの一覧表示、実行の開始、待機中の項目の確認をできるようにします。トークンで承認や却下をすることはできません。",
       "createdToast": "トークンを作成しました",
       "createdToastBody": "本番版では、ここでトークンの全文を一度だけコピーできます。デモのトークンは使えません。",
       "createFailed": "トークンを作成できませんでした",
@@ -744,7 +744,7 @@
       "expires": "有効期限：{date}",
       "lastUsed": "最終利用：{when}",
       "neverUsed": "未使用",
-      "none": "トークンはありません。作成して、ClaudeなどのAIツールに接続します。"
+      "none": "トークンはありません。作成して、GeminiなどのAIツールに接続します。"
     }
   },
   "usage": {
