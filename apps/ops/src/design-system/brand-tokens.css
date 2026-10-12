@@ -1,0 +1,74 @@
+@import "tailwindcss";
+
+/* Fonts reference variables that next/font sets on <html>; `inline` makes
+   utilities emit the resolved stack instead of var(--font-sans). */
+@theme inline {
+  --font-sans: var(--font-geist-sans), var(--font-noto-jp), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace;
+  --font-display: var(--font-michroma), var(--font-geist-sans), sans-serif;
+}
+
+@theme {
+  /* Neutrals - the only colours UI chrome may use */
+  --color-ink: #111111;
+  --color-paper: #ffffff;
+  --color-grey-50: #f7f7f8;
+  --color-grey-100: #eeeef0;
+  --color-grey-200: #dedee2;
+  --color-grey-300: #c5c5cb;
+  --color-grey-500: #6f6f78;
+  --color-grey-700: #4a4a52;
+  --color-grey-900: #1e1e22;
+
+  /* Accents - illustrations and status only. Text values pass 4.5:1 on paper. */
+  --color-machine: #1d4ed8; /* cobalt, 6.3:1 */
+  --color-machine-soft: #dbeafe;
+  --color-human: #b45309; /* amber, 5.0:1 */
+  --color-human-soft: #fef3c7;
+  --color-blocked: #b91c1c; /* red, 6.0:1 */
+  --color-blocked-soft: #fee2e2;
+
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.875rem;
+
+  --shadow-sm: 0 1px 2px rgb(17 17 17 / 0.06);
+  --shadow-md: 0 4px 16px rgb(17 17 17 / 0.08);
+
+  --container-prose: 42rem;
+  --container-page: 76rem;
+  --container-frame: 87rem; /* 1392px boxed column (Attio) */
+}
+
+@layer base {
+  html {
+    background: var(--color-paper);
+    color: var(--color-ink);
+  }
+  body {
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  :lang(ja) {
+    font-family: var(--font-noto-jp), var(--font-geist-sans), sans-serif;
+  }
+}
+
+/* Homepage extensions: existing brand roles remain the source of truth. */
+:root {
+  --color-stage: #f4f5f6;
+  --color-stage-line: #e7e8eb;
+  --color-muted-ink: #62636c;
+  --color-overlay: rgb(17 17 17 / 0.035);
+  --color-shadow: rgb(17 17 17 / 0.08);
+  --color-shadow-soft: rgb(17 17 17 / 0.035);
+  --color-on-dark: #e1e1e5;
+  --color-focus: var(--color-machine);
+  --space-section: clamp(2rem, 5vw, 5rem);
+  --text-hero: clamp(2rem, 4.4vw, 4rem);
+  --text-section: clamp(2rem, 3.8vw, 3.5rem);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-quick: 160ms;
+  --radius-panel: 12px;
+  --rule-page: 1px solid var(--color-grey-200);
+}

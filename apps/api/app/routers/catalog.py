@@ -4,7 +4,7 @@ from app.models.catalog import Agent, Pack, Suggestion
 from app.models.requests import Installation, InstallRequest, SuggestRequest
 from app.routers.org import require_org
 from app.routing import ApiRouter
-from app.store import get_store, locked_store
+from app.store import Store, get_store, locked_store
 
 router = ApiRouter(prefix="/v1", tags=["catalog"])
 
@@ -19,8 +19,18 @@ WORDS = {
 }
 
 
+def is_listed(store: Store, pack: Pack) -> bool:
+    """The marketplace effect of the ops listing: published packs are shown, a deprecated one only while the
+    demo tenant has it installed. A pack without a listing is treated as published."""
+    listing = store.pack_listings.get(pack.slug)
+    if listing is None or listing.status == "published":
+        return True
+    return listing.status == "deprecated" and pack.installed
+
+
 def find_pack(slug: str) -> Pack:
-    pack = next((p for p in get_store().packs if p.slug == slug), None)
+    store = get_store()
+    pack = next((p for p in store.packs if p.slug == slug and is_listed(store, p)), None)
     if pack is None:
         raise ApiProblem(404, "NOT_FOUND", f"No Workflow Pack called {slug}.")
     return pack
@@ -28,12 +38,14 @@ def find_pack(slug: str) -> Pack:
 
 @router.get("/workflow-packs", operation_id="listWorkflowPacks", response_model=list[Pack])
 def list_workflow_packs(_: CurrentActor) -> list[Pack]:
-    return get_store().packs
+    with locked_store() as store:
+        return [p for p in store.packs if is_listed(store, p)]
 
 
 @router.get("/workflow-packs/{slug}", operation_id="getWorkflowPack", response_model=Pack)
 def get_workflow_pack(slug: str, _: CurrentActor) -> Pack:
-    return find_pack(slug)
+    with locked_store():
+        return find_pack(slug)
 
 
 @router.get("/agents", operation_id="listAgents", response_model=list[Agent])
@@ -45,12 +57,14 @@ def list_agents(_: CurrentActor) -> list[Agent]:
 def suggest_workflow_pack(body: SuggestRequest, _: CurrentActor) -> Suggestion:
     """Keyword match for the static API. The dynamic backend asks Gemini and keeps this response shape."""
     words = set(body.text.lower().replace(",", " ").split())
-    best = max(WORDS, key=lambda slug: len(WORDS[slug] & words))
-    if not WORDS[best] & words:
-        return Suggestion(
-            steps=["Describe the result you want, the apps involved and how often."], simulated=True
-        )
-    pack = find_pack(best)
+    with locked_store() as store:
+        listed = [p.slug for p in store.packs if p.slug in WORDS and is_listed(store, p)]
+        best = max(listed, key=lambda slug: len(WORDS[slug] & words), default=None)
+        if best is None or not WORDS[best] & words:
+            return Suggestion(
+                steps=["Describe the result you want, the apps involved and how often."], simulated=True
+            )
+        pack = find_pack(best)
     steps = [
         f"Read the data it needs from {', '.join(c.app for c in pack.connectors)}.",
         f"{pack.outcome}",

@@ -3,8 +3,8 @@
 import { queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { approveApproval, claimHumanTask, createToken, declineApproval, disconnectConnection, getHumanTask, getOrganization, getUsage, getWorkflowPack, getWorkflowRun, installWorkflowPack, inviteMember, listAgents, listApprovals, listAttention, listConnections, listEarnings, listEligibleHumanTasks, listMembers, listMemory, listPolicies, listTokens, listWorkflowPacks, listWorkflowRuns, type Options, retractMemory, reviewMemoryCandidate, revokeGrant, revokeToken, startWorkflowRun, submitHumanTask, suggestWorkflowPack } from '../sdk.gen';
-import type { ApproveApprovalData, ApproveApprovalError, ApproveApprovalResponse, ClaimHumanTaskData, ClaimHumanTaskError, ClaimHumanTaskResponse, CreateTokenData, CreateTokenError, CreateTokenResponse, DeclineApprovalData, DeclineApprovalError, DeclineApprovalResponse, DisconnectConnectionData, DisconnectConnectionError, DisconnectConnectionResponse, GetHumanTaskData, GetHumanTaskError, GetHumanTaskResponse, GetOrganizationData, GetOrganizationError, GetOrganizationResponse, GetUsageData, GetUsageError, GetUsageResponse, GetWorkflowPackData, GetWorkflowPackError, GetWorkflowPackResponse, GetWorkflowRunData, GetWorkflowRunError, GetWorkflowRunResponse, InstallWorkflowPackData, InstallWorkflowPackError, InstallWorkflowPackResponse, InviteMemberData, InviteMemberError, InviteMemberResponse, ListAgentsData, ListAgentsError, ListAgentsResponse, ListApprovalsData, ListApprovalsError, ListApprovalsResponse, ListAttentionData, ListAttentionError, ListAttentionResponse, ListConnectionsData, ListConnectionsError, ListConnectionsResponse, ListEarningsData, ListEarningsError, ListEarningsResponse, ListEligibleHumanTasksData, ListEligibleHumanTasksError, ListEligibleHumanTasksResponse, ListMembersData, ListMembersError, ListMembersResponse, ListMemoryData, ListMemoryError, ListMemoryResponse, ListPoliciesData, ListPoliciesError, ListPoliciesResponse, ListTokensData, ListTokensError, ListTokensResponse, ListWorkflowPacksData, ListWorkflowPacksError, ListWorkflowPacksResponse, ListWorkflowRunsData, ListWorkflowRunsError, ListWorkflowRunsResponse, RetractMemoryData, RetractMemoryError, RetractMemoryResponse, ReviewMemoryCandidateData, ReviewMemoryCandidateError, ReviewMemoryCandidateResponse, RevokeGrantData, RevokeGrantError, RevokeGrantResponse, RevokeTokenData, RevokeTokenError, RevokeTokenResponse, StartWorkflowRunData, StartWorkflowRunError, StartWorkflowRunResponse, SubmitHumanTaskData, SubmitHumanTaskError, SubmitHumanTaskResponse, SuggestWorkflowPackData, SuggestWorkflowPackError, SuggestWorkflowPackResponse } from '../types.gen';
+import { approveApproval, claimHumanTask, createToken, declineApproval, disconnectConnection, getHumanTask, getOrganization, getUsage, getWorkflowPack, getWorkflowRun, installWorkflowPack, inviteMember, listAgents, listApprovals, listAttention, listConnections, listEarnings, listEligibleHumanTasks, listMembers, listMemory, listPolicies, listTokens, listWorkflowPacks, listWorkflowRuns, opsAddConnector, opsApprovePack, opsApproveReviewer, opsCertifyPack, opsCreatePack, opsCreateTenant, opsDeclareIncident, opsDeprecatePack, opsDisableConnector, opsEnableConnector, opsGetBilling, opsGetHealth, opsGetMe, opsGetOverview, opsGetPack, opsGetTenant, opsHealthCheckConnector, opsListAudit, opsListAvailableToolkits, opsListConnectors, opsListGuardrails, opsListPacks, opsListReviewers, opsListRuns, opsListTeam, opsListTenants, opsReactivateTenant, opsReinstateReviewer, opsRejectPack, opsRepublishPack, opsSetConnectorDefaults, opsSetGuardrail, opsSetReviewerLevel, opsSetTenantPlan, opsSetTenantSpendCap, opsSubmitPack, opsSuspendReviewer, opsSuspendTenant, opsUpdateIncident, type Options, retractMemory, reviewMemoryCandidate, revokeGrant, revokeToken, startWorkflowRun, submitHumanTask, suggestWorkflowPack } from '../sdk.gen';
+import type { ApproveApprovalData, ApproveApprovalError, ApproveApprovalResponse, ClaimHumanTaskData, ClaimHumanTaskError, ClaimHumanTaskResponse, CreateTokenData, CreateTokenError, CreateTokenResponse, DeclineApprovalData, DeclineApprovalError, DeclineApprovalResponse, DisconnectConnectionData, DisconnectConnectionError, DisconnectConnectionResponse, GetHumanTaskData, GetHumanTaskError, GetHumanTaskResponse, GetOrganizationData, GetOrganizationError, GetOrganizationResponse, GetUsageData, GetUsageError, GetUsageResponse, GetWorkflowPackData, GetWorkflowPackError, GetWorkflowPackResponse, GetWorkflowRunData, GetWorkflowRunError, GetWorkflowRunResponse, InstallWorkflowPackData, InstallWorkflowPackError, InstallWorkflowPackResponse, InviteMemberData, InviteMemberError, InviteMemberResponse, ListAgentsData, ListAgentsError, ListAgentsResponse, ListApprovalsData, ListApprovalsError, ListApprovalsResponse, ListAttentionData, ListAttentionError, ListAttentionResponse, ListConnectionsData, ListConnectionsError, ListConnectionsResponse, ListEarningsData, ListEarningsError, ListEarningsResponse, ListEligibleHumanTasksData, ListEligibleHumanTasksError, ListEligibleHumanTasksResponse, ListMembersData, ListMembersError, ListMembersResponse, ListMemoryData, ListMemoryError, ListMemoryResponse, ListPoliciesData, ListPoliciesError, ListPoliciesResponse, ListTokensData, ListTokensError, ListTokensResponse, ListWorkflowPacksData, ListWorkflowPacksError, ListWorkflowPacksResponse, ListWorkflowRunsData, ListWorkflowRunsError, ListWorkflowRunsResponse, OpsAddConnectorData, OpsAddConnectorError, OpsAddConnectorResponse, OpsApprovePackData, OpsApprovePackError, OpsApprovePackResponse, OpsApproveReviewerData, OpsApproveReviewerError, OpsApproveReviewerResponse, OpsCertifyPackData, OpsCertifyPackError, OpsCertifyPackResponse, OpsCreatePackData, OpsCreatePackError, OpsCreatePackResponse, OpsCreateTenantData, OpsCreateTenantError, OpsCreateTenantResponse, OpsDeclareIncidentData, OpsDeclareIncidentError, OpsDeclareIncidentResponse, OpsDeprecatePackData, OpsDeprecatePackError, OpsDeprecatePackResponse, OpsDisableConnectorData, OpsDisableConnectorError, OpsDisableConnectorResponse, OpsEnableConnectorData, OpsEnableConnectorError, OpsEnableConnectorResponse, OpsGetBillingData, OpsGetBillingError, OpsGetBillingResponse, OpsGetHealthData, OpsGetHealthError, OpsGetHealthResponse, OpsGetMeData, OpsGetMeError, OpsGetMeResponse, OpsGetOverviewData, OpsGetOverviewError, OpsGetOverviewResponse, OpsGetPackData, OpsGetPackError, OpsGetPackResponse, OpsGetTenantData, OpsGetTenantError, OpsGetTenantResponse, OpsHealthCheckConnectorData, OpsHealthCheckConnectorError, OpsHealthCheckConnectorResponse, OpsListAuditData, OpsListAuditError, OpsListAuditResponse, OpsListAvailableToolkitsData, OpsListAvailableToolkitsError, OpsListAvailableToolkitsResponse, OpsListConnectorsData, OpsListConnectorsError, OpsListConnectorsResponse, OpsListGuardrailsData, OpsListGuardrailsError, OpsListGuardrailsResponse, OpsListPacksData, OpsListPacksError, OpsListPacksResponse, OpsListReviewersData, OpsListReviewersError, OpsListReviewersResponse, OpsListRunsData, OpsListRunsError, OpsListRunsResponse, OpsListTeamData, OpsListTeamError, OpsListTeamResponse, OpsListTenantsData, OpsListTenantsError, OpsListTenantsResponse, OpsReactivateTenantData, OpsReactivateTenantError, OpsReactivateTenantResponse, OpsReinstateReviewerData, OpsReinstateReviewerError, OpsReinstateReviewerResponse, OpsRejectPackData, OpsRejectPackError, OpsRejectPackResponse, OpsRepublishPackData, OpsRepublishPackError, OpsRepublishPackResponse, OpsSetConnectorDefaultsData, OpsSetConnectorDefaultsError, OpsSetConnectorDefaultsResponse, OpsSetGuardrailData, OpsSetGuardrailError, OpsSetGuardrailResponse, OpsSetReviewerLevelData, OpsSetReviewerLevelError, OpsSetReviewerLevelResponse, OpsSetTenantPlanData, OpsSetTenantPlanError, OpsSetTenantPlanResponse, OpsSetTenantSpendCapData, OpsSetTenantSpendCapError, OpsSetTenantSpendCapResponse, OpsSubmitPackData, OpsSubmitPackError, OpsSubmitPackResponse, OpsSuspendReviewerData, OpsSuspendReviewerError, OpsSuspendReviewerResponse, OpsSuspendTenantData, OpsSuspendTenantError, OpsSuspendTenantResponse, OpsUpdateIncidentData, OpsUpdateIncidentError, OpsUpdateIncidentResponse, RetractMemoryData, RetractMemoryError, RetractMemoryResponse, ReviewMemoryCandidateData, ReviewMemoryCandidateError, ReviewMemoryCandidateResponse, RevokeGrantData, RevokeGrantError, RevokeGrantResponse, RevokeTokenData, RevokeTokenError, RevokeTokenResponse, StartWorkflowRunData, StartWorkflowRunError, StartWorkflowRunResponse, SubmitHumanTaskData, SubmitHumanTaskError, SubmitHumanTaskResponse, SuggestWorkflowPackData, SuggestWorkflowPackError, SuggestWorkflowPackResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -577,6 +577,692 @@ export const revokeTokenMutation = (options?: Partial<Options<RevokeTokenData>>)
     const mutationOptions: UseMutationOptions<RevokeTokenResponse, RevokeTokenError, Options<RevokeTokenData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await revokeToken({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const opsListPacksQueryKey = (options?: Options<OpsListPacksData>) => createQueryKey('opsListPacks', options);
+
+/**
+ * Ops List Packs
+ */
+export const opsListPacksOptions = (options?: Options<OpsListPacksData>) => queryOptions<OpsListPacksResponse, OpsListPacksError, OpsListPacksResponse, ReturnType<typeof opsListPacksQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await opsListPacks({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: opsListPacksQueryKey(options)
+});
+
+/**
+ * Ops Create Pack
+ */
+export const opsCreatePackMutation = (options?: Partial<Options<OpsCreatePackData>>): UseMutationOptions<OpsCreatePackResponse, OpsCreatePackError, Options<OpsCreatePackData>> => {
+    const mutationOptions: UseMutationOptions<OpsCreatePackResponse, OpsCreatePackError, Options<OpsCreatePackData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await opsCreatePack({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const opsGetPackQueryKey = (options: Options<OpsGetPackData>) => createQueryKey('opsGetPack', options);
+
+/**
+ * Ops Get Pack
+ */
+export const opsGetPackOptions = (options: Options<OpsGetPackData>) => queryOptions<OpsGetPackResponse, OpsGetPackError, OpsGetPackResponse, ReturnType<typeof opsGetPackQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await opsGetPack({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: opsGetPackQueryKey(options)
+});
+
+/**
+ * Ops Submit Pack
+ */
+export const opsSubmitPackMutation = (options?: Partial<Options<OpsSubmitPackData>>): UseMutationOptions<OpsSubmitPackResponse, OpsSubmitPackError, Options<OpsSubmitPackData>> => {
+    const mutationOptions: UseMutationOptions<OpsSubmitPackResponse, OpsSubmitPackError, Options<OpsSubmitPackData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await opsSubmitPack({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Ops Approve Pack
+ */
+export const opsApprovePackMutation = (options?: Partial<Options<OpsApprovePackData>>): UseMutationOptions<OpsApprovePackResponse, OpsApprovePackError, Options<OpsApprovePackData>> => {
+    const mutationOptions: UseMutationOptions<OpsApprovePackResponse, OpsApprovePackError, Options<OpsApprovePackData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await opsApprovePack({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Ops Reject Pack
+ */
+export const opsRejectPackMutation = (options?: Partial<Options<OpsRejectPackData>>): UseMutationOptions<OpsRejectPackResponse, OpsRejectPackError, Options<OpsRejectPackData>> => {
+    const mutationOptions: UseMutationOptions<OpsRejectPackResponse, OpsRejectPackError, Options<OpsRejectPackData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await opsRejectPack({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Ops Deprecate Pack
+ */
+export const opsDeprecatePackMutation = (options?: Partial<Options<OpsDeprecatePackData>>): UseMutationOptions<OpsDeprecatePackResponse, OpsDeprecatePackError, Options<OpsDeprecatePackData>> => {
+    const mutationOptions: UseMutationOptions<OpsDeprecatePackResponse, OpsDeprecatePackError, Options<OpsDeprecatePackData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await opsDeprecatePack({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Ops Republish Pack
+ */
+export const opsRepublishPackMutation = (options?: Partial<Options<OpsRepublishPackData>>): UseMutationOptions<OpsRepublishPackResponse, OpsRepublishPackError, Options<OpsRepublishPackData>> => {
+    const mutationOptions: UseMutationOptions<OpsRepublishPackResponse, OpsRepublishPackError, Options<OpsRepublishPackData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await opsRepublishPack({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Ops Certify Pack
+ */
+export const opsCertifyPackMutation = (options?: Partial<Options<OpsCertifyPackData>>): UseMutationOptions<OpsCertifyPackResponse, OpsCertifyPackError, Options<OpsCertifyPackData>> => {
+    const mutationOptions: UseMutationOptions<OpsCertifyPackResponse, OpsCertifyPackError, Options<OpsCertifyPackData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await opsCertifyPack({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const opsListConnectorsQueryKey = (options?: Options<OpsListConnectorsData>) => createQueryKey('opsListConnectors', options);
+
+/**
+ * Ops List Connectors
+ */
+export const opsListConnectorsOptions = (options?: Options<OpsListConnectorsData>) => queryOptions<OpsListConnectorsResponse, OpsListConnectorsError, OpsListConnectorsResponse, ReturnType<typeof opsListConnectorsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await opsListConnectors({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: opsListConnectorsQueryKey(options)
+});
+
+/**
+ * Ops Add Connector
+ */
+export const opsAddConnectorMutation = (options?: Partial<Options<OpsAddConnectorData>>): UseMutationOptions<OpsAddConnectorResponse, OpsAddConnectorError, Options<OpsAddConnectorData>> => {
+    const mutationOptions: UseMutationOptions<OpsAddConnectorResponse, OpsAddConnectorError, Options<OpsAddConnectorData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await opsAddConnector({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const opsListAvailableToolkitsQueryKey = (options?: Options<OpsListAvailableToolkitsData>) => createQueryKey('opsListAvailableToolkits', options);
+
+/**
+ * Ops List Available Toolkits
+ *
+ * Simulated Composio toolkit discovery, minus the ones already in the catalog.
+ */
+export const opsListAvailableToolkitsOptions = (options?: Options<OpsListAvailableToolkitsData>) => queryOptions<OpsListAvailableToolkitsResponse, OpsListAvailableToolkitsError, OpsListAvailableToolkitsResponse, ReturnType<typeof opsListAvailableToolkitsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await opsListAvailableToolkits({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: opsListAvailableToolkitsQueryKey(options)
+});
+
+/**
+ * Ops Enable Connector
+ */
+export const opsEnableConnectorMutation = (options?: Partial<Options<OpsEnableConnectorData>>): UseMutationOptions<OpsEnableConnectorResponse, OpsEnableConnectorError, Options<OpsEnableConnectorData>> => {
+    const mutationOptions: UseMutationOptions<OpsEnableConnectorResponse, OpsEnableConnectorError, Options<OpsEnableConnectorData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await opsEnableConnector({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Ops Disable Connector
+ */
+export const opsDisableConnectorMutation = (options?: Partial<Options<OpsDisableConnectorData>>): UseMutationOptions<OpsDisableConnectorResponse, OpsDisableConnectorError, Options<OpsDisableConnectorData>> => {
+    const mutationOptions: UseMutationOptions<OpsDisableConnectorResponse, OpsDisableConnectorError, Options<OpsDisableConnectorData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await opsDisableConnector({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Ops Set Connector Defaults
+ */
+export const opsSetConnectorDefaultsMutation = (options?: Partial<Options<OpsSetConnectorDefaultsData>>): UseMutationOptions<OpsSetConnectorDefaultsResponse, OpsSetConnectorDefaultsError, Options<OpsSetConnectorDefaultsData>> => {
+    const mutationOptions: UseMutationOptions<OpsSetConnectorDefaultsResponse, OpsSetConnectorDefaultsError, Options<OpsSetConnectorDefaultsData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await opsSetConnectorDefaults({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Ops Health Check Connector
+ *
+ * Simulated and deterministic: healthy unless the connector is disabled.
+ */
+export const opsHealthCheckConnectorMutation = (options?: Partial<Options<OpsHealthCheckConnectorData>>): UseMutationOptions<OpsHealthCheckConnectorResponse, OpsHealthCheckConnectorError, Options<OpsHealthCheckConnectorData>> => {
+    const mutationOptions: UseMutationOptions<OpsHealthCheckConnectorResponse, OpsHealthCheckConnectorError, Options<OpsHealthCheckConnectorData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await opsHealthCheckConnector({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const opsGetHealthQueryKey = (options?: Options<OpsGetHealthData>) => createQueryKey('opsGetHealth', options);
+
+/**
+ * Ops Get Health
+ */
+export const opsGetHealthOptions = (options?: Options<OpsGetHealthData>) => queryOptions<OpsGetHealthResponse, OpsGetHealthError, OpsGetHealthResponse, ReturnType<typeof opsGetHealthQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await opsGetHealth({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: opsGetHealthQueryKey(options)
+});
+
+/**
+ * Ops Declare Incident
+ */
+export const opsDeclareIncidentMutation = (options?: Partial<Options<OpsDeclareIncidentData>>): UseMutationOptions<OpsDeclareIncidentResponse, OpsDeclareIncidentError, Options<OpsDeclareIncidentData>> => {
+    const mutationOptions: UseMutationOptions<OpsDeclareIncidentResponse, OpsDeclareIncidentError, Options<OpsDeclareIncidentData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await opsDeclareIncident({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Ops Update Incident
+ */
+export const opsUpdateIncidentMutation = (options?: Partial<Options<OpsUpdateIncidentData>>): UseMutationOptions<OpsUpdateIncidentResponse, OpsUpdateIncidentError, Options<OpsUpdateIncidentData>> => {
+    const mutationOptions: UseMutationOptions<OpsUpdateIncidentResponse, OpsUpdateIncidentError, Options<OpsUpdateIncidentData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await opsUpdateIncident({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const opsGetOverviewQueryKey = (options?: Options<OpsGetOverviewData>) => createQueryKey('opsGetOverview', options);
+
+/**
+ * Ops Get Overview
+ */
+export const opsGetOverviewOptions = (options?: Options<OpsGetOverviewData>) => queryOptions<OpsGetOverviewResponse, OpsGetOverviewError, OpsGetOverviewResponse, ReturnType<typeof opsGetOverviewQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await opsGetOverview({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: opsGetOverviewQueryKey(options)
+});
+
+export const opsListReviewersQueryKey = (options?: Options<OpsListReviewersData>) => createQueryKey('opsListReviewers', options);
+
+/**
+ * Ops List Reviewers
+ */
+export const opsListReviewersOptions = (options?: Options<OpsListReviewersData>) => queryOptions<OpsListReviewersResponse, OpsListReviewersError, OpsListReviewersResponse, ReturnType<typeof opsListReviewersQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await opsListReviewers({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: opsListReviewersQueryKey(options)
+});
+
+/**
+ * Ops Approve Reviewer
+ */
+export const opsApproveReviewerMutation = (options?: Partial<Options<OpsApproveReviewerData>>): UseMutationOptions<OpsApproveReviewerResponse, OpsApproveReviewerError, Options<OpsApproveReviewerData>> => {
+    const mutationOptions: UseMutationOptions<OpsApproveReviewerResponse, OpsApproveReviewerError, Options<OpsApproveReviewerData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await opsApproveReviewer({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Ops Suspend Reviewer
+ */
+export const opsSuspendReviewerMutation = (options?: Partial<Options<OpsSuspendReviewerData>>): UseMutationOptions<OpsSuspendReviewerResponse, OpsSuspendReviewerError, Options<OpsSuspendReviewerData>> => {
+    const mutationOptions: UseMutationOptions<OpsSuspendReviewerResponse, OpsSuspendReviewerError, Options<OpsSuspendReviewerData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await opsSuspendReviewer({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Ops Reinstate Reviewer
+ */
+export const opsReinstateReviewerMutation = (options?: Partial<Options<OpsReinstateReviewerData>>): UseMutationOptions<OpsReinstateReviewerResponse, OpsReinstateReviewerError, Options<OpsReinstateReviewerData>> => {
+    const mutationOptions: UseMutationOptions<OpsReinstateReviewerResponse, OpsReinstateReviewerError, Options<OpsReinstateReviewerData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await opsReinstateReviewer({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Ops Set Reviewer Level
+ */
+export const opsSetReviewerLevelMutation = (options?: Partial<Options<OpsSetReviewerLevelData>>): UseMutationOptions<OpsSetReviewerLevelResponse, OpsSetReviewerLevelError, Options<OpsSetReviewerLevelData>> => {
+    const mutationOptions: UseMutationOptions<OpsSetReviewerLevelResponse, OpsSetReviewerLevelError, Options<OpsSetReviewerLevelData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await opsSetReviewerLevel({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const opsListRunsQueryKey = (options?: Options<OpsListRunsData>) => createQueryKey('opsListRuns', options);
+
+/**
+ * Ops List Runs
+ */
+export const opsListRunsOptions = (options?: Options<OpsListRunsData>) => queryOptions<OpsListRunsResponse, OpsListRunsError, OpsListRunsResponse, ReturnType<typeof opsListRunsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await opsListRuns({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: opsListRunsQueryKey(options)
+});
+
+export const opsListGuardrailsQueryKey = (options?: Options<OpsListGuardrailsData>) => createQueryKey('opsListGuardrails', options);
+
+/**
+ * Ops List Guardrails
+ */
+export const opsListGuardrailsOptions = (options?: Options<OpsListGuardrailsData>) => queryOptions<OpsListGuardrailsResponse, OpsListGuardrailsError, OpsListGuardrailsResponse, ReturnType<typeof opsListGuardrailsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await opsListGuardrails({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: opsListGuardrailsQueryKey(options)
+});
+
+/**
+ * Ops Set Guardrail
+ */
+export const opsSetGuardrailMutation = (options?: Partial<Options<OpsSetGuardrailData>>): UseMutationOptions<OpsSetGuardrailResponse, OpsSetGuardrailError, Options<OpsSetGuardrailData>> => {
+    const mutationOptions: UseMutationOptions<OpsSetGuardrailResponse, OpsSetGuardrailError, Options<OpsSetGuardrailData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await opsSetGuardrail({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const opsGetBillingQueryKey = (options?: Options<OpsGetBillingData>) => createQueryKey('opsGetBilling', options);
+
+/**
+ * Ops Get Billing
+ */
+export const opsGetBillingOptions = (options?: Options<OpsGetBillingData>) => queryOptions<OpsGetBillingResponse, OpsGetBillingError, OpsGetBillingResponse, ReturnType<typeof opsGetBillingQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await opsGetBilling({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: opsGetBillingQueryKey(options)
+});
+
+export const opsGetMeQueryKey = (options?: Options<OpsGetMeData>) => createQueryKey('opsGetMe', options);
+
+/**
+ * Ops Get Me
+ */
+export const opsGetMeOptions = (options?: Options<OpsGetMeData>) => queryOptions<OpsGetMeResponse, OpsGetMeError, OpsGetMeResponse, ReturnType<typeof opsGetMeQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await opsGetMe({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: opsGetMeQueryKey(options)
+});
+
+export const opsListTeamQueryKey = (options?: Options<OpsListTeamData>) => createQueryKey('opsListTeam', options);
+
+/**
+ * Ops List Team
+ */
+export const opsListTeamOptions = (options?: Options<OpsListTeamData>) => queryOptions<OpsListTeamResponse, OpsListTeamError, OpsListTeamResponse, ReturnType<typeof opsListTeamQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await opsListTeam({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: opsListTeamQueryKey(options)
+});
+
+export const opsListAuditQueryKey = (options?: Options<OpsListAuditData>) => createQueryKey('opsListAudit', options);
+
+/**
+ * Ops List Audit
+ *
+ * Newest first. Entries with the same timestamp keep the order they were written in, newest first.
+ */
+export const opsListAuditOptions = (options?: Options<OpsListAuditData>) => queryOptions<OpsListAuditResponse, OpsListAuditError, OpsListAuditResponse, ReturnType<typeof opsListAuditQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await opsListAudit({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: opsListAuditQueryKey(options)
+});
+
+export const opsListTenantsQueryKey = (options?: Options<OpsListTenantsData>) => createQueryKey('opsListTenants', options);
+
+/**
+ * Ops List Tenants
+ */
+export const opsListTenantsOptions = (options?: Options<OpsListTenantsData>) => queryOptions<OpsListTenantsResponse, OpsListTenantsError, OpsListTenantsResponse, ReturnType<typeof opsListTenantsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await opsListTenants({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: opsListTenantsQueryKey(options)
+});
+
+/**
+ * Ops Create Tenant
+ */
+export const opsCreateTenantMutation = (options?: Partial<Options<OpsCreateTenantData>>): UseMutationOptions<OpsCreateTenantResponse, OpsCreateTenantError, Options<OpsCreateTenantData>> => {
+    const mutationOptions: UseMutationOptions<OpsCreateTenantResponse, OpsCreateTenantError, Options<OpsCreateTenantData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await opsCreateTenant({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const opsGetTenantQueryKey = (options: Options<OpsGetTenantData>) => createQueryKey('opsGetTenant', options);
+
+/**
+ * Ops Get Tenant
+ */
+export const opsGetTenantOptions = (options: Options<OpsGetTenantData>) => queryOptions<OpsGetTenantResponse, OpsGetTenantError, OpsGetTenantResponse, ReturnType<typeof opsGetTenantQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await opsGetTenant({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: opsGetTenantQueryKey(options)
+});
+
+/**
+ * Ops Suspend Tenant
+ */
+export const opsSuspendTenantMutation = (options?: Partial<Options<OpsSuspendTenantData>>): UseMutationOptions<OpsSuspendTenantResponse, OpsSuspendTenantError, Options<OpsSuspendTenantData>> => {
+    const mutationOptions: UseMutationOptions<OpsSuspendTenantResponse, OpsSuspendTenantError, Options<OpsSuspendTenantData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await opsSuspendTenant({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Ops Reactivate Tenant
+ *
+ * The tenant returns to the status it had when suspended. One seeded as suspended becomes active.
+ */
+export const opsReactivateTenantMutation = (options?: Partial<Options<OpsReactivateTenantData>>): UseMutationOptions<OpsReactivateTenantResponse, OpsReactivateTenantError, Options<OpsReactivateTenantData>> => {
+    const mutationOptions: UseMutationOptions<OpsReactivateTenantResponse, OpsReactivateTenantError, Options<OpsReactivateTenantData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await opsReactivateTenant({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Ops Set Tenant Plan
+ */
+export const opsSetTenantPlanMutation = (options?: Partial<Options<OpsSetTenantPlanData>>): UseMutationOptions<OpsSetTenantPlanResponse, OpsSetTenantPlanError, Options<OpsSetTenantPlanData>> => {
+    const mutationOptions: UseMutationOptions<OpsSetTenantPlanResponse, OpsSetTenantPlanError, Options<OpsSetTenantPlanData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await opsSetTenantPlan({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Ops Set Tenant Spend Cap
+ */
+export const opsSetTenantSpendCapMutation = (options?: Partial<Options<OpsSetTenantSpendCapData>>): UseMutationOptions<OpsSetTenantSpendCapResponse, OpsSetTenantSpendCapError, Options<OpsSetTenantSpendCapData>> => {
+    const mutationOptions: UseMutationOptions<OpsSetTenantSpendCapResponse, OpsSetTenantSpendCapError, Options<OpsSetTenantSpendCapData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await opsSetTenantSpendCap({
                 ...options,
                 ...fnOptions,
                 throwOnError: true

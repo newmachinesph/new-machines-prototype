@@ -3,7 +3,8 @@ from app.store import get_store, reset_store
 
 def test_store_loads_every_fixture():
     s = reset_store()
-    assert len(s.packs) == 7
+    assert len(s.packs) == 11  # 7 published seeds plus 4 ops listings (see test_ops_catalog)
+    assert sum(x.status == "published" for x in s.pack_listings.values()) == 7
     assert "run_1042" in s.runs
     assert s.runs["run_1042"].deliverable is not None
     assert {r.id for r in s.run_summaries} >= {"run_1047", "run_1033"}

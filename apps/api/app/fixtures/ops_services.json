@@ -1,0 +1,73 @@
+[
+  {
+    "key": "api",
+    "name": "API",
+    "status": "operational",
+    "latencyP95Ms": 118,
+    "uptime30d": 0.9994
+  },
+  {
+    "key": "temporal_workers",
+    "name": "Temporal workers",
+    "status": "operational",
+    "latencyP95Ms": 74,
+    "uptime30d": 0.9991
+  },
+  {
+    "key": "temporal_cloud",
+    "name": "Temporal Cloud",
+    "status": "operational",
+    "latencyP95Ms": 96,
+    "uptime30d": 0.9998
+  },
+  {
+    "key": "cerbos",
+    "name": "Cerbos",
+    "status": "operational",
+    "latencyP95Ms": 12,
+    "uptime30d": 0.9999
+  },
+  {
+    "key": "composio",
+    "name": "Composio",
+    "status": "operational",
+    "latencyP95Ms": 410,
+    "uptime30d": 0.9972
+  },
+  {
+    "key": "vertex_gemini",
+    "name": "Vertex AI Gemini",
+    "status": "operational",
+    "latencyP95Ms": 1380,
+    "uptime30d": 0.9981
+  },
+  {
+    "key": "cloud_sql",
+    "name": "Cloud SQL",
+    "status": "operational",
+    "latencyP95Ms": 9,
+    "uptime30d": 0.9997
+  },
+  {
+    "key": "cloud_storage",
+    "name": "Cloud Storage",
+    "status": "operational",
+    "latencyP95Ms": 42,
+    "uptime30d": 0.9999
+  },
+  {
+    "key": "langfuse",
+    "name": "Langfuse",
+    "status": "degraded",
+    "latencyP95Ms": 890,
+    "uptime30d": 0.9934,
+    "note": "Trace ingestion is delayed by about 10 minutes."
+  },
+  {
+    "key": "firebase_auth",
+    "name": "Firebase Auth",
+    "status": "operational",
+    "latencyP95Ms": 160,
+    "uptime30d": 0.9996
+  }
+]

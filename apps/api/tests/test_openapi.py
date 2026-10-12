@@ -1,4 +1,5 @@
 import json
+import re
 from pathlib import Path
 
 from app.main import create_app
@@ -54,6 +55,11 @@ def test_only_request_bodies_forbid_unknown_keys():
         for op in operations(spec)
         if "requestBody" in op
     }
+    pending = list(requests)
+    while pending:  # nested input models (a pack's connectors, a connector's defaults) are request models too
+        refs = set(re.findall(r"#/components/schemas/(\w+)", json.dumps(schemas[pending.pop()])))
+        pending += list(refs - requests)
+        requests |= refs
     assert requests and all(schemas[name].get("additionalProperties") is False for name in requests)
     responses = set(schemas) - requests
     assert responses and all("additionalProperties" not in schemas[name] for name in responses)

@@ -1,0 +1,283 @@
+[
+  {
+    "id": "google-sheets",
+    "app": "Google Sheets",
+    "category": "Spreadsheets",
+    "provider": "Composio",
+    "authType": "oauth_managed",
+    "status": "enabled",
+    "tenantsConnected": 6,
+    "callsToday": 1840,
+    "errorRate": 0.004,
+    "lastHealthCheck": {
+      "at": "2026-10-12T16:00:00Z",
+      "ok": true,
+      "latencyMs": 230
+    },
+    "defaults": {
+      "read": "permit",
+      "write": "require_approval",
+      "delete": "deny",
+      "money": "deny"
+    },
+    "scopes": [
+      "spreadsheets.readonly"
+    ]
+  },
+  {
+    "id": "gmail",
+    "app": "Gmail",
+    "category": "Email",
+    "provider": "Composio",
+    "authType": "oauth_managed",
+    "status": "enabled",
+    "tenantsConnected": 7,
+    "callsToday": 2210,
+    "errorRate": 0.006,
+    "lastHealthCheck": {
+      "at": "2026-10-12T16:00:00Z",
+      "ok": true,
+      "latencyMs": 260
+    },
+    "defaults": {
+      "read": "permit",
+      "write": "require_approval",
+      "delete": "deny",
+      "money": "deny"
+    },
+    "scopes": [
+      "gmail.readonly",
+      "gmail.send"
+    ]
+  },
+  {
+    "id": "google-drive",
+    "app": "Google Drive",
+    "category": "Files",
+    "provider": "Composio",
+    "authType": "oauth_managed",
+    "status": "enabled",
+    "tenantsConnected": 5,
+    "callsToday": 960,
+    "errorRate": 0.003,
+    "lastHealthCheck": {
+      "at": "2026-10-12T16:00:00Z",
+      "ok": true,
+      "latencyMs": 240
+    },
+    "defaults": {
+      "read": "permit",
+      "write": "require_approval",
+      "delete": "deny",
+      "money": "deny"
+    },
+    "scopes": [
+      "drive.file"
+    ]
+  },
+  {
+    "id": "slack",
+    "app": "Slack",
+    "category": "Messaging",
+    "provider": "Composio",
+    "authType": "oauth_managed",
+    "status": "enabled",
+    "tenantsConnected": 3,
+    "callsToday": 410,
+    "errorRate": 0.012,
+    "lastHealthCheck": {
+      "at": "2026-10-12T16:00:00Z",
+      "ok": true,
+      "latencyMs": 310
+    },
+    "defaults": {
+      "read": "permit",
+      "write": "require_approval",
+      "delete": "deny",
+      "money": "deny"
+    },
+    "scopes": [
+      "channels:read",
+      "chat:write"
+    ]
+  },
+  {
+    "id": "shopify",
+    "app": "Shopify",
+    "category": "Commerce",
+    "provider": "Mock",
+    "authType": "oauth_own_app",
+    "status": "enabled",
+    "tenantsConnected": 6,
+    "callsToday": 1520,
+    "errorRate": 0.009,
+    "lastHealthCheck": {
+      "at": "2026-10-12T16:00:00Z",
+      "ok": true,
+      "latencyMs": 290
+    },
+    "defaults": {
+      "read": "permit",
+      "write": "require_approval",
+      "delete": "deny",
+      "money": "deny"
+    },
+    "scopes": [
+      "read_orders",
+      "write_orders"
+    ]
+  },
+  {
+    "id": "stripe",
+    "app": "Stripe",
+    "category": "Payments",
+    "provider": "Mock",
+    "authType": "api_key",
+    "status": "enabled",
+    "tenantsConnected": 4,
+    "callsToday": 780,
+    "errorRate": 0.002,
+    "lastHealthCheck": {
+      "at": "2026-10-12T16:00:00Z",
+      "ok": true,
+      "latencyMs": 200
+    },
+    "defaults": {
+      "read": "permit",
+      "write": "require_approval",
+      "delete": "deny",
+      "money": "require_approval"
+    },
+    "scopes": [
+      "read_only"
+    ]
+  },
+  {
+    "id": "google-calendar",
+    "app": "Google Calendar",
+    "category": "Calendar",
+    "provider": "Composio",
+    "authType": "oauth_managed",
+    "status": "enabled",
+    "tenantsConnected": 2,
+    "callsToday": 150,
+    "errorRate": 0.007,
+    "lastHealthCheck": {
+      "at": "2026-10-12T16:00:00Z",
+      "ok": true,
+      "latencyMs": 250
+    },
+    "defaults": {
+      "read": "permit",
+      "write": "require_approval",
+      "delete": "deny",
+      "money": "deny"
+    },
+    "scopes": [
+      "calendar.readonly"
+    ]
+  },
+  {
+    "id": "freee",
+    "app": "freee",
+    "category": "Accounting",
+    "provider": "Composio",
+    "authType": "oauth_managed",
+    "status": "enabled",
+    "tenantsConnected": 2,
+    "callsToday": 220,
+    "errorRate": 0.018,
+    "lastHealthCheck": {
+      "at": "2026-10-12T16:00:00Z",
+      "ok": true,
+      "latencyMs": 420
+    },
+    "defaults": {
+      "read": "permit",
+      "write": "require_approval",
+      "delete": "deny",
+      "money": "deny"
+    },
+    "scopes": [
+      "read",
+      "write"
+    ]
+  },
+  {
+    "id": "kintone",
+    "app": "kintone",
+    "category": "Database",
+    "provider": "Composio",
+    "authType": "api_key",
+    "status": "enabled",
+    "tenantsConnected": 1,
+    "callsToday": 90,
+    "errorRate": 0.011,
+    "lastHealthCheck": {
+      "at": "2026-10-12T16:00:00Z",
+      "ok": true,
+      "latencyMs": 380
+    },
+    "defaults": {
+      "read": "permit",
+      "write": "require_approval",
+      "delete": "deny",
+      "money": "deny"
+    },
+    "scopes": [
+      "k:app_record:read"
+    ]
+  },
+  {
+    "id": "line-works",
+    "app": "LINE WORKS",
+    "category": "Messaging",
+    "provider": "Composio",
+    "authType": "oauth_own_app",
+    "status": "beta",
+    "tenantsConnected": 1,
+    "callsToday": 35,
+    "errorRate": 0.042,
+    "lastHealthCheck": {
+      "at": "2026-10-12T16:00:00Z",
+      "ok": true,
+      "latencyMs": 510
+    },
+    "defaults": {
+      "read": "permit",
+      "write": "require_approval",
+      "delete": "deny",
+      "money": "deny"
+    },
+    "scopes": [
+      "bot",
+      "user.read"
+    ]
+  },
+  {
+    "id": "smarthr",
+    "app": "SmartHR",
+    "category": "HR",
+    "provider": "Composio",
+    "authType": "api_key",
+    "status": "disabled",
+    "tenantsConnected": 0,
+    "callsToday": 0,
+    "errorRate": 0.31,
+    "lastHealthCheck": {
+      "at": "2026-10-12T16:00:00Z",
+      "ok": false,
+      "latencyMs": 0,
+      "note": "Vendor API returning 500s on employee reads."
+    },
+    "defaults": {
+      "read": "permit",
+      "write": "require_approval",
+      "delete": "deny",
+      "money": "deny"
+    },
+    "scopes": [
+      "employee:read"
+    ]
+  }
+]

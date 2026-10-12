@@ -1,0 +1,50 @@
+[
+  {
+    "slug": "notion",
+    "name": "Notion",
+    "category": "Knowledge",
+    "authType": "oauth_managed"
+  },
+  {
+    "slug": "hubspot",
+    "name": "HubSpot",
+    "category": "CRM",
+    "authType": "oauth_managed"
+  },
+  {
+    "slug": "xero",
+    "name": "Xero",
+    "category": "Accounting",
+    "authType": "oauth_managed"
+  },
+  {
+    "slug": "quickbooks",
+    "name": "QuickBooks",
+    "category": "Accounting",
+    "authType": "oauth_managed"
+  },
+  {
+    "slug": "zendesk",
+    "name": "Zendesk",
+    "category": "Support",
+    "authType": "oauth_managed"
+  },
+  {
+    "slug": "asana",
+    "name": "Asana",
+    "category": "Projects",
+    "authType": "oauth_managed"
+  },
+  {
+    "slug": "airtable",
+    "name": "Airtable",
+    "category": "Database",
+    "authType": "api_key"
+  },
+  {
+    "slug": "microsoft-teams",
+    "name": "Microsoft Teams",
+    "category": "Messaging",
+    "authType": "oauth_managed"
+  }
+]

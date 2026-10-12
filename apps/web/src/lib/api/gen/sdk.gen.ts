@@ -4,8 +4,8 @@ import * as z from 'zod';
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { ApproveApprovalData, ApproveApprovalErrors, ApproveApprovalResponses, ClaimHumanTaskData, ClaimHumanTaskErrors, ClaimHumanTaskResponses, CreateTokenData, CreateTokenErrors, CreateTokenResponses, DeclineApprovalData, DeclineApprovalErrors, DeclineApprovalResponses, DisconnectConnectionData, DisconnectConnectionErrors, DisconnectConnectionResponses, GetHumanTaskData, GetHumanTaskErrors, GetHumanTaskResponses, GetOrganizationData, GetOrganizationErrors, GetOrganizationResponses, GetUsageData, GetUsageErrors, GetUsageResponses, GetWorkflowPackData, GetWorkflowPackErrors, GetWorkflowPackResponses, GetWorkflowRunData, GetWorkflowRunErrors, GetWorkflowRunResponses, InstallWorkflowPackData, InstallWorkflowPackErrors, InstallWorkflowPackResponses, InviteMemberData, InviteMemberErrors, InviteMemberResponses, ListAgentsData, ListAgentsErrors, ListAgentsResponses, ListApprovalsData, ListApprovalsErrors, ListApprovalsResponses, ListAttentionData, ListAttentionErrors, ListAttentionResponses, ListConnectionsData, ListConnectionsErrors, ListConnectionsResponses, ListEarningsData, ListEarningsErrors, ListEarningsResponses, ListEligibleHumanTasksData, ListEligibleHumanTasksErrors, ListEligibleHumanTasksResponses, ListMembersData, ListMembersErrors, ListMembersResponses, ListMemoryData, ListMemoryErrors, ListMemoryResponses, ListPoliciesData, ListPoliciesErrors, ListPoliciesResponses, ListTokensData, ListTokensErrors, ListTokensResponses, ListWorkflowPacksData, ListWorkflowPacksErrors, ListWorkflowPacksResponses, ListWorkflowRunsData, ListWorkflowRunsErrors, ListWorkflowRunsResponses, RetractMemoryData, RetractMemoryErrors, RetractMemoryResponses, ReviewMemoryCandidateData, ReviewMemoryCandidateErrors, ReviewMemoryCandidateResponses, RevokeGrantData, RevokeGrantErrors, RevokeGrantResponses, RevokeTokenData, RevokeTokenErrors, RevokeTokenResponses, StartWorkflowRunData, StartWorkflowRunErrors, StartWorkflowRunResponses, SubmitHumanTaskData, SubmitHumanTaskErrors, SubmitHumanTaskResponses, SuggestWorkflowPackData, SuggestWorkflowPackErrors, SuggestWorkflowPackResponses } from './types.gen';
-import { zApproveApprovalPath, zApproveApprovalResponse, zClaimHumanTaskPath, zClaimHumanTaskResponse, zCreateTokenBody, zCreateTokenResponse, zDeclineApprovalPath, zDeclineApprovalResponse, zDisconnectConnectionPath, zDisconnectConnectionResponse, zGetHumanTaskPath, zGetHumanTaskResponse, zGetOrganizationPath, zGetOrganizationResponse, zGetUsagePath, zGetUsageResponse, zGetWorkflowPackPath, zGetWorkflowPackResponse, zGetWorkflowRunPath, zGetWorkflowRunResponse, zInstallWorkflowPackBody, zInstallWorkflowPackPath, zInstallWorkflowPackResponse, zInviteMemberBody, zInviteMemberPath, zInviteMemberResponse, zListAgentsResponse, zListApprovalsResponse, zListAttentionPath, zListAttentionResponse, zListConnectionsResponse, zListEarningsResponse, zListEligibleHumanTasksResponse, zListMembersPath, zListMembersResponse, zListMemoryResponse, zListPoliciesPath, zListPoliciesResponse, zListTokensResponse, zListWorkflowPacksResponse, zListWorkflowRunsResponse, zRetractMemoryPath, zRetractMemoryResponse, zReviewMemoryCandidateBody, zReviewMemoryCandidatePath, zReviewMemoryCandidateResponse, zRevokeGrantQuery, zRevokeGrantResponse, zRevokeTokenPath, zRevokeTokenResponse, zStartWorkflowRunBody, zStartWorkflowRunHeaders, zStartWorkflowRunResponse, zSubmitHumanTaskBody, zSubmitHumanTaskPath, zSubmitHumanTaskResponse, zSuggestWorkflowPackBody, zSuggestWorkflowPackResponse } from './zod.gen';
+import type { ApproveApprovalData, ApproveApprovalErrors, ApproveApprovalResponses, ClaimHumanTaskData, ClaimHumanTaskErrors, ClaimHumanTaskResponses, CreateTokenData, CreateTokenErrors, CreateTokenResponses, DeclineApprovalData, DeclineApprovalErrors, DeclineApprovalResponses, DisconnectConnectionData, DisconnectConnectionErrors, DisconnectConnectionResponses, GetHumanTaskData, GetHumanTaskErrors, GetHumanTaskResponses, GetOrganizationData, GetOrganizationErrors, GetOrganizationResponses, GetUsageData, GetUsageErrors, GetUsageResponses, GetWorkflowPackData, GetWorkflowPackErrors, GetWorkflowPackResponses, GetWorkflowRunData, GetWorkflowRunErrors, GetWorkflowRunResponses, InstallWorkflowPackData, InstallWorkflowPackErrors, InstallWorkflowPackResponses, InviteMemberData, InviteMemberErrors, InviteMemberResponses, ListAgentsData, ListAgentsErrors, ListAgentsResponses, ListApprovalsData, ListApprovalsErrors, ListApprovalsResponses, ListAttentionData, ListAttentionErrors, ListAttentionResponses, ListConnectionsData, ListConnectionsErrors, ListConnectionsResponses, ListEarningsData, ListEarningsErrors, ListEarningsResponses, ListEligibleHumanTasksData, ListEligibleHumanTasksErrors, ListEligibleHumanTasksResponses, ListMembersData, ListMembersErrors, ListMembersResponses, ListMemoryData, ListMemoryErrors, ListMemoryResponses, ListPoliciesData, ListPoliciesErrors, ListPoliciesResponses, ListTokensData, ListTokensErrors, ListTokensResponses, ListWorkflowPacksData, ListWorkflowPacksErrors, ListWorkflowPacksResponses, ListWorkflowRunsData, ListWorkflowRunsErrors, ListWorkflowRunsResponses, OpsAddConnectorData, OpsAddConnectorErrors, OpsAddConnectorResponses, OpsApprovePackData, OpsApprovePackErrors, OpsApprovePackResponses, OpsApproveReviewerData, OpsApproveReviewerErrors, OpsApproveReviewerResponses, OpsCertifyPackData, OpsCertifyPackErrors, OpsCertifyPackResponses, OpsCreatePackData, OpsCreatePackErrors, OpsCreatePackResponses, OpsCreateTenantData, OpsCreateTenantErrors, OpsCreateTenantResponses, OpsDeclareIncidentData, OpsDeclareIncidentErrors, OpsDeclareIncidentResponses, OpsDeprecatePackData, OpsDeprecatePackErrors, OpsDeprecatePackResponses, OpsDisableConnectorData, OpsDisableConnectorErrors, OpsDisableConnectorResponses, OpsEnableConnectorData, OpsEnableConnectorErrors, OpsEnableConnectorResponses, OpsGetBillingData, OpsGetBillingErrors, OpsGetBillingResponses, OpsGetHealthData, OpsGetHealthErrors, OpsGetHealthResponses, OpsGetMeData, OpsGetMeErrors, OpsGetMeResponses, OpsGetOverviewData, OpsGetOverviewErrors, OpsGetOverviewResponses, OpsGetPackData, OpsGetPackErrors, OpsGetPackResponses, OpsGetTenantData, OpsGetTenantErrors, OpsGetTenantResponses, OpsHealthCheckConnectorData, OpsHealthCheckConnectorErrors, OpsHealthCheckConnectorResponses, OpsListAuditData, OpsListAuditErrors, OpsListAuditResponses, OpsListAvailableToolkitsData, OpsListAvailableToolkitsErrors, OpsListAvailableToolkitsResponses, OpsListConnectorsData, OpsListConnectorsErrors, OpsListConnectorsResponses, OpsListGuardrailsData, OpsListGuardrailsErrors, OpsListGuardrailsResponses, OpsListPacksData, OpsListPacksErrors, OpsListPacksResponses, OpsListReviewersData, OpsListReviewersErrors, OpsListReviewersResponses, OpsListRunsData, OpsListRunsErrors, OpsListRunsResponses, OpsListTeamData, OpsListTeamErrors, OpsListTeamResponses, OpsListTenantsData, OpsListTenantsErrors, OpsListTenantsResponses, OpsReactivateTenantData, OpsReactivateTenantErrors, OpsReactivateTenantResponses, OpsReinstateReviewerData, OpsReinstateReviewerErrors, OpsReinstateReviewerResponses, OpsRejectPackData, OpsRejectPackErrors, OpsRejectPackResponses, OpsRepublishPackData, OpsRepublishPackErrors, OpsRepublishPackResponses, OpsSetConnectorDefaultsData, OpsSetConnectorDefaultsErrors, OpsSetConnectorDefaultsResponses, OpsSetGuardrailData, OpsSetGuardrailErrors, OpsSetGuardrailResponses, OpsSetReviewerLevelData, OpsSetReviewerLevelErrors, OpsSetReviewerLevelResponses, OpsSetTenantPlanData, OpsSetTenantPlanErrors, OpsSetTenantPlanResponses, OpsSetTenantSpendCapData, OpsSetTenantSpendCapErrors, OpsSetTenantSpendCapResponses, OpsSubmitPackData, OpsSubmitPackErrors, OpsSubmitPackResponses, OpsSuspendReviewerData, OpsSuspendReviewerErrors, OpsSuspendReviewerResponses, OpsSuspendTenantData, OpsSuspendTenantErrors, OpsSuspendTenantResponses, OpsUpdateIncidentData, OpsUpdateIncidentErrors, OpsUpdateIncidentResponses, RetractMemoryData, RetractMemoryErrors, RetractMemoryResponses, ReviewMemoryCandidateData, ReviewMemoryCandidateErrors, ReviewMemoryCandidateResponses, RevokeGrantData, RevokeGrantErrors, RevokeGrantResponses, RevokeTokenData, RevokeTokenErrors, RevokeTokenResponses, StartWorkflowRunData, StartWorkflowRunErrors, StartWorkflowRunResponses, SubmitHumanTaskData, SubmitHumanTaskErrors, SubmitHumanTaskResponses, SuggestWorkflowPackData, SuggestWorkflowPackErrors, SuggestWorkflowPackResponses } from './types.gen';
+import { zApproveApprovalPath, zApproveApprovalResponse, zClaimHumanTaskPath, zClaimHumanTaskResponse, zCreateTokenBody, zCreateTokenResponse, zDeclineApprovalPath, zDeclineApprovalResponse, zDisconnectConnectionPath, zDisconnectConnectionResponse, zGetHumanTaskPath, zGetHumanTaskResponse, zGetOrganizationPath, zGetOrganizationResponse, zGetUsagePath, zGetUsageResponse, zGetWorkflowPackPath, zGetWorkflowPackResponse, zGetWorkflowRunPath, zGetWorkflowRunResponse, zInstallWorkflowPackBody, zInstallWorkflowPackPath, zInstallWorkflowPackResponse, zInviteMemberBody, zInviteMemberPath, zInviteMemberResponse, zListAgentsResponse, zListApprovalsResponse, zListAttentionPath, zListAttentionResponse, zListConnectionsResponse, zListEarningsResponse, zListEligibleHumanTasksResponse, zListMembersPath, zListMembersResponse, zListMemoryResponse, zListPoliciesPath, zListPoliciesResponse, zListTokensResponse, zListWorkflowPacksResponse, zListWorkflowRunsResponse, zOpsAddConnectorBody, zOpsAddConnectorResponse, zOpsApprovePackBody, zOpsApprovePackPath, zOpsApprovePackResponse, zOpsApproveReviewerBody, zOpsApproveReviewerPath, zOpsApproveReviewerResponse, zOpsCertifyPackBody, zOpsCertifyPackPath, zOpsCertifyPackResponse, zOpsCreatePackBody, zOpsCreatePackResponse, zOpsCreateTenantBody, zOpsCreateTenantResponse, zOpsDeclareIncidentBody, zOpsDeclareIncidentResponse, zOpsDeprecatePackBody, zOpsDeprecatePackPath, zOpsDeprecatePackResponse, zOpsDisableConnectorBody, zOpsDisableConnectorPath, zOpsDisableConnectorResponse, zOpsEnableConnectorBody, zOpsEnableConnectorPath, zOpsEnableConnectorResponse, zOpsGetBillingResponse, zOpsGetHealthResponse, zOpsGetMeResponse, zOpsGetOverviewResponse, zOpsGetPackPath, zOpsGetPackResponse, zOpsGetTenantPath, zOpsGetTenantResponse, zOpsHealthCheckConnectorPath, zOpsHealthCheckConnectorResponse, zOpsListAuditQuery, zOpsListAuditResponse, zOpsListAvailableToolkitsResponse, zOpsListConnectorsResponse, zOpsListGuardrailsResponse, zOpsListPacksQuery, zOpsListPacksResponse, zOpsListReviewersQuery, zOpsListReviewersResponse, zOpsListRunsQuery, zOpsListRunsResponse, zOpsListTeamResponse, zOpsListTenantsQuery, zOpsListTenantsResponse, zOpsReactivateTenantBody, zOpsReactivateTenantPath, zOpsReactivateTenantResponse, zOpsReinstateReviewerBody, zOpsReinstateReviewerPath, zOpsReinstateReviewerResponse, zOpsRejectPackBody, zOpsRejectPackPath, zOpsRejectPackResponse, zOpsRepublishPackBody, zOpsRepublishPackPath, zOpsRepublishPackResponse, zOpsSetConnectorDefaultsBody, zOpsSetConnectorDefaultsPath, zOpsSetConnectorDefaultsResponse, zOpsSetGuardrailBody, zOpsSetGuardrailPath, zOpsSetGuardrailResponse, zOpsSetReviewerLevelBody, zOpsSetReviewerLevelPath, zOpsSetReviewerLevelResponse, zOpsSetTenantPlanBody, zOpsSetTenantPlanPath, zOpsSetTenantPlanResponse, zOpsSetTenantSpendCapBody, zOpsSetTenantSpendCapPath, zOpsSetTenantSpendCapResponse, zOpsSubmitPackBody, zOpsSubmitPackPath, zOpsSubmitPackResponse, zOpsSuspendReviewerBody, zOpsSuspendReviewerPath, zOpsSuspendReviewerResponse, zOpsSuspendTenantBody, zOpsSuspendTenantPath, zOpsSuspendTenantResponse, zOpsUpdateIncidentBody, zOpsUpdateIncidentPath, zOpsUpdateIncidentResponse, zRetractMemoryPath, zRetractMemoryResponse, zReviewMemoryCandidateBody, zReviewMemoryCandidatePath, zReviewMemoryCandidateResponse, zRevokeGrantQuery, zRevokeGrantResponse, zRevokeTokenPath, zRevokeTokenResponse, zStartWorkflowRunBody, zStartWorkflowRunHeaders, zStartWorkflowRunResponse, zSubmitHumanTaskBody, zSubmitHumanTaskPath, zSubmitHumanTaskResponse, zSuggestWorkflowPackBody, zSuggestWorkflowPackResponse } from './zod.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -517,4 +517,689 @@ export const revokeToken = <ThrowOnError extends boolean = false>(options: Optio
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/v1/tokens/{token_id}',
     ...options
+});
+
+/**
+ * Ops List Packs
+ */
+export const opsListPacks = <ThrowOnError extends boolean = false>(options?: Options<OpsListPacksData, ThrowOnError>): RequestResult<OpsListPacksResponses, OpsListPacksErrors, ThrowOnError> => (options?.client ?? client).get<OpsListPacksResponses, OpsListPacksErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: z.never().optional(),
+        query: zOpsListPacksQuery.optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zOpsListPacksResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/ops/packs',
+    ...options
+});
+
+/**
+ * Ops Create Pack
+ */
+export const opsCreatePack = <ThrowOnError extends boolean = false>(options: Options<OpsCreatePackData, ThrowOnError>): RequestResult<OpsCreatePackResponses, OpsCreatePackErrors, ThrowOnError> => (options.client ?? client).post<OpsCreatePackResponses, OpsCreatePackErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zOpsCreatePackBody,
+        path: z.never().optional(),
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zOpsCreatePackResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/ops/packs',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Ops Get Pack
+ */
+export const opsGetPack = <ThrowOnError extends boolean = false>(options: Options<OpsGetPackData, ThrowOnError>): RequestResult<OpsGetPackResponses, OpsGetPackErrors, ThrowOnError> => (options.client ?? client).get<OpsGetPackResponses, OpsGetPackErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zOpsGetPackPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zOpsGetPackResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/ops/packs/{slug}',
+    ...options
+});
+
+/**
+ * Ops Submit Pack
+ */
+export const opsSubmitPack = <ThrowOnError extends boolean = false>(options: Options<OpsSubmitPackData, ThrowOnError>): RequestResult<OpsSubmitPackResponses, OpsSubmitPackErrors, ThrowOnError> => (options.client ?? client).post<OpsSubmitPackResponses, OpsSubmitPackErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zOpsSubmitPackBody,
+        path: zOpsSubmitPackPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zOpsSubmitPackResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/ops/packs/{slug}:submit',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Ops Approve Pack
+ */
+export const opsApprovePack = <ThrowOnError extends boolean = false>(options: Options<OpsApprovePackData, ThrowOnError>): RequestResult<OpsApprovePackResponses, OpsApprovePackErrors, ThrowOnError> => (options.client ?? client).post<OpsApprovePackResponses, OpsApprovePackErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zOpsApprovePackBody,
+        path: zOpsApprovePackPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zOpsApprovePackResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/ops/packs/{slug}:approve',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Ops Reject Pack
+ */
+export const opsRejectPack = <ThrowOnError extends boolean = false>(options: Options<OpsRejectPackData, ThrowOnError>): RequestResult<OpsRejectPackResponses, OpsRejectPackErrors, ThrowOnError> => (options.client ?? client).post<OpsRejectPackResponses, OpsRejectPackErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zOpsRejectPackBody,
+        path: zOpsRejectPackPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zOpsRejectPackResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/ops/packs/{slug}:reject',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Ops Deprecate Pack
+ */
+export const opsDeprecatePack = <ThrowOnError extends boolean = false>(options: Options<OpsDeprecatePackData, ThrowOnError>): RequestResult<OpsDeprecatePackResponses, OpsDeprecatePackErrors, ThrowOnError> => (options.client ?? client).post<OpsDeprecatePackResponses, OpsDeprecatePackErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zOpsDeprecatePackBody,
+        path: zOpsDeprecatePackPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zOpsDeprecatePackResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/ops/packs/{slug}:deprecate',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Ops Republish Pack
+ */
+export const opsRepublishPack = <ThrowOnError extends boolean = false>(options: Options<OpsRepublishPackData, ThrowOnError>): RequestResult<OpsRepublishPackResponses, OpsRepublishPackErrors, ThrowOnError> => (options.client ?? client).post<OpsRepublishPackResponses, OpsRepublishPackErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zOpsRepublishPackBody,
+        path: zOpsRepublishPackPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zOpsRepublishPackResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/ops/packs/{slug}:republish',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Ops Certify Pack
+ */
+export const opsCertifyPack = <ThrowOnError extends boolean = false>(options: Options<OpsCertifyPackData, ThrowOnError>): RequestResult<OpsCertifyPackResponses, OpsCertifyPackErrors, ThrowOnError> => (options.client ?? client).post<OpsCertifyPackResponses, OpsCertifyPackErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zOpsCertifyPackBody,
+        path: zOpsCertifyPackPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zOpsCertifyPackResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/ops/packs/{slug}:certify',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Ops List Connectors
+ */
+export const opsListConnectors = <ThrowOnError extends boolean = false>(options?: Options<OpsListConnectorsData, ThrowOnError>): RequestResult<OpsListConnectorsResponses, OpsListConnectorsErrors, ThrowOnError> => (options?.client ?? client).get<OpsListConnectorsResponses, OpsListConnectorsErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: z.never().optional(),
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zOpsListConnectorsResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/ops/connectors',
+    ...options
+});
+
+/**
+ * Ops Add Connector
+ */
+export const opsAddConnector = <ThrowOnError extends boolean = false>(options: Options<OpsAddConnectorData, ThrowOnError>): RequestResult<OpsAddConnectorResponses, OpsAddConnectorErrors, ThrowOnError> => (options.client ?? client).post<OpsAddConnectorResponses, OpsAddConnectorErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zOpsAddConnectorBody,
+        path: z.never().optional(),
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zOpsAddConnectorResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/ops/connectors',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Ops List Available Toolkits
+ *
+ * Simulated Composio toolkit discovery, minus the ones already in the catalog.
+ */
+export const opsListAvailableToolkits = <ThrowOnError extends boolean = false>(options?: Options<OpsListAvailableToolkitsData, ThrowOnError>): RequestResult<OpsListAvailableToolkitsResponses, OpsListAvailableToolkitsErrors, ThrowOnError> => (options?.client ?? client).get<OpsListAvailableToolkitsResponses, OpsListAvailableToolkitsErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: z.never().optional(),
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zOpsListAvailableToolkitsResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/ops/connectors/available',
+    ...options
+});
+
+/**
+ * Ops Enable Connector
+ */
+export const opsEnableConnector = <ThrowOnError extends boolean = false>(options: Options<OpsEnableConnectorData, ThrowOnError>): RequestResult<OpsEnableConnectorResponses, OpsEnableConnectorErrors, ThrowOnError> => (options.client ?? client).post<OpsEnableConnectorResponses, OpsEnableConnectorErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zOpsEnableConnectorBody,
+        path: zOpsEnableConnectorPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zOpsEnableConnectorResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/ops/connectors/{connector_id}:enable',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Ops Disable Connector
+ */
+export const opsDisableConnector = <ThrowOnError extends boolean = false>(options: Options<OpsDisableConnectorData, ThrowOnError>): RequestResult<OpsDisableConnectorResponses, OpsDisableConnectorErrors, ThrowOnError> => (options.client ?? client).post<OpsDisableConnectorResponses, OpsDisableConnectorErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zOpsDisableConnectorBody,
+        path: zOpsDisableConnectorPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zOpsDisableConnectorResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/ops/connectors/{connector_id}:disable',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Ops Set Connector Defaults
+ */
+export const opsSetConnectorDefaults = <ThrowOnError extends boolean = false>(options: Options<OpsSetConnectorDefaultsData, ThrowOnError>): RequestResult<OpsSetConnectorDefaultsResponses, OpsSetConnectorDefaultsErrors, ThrowOnError> => (options.client ?? client).post<OpsSetConnectorDefaultsResponses, OpsSetConnectorDefaultsErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zOpsSetConnectorDefaultsBody,
+        path: zOpsSetConnectorDefaultsPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zOpsSetConnectorDefaultsResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/ops/connectors/{connector_id}:setDefaults',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Ops Health Check Connector
+ *
+ * Simulated and deterministic: healthy unless the connector is disabled.
+ */
+export const opsHealthCheckConnector = <ThrowOnError extends boolean = false>(options: Options<OpsHealthCheckConnectorData, ThrowOnError>): RequestResult<OpsHealthCheckConnectorResponses, OpsHealthCheckConnectorErrors, ThrowOnError> => (options.client ?? client).post<OpsHealthCheckConnectorResponses, OpsHealthCheckConnectorErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zOpsHealthCheckConnectorPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zOpsHealthCheckConnectorResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/ops/connectors/{connector_id}:healthCheck',
+    ...options
+});
+
+/**
+ * Ops Get Health
+ */
+export const opsGetHealth = <ThrowOnError extends boolean = false>(options?: Options<OpsGetHealthData, ThrowOnError>): RequestResult<OpsGetHealthResponses, OpsGetHealthErrors, ThrowOnError> => (options?.client ?? client).get<OpsGetHealthResponses, OpsGetHealthErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: z.never().optional(),
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zOpsGetHealthResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/ops/health',
+    ...options
+});
+
+/**
+ * Ops Declare Incident
+ */
+export const opsDeclareIncident = <ThrowOnError extends boolean = false>(options: Options<OpsDeclareIncidentData, ThrowOnError>): RequestResult<OpsDeclareIncidentResponses, OpsDeclareIncidentErrors, ThrowOnError> => (options.client ?? client).post<OpsDeclareIncidentResponses, OpsDeclareIncidentErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zOpsDeclareIncidentBody,
+        path: z.never().optional(),
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zOpsDeclareIncidentResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/ops/incidents',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Ops Update Incident
+ */
+export const opsUpdateIncident = <ThrowOnError extends boolean = false>(options: Options<OpsUpdateIncidentData, ThrowOnError>): RequestResult<OpsUpdateIncidentResponses, OpsUpdateIncidentErrors, ThrowOnError> => (options.client ?? client).post<OpsUpdateIncidentResponses, OpsUpdateIncidentErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zOpsUpdateIncidentBody,
+        path: zOpsUpdateIncidentPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zOpsUpdateIncidentResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/ops/incidents/{incident_id}:update',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Ops Get Overview
+ */
+export const opsGetOverview = <ThrowOnError extends boolean = false>(options?: Options<OpsGetOverviewData, ThrowOnError>): RequestResult<OpsGetOverviewResponses, OpsGetOverviewErrors, ThrowOnError> => (options?.client ?? client).get<OpsGetOverviewResponses, OpsGetOverviewErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: z.never().optional(),
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zOpsGetOverviewResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/ops/overview',
+    ...options
+});
+
+/**
+ * Ops List Reviewers
+ */
+export const opsListReviewers = <ThrowOnError extends boolean = false>(options?: Options<OpsListReviewersData, ThrowOnError>): RequestResult<OpsListReviewersResponses, OpsListReviewersErrors, ThrowOnError> => (options?.client ?? client).get<OpsListReviewersResponses, OpsListReviewersErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: z.never().optional(),
+        query: zOpsListReviewersQuery.optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zOpsListReviewersResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/ops/reviewers',
+    ...options
+});
+
+/**
+ * Ops Approve Reviewer
+ */
+export const opsApproveReviewer = <ThrowOnError extends boolean = false>(options: Options<OpsApproveReviewerData, ThrowOnError>): RequestResult<OpsApproveReviewerResponses, OpsApproveReviewerErrors, ThrowOnError> => (options.client ?? client).post<OpsApproveReviewerResponses, OpsApproveReviewerErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zOpsApproveReviewerBody,
+        path: zOpsApproveReviewerPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zOpsApproveReviewerResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/ops/reviewers/{reviewer_id}:approve',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Ops Suspend Reviewer
+ */
+export const opsSuspendReviewer = <ThrowOnError extends boolean = false>(options: Options<OpsSuspendReviewerData, ThrowOnError>): RequestResult<OpsSuspendReviewerResponses, OpsSuspendReviewerErrors, ThrowOnError> => (options.client ?? client).post<OpsSuspendReviewerResponses, OpsSuspendReviewerErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zOpsSuspendReviewerBody,
+        path: zOpsSuspendReviewerPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zOpsSuspendReviewerResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/ops/reviewers/{reviewer_id}:suspend',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Ops Reinstate Reviewer
+ */
+export const opsReinstateReviewer = <ThrowOnError extends boolean = false>(options: Options<OpsReinstateReviewerData, ThrowOnError>): RequestResult<OpsReinstateReviewerResponses, OpsReinstateReviewerErrors, ThrowOnError> => (options.client ?? client).post<OpsReinstateReviewerResponses, OpsReinstateReviewerErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zOpsReinstateReviewerBody,
+        path: zOpsReinstateReviewerPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zOpsReinstateReviewerResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/ops/reviewers/{reviewer_id}:reinstate',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Ops Set Reviewer Level
+ */
+export const opsSetReviewerLevel = <ThrowOnError extends boolean = false>(options: Options<OpsSetReviewerLevelData, ThrowOnError>): RequestResult<OpsSetReviewerLevelResponses, OpsSetReviewerLevelErrors, ThrowOnError> => (options.client ?? client).post<OpsSetReviewerLevelResponses, OpsSetReviewerLevelErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zOpsSetReviewerLevelBody,
+        path: zOpsSetReviewerLevelPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zOpsSetReviewerLevelResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/ops/reviewers/{reviewer_id}:setLevel',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Ops List Runs
+ */
+export const opsListRuns = <ThrowOnError extends boolean = false>(options?: Options<OpsListRunsData, ThrowOnError>): RequestResult<OpsListRunsResponses, OpsListRunsErrors, ThrowOnError> => (options?.client ?? client).get<OpsListRunsResponses, OpsListRunsErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: z.never().optional(),
+        query: zOpsListRunsQuery.optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zOpsListRunsResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/ops/runs',
+    ...options
+});
+
+/**
+ * Ops List Guardrails
+ */
+export const opsListGuardrails = <ThrowOnError extends boolean = false>(options?: Options<OpsListGuardrailsData, ThrowOnError>): RequestResult<OpsListGuardrailsResponses, OpsListGuardrailsErrors, ThrowOnError> => (options?.client ?? client).get<OpsListGuardrailsResponses, OpsListGuardrailsErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: z.never().optional(),
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zOpsListGuardrailsResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/ops/guardrails',
+    ...options
+});
+
+/**
+ * Ops Set Guardrail
+ */
+export const opsSetGuardrail = <ThrowOnError extends boolean = false>(options: Options<OpsSetGuardrailData, ThrowOnError>): RequestResult<OpsSetGuardrailResponses, OpsSetGuardrailErrors, ThrowOnError> => (options.client ?? client).post<OpsSetGuardrailResponses, OpsSetGuardrailErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zOpsSetGuardrailBody,
+        path: zOpsSetGuardrailPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zOpsSetGuardrailResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/ops/guardrails/{key}:set',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Ops Get Billing
+ */
+export const opsGetBilling = <ThrowOnError extends boolean = false>(options?: Options<OpsGetBillingData, ThrowOnError>): RequestResult<OpsGetBillingResponses, OpsGetBillingErrors, ThrowOnError> => (options?.client ?? client).get<OpsGetBillingResponses, OpsGetBillingErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: z.never().optional(),
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zOpsGetBillingResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/ops/billing',
+    ...options
+});
+
+/**
+ * Ops Get Me
+ */
+export const opsGetMe = <ThrowOnError extends boolean = false>(options?: Options<OpsGetMeData, ThrowOnError>): RequestResult<OpsGetMeResponses, OpsGetMeErrors, ThrowOnError> => (options?.client ?? client).get<OpsGetMeResponses, OpsGetMeErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: z.never().optional(),
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zOpsGetMeResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/ops/me',
+    ...options
+});
+
+/**
+ * Ops List Team
+ */
+export const opsListTeam = <ThrowOnError extends boolean = false>(options?: Options<OpsListTeamData, ThrowOnError>): RequestResult<OpsListTeamResponses, OpsListTeamErrors, ThrowOnError> => (options?.client ?? client).get<OpsListTeamResponses, OpsListTeamErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: z.never().optional(),
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zOpsListTeamResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/ops/team',
+    ...options
+});
+
+/**
+ * Ops List Audit
+ *
+ * Newest first. Entries with the same timestamp keep the order they were written in, newest first.
+ */
+export const opsListAudit = <ThrowOnError extends boolean = false>(options?: Options<OpsListAuditData, ThrowOnError>): RequestResult<OpsListAuditResponses, OpsListAuditErrors, ThrowOnError> => (options?.client ?? client).get<OpsListAuditResponses, OpsListAuditErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: z.never().optional(),
+        query: zOpsListAuditQuery.optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zOpsListAuditResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/ops/audit',
+    ...options
+});
+
+/**
+ * Ops List Tenants
+ */
+export const opsListTenants = <ThrowOnError extends boolean = false>(options?: Options<OpsListTenantsData, ThrowOnError>): RequestResult<OpsListTenantsResponses, OpsListTenantsErrors, ThrowOnError> => (options?.client ?? client).get<OpsListTenantsResponses, OpsListTenantsErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: z.never().optional(),
+        query: zOpsListTenantsQuery.optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zOpsListTenantsResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/ops/tenants',
+    ...options
+});
+
+/**
+ * Ops Create Tenant
+ */
+export const opsCreateTenant = <ThrowOnError extends boolean = false>(options: Options<OpsCreateTenantData, ThrowOnError>): RequestResult<OpsCreateTenantResponses, OpsCreateTenantErrors, ThrowOnError> => (options.client ?? client).post<OpsCreateTenantResponses, OpsCreateTenantErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zOpsCreateTenantBody,
+        path: z.never().optional(),
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zOpsCreateTenantResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/ops/tenants',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Ops Get Tenant
+ */
+export const opsGetTenant = <ThrowOnError extends boolean = false>(options: Options<OpsGetTenantData, ThrowOnError>): RequestResult<OpsGetTenantResponses, OpsGetTenantErrors, ThrowOnError> => (options.client ?? client).get<OpsGetTenantResponses, OpsGetTenantErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zOpsGetTenantPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zOpsGetTenantResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/ops/tenants/{tenant_id}',
+    ...options
+});
+
+/**
+ * Ops Suspend Tenant
+ */
+export const opsSuspendTenant = <ThrowOnError extends boolean = false>(options: Options<OpsSuspendTenantData, ThrowOnError>): RequestResult<OpsSuspendTenantResponses, OpsSuspendTenantErrors, ThrowOnError> => (options.client ?? client).post<OpsSuspendTenantResponses, OpsSuspendTenantErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zOpsSuspendTenantBody,
+        path: zOpsSuspendTenantPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zOpsSuspendTenantResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/ops/tenants/{tenant_id}:suspend',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Ops Reactivate Tenant
+ *
+ * The tenant returns to the status it had when suspended. One seeded as suspended becomes active.
+ */
+export const opsReactivateTenant = <ThrowOnError extends boolean = false>(options: Options<OpsReactivateTenantData, ThrowOnError>): RequestResult<OpsReactivateTenantResponses, OpsReactivateTenantErrors, ThrowOnError> => (options.client ?? client).post<OpsReactivateTenantResponses, OpsReactivateTenantErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zOpsReactivateTenantBody,
+        path: zOpsReactivateTenantPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zOpsReactivateTenantResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/ops/tenants/{tenant_id}:reactivate',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Ops Set Tenant Plan
+ */
+export const opsSetTenantPlan = <ThrowOnError extends boolean = false>(options: Options<OpsSetTenantPlanData, ThrowOnError>): RequestResult<OpsSetTenantPlanResponses, OpsSetTenantPlanErrors, ThrowOnError> => (options.client ?? client).post<OpsSetTenantPlanResponses, OpsSetTenantPlanErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zOpsSetTenantPlanBody,
+        path: zOpsSetTenantPlanPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zOpsSetTenantPlanResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/ops/tenants/{tenant_id}:setPlan',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Ops Set Tenant Spend Cap
+ */
+export const opsSetTenantSpendCap = <ThrowOnError extends boolean = false>(options: Options<OpsSetTenantSpendCapData, ThrowOnError>): RequestResult<OpsSetTenantSpendCapResponses, OpsSetTenantSpendCapErrors, ThrowOnError> => (options.client ?? client).post<OpsSetTenantSpendCapResponses, OpsSetTenantSpendCapErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zOpsSetTenantSpendCapBody,
+        path: zOpsSetTenantSpendCapPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zOpsSetTenantSpendCapResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/ops/tenants/{tenant_id}:setSpendCap',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
 });

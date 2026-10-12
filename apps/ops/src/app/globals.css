@@ -1,0 +1,90 @@
+@import "../design-system/brand-tokens.css";
+
+/* App-level roles built on the brand neutrals and the three accent roles
+   (machine = cobalt, human = amber, blocked = red), shared with the customer app.
+   Policy uses blocked when it denies and ink when it permits; verified is ink, never green. */
+@theme {
+  --color-stage: #f4f5f6;
+  --color-rule: #e4e5e8;
+  --color-muted: #62636c;
+  --color-policy: #3f3f46;
+  --color-policy-soft: #ececef;
+  --color-ok: #111111;
+  --color-sim: #6d28d9;
+  --color-sim-soft: #f1ecfd;
+
+  /* Operator chrome: the ink sidebar that tells staff they are in the console, not the product.
+     Text roles pass 4.5:1 on ink. */
+  --color-chrome: #111111;
+  --color-chrome-text: #e1e1e5;
+  --color-chrome-muted: #9a9aa3;
+  --color-chrome-raise: #232328;
+  --color-chrome-line: #2c2c32;
+}
+
+@layer base {
+  body {
+    background: var(--color-stage);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-machine);
+    outline-offset: 2px;
+  }
+  ::selection {
+    background: var(--color-machine-soft);
+  }
+}
+
+@layer components {
+  .panel {
+    background: var(--color-paper);
+    border: 1px solid var(--color-rule);
+    border-radius: 12px;
+  }
+  .tnum {
+    font-variant-numeric: tabular-nums;
+  }
+  .h-page {
+    font-size: 1.5rem;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    font-weight: 600;
+  }
+  .h-section {
+    font-size: 0.9375rem;
+    line-height: 1.4;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+  }
+  .label {
+    font-size: 0.75rem;
+    line-height: 1.35;
+    color: var(--color-muted);
+  }
+  .link {
+    text-decoration: underline;
+    text-decoration-color: var(--color-grey-300);
+    text-underline-offset: 3px;
+  }
+  .link:hover {
+    text-decoration-color: currentColor;
+  }
+}
+
+@keyframes nm-breathe {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+.live-dot {
+  animation: nm-breathe 1.8s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .live-dot {
+    animation: none;
+  }
+}

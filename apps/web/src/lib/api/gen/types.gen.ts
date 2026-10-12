@@ -5,6 +5,24 @@ export type ClientOptions = {
 };
 
 /**
+ * AddConnectorRequest
+ */
+export type AddConnectorRequest = {
+    /**
+     * Toolkitslug
+     */
+    toolkitSlug: string;
+    /**
+     * Status
+     */
+    status: 'enabled' | 'beta';
+    /**
+     * Reason
+     */
+    reason: string;
+};
+
+/**
  * Agent
  */
 export type Agent = {
@@ -160,6 +178,74 @@ export type AttentionItem = {
 };
 
 /**
+ * AuditEntry
+ */
+export type AuditEntry = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * At
+     */
+    at: string;
+    /**
+     * Actoremail
+     */
+    actorEmail: string;
+    /**
+     * Actorrole
+     */
+    actorRole: 'owner' | 'admin' | 'support';
+    /**
+     * Action
+     */
+    action: string;
+    /**
+     * Targettype
+     */
+    targetType: 'tenant' | 'pack' | 'connector' | 'reviewer' | 'guardrail' | 'incident';
+    /**
+     * Targetid
+     */
+    targetId: string;
+    /**
+     * Reason
+     */
+    reason: string;
+    /**
+     * Summary
+     */
+    summary: string;
+};
+
+/**
+ * BillingSummary
+ */
+export type BillingSummary = {
+    mrr: Money;
+    arr: Money;
+    aiCostMonth: Money;
+    /**
+     * Grossmargin
+     */
+    grossMargin: number;
+    reviewerPayoutsMonth: Money;
+    /**
+     * Invoices
+     */
+    invoices: Array<Invoice>;
+    /**
+     * Payouts
+     */
+    payouts: Array<Payout>;
+    /**
+     * Simulated
+     */
+    simulated?: true;
+};
+
+/**
  * ChainStep
  */
 export type ChainStep = {
@@ -213,6 +299,164 @@ export type Connection = {
      * Health
      */
     health?: string;
+};
+
+/**
+ * ConnectorDefaults
+ */
+export type ConnectorDefaults = {
+    /**
+     * Read
+     */
+    read: 'permit' | 'require_approval' | 'deny';
+    /**
+     * Write
+     */
+    write: 'permit' | 'require_approval' | 'deny';
+    /**
+     * Delete
+     */
+    delete: 'permit' | 'require_approval' | 'deny';
+    /**
+     * Money
+     */
+    money: 'permit' | 'require_approval' | 'deny';
+};
+
+/**
+ * ConnectorEntry
+ */
+export type ConnectorEntry = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * App
+     */
+    app: string;
+    /**
+     * Category
+     */
+    category: string;
+    /**
+     * Provider
+     */
+    provider: 'Composio' | 'Native' | 'Mock';
+    /**
+     * Authtype
+     */
+    authType: 'oauth_managed' | 'oauth_own_app' | 'api_key';
+    /**
+     * Status
+     */
+    status: 'enabled' | 'beta' | 'disabled';
+    /**
+     * Tenantsconnected
+     */
+    tenantsConnected: number;
+    /**
+     * Callstoday
+     */
+    callsToday: number;
+    /**
+     * Errorrate
+     */
+    errorRate: number;
+    lastHealthCheck: HealthCheck;
+    defaults: ConnectorDefaults;
+    /**
+     * Scopes
+     */
+    scopes: Array<string>;
+};
+
+/**
+ * CreatePackRequest
+ */
+export type CreatePackRequest = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Slug
+     */
+    slug: string;
+    /**
+     * Publisher
+     */
+    publisher: string;
+    /**
+     * Category
+     */
+    category: string;
+    /**
+     * Outcome
+     */
+    outcome: string;
+    /**
+     * Description
+     */
+    description: string;
+    /**
+     * Riskclass
+     */
+    riskClass: 'low' | 'medium' | 'high';
+    /**
+     * Connectors
+     */
+    connectors: Array<PackConnector>;
+    /**
+     * Humanreview
+     */
+    humanReview: string;
+    /**
+     * Reason
+     */
+    reason: string;
+};
+
+/**
+ * CreateTenantRequest
+ */
+export type CreateTenantRequest = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Short
+     */
+    short: string;
+    /**
+     * Plan
+     */
+    plan: 'Starter' | 'Pro' | 'Enterprise';
+    /**
+     * Region
+     */
+    region: string;
+    /**
+     * Country
+     */
+    country: string;
+    /**
+     * Owneremail
+     */
+    ownerEmail: string;
+    /**
+     * Monthlycapminor
+     */
+    monthlyCapMinor: number;
+    /**
+     * Trialdays
+     */
+    trialDays?: number;
+    /**
+     * Reason
+     */
+    reason: string;
 };
 
 /**
@@ -282,6 +526,28 @@ export type DecisionRecord = {
      * Approval
      */
     approval?: ApprovalRef;
+};
+
+/**
+ * DeclareIncidentRequest
+ */
+export type DeclareIncidentRequest = {
+    /**
+     * Title
+     */
+    title: string;
+    /**
+     * Severity
+     */
+    severity: 'sev1' | 'sev2' | 'sev3';
+    /**
+     * Services
+     */
+    services: Array<string>;
+    /**
+     * Reason
+     */
+    reason: string;
 };
 
 /**
@@ -458,6 +724,96 @@ export type Grant = {
 };
 
 /**
+ * Guardrail
+ */
+export type Guardrail = {
+    /**
+     * Key
+     */
+    key: string;
+    /**
+     * Kind
+     */
+    kind: 'kill_switch' | 'flag' | 'limit';
+    /**
+     * Label
+     */
+    label: string;
+    /**
+     * Description
+     */
+    description: string;
+    /**
+     * Enabled
+     */
+    enabled: boolean;
+    /**
+     * Value
+     */
+    value?: number;
+    /**
+     * Unit
+     */
+    unit?: string;
+    /**
+     * Updatedat
+     */
+    updatedAt: string;
+    /**
+     * Updatedby
+     */
+    updatedBy: string;
+    /**
+     * Scope
+     */
+    scope?: 'platform';
+};
+
+/**
+ * HealthCheck
+ */
+export type HealthCheck = {
+    /**
+     * At
+     */
+    at: string;
+    /**
+     * Ok
+     */
+    ok: boolean;
+    /**
+     * Latencyms
+     */
+    latencyMs: number;
+    /**
+     * Note
+     */
+    note?: string;
+};
+
+/**
+ * HourPoint
+ */
+export type HourPoint = {
+    /**
+     * Hour
+     */
+    hour: number;
+    /**
+     * Completed
+     */
+    completed: number;
+    /**
+     * Failed
+     */
+    failed: number;
+    /**
+     * Waiting
+     */
+    waiting: number;
+};
+
+/**
  * HumanTask
  */
 export type HumanTask = {
@@ -545,6 +901,62 @@ export type HumanTask = {
 };
 
 /**
+ * Incident
+ */
+export type Incident = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Title
+     */
+    title: string;
+    /**
+     * Severity
+     */
+    severity: 'sev1' | 'sev2' | 'sev3';
+    /**
+     * Status
+     */
+    status: 'investigating' | 'monitoring' | 'resolved';
+    /**
+     * Startedat
+     */
+    startedAt: string;
+    /**
+     * Resolvedat
+     */
+    resolvedAt?: string;
+    /**
+     * Services
+     */
+    services: Array<string>;
+    /**
+     * Updates
+     */
+    updates: Array<IncidentUpdate>;
+};
+
+/**
+ * IncidentUpdate
+ */
+export type IncidentUpdate = {
+    /**
+     * At
+     */
+    at: string;
+    /**
+     * By
+     */
+    by: string;
+    /**
+     * Text
+     */
+    text: string;
+};
+
+/**
  * InstallRequest
  */
 export type InstallRequest = {
@@ -596,6 +1008,33 @@ export type InviteRequest = {
      * Role
      */
     role: 'Member' | 'Admin';
+};
+
+/**
+ * Invoice
+ */
+export type Invoice = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Tenantid
+     */
+    tenantId: string;
+    /**
+     * Tenantname
+     */
+    tenantName: string;
+    /**
+     * Period
+     */
+    period: string;
+    amount: Money;
+    /**
+     * Status
+     */
+    status: 'paid' | 'open' | 'overdue' | 'void';
 };
 
 /**
@@ -794,6 +1233,196 @@ export type Money = {
 };
 
 /**
+ * OpsAttentionItem
+ */
+export type OpsAttentionItem = {
+    /**
+     * Kind
+     */
+    kind: 'pack_review' | 'reviewer_application' | 'connector_error' | 'tenant_cap' | 'incident' | 'tenant_at_risk';
+    /**
+     * Title
+     */
+    title: string;
+    /**
+     * Detail
+     */
+    detail: string;
+    /**
+     * Href
+     */
+    href: string;
+    /**
+     * Severity
+     */
+    severity: 'info' | 'warn' | 'critical';
+    /**
+     * At
+     */
+    at: string;
+};
+
+/**
+ * OpsHealth
+ */
+export type OpsHealth = {
+    /**
+     * Services
+     */
+    services: Array<ServiceStatus>;
+    /**
+     * Incidents
+     */
+    incidents: Array<Incident>;
+    /**
+     * Simulated
+     */
+    simulated?: true;
+};
+
+/**
+ * OpsKpis
+ */
+export type OpsKpis = {
+    /**
+     * Activetenants
+     */
+    activeTenants: number;
+    /**
+     * Trialtenants
+     */
+    trialTenants: number;
+    /**
+     * Runstoday
+     */
+    runsToday: number;
+    /**
+     * Runsuccessrate7D
+     */
+    runSuccessRate7d: number;
+    /**
+     * Openhumantasks
+     */
+    openHumanTasks: number;
+    /**
+     * Pendingapprovals
+     */
+    pendingApprovals: number;
+    aiSpendToday: Money;
+    platformDailyCap: Money;
+    /**
+     * Incidentsopen
+     */
+    incidentsOpen: number;
+};
+
+/**
+ * OpsMe
+ */
+export type OpsMe = {
+    /**
+     * Userid
+     */
+    userId: string;
+    /**
+     * Email
+     */
+    email: string;
+    /**
+     * Role
+     */
+    role: 'owner' | 'admin' | 'support';
+};
+
+/**
+ * OpsOverview
+ */
+export type OpsOverview = {
+    kpis: OpsKpis;
+    /**
+     * Attention
+     */
+    attention: Array<OpsAttentionItem>;
+    /**
+     * Recentaudit
+     */
+    recentAudit: Array<AuditEntry>;
+    /**
+     * Runsbyhour
+     */
+    runsByHour: Array<HourPoint>;
+    /**
+     * Simulatedfields
+     */
+    simulatedFields: Array<string>;
+};
+
+/**
+ * OpsRun
+ */
+export type OpsRun = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Tenantid
+     */
+    tenantId: string;
+    /**
+     * Tenantname
+     */
+    tenantName: string;
+    /**
+     * Pack
+     */
+    pack: string;
+    /**
+     * Status
+     */
+    status: 'RUNNING' | 'WAITING_FOR_HUMAN' | 'WAITING_FOR_EVENT' | 'VERIFYING' | 'COMPLETED' | 'FAILED' | 'CANCELLED' | 'NEEDS_ATTENTION';
+    /**
+     * Startedat
+     */
+    startedAt: string;
+    cost: Money;
+    /**
+     * Waitingon
+     */
+    waitingOn?: 'human' | 'approval' | 'policy';
+    /**
+     * Durationseconds
+     */
+    durationSeconds?: number;
+};
+
+/**
+ * OpsTeamMember
+ */
+export type OpsTeamMember = {
+    /**
+     * Email
+     */
+    email: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Role
+     */
+    role: 'owner' | 'admin' | 'support';
+    /**
+     * Lastactiveat
+     */
+    lastActiveAt: string;
+    /**
+     * Mfa
+     */
+    mfa: boolean;
+};
+
+/**
  * OrderSide
  */
 export type OrderSide = {
@@ -946,6 +1575,173 @@ export type PackEstimate = {
 };
 
 /**
+ * PackHistoryEntry
+ */
+export type PackHistoryEntry = {
+    /**
+     * At
+     */
+    at: string;
+    /**
+     * By
+     */
+    by: string;
+    /**
+     * Action
+     */
+    action: string;
+    /**
+     * Note
+     */
+    note: string;
+};
+
+/**
+ * PackListing
+ */
+export type PackListing = {
+    /**
+     * Slug
+     */
+    slug: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Version
+     */
+    version: string;
+    /**
+     * Publisher
+     */
+    publisher: string;
+    /**
+     * Category
+     */
+    category: string;
+    /**
+     * Status
+     */
+    status: 'draft' | 'in_review' | 'published' | 'deprecated' | 'rejected';
+    /**
+     * Riskclass
+     */
+    riskClass: 'low' | 'medium' | 'high';
+    /**
+     * Certified
+     */
+    certified: boolean;
+    /**
+     * Installs
+     */
+    installs: number;
+    /**
+     * Runs30D
+     */
+    runs30d: number;
+    /**
+     * Successrate
+     */
+    successRate: number;
+    /**
+     * Pricenote
+     */
+    priceNote: string;
+    /**
+     * Submittedat
+     */
+    submittedAt?: string;
+    /**
+     * Updatedat
+     */
+    updatedAt: string;
+    /**
+     * Connectors
+     */
+    connectors: Array<string>;
+    /**
+     * Reviewnotes
+     */
+    reviewNotes?: string;
+};
+
+/**
+ * PackListingDetail
+ */
+export type PackListingDetail = {
+    /**
+     * Slug
+     */
+    slug: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Version
+     */
+    version: string;
+    /**
+     * Publisher
+     */
+    publisher: string;
+    /**
+     * Category
+     */
+    category: string;
+    /**
+     * Status
+     */
+    status: 'draft' | 'in_review' | 'published' | 'deprecated' | 'rejected';
+    /**
+     * Riskclass
+     */
+    riskClass: 'low' | 'medium' | 'high';
+    /**
+     * Certified
+     */
+    certified: boolean;
+    /**
+     * Installs
+     */
+    installs: number;
+    /**
+     * Runs30D
+     */
+    runs30d: number;
+    /**
+     * Successrate
+     */
+    successRate: number;
+    /**
+     * Pricenote
+     */
+    priceNote: string;
+    /**
+     * Submittedat
+     */
+    submittedAt?: string;
+    /**
+     * Updatedat
+     */
+    updatedAt: string;
+    /**
+     * Connectors
+     */
+    connectors: Array<string>;
+    /**
+     * Reviewnotes
+     */
+    reviewNotes?: string;
+    pack: Pack;
+    /**
+     * History
+     */
+    history: Array<PackHistoryEntry>;
+};
+
+/**
  * PassportResult
  */
 export type PassportResult = {
@@ -987,6 +1783,29 @@ export type PaymentSide = {
      * Batch
      */
     batch: string;
+};
+
+/**
+ * Payout
+ */
+export type Payout = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Reviewerid
+     */
+    reviewerId: string;
+    /**
+     * Reviewername
+     */
+    reviewerName: string;
+    amount: Money;
+    /**
+     * Status
+     */
+    status: 'scheduled' | 'paid' | 'held';
 };
 
 /**
@@ -1062,6 +1881,16 @@ export type Problem = {
 };
 
 /**
+ * ReasonRequest
+ */
+export type ReasonRequest = {
+    /**
+     * Reason
+     */
+    reason: string;
+};
+
+/**
  * RedactedRecord
  */
 export type RedactedRecord = {
@@ -1079,6 +1908,65 @@ export type RedactedRecord = {
      * Agentnote
      */
     agentNote: string;
+};
+
+/**
+ * Reviewer
+ */
+export type Reviewer = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Email
+     */
+    email: string;
+    /**
+     * Country
+     */
+    country: string;
+    /**
+     * Languages
+     */
+    languages: Array<string>;
+    /**
+     * Skills
+     */
+    skills: Array<string>;
+    /**
+     * Level
+     */
+    level: 'trainee' | 'qualified' | 'senior';
+    /**
+     * Status
+     */
+    status: 'applicant' | 'active' | 'suspended';
+    /**
+     * Tasksdone30D
+     */
+    tasksDone30d: number;
+    /**
+     * Accuracy
+     */
+    accuracy: number;
+    /**
+     * Medianminutes
+     */
+    medianMinutes: number;
+    earnings30d: Money;
+    /**
+     * Joinedat
+     */
+    joinedAt: string;
+    /**
+     * Queue
+     */
+    queue: number;
 };
 
 /**
@@ -1301,6 +2189,107 @@ export type RunSummary = {
 };
 
 /**
+ * ServiceStatus
+ */
+export type ServiceStatus = {
+    /**
+     * Key
+     */
+    key: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Status
+     */
+    status: 'operational' | 'degraded' | 'outage';
+    /**
+     * Latencyp95Ms
+     */
+    latencyP95Ms: number;
+    /**
+     * Uptime30D
+     */
+    uptime30d: number;
+    /**
+     * Note
+     */
+    note?: string;
+};
+
+/**
+ * SetDefaultsRequest
+ */
+export type SetDefaultsRequest = {
+    defaults: ConnectorDefaults;
+    /**
+     * Reason
+     */
+    reason: string;
+};
+
+/**
+ * SetGuardrailRequest
+ */
+export type SetGuardrailRequest = {
+    /**
+     * Enabled
+     */
+    enabled?: boolean;
+    /**
+     * Value
+     */
+    value?: number;
+    /**
+     * Reason
+     */
+    reason: string;
+};
+
+/**
+ * SetLevelRequest
+ */
+export type SetLevelRequest = {
+    /**
+     * Level
+     */
+    level: 'trainee' | 'qualified' | 'senior';
+    /**
+     * Reason
+     */
+    reason: string;
+};
+
+/**
+ * SetPlanRequest
+ */
+export type SetPlanRequest = {
+    /**
+     * Plan
+     */
+    plan: 'Starter' | 'Pro' | 'Enterprise';
+    /**
+     * Reason
+     */
+    reason: string;
+};
+
+/**
+ * SetSpendCapRequest
+ */
+export type SetSpendCapRequest = {
+    /**
+     * Monthlycapminor
+     */
+    monthlyCapMinor: number;
+    /**
+     * Reason
+     */
+    reason: string;
+};
+
+/**
  * Spent
  */
 export type Spent = {
@@ -1421,6 +2410,220 @@ export type Suggestion = {
 };
 
 /**
+ * Tenant
+ */
+export type Tenant = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Short
+     */
+    short: string;
+    /**
+     * Plan
+     */
+    plan: 'Starter' | 'Pro' | 'Enterprise';
+    /**
+     * Status
+     */
+    status: 'active' | 'trial' | 'suspended' | 'churned';
+    /**
+     * Region
+     */
+    region: string;
+    /**
+     * Country
+     */
+    country: string;
+    /**
+     * Owneremail
+     */
+    ownerEmail: string;
+    /**
+     * Seats
+     */
+    seats: number;
+    /**
+     * Members
+     */
+    members: number;
+    /**
+     * Createdat
+     */
+    createdAt: string;
+    monthlyCap: Money;
+    monthSpent: Money;
+    /**
+     * Runs30D
+     */
+    runs30d: number;
+    /**
+     * Successrate
+     */
+    successRate: number;
+    /**
+     * Openhumantasks
+     */
+    openHumanTasks: number;
+    /**
+     * Packsinstalled
+     */
+    packsInstalled: number;
+    /**
+     * Connectors
+     */
+    connectors: number;
+    /**
+     * Health
+     */
+    health: 'healthy' | 'watch' | 'at_risk';
+    /**
+     * Notes
+     */
+    notes: string;
+    /**
+     * Trialendsat
+     */
+    trialEndsAt?: string;
+    /**
+     * Suspendedreason
+     */
+    suspendedReason?: string;
+};
+
+/**
+ * TenantConnection
+ */
+export type TenantConnection = {
+    /**
+     * App
+     */
+    app: string;
+    /**
+     * Status
+     */
+    status: 'connected' | 'not_connected' | 'sandbox' | 'needs_reauth';
+};
+
+/**
+ * TenantDetail
+ */
+export type TenantDetail = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Short
+     */
+    short: string;
+    /**
+     * Plan
+     */
+    plan: 'Starter' | 'Pro' | 'Enterprise';
+    /**
+     * Status
+     */
+    status: 'active' | 'trial' | 'suspended' | 'churned';
+    /**
+     * Region
+     */
+    region: string;
+    /**
+     * Country
+     */
+    country: string;
+    /**
+     * Owneremail
+     */
+    ownerEmail: string;
+    /**
+     * Seats
+     */
+    seats: number;
+    /**
+     * Members
+     */
+    members: number;
+    /**
+     * Createdat
+     */
+    createdAt: string;
+    monthlyCap: Money;
+    monthSpent: Money;
+    /**
+     * Runs30D
+     */
+    runs30d: number;
+    /**
+     * Successrate
+     */
+    successRate: number;
+    /**
+     * Openhumantasks
+     */
+    openHumanTasks: number;
+    /**
+     * Packsinstalled
+     */
+    packsInstalled: number;
+    /**
+     * Connectors
+     */
+    connectors: number;
+    /**
+     * Health
+     */
+    health: 'healthy' | 'watch' | 'at_risk';
+    /**
+     * Notes
+     */
+    notes: string;
+    /**
+     * Trialendsat
+     */
+    trialEndsAt?: string;
+    /**
+     * Suspendedreason
+     */
+    suspendedReason?: string;
+    /**
+     * Memberslist
+     */
+    membersList: Array<Member>;
+    /**
+     * Installedpacks
+     */
+    installedPacks: Array<string>;
+    /**
+     * Connectorslist
+     */
+    connectorsList: Array<TenantConnection>;
+    /**
+     * Recentruns
+     */
+    recentRuns: Array<OpsRun>;
+    /**
+     * Usagebyday
+     */
+    usageByDay: Array<UsagePoint>;
+    /**
+     * Simulated
+     */
+    simulated: true;
+};
+
+/**
  * TimelineEvent
  */
 export type TimelineEvent = {
@@ -1497,6 +2700,30 @@ export type ToolCall = {
 };
 
 /**
+ * Toolkit
+ *
+ * A Composio toolkit that can be added to the catalog (simulated discovery).
+ */
+export type Toolkit = {
+    /**
+     * Slug
+     */
+    slug: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Category
+     */
+    category: string;
+    /**
+     * Authtype
+     */
+    authType: 'oauth_managed' | 'oauth_own_app' | 'api_key';
+};
+
+/**
  * TrustPassport
  */
 export type TrustPassport = {
@@ -1531,6 +2758,24 @@ export type TrustPassport = {
 };
 
 /**
+ * UpdateIncidentRequest
+ */
+export type UpdateIncidentRequest = {
+    /**
+     * Status
+     */
+    status: 'investigating' | 'monitoring' | 'resolved';
+    /**
+     * Text
+     */
+    text: string;
+    /**
+     * Reason
+     */
+    reason: string;
+};
+
+/**
  * Usage
  */
 export type Usage = {
@@ -1539,6 +2784,20 @@ export type Usage = {
      * Ledger
      */
     ledger: Array<LedgerTxn>;
+};
+
+/**
+ * UsagePoint
+ */
+export type UsagePoint = {
+    /**
+     * Day
+     */
+    day: string;
+    /**
+     * Amountminor
+     */
+    amountMinor: number;
 };
 
 export type ListWorkflowPacksData = {
@@ -2944,3 +4203,1771 @@ export type RevokeTokenResponses = {
 };
 
 export type RevokeTokenResponse = RevokeTokenResponses[keyof RevokeTokenResponses];
+
+export type OpsListPacksData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Status
+         */
+        status?: 'draft' | 'in_review' | 'published' | 'deprecated' | 'rejected' | null;
+    };
+    url: '/v1/ops/packs';
+};
+
+export type OpsListPacksErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type OpsListPacksError = OpsListPacksErrors[keyof OpsListPacksErrors];
+
+export type OpsListPacksResponses = {
+    /**
+     * Response Opslistpacks
+     *
+     * Successful Response
+     */
+    200: Array<PackListing>;
+};
+
+export type OpsListPacksResponse = OpsListPacksResponses[keyof OpsListPacksResponses];
+
+export type OpsCreatePackData = {
+    body: CreatePackRequest;
+    path?: never;
+    query?: never;
+    url: '/v1/ops/packs';
+};
+
+export type OpsCreatePackErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type OpsCreatePackError = OpsCreatePackErrors[keyof OpsCreatePackErrors];
+
+export type OpsCreatePackResponses = {
+    /**
+     * Successful Response
+     */
+    201: PackListingDetail;
+};
+
+export type OpsCreatePackResponse = OpsCreatePackResponses[keyof OpsCreatePackResponses];
+
+export type OpsGetPackData = {
+    body?: never;
+    path: {
+        /**
+         * Slug
+         */
+        slug: string;
+    };
+    query?: never;
+    url: '/v1/ops/packs/{slug}';
+};
+
+export type OpsGetPackErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type OpsGetPackError = OpsGetPackErrors[keyof OpsGetPackErrors];
+
+export type OpsGetPackResponses = {
+    /**
+     * Successful Response
+     */
+    200: PackListingDetail;
+};
+
+export type OpsGetPackResponse = OpsGetPackResponses[keyof OpsGetPackResponses];
+
+export type OpsSubmitPackData = {
+    body: ReasonRequest;
+    path: {
+        /**
+         * Slug
+         */
+        slug: string;
+    };
+    query?: never;
+    url: '/v1/ops/packs/{slug}:submit';
+};
+
+export type OpsSubmitPackErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type OpsSubmitPackError = OpsSubmitPackErrors[keyof OpsSubmitPackErrors];
+
+export type OpsSubmitPackResponses = {
+    /**
+     * Successful Response
+     */
+    200: PackListingDetail;
+};
+
+export type OpsSubmitPackResponse = OpsSubmitPackResponses[keyof OpsSubmitPackResponses];
+
+export type OpsApprovePackData = {
+    body: ReasonRequest;
+    path: {
+        /**
+         * Slug
+         */
+        slug: string;
+    };
+    query?: never;
+    url: '/v1/ops/packs/{slug}:approve';
+};
+
+export type OpsApprovePackErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type OpsApprovePackError = OpsApprovePackErrors[keyof OpsApprovePackErrors];
+
+export type OpsApprovePackResponses = {
+    /**
+     * Successful Response
+     */
+    200: PackListingDetail;
+};
+
+export type OpsApprovePackResponse = OpsApprovePackResponses[keyof OpsApprovePackResponses];
+
+export type OpsRejectPackData = {
+    body: ReasonRequest;
+    path: {
+        /**
+         * Slug
+         */
+        slug: string;
+    };
+    query?: never;
+    url: '/v1/ops/packs/{slug}:reject';
+};
+
+export type OpsRejectPackErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type OpsRejectPackError = OpsRejectPackErrors[keyof OpsRejectPackErrors];
+
+export type OpsRejectPackResponses = {
+    /**
+     * Successful Response
+     */
+    200: PackListingDetail;
+};
+
+export type OpsRejectPackResponse = OpsRejectPackResponses[keyof OpsRejectPackResponses];
+
+export type OpsDeprecatePackData = {
+    body: ReasonRequest;
+    path: {
+        /**
+         * Slug
+         */
+        slug: string;
+    };
+    query?: never;
+    url: '/v1/ops/packs/{slug}:deprecate';
+};
+
+export type OpsDeprecatePackErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type OpsDeprecatePackError = OpsDeprecatePackErrors[keyof OpsDeprecatePackErrors];
+
+export type OpsDeprecatePackResponses = {
+    /**
+     * Successful Response
+     */
+    200: PackListingDetail;
+};
+
+export type OpsDeprecatePackResponse = OpsDeprecatePackResponses[keyof OpsDeprecatePackResponses];
+
+export type OpsRepublishPackData = {
+    body: ReasonRequest;
+    path: {
+        /**
+         * Slug
+         */
+        slug: string;
+    };
+    query?: never;
+    url: '/v1/ops/packs/{slug}:republish';
+};
+
+export type OpsRepublishPackErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type OpsRepublishPackError = OpsRepublishPackErrors[keyof OpsRepublishPackErrors];
+
+export type OpsRepublishPackResponses = {
+    /**
+     * Successful Response
+     */
+    200: PackListingDetail;
+};
+
+export type OpsRepublishPackResponse = OpsRepublishPackResponses[keyof OpsRepublishPackResponses];
+
+export type OpsCertifyPackData = {
+    body: ReasonRequest;
+    path: {
+        /**
+         * Slug
+         */
+        slug: string;
+    };
+    query?: never;
+    url: '/v1/ops/packs/{slug}:certify';
+};
+
+export type OpsCertifyPackErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type OpsCertifyPackError = OpsCertifyPackErrors[keyof OpsCertifyPackErrors];
+
+export type OpsCertifyPackResponses = {
+    /**
+     * Successful Response
+     */
+    200: PackListingDetail;
+};
+
+export type OpsCertifyPackResponse = OpsCertifyPackResponses[keyof OpsCertifyPackResponses];
+
+export type OpsListConnectorsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/ops/connectors';
+};
+
+export type OpsListConnectorsErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type OpsListConnectorsError = OpsListConnectorsErrors[keyof OpsListConnectorsErrors];
+
+export type OpsListConnectorsResponses = {
+    /**
+     * Response Opslistconnectors
+     *
+     * Successful Response
+     */
+    200: Array<ConnectorEntry>;
+};
+
+export type OpsListConnectorsResponse = OpsListConnectorsResponses[keyof OpsListConnectorsResponses];
+
+export type OpsAddConnectorData = {
+    body: AddConnectorRequest;
+    path?: never;
+    query?: never;
+    url: '/v1/ops/connectors';
+};
+
+export type OpsAddConnectorErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type OpsAddConnectorError = OpsAddConnectorErrors[keyof OpsAddConnectorErrors];
+
+export type OpsAddConnectorResponses = {
+    /**
+     * Successful Response
+     */
+    201: ConnectorEntry;
+};
+
+export type OpsAddConnectorResponse = OpsAddConnectorResponses[keyof OpsAddConnectorResponses];
+
+export type OpsListAvailableToolkitsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/ops/connectors/available';
+};
+
+export type OpsListAvailableToolkitsErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type OpsListAvailableToolkitsError = OpsListAvailableToolkitsErrors[keyof OpsListAvailableToolkitsErrors];
+
+export type OpsListAvailableToolkitsResponses = {
+    /**
+     * Response Opslistavailabletoolkits
+     *
+     * Successful Response
+     */
+    200: Array<Toolkit>;
+};
+
+export type OpsListAvailableToolkitsResponse = OpsListAvailableToolkitsResponses[keyof OpsListAvailableToolkitsResponses];
+
+export type OpsEnableConnectorData = {
+    body: ReasonRequest;
+    path: {
+        /**
+         * Connector Id
+         */
+        connector_id: string;
+    };
+    query?: never;
+    url: '/v1/ops/connectors/{connector_id}:enable';
+};
+
+export type OpsEnableConnectorErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type OpsEnableConnectorError = OpsEnableConnectorErrors[keyof OpsEnableConnectorErrors];
+
+export type OpsEnableConnectorResponses = {
+    /**
+     * Successful Response
+     */
+    200: ConnectorEntry;
+};
+
+export type OpsEnableConnectorResponse = OpsEnableConnectorResponses[keyof OpsEnableConnectorResponses];
+
+export type OpsDisableConnectorData = {
+    body: ReasonRequest;
+    path: {
+        /**
+         * Connector Id
+         */
+        connector_id: string;
+    };
+    query?: never;
+    url: '/v1/ops/connectors/{connector_id}:disable';
+};
+
+export type OpsDisableConnectorErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type OpsDisableConnectorError = OpsDisableConnectorErrors[keyof OpsDisableConnectorErrors];
+
+export type OpsDisableConnectorResponses = {
+    /**
+     * Successful Response
+     */
+    200: ConnectorEntry;
+};
+
+export type OpsDisableConnectorResponse = OpsDisableConnectorResponses[keyof OpsDisableConnectorResponses];
+
+export type OpsSetConnectorDefaultsData = {
+    body: SetDefaultsRequest;
+    path: {
+        /**
+         * Connector Id
+         */
+        connector_id: string;
+    };
+    query?: never;
+    url: '/v1/ops/connectors/{connector_id}:setDefaults';
+};
+
+export type OpsSetConnectorDefaultsErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type OpsSetConnectorDefaultsError = OpsSetConnectorDefaultsErrors[keyof OpsSetConnectorDefaultsErrors];
+
+export type OpsSetConnectorDefaultsResponses = {
+    /**
+     * Successful Response
+     */
+    200: ConnectorEntry;
+};
+
+export type OpsSetConnectorDefaultsResponse = OpsSetConnectorDefaultsResponses[keyof OpsSetConnectorDefaultsResponses];
+
+export type OpsHealthCheckConnectorData = {
+    body?: never;
+    path: {
+        /**
+         * Connector Id
+         */
+        connector_id: string;
+    };
+    query?: never;
+    url: '/v1/ops/connectors/{connector_id}:healthCheck';
+};
+
+export type OpsHealthCheckConnectorErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type OpsHealthCheckConnectorError = OpsHealthCheckConnectorErrors[keyof OpsHealthCheckConnectorErrors];
+
+export type OpsHealthCheckConnectorResponses = {
+    /**
+     * Successful Response
+     */
+    200: ConnectorEntry;
+};
+
+export type OpsHealthCheckConnectorResponse = OpsHealthCheckConnectorResponses[keyof OpsHealthCheckConnectorResponses];
+
+export type OpsGetHealthData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/ops/health';
+};
+
+export type OpsGetHealthErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type OpsGetHealthError = OpsGetHealthErrors[keyof OpsGetHealthErrors];
+
+export type OpsGetHealthResponses = {
+    /**
+     * Successful Response
+     */
+    200: OpsHealth;
+};
+
+export type OpsGetHealthResponse = OpsGetHealthResponses[keyof OpsGetHealthResponses];
+
+export type OpsDeclareIncidentData = {
+    body: DeclareIncidentRequest;
+    path?: never;
+    query?: never;
+    url: '/v1/ops/incidents';
+};
+
+export type OpsDeclareIncidentErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type OpsDeclareIncidentError = OpsDeclareIncidentErrors[keyof OpsDeclareIncidentErrors];
+
+export type OpsDeclareIncidentResponses = {
+    /**
+     * Successful Response
+     */
+    201: Incident;
+};
+
+export type OpsDeclareIncidentResponse = OpsDeclareIncidentResponses[keyof OpsDeclareIncidentResponses];
+
+export type OpsUpdateIncidentData = {
+    body: UpdateIncidentRequest;
+    path: {
+        /**
+         * Incident Id
+         */
+        incident_id: string;
+    };
+    query?: never;
+    url: '/v1/ops/incidents/{incident_id}:update';
+};
+
+export type OpsUpdateIncidentErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type OpsUpdateIncidentError = OpsUpdateIncidentErrors[keyof OpsUpdateIncidentErrors];
+
+export type OpsUpdateIncidentResponses = {
+    /**
+     * Successful Response
+     */
+    200: Incident;
+};
+
+export type OpsUpdateIncidentResponse = OpsUpdateIncidentResponses[keyof OpsUpdateIncidentResponses];
+
+export type OpsGetOverviewData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/ops/overview';
+};
+
+export type OpsGetOverviewErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type OpsGetOverviewError = OpsGetOverviewErrors[keyof OpsGetOverviewErrors];
+
+export type OpsGetOverviewResponses = {
+    /**
+     * Successful Response
+     */
+    200: OpsOverview;
+};
+
+export type OpsGetOverviewResponse = OpsGetOverviewResponses[keyof OpsGetOverviewResponses];
+
+export type OpsListReviewersData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Status
+         */
+        status?: 'applicant' | 'active' | 'suspended' | null;
+    };
+    url: '/v1/ops/reviewers';
+};
+
+export type OpsListReviewersErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type OpsListReviewersError = OpsListReviewersErrors[keyof OpsListReviewersErrors];
+
+export type OpsListReviewersResponses = {
+    /**
+     * Response Opslistreviewers
+     *
+     * Successful Response
+     */
+    200: Array<Reviewer>;
+};
+
+export type OpsListReviewersResponse = OpsListReviewersResponses[keyof OpsListReviewersResponses];
+
+export type OpsApproveReviewerData = {
+    body: ReasonRequest;
+    path: {
+        /**
+         * Reviewer Id
+         */
+        reviewer_id: string;
+    };
+    query?: never;
+    url: '/v1/ops/reviewers/{reviewer_id}:approve';
+};
+
+export type OpsApproveReviewerErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type OpsApproveReviewerError = OpsApproveReviewerErrors[keyof OpsApproveReviewerErrors];
+
+export type OpsApproveReviewerResponses = {
+    /**
+     * Successful Response
+     */
+    200: Reviewer;
+};
+
+export type OpsApproveReviewerResponse = OpsApproveReviewerResponses[keyof OpsApproveReviewerResponses];
+
+export type OpsSuspendReviewerData = {
+    body: ReasonRequest;
+    path: {
+        /**
+         * Reviewer Id
+         */
+        reviewer_id: string;
+    };
+    query?: never;
+    url: '/v1/ops/reviewers/{reviewer_id}:suspend';
+};
+
+export type OpsSuspendReviewerErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type OpsSuspendReviewerError = OpsSuspendReviewerErrors[keyof OpsSuspendReviewerErrors];
+
+export type OpsSuspendReviewerResponses = {
+    /**
+     * Successful Response
+     */
+    200: Reviewer;
+};
+
+export type OpsSuspendReviewerResponse = OpsSuspendReviewerResponses[keyof OpsSuspendReviewerResponses];
+
+export type OpsReinstateReviewerData = {
+    body: ReasonRequest;
+    path: {
+        /**
+         * Reviewer Id
+         */
+        reviewer_id: string;
+    };
+    query?: never;
+    url: '/v1/ops/reviewers/{reviewer_id}:reinstate';
+};
+
+export type OpsReinstateReviewerErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type OpsReinstateReviewerError = OpsReinstateReviewerErrors[keyof OpsReinstateReviewerErrors];
+
+export type OpsReinstateReviewerResponses = {
+    /**
+     * Successful Response
+     */
+    200: Reviewer;
+};
+
+export type OpsReinstateReviewerResponse = OpsReinstateReviewerResponses[keyof OpsReinstateReviewerResponses];
+
+export type OpsSetReviewerLevelData = {
+    body: SetLevelRequest;
+    path: {
+        /**
+         * Reviewer Id
+         */
+        reviewer_id: string;
+    };
+    query?: never;
+    url: '/v1/ops/reviewers/{reviewer_id}:setLevel';
+};
+
+export type OpsSetReviewerLevelErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type OpsSetReviewerLevelError = OpsSetReviewerLevelErrors[keyof OpsSetReviewerLevelErrors];
+
+export type OpsSetReviewerLevelResponses = {
+    /**
+     * Successful Response
+     */
+    200: Reviewer;
+};
+
+export type OpsSetReviewerLevelResponse = OpsSetReviewerLevelResponses[keyof OpsSetReviewerLevelResponses];
+
+export type OpsListRunsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Status
+         */
+        status?: 'RUNNING' | 'WAITING_FOR_HUMAN' | 'WAITING_FOR_EVENT' | 'VERIFYING' | 'COMPLETED' | 'FAILED' | 'CANCELLED' | 'NEEDS_ATTENTION' | null;
+        /**
+         * Tenant
+         */
+        tenant?: string | null;
+    };
+    url: '/v1/ops/runs';
+};
+
+export type OpsListRunsErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type OpsListRunsError = OpsListRunsErrors[keyof OpsListRunsErrors];
+
+export type OpsListRunsResponses = {
+    /**
+     * Response Opslistruns
+     *
+     * Successful Response
+     */
+    200: Array<OpsRun>;
+};
+
+export type OpsListRunsResponse = OpsListRunsResponses[keyof OpsListRunsResponses];
+
+export type OpsListGuardrailsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/ops/guardrails';
+};
+
+export type OpsListGuardrailsErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type OpsListGuardrailsError = OpsListGuardrailsErrors[keyof OpsListGuardrailsErrors];
+
+export type OpsListGuardrailsResponses = {
+    /**
+     * Response Opslistguardrails
+     *
+     * Successful Response
+     */
+    200: Array<Guardrail>;
+};
+
+export type OpsListGuardrailsResponse = OpsListGuardrailsResponses[keyof OpsListGuardrailsResponses];
+
+export type OpsSetGuardrailData = {
+    body: SetGuardrailRequest;
+    path: {
+        /**
+         * Key
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/v1/ops/guardrails/{key}:set';
+};
+
+export type OpsSetGuardrailErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type OpsSetGuardrailError = OpsSetGuardrailErrors[keyof OpsSetGuardrailErrors];
+
+export type OpsSetGuardrailResponses = {
+    /**
+     * Successful Response
+     */
+    200: Guardrail;
+};
+
+export type OpsSetGuardrailResponse = OpsSetGuardrailResponses[keyof OpsSetGuardrailResponses];
+
+export type OpsGetBillingData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/ops/billing';
+};
+
+export type OpsGetBillingErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type OpsGetBillingError = OpsGetBillingErrors[keyof OpsGetBillingErrors];
+
+export type OpsGetBillingResponses = {
+    /**
+     * Successful Response
+     */
+    200: BillingSummary;
+};
+
+export type OpsGetBillingResponse = OpsGetBillingResponses[keyof OpsGetBillingResponses];
+
+export type OpsGetMeData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/ops/me';
+};
+
+export type OpsGetMeErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type OpsGetMeError = OpsGetMeErrors[keyof OpsGetMeErrors];
+
+export type OpsGetMeResponses = {
+    /**
+     * Successful Response
+     */
+    200: OpsMe;
+};
+
+export type OpsGetMeResponse = OpsGetMeResponses[keyof OpsGetMeResponses];
+
+export type OpsListTeamData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/ops/team';
+};
+
+export type OpsListTeamErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type OpsListTeamError = OpsListTeamErrors[keyof OpsListTeamErrors];
+
+export type OpsListTeamResponses = {
+    /**
+     * Response Opslistteam
+     *
+     * Successful Response
+     */
+    200: Array<OpsTeamMember>;
+};
+
+export type OpsListTeamResponse = OpsListTeamResponses[keyof OpsListTeamResponses];
+
+export type OpsListAuditData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Targettype
+         */
+        targetType?: 'tenant' | 'pack' | 'connector' | 'reviewer' | 'guardrail' | 'incident' | null;
+        /**
+         * Targetid
+         */
+        targetId?: string | null;
+        /**
+         * Limit
+         */
+        limit?: number;
+    };
+    url: '/v1/ops/audit';
+};
+
+export type OpsListAuditErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type OpsListAuditError = OpsListAuditErrors[keyof OpsListAuditErrors];
+
+export type OpsListAuditResponses = {
+    /**
+     * Response Opslistaudit
+     *
+     * Successful Response
+     */
+    200: Array<AuditEntry>;
+};
+
+export type OpsListAuditResponse = OpsListAuditResponses[keyof OpsListAuditResponses];
+
+export type OpsListTenantsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Status
+         */
+        status?: 'active' | 'trial' | 'suspended' | 'churned' | null;
+        /**
+         * Q
+         */
+        q?: string | null;
+    };
+    url: '/v1/ops/tenants';
+};
+
+export type OpsListTenantsErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type OpsListTenantsError = OpsListTenantsErrors[keyof OpsListTenantsErrors];
+
+export type OpsListTenantsResponses = {
+    /**
+     * Response Opslisttenants
+     *
+     * Successful Response
+     */
+    200: Array<Tenant>;
+};
+
+export type OpsListTenantsResponse = OpsListTenantsResponses[keyof OpsListTenantsResponses];
+
+export type OpsCreateTenantData = {
+    body: CreateTenantRequest;
+    path?: never;
+    query?: never;
+    url: '/v1/ops/tenants';
+};
+
+export type OpsCreateTenantErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type OpsCreateTenantError = OpsCreateTenantErrors[keyof OpsCreateTenantErrors];
+
+export type OpsCreateTenantResponses = {
+    /**
+     * Successful Response
+     */
+    201: Tenant;
+};
+
+export type OpsCreateTenantResponse = OpsCreateTenantResponses[keyof OpsCreateTenantResponses];
+
+export type OpsGetTenantData = {
+    body?: never;
+    path: {
+        /**
+         * Tenant Id
+         */
+        tenant_id: string;
+    };
+    query?: never;
+    url: '/v1/ops/tenants/{tenant_id}';
+};
+
+export type OpsGetTenantErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type OpsGetTenantError = OpsGetTenantErrors[keyof OpsGetTenantErrors];
+
+export type OpsGetTenantResponses = {
+    /**
+     * Successful Response
+     */
+    200: TenantDetail;
+};
+
+export type OpsGetTenantResponse = OpsGetTenantResponses[keyof OpsGetTenantResponses];
+
+export type OpsSuspendTenantData = {
+    body: ReasonRequest;
+    path: {
+        /**
+         * Tenant Id
+         */
+        tenant_id: string;
+    };
+    query?: never;
+    url: '/v1/ops/tenants/{tenant_id}:suspend';
+};
+
+export type OpsSuspendTenantErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type OpsSuspendTenantError = OpsSuspendTenantErrors[keyof OpsSuspendTenantErrors];
+
+export type OpsSuspendTenantResponses = {
+    /**
+     * Successful Response
+     */
+    200: Tenant;
+};
+
+export type OpsSuspendTenantResponse = OpsSuspendTenantResponses[keyof OpsSuspendTenantResponses];
+
+export type OpsReactivateTenantData = {
+    body: ReasonRequest;
+    path: {
+        /**
+         * Tenant Id
+         */
+        tenant_id: string;
+    };
+    query?: never;
+    url: '/v1/ops/tenants/{tenant_id}:reactivate';
+};
+
+export type OpsReactivateTenantErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type OpsReactivateTenantError = OpsReactivateTenantErrors[keyof OpsReactivateTenantErrors];
+
+export type OpsReactivateTenantResponses = {
+    /**
+     * Successful Response
+     */
+    200: Tenant;
+};
+
+export type OpsReactivateTenantResponse = OpsReactivateTenantResponses[keyof OpsReactivateTenantResponses];
+
+export type OpsSetTenantPlanData = {
+    body: SetPlanRequest;
+    path: {
+        /**
+         * Tenant Id
+         */
+        tenant_id: string;
+    };
+    query?: never;
+    url: '/v1/ops/tenants/{tenant_id}:setPlan';
+};
+
+export type OpsSetTenantPlanErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type OpsSetTenantPlanError = OpsSetTenantPlanErrors[keyof OpsSetTenantPlanErrors];
+
+export type OpsSetTenantPlanResponses = {
+    /**
+     * Successful Response
+     */
+    200: Tenant;
+};
+
+export type OpsSetTenantPlanResponse = OpsSetTenantPlanResponses[keyof OpsSetTenantPlanResponses];
+
+export type OpsSetTenantSpendCapData = {
+    body: SetSpendCapRequest;
+    path: {
+        /**
+         * Tenant Id
+         */
+        tenant_id: string;
+    };
+    query?: never;
+    url: '/v1/ops/tenants/{tenant_id}:setSpendCap';
+};
+
+export type OpsSetTenantSpendCapErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type OpsSetTenantSpendCapError = OpsSetTenantSpendCapErrors[keyof OpsSetTenantSpendCapErrors];
+
+export type OpsSetTenantSpendCapResponses = {
+    /**
+     * Successful Response
+     */
+    200: Tenant;
+};
+
+export type OpsSetTenantSpendCapResponse = OpsSetTenantSpendCapResponses[keyof OpsSetTenantSpendCapResponses];
