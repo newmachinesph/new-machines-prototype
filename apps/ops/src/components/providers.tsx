@@ -22,7 +22,10 @@ export function Providers({ children }: { children: ReactNode }) {
         defaultOptions: {
           queries: {
             staleTime: 30_000,
-            retry: (count, e) => !(e instanceof ApiError && e.status >= 400 && e.status < 500) && count < 2,
+            // 4xx answers and a switched-off runtime will not change on a retry.
+            retry: (count, e) =>
+              !(e instanceof ApiError && ((e.status >= 400 && e.status < 500) || e.code === "RUNTIME_UNAVAILABLE")) &&
+              count < 2,
           },
         },
       }),

@@ -7,6 +7,12 @@ describe("toApiError", () => {
     expect(e).toBeInstanceOf(ApiError);
     expect(e).toMatchObject({ status: 409, code: "CONFLICT", detail: "Already granted." });
   });
+  it("keeps the issue list of an invalid definition", () => {
+    const issue = { kind: "agent", key: "finance-agent", path: "runtime.max_turns", message: "must be >= 1" };
+    const e = toApiError({ status: 422, code: "INVALID_DEFINITION", detail: "1 problem(s)", errors: [issue] });
+    expect(e.issues).toEqual([issue]);
+    expect(toApiError({ status: 409, code: "NO_CHANGE", detail: "Unchanged.", errors: null }).issues).toEqual([]);
+  });
   it("turns network failures into a reachability error", () => {
     expect(toApiError(new TypeError("Failed to fetch"))).toMatchObject({ status: 0, code: "UNREACHABLE" });
   });

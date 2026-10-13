@@ -1,0 +1,17 @@
+kind: pack
+key: demo-pack
+slug: demo-pack
+name: Demo pack
+version: 1.0.0
+publisher: New Machines
+function: finance-operations
+industries: [retail-commerce]
+outcome: Orders triaged
+description: Smallest valid pack for engine tests.
+risk_class: low
+price_note: Test only
+workflow: demo-pack
+contract: demo-pack
+agents: [helper-agent]
+connectors: [shop]
+human_review: Reviewer checks flagged orders.

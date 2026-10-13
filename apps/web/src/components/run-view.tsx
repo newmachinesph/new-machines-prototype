@@ -9,6 +9,7 @@ import type { Run } from "@/lib/types";
 import { useFormat } from "@/lib/use-format";
 import { NodeInspector } from "./node-inspector";
 import { RunCanvas } from "./run-canvas";
+import { WorkReceipt } from "./work-receipt";
 import { ActorGlyph, ActorLabel, ButtonLink, Callout, Id, KeyValues, OutcomeRail, Section, SimTag } from "./ui";
 
 function defaultNode(run: Run) {
@@ -169,6 +170,7 @@ export function RunView({ run }: { run: Run }) {
               />
             </div>
           </Section>
+          <WorkReceipt runId={run.id} status={run.status} />
           {run.deliverable ? (
             <ButtonLink href={`/app/runs/${run.id}/evidence`} className="w-full">
               {t("openDeliverable")}

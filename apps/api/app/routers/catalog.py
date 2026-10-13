@@ -1,6 +1,7 @@
 from app.auth import CurrentActor
+from app.defs.current import latest_bodies
 from app.errors import ApiProblem
-from app.models.catalog import Agent, Pack, Suggestion
+from app.models.catalog import Agent, Pack, Suggestion, Taxonomy, TaxonomyEntry
 from app.models.requests import Installation, InstallRequest, SuggestRequest
 from app.routers.org import require_org
 from app.routing import ApiRouter
@@ -36,16 +37,40 @@ def find_pack(slug: str) -> Pack:
     return pack
 
 
+def _classified(packs: list[Pack]) -> list[Pack]:
+    """Copies of `packs` with `function` and `industries` from their pack definitions (none without one)."""
+    defs = {body.get("slug", key): body for key, body in latest_bodies("pack").items()}
+    out = []
+    for pack in packs:
+        body = defs.get(pack.slug) or {}
+        industries = [str(i) for i in body.get("industries") or []]
+        out.append(pack.model_copy(update={"function": body.get("function"), "industries": industries}))
+    return out
+
+
 @router.get("/workflow-packs", operation_id="listWorkflowPacks", response_model=list[Pack])
 def list_workflow_packs(_: CurrentActor) -> list[Pack]:
     with locked_store() as store:
-        return [p for p in store.packs if is_listed(store, p)]
+        listed = [p for p in store.packs if is_listed(store, p)]
+    return _classified(listed)
 
 
 @router.get("/workflow-packs/{slug}", operation_id="getWorkflowPack", response_model=Pack)
 def get_workflow_pack(slug: str, _: CurrentActor) -> Pack:
     with locked_store():
-        return find_pack(slug)
+        pack = find_pack(slug)
+    return _classified([pack])[0]
+
+
+@router.get("/catalog/taxonomy", operation_id="getCatalogTaxonomy", response_model=Taxonomy)
+def get_catalog_taxonomy(_: CurrentActor) -> Taxonomy:
+    """Functions and industries packs are classified by (the `taxonomy` definition)."""
+    body = latest_bodies("taxonomy").get("default") or {}
+
+    def entries(field: str) -> list[TaxonomyEntry]:
+        return [TaxonomyEntry(id=str(e["id"]), name=str(e["name"])) for e in body.get(field) or []]
+
+    return Taxonomy(functions=entries("functions"), industries=entries("industries"))
 
 
 @router.get("/agents", operation_id="listAgents", response_model=list[Agent])
@@ -65,6 +90,7 @@ def suggest_workflow_pack(body: SuggestRequest, _: CurrentActor) -> Suggestion:
                 steps=["Describe the result you want, the apps involved and how often."], simulated=True
             )
         pack = find_pack(best)
+    pack = _classified([pack])[0]
     steps = [
         f"Read the data it needs from {', '.join(c.app for c in pack.connectors)}.",
         f"{pack.outcome}",

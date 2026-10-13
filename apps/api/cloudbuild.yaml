@@ -1,0 +1,8 @@
+# Cloud Build for the API image. The Dockerfile lives in apps/api but builds from the demo-app root, so it can
+# copy definitions/. From demo-app/:
+#   gcloud builds submit --project nm-demo-iu7uo4 --region asia-south1 --config apps/api/cloudbuild.yaml \
+#     --substitutions _IMAGE=asia-south1-docker.pkg.dev/nm-demo-iu7uo4/nm/nm-api:<tag> .
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args: ["build", "-f", "apps/api/Dockerfile", "-t", "${_IMAGE}", "."]
+images: ["${_IMAGE}"]

@@ -4,19 +4,28 @@ import { expect, test } from "@playwright/test";
 // heading, the page does not scroll sideways, and the console stays free of errors. Page tasks extend
 // the ready check with their own data.
 const MOCK_SESSION_KEY = "nm-ops-mock-session";
-const ROUTES = [
+// The third entry, when present, is the subject of the page's runtime-off empty state.
+const ROUTES: readonly (readonly [path: string, title: string, runtimeOff?: string])[] = [
   ["/command", "Command center"],
   ["/tenants", "Tenants"],
   ["/runs", "Runs"],
   ["/billing", "Billing"],
   ["/marketplace", "Marketplace"],
   ["/connectors", "Connectors"],
+  ["/definitions", "Definitions", "Definitions"],
+  ["/agents", "Agents", "Agents"],
+  ["/contracts", "Work Contracts", "Work contracts"],
+  ["/memory", "Memory", "Memory spaces"],
   ["/workforce", "Workforce"],
   ["/team", "Ops team"],
   ["/guardrails", "Guardrails"],
   ["/health", "System health"],
   ["/audit", "Audit log"],
-] as const;
+];
+
+// The suite's API runs with the runtime off, so pages that read definitions or memory get 503 and show
+// their empty state. The browser logs the 503 itself as a console error; that one is expected.
+const RUNTIME_OFF_LOG = /status of 503/;
 
 test.beforeEach(async ({ context }) => {
   await context.addInitScript((key) => {
@@ -29,7 +38,7 @@ test.beforeEach(async ({ context }) => {
 });
 
 for (const width of [390, 1440]) {
-  for (const [path, title] of ROUTES) {
+  for (const [path, title, runtimeSubject] of ROUTES) {
     test(`${path} renders cleanly at ${width}px`, async ({ page }) => {
       const errors: string[] = [];
       page.on("console", (m) => {
@@ -40,6 +49,9 @@ for (const width of [390, 1440]) {
 
       await page.goto(path);
       await expect(page.getByRole("heading", { level: 1, name: title })).toBeVisible();
+      if (runtimeSubject) {
+        await expect(page.getByText(`${runtimeSubject} need the local runtime (Postgres). See README.`)).toBeVisible();
+      }
       // The operator from GET /v1/ops/me: the role always, the email from md up.
       await expect(page.getByRole("banner").getByText("Owner", { exact: true })).toBeVisible();
       if (width >= 768) await expect(page.getByRole("banner").getByText("ops@newmachin.es")).toBeVisible();
@@ -49,7 +61,7 @@ for (const width of [390, 1440]) {
         innerWidth: window.innerWidth,
       }));
       expect(scrollWidth).toBeLessThanOrEqual(innerWidth);
-      expect(errors).toEqual([]);
+      expect(errors.filter((e) => !(runtimeSubject && RUNTIME_OFF_LOG.test(e)))).toEqual([]);
     });
   }
 }

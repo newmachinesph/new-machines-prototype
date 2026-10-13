@@ -8,6 +8,10 @@ describe("safeNext", () => {
     "/audit",
     "/marketplace/shipping-exceptions",
     "/runs?status=FAILED",
+    "/definitions/agent/finance-agent?version=2",
+    "/agents",
+    "/contracts",
+    "/memory?space=retail-commerce",
   ])("accepts %s", (path) => {
     expect(safeNext(path)).toBe(path);
   });

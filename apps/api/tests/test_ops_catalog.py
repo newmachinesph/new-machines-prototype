@@ -74,6 +74,19 @@ def test_pack_detail_has_the_customer_pack_and_history(client):
     assert detail["history"] and {"at", "by", "action", "note"} <= set(detail["history"][0])
 
 
+def test_listings_carry_function_and_industries_from_the_pack_definition(client):
+    listings = {p["slug"]: p for p in client.get("/v1/ops/packs").json()}
+    recon = listings["order-payment-reconciliation"]
+    assert recon["function"] == {"id": "finance-ops", "name": "Finance operations"}
+    assert [i["name"] for i in recon["industries"]] == ["Retail & Commerce", "Manufacturing"]
+    # A listing without a pack definition is unclassified.
+    assert listings["refund-triage"].get("function") is None and listings["refund-triage"]["industries"] == []
+    detail = client.get("/v1/ops/packs/order-payment-reconciliation").json()
+    assert detail["function"]["id"] == "finance-ops"
+    assert detail["pack"]["function"] == "finance-ops"
+    assert detail["pack"]["industries"] == ["retail-commerce", "manufacturing"]
+
+
 def test_an_unknown_pack_is_404_everywhere(client):
     assert client.get("/v1/ops/packs/nope").status_code == 404
     for verb in ("submit", "approve", "reject", "deprecate", "republish", "certify"):

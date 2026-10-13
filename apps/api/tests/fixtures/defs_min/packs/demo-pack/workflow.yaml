@@ -1,0 +1,38 @@
+kind: workflow
+key: demo-pack
+schema_version: nm.workflow.v1
+workflow_id: demo-pack
+version: "1"
+entry_node_id: start
+default_policy_ref: policy.default
+work_contract_ref: demo-pack
+limits:
+  max_duration_s: 600
+  max_cost_minor: 1000
+  currency: USD
+  max_parallel_nodes: 1
+  max_total_node_attempts: 5
+nodes:
+  - id: start
+    type: trigger
+    version: "1"
+    config: {}
+    routes: {next: analyse}
+  - id: analyse
+    type: agent
+    version: "1"
+    config:
+      agent: helper-agent
+      input: "=run.input"
+    routes: {next: decide}
+  - id: decide
+    type: decision
+    version: "1"
+    config:
+      rules: triage
+      facts: "=nodes.analyse.output"
+    routes: {APPROVED: finish, HUMAN_REVIEW: finish}
+  - id: finish
+    type: end
+    version: "1"
+    config: {}

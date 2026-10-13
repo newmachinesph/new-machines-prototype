@@ -269,7 +269,29 @@
       "workflowRef": "ワークフロー",
       "contract": "契約",
       "openDeliverable": "成果物と根拠を開く",
-      "deliverablePending": "実行が検証されると、ここに成果物が表示されます。<example>完了済みの例を見る</example>。"
+      "deliverablePending": "実行が検証されると、ここに成果物が表示されます。<example>完了済みの例を見る</example>。",
+      "receipt": {
+        "title": "作業レシート",
+        "verified": "検証済み",
+        "notVerified": "未検証",
+        "entries": "記録件数",
+        "headHash": "先頭ハッシュ",
+        "pinned": "固定されたバージョン",
+        "version": "v{version}",
+        "help": "すべてのステップはハッシュチェーンに記録されます。以下は、この実行が使った定義の正確なバージョンです。",
+        "kinds": {
+          "pack": "パック",
+          "workflow": "ワークフロー",
+          "contract": "作業契約",
+          "agent": "エージェント",
+          "connector": "コネクタ",
+          "decision_rules": "判定ルール",
+          "memory_space": "メモリスペース",
+          "schema": "スキーマ",
+          "models": "モデルプロファイル",
+          "taxonomy": "分類"
+        }
+      }
     },
     "evidence": {
       "pageTitle": "成果物と根拠",
@@ -415,7 +437,23 @@
       "recorded": "承認 <mono>{id}</mono> として、内容 <mono>{hash}</mono> に対して記録しました。",
       "backToRun": "実行に戻る",
       "declinedTitle": "却下しました。何も送信されていません。",
-      "declinedBody": "実行はこの請求書をスキップとして完了します。"
+      "declinedBody": "実行はこの請求書をスキップとして完了します。",
+      "actionHeading": "アクション",
+      "app": "アプリ",
+      "step": "ステップ",
+      "tool": "ツール呼び出し",
+      "does": "内容",
+      "simulatedNote": "サンドボックスのデータで実行されます。{app}では何も変更されません。",
+      "actionPendingNote": "承認すると、実行はこの1つのステップを進めます。却下すると実行は停止します。",
+      "approveAction": "承認",
+      "actionApprovedToast": "承認しました",
+      "actionApprovedToastBody": "実行は{app}でこのステップを進めます。",
+      "actionApprovedToastSimulated": "実行はこのステップを進めます。シミュレーションのため、{app}では何も変更されません。",
+      "actionDeclinedToastBody": "実行はここで停止します。{app}では何も変更されていません。",
+      "actionApprovedTitle": "承認しました。実行はこのステップを進めます。",
+      "actionRecorded": "承認 <mono>{id}</mono> として記録しました。",
+      "actionDeclinedTitle": "却下しました。実行はここで停止します。",
+      "actionDeclinedBody": "{app}では何も変更されていません。もう一度試すには、新しい実行を開始してください。"
     }
   },
   "connections": {
@@ -528,6 +566,8 @@
       "hired": "採用済み",
       "intro": "Workflow Packsは、エージェント、必要なレビュアー、成果を裏付ける検証をひとまとめにしたものです。採用する前に、サンプルデータで試せます。",
       "filterLabel": "パックを絞り込む",
+      "industryLabel": "業界で絞り込む",
+      "allIndustries": "すべての業界",
       "priceNote": "価格は1回の実行あたりの見積りです。レビュアーへの支払いは、実行で必要になったときだけです。",
       "search": "パックを検索",
       "searchPlaceholder": "成果、提供元、カテゴリでパックを検索",
@@ -899,15 +939,18 @@
       },
       "REVISION_REQUIRED": {
         "label": "修正を付けて差し戻し",
-        "help": "エージェントがあなたのメモを反映して、やり直します。"
+        "help": "エージェントがあなたのメモを反映して、やり直します。",
+        "helpRun": "あなたの修正は実行の次のステップに渡されます。エージェントが作業をやり直すことはありません。"
       },
       "REJECTED": {
         "label": "却下",
-        "help": "結果が誤っており、再試行すべきではありません。"
+        "help": "結果が誤っており、再試行すべきではありません。",
+        "helpRun": "結果が誤っています。実行はここで停止し、再試行しません。"
       },
       "ESCALATED": {
         "label": "エスカレーション",
-        "help": "より大きな権限や背景知識を持つ人の判断が必要です。"
+        "help": "より大きな権限や背景知識を持つ人の判断が必要です。",
+        "helpRun": "より大きな権限や背景知識を持つ人の判断が必要です。実行はここで停止します。"
       }
     },
     "feedback": {
@@ -941,6 +984,14 @@
       },
       "notePlaceholder": "このレコードの修正（任意）",
       "noteLabel": "{id} の修正"
+    },
+    "runSubmitted": {
+      "continuesTitle": "レビューを記録しました。実行はこのレビューをもとに進みます。",
+      "continuesBody": "次のステップで、あなたの判定と修正が使われます。",
+      "stopsTitle": "レビューを記録しました。実行はここで停止します。",
+      "stopsBody": "結果を却下またはエスカレーションしたため、実行は再試行せずに終了します。",
+      "recordedTitle": "レビューを記録しました",
+      "recordedBody": "実行はあなたの判定を受け取りました。"
     }
   }
 }

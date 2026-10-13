@@ -164,6 +164,11 @@ function PackBody({ pack }: { pack: PackListingDetail }) {
                 { label: "Version", value: pack.version },
                 { label: "Publisher", value: pack.publisher },
                 { label: "Category", value: pack.category },
+                { label: "Function", value: pack.function?.name ?? "Not classified" },
+                {
+                  label: "Industries",
+                  value: pack.industries?.length ? pack.industries.map((i) => i.name).join(", ") : "None set",
+                },
                 { label: "Risk class", value: sentence(pack.riskClass) },
                 { label: "Price", value: pack.priceNote },
                 { label: "Regions", value: p.regions.join(", ") || "None set" },

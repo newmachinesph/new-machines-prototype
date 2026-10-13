@@ -1,0 +1,33 @@
+kind: connector
+key: googlesheets
+app: Google Sheets
+toolkit: googlesheets
+
+tools:
+  - id: append_rows
+    slug: GOOGLESHEETS_SPREADSHEETS_VALUES_APPEND
+    action_class: write
+    capability: sheets.write
+    description: Append rows after the last row of a table in a spreadsheet.
+    input_schema:
+      type: object
+      required: [spreadsheetId, range, valueInputOption, values]
+      properties:
+        spreadsheetId:
+          type: string
+          description: The spreadsheet id from its URL.
+        range:
+          type: string
+          description: A1 notation of the table to append to, such as Reconciliation!A:F.
+        valueInputOption:
+          type: string
+          enum: [RAW, USER_ENTERED]
+          description: RAW stores values as given; USER_ENTERED parses them as if typed.
+        values:
+          type: array
+          description: Rows to append. Each inner array is one row.
+          items:
+            type: array
+            items: {type: [string, number, boolean, "null"]}
+
+defaults: {read: permit, write: require_approval, delete: deny, money: deny}

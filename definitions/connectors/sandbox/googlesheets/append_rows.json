@@ -1,0 +1,11 @@
+{
+  "spreadsheetId": "sandbox-reconciliation-sheet",
+  "tableRange": "Reconciliation!A1:F13",
+  "updates": {
+    "spreadsheetId": "sandbox-reconciliation-sheet",
+    "updatedRange": "Reconciliation!A14:F25",
+    "updatedRows": 12,
+    "updatedColumns": 6,
+    "updatedCells": 72
+  }
+}

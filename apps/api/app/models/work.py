@@ -55,6 +55,10 @@ class HumanTask(Model):
     records: list[RedactedRecord]
     lease_minutes: int
     buyer: str
+    # A task of a real run: the verdict goes straight to the run, with no acceptance check and no pay.
+    real_run: bool | Opt = None
+    # A submitted real-run task: whether the run goes on with the review or stops (reject or escalate).
+    run_outcome: Literal["CONTINUES", "STOPS"] | Opt = None
 
 
 class DigestRow(Model):
@@ -69,6 +73,18 @@ class EmailPreview(Model):
     body: str
 
 
+class ApprovalAction(Model):
+    """The step a real run asks to take once approved: the app it acts on, the workflow step, and the tool
+    call. `mocked` is true when that call would run against sandbox data instead of the connected app."""
+
+    app: str
+    step: str
+    tool: str | Opt = None  # "<connector>.<tool id>"
+    operation: str | Opt = None  # the tool id in words, e.g. "append rows"
+    summary: str | Opt = None
+    mocked: bool
+
+
 class Approval(Model):
     id: str
     run_id: str
@@ -80,7 +96,9 @@ class Approval(Model):
     policy_ref: str
     reason_codes: list[str]
     digest: list[DigestRow]
-    preview: EmailPreview
+    preview: EmailPreview | Opt = None  # the email to send (fixture approvals)
+    action: ApprovalAction | Opt = None  # the step to run (real-run approvals)
+    summary: str | Opt = None  # what the step being approved will do (real runs)
 
 
 class Earning(Model):

@@ -1,0 +1,24 @@
+name: nm-local
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    environment: { POSTGRES_USER: nm, POSTGRES_PASSWORD: nm, POSTGRES_DB: nm }
+    ports: ["127.0.0.1:5442:5432"]
+    volumes: [nm-pg:/var/lib/postgresql/data]
+    healthcheck: { test: ["CMD-SHELL", "pg_isready -U nm"], interval: 2s, retries: 30 }
+  temporal:
+    image: temporalio/temporal:1.5.1
+    # History lives in a SQLite file on the nm-temporal volume, so runs survive a container restart. The image
+    # runs as user `temporal`; its home directory is the writable path the volume is mounted on.
+    command:
+      [
+        "server", "start-dev", "--ip", "0.0.0.0", "--ui-port", "8233",
+        "--db-filename", "/home/temporal/temporal.db",
+      ]
+    ports: ["127.0.0.1:7243:7233", "127.0.0.1:8243:8233"]
+    volumes: [nm-temporal:/home/temporal]
+    healthcheck:
+      test: ["CMD", "temporal", "operator", "cluster", "health", "--address", "127.0.0.1:7233"]
+      interval: 2s
+      retries: 30
+volumes: { nm-pg: {}, nm-temporal: {} }

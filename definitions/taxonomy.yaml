@@ -1,0 +1,15 @@
+# How packs are classified: one function per pack, several industries per pack.
+kind: taxonomy
+key: default
+
+functions:
+  - {id: finance-ops, name: Finance operations}
+  - {id: customer-ops, name: Customer operations}
+  - {id: fulfillment, name: Fulfillment}
+  - {id: merchandising, name: Merchandising}
+  - {id: operations, name: Operations}
+
+industries:
+  - {id: retail-commerce, name: Retail & Commerce}
+  - {id: manufacturing, name: Manufacturing}
+  - {id: media-content, name: "Media, Content & Digital Experiences"}

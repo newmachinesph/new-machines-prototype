@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { ORG_ID } from "@/lib/api/client";
 import {
+  getCatalogTaxonomyOptions,
   getWorkflowPackOptions,
   installWorkflowPackMutation,
   listAgentsOptions,
@@ -14,6 +15,7 @@ import {
 
 export const usePacks = (enabled = true) => useQuery({ ...listWorkflowPacksOptions(), enabled });
 export const usePack = (slug: string) => useQuery(getWorkflowPackOptions({ path: { slug } }));
+export const useTaxonomy = () => useQuery({ ...getCatalogTaxonomyOptions(), staleTime: Infinity });
 export const useAgents = () => useQuery({ ...listAgentsOptions(), staleTime: Infinity });
 
 export function useAgentById() {

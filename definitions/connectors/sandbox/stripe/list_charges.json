@@ -1,0 +1,236 @@
+{
+  "object": "list",
+  "url": "/v1/charges",
+  "has_more": false,
+  "data": [
+    {
+      "id": "ch_3Sandbox1001",
+      "object": "charge",
+      "amount": 4500,
+      "amount_captured": 4500,
+      "amount_refunded": 0,
+      "currency": "usd",
+      "created": 1791278040,
+      "status": "succeeded",
+      "paid": true,
+      "captured": true,
+      "refunded": false,
+      "disputed": false,
+      "livemode": false,
+      "description": "Order #1001",
+      "metadata": {
+        "order_id": "#1001"
+      },
+      "payment_intent": "pi_3Sandbox1001",
+      "receipt_email": "maya.ortiz@example.com"
+    },
+    {
+      "id": "ch_3Sandbox1002",
+      "object": "charge",
+      "amount": 12900,
+      "amount_captured": 12900,
+      "amount_refunded": 0,
+      "currency": "usd",
+      "created": 1791299700,
+      "status": "succeeded",
+      "paid": true,
+      "captured": true,
+      "refunded": false,
+      "disputed": false,
+      "livemode": false,
+      "description": "Order #1002",
+      "metadata": {
+        "order_id": "#1002"
+      },
+      "payment_intent": "pi_3Sandbox1002",
+      "receipt_email": "ben.hartley@example.com"
+    },
+    {
+      "id": "ch_3Sandbox1003",
+      "object": "charge",
+      "amount": 2350,
+      "amount_captured": 2350,
+      "amount_refunded": 0,
+      "currency": "usd",
+      "created": 1791371760,
+      "status": "succeeded",
+      "paid": true,
+      "captured": true,
+      "refunded": false,
+      "disputed": false,
+      "livemode": false,
+      "description": "Order #1003",
+      "metadata": {
+        "order_id": "#1003"
+      },
+      "payment_intent": "pi_3Sandbox1003",
+      "receipt_email": "priya.nair@example.com"
+    },
+    {
+      "id": "ch_3Sandbox1004",
+      "object": "charge",
+      "amount": 8676,
+      "amount_captured": 8676,
+      "amount_refunded": 0,
+      "currency": "usd",
+      "created": 1791389820,
+      "status": "succeeded",
+      "paid": true,
+      "captured": true,
+      "refunded": false,
+      "disputed": false,
+      "livemode": false,
+      "description": "Order #1004",
+      "metadata": {
+        "order_id": "#1004"
+      },
+      "payment_intent": "pi_3Sandbox1004",
+      "receipt_email": "tom.reyes@example.com"
+    },
+    {
+      "id": "ch_3Sandbox1005",
+      "object": "charge",
+      "amount": 15000,
+      "amount_captured": 15000,
+      "amount_refunded": 0,
+      "currency": "usd",
+      "created": 1791454380,
+      "status": "succeeded",
+      "paid": true,
+      "captured": true,
+      "refunded": false,
+      "disputed": false,
+      "livemode": false,
+      "description": "Order #1005",
+      "metadata": {
+        "order_id": "#1005"
+      },
+      "payment_intent": "pi_3Sandbox1005",
+      "receipt_email": "lena.fischer@example.com"
+    },
+    {
+      "id": "ch_3Sandbox1006",
+      "object": "charge",
+      "amount": 3299,
+      "amount_captured": 3299,
+      "amount_refunded": 0,
+      "currency": "usd",
+      "created": 1791483240,
+      "status": "succeeded",
+      "paid": true,
+      "captured": true,
+      "refunded": false,
+      "disputed": false,
+      "livemode": false,
+      "description": "Order #1006",
+      "metadata": {
+        "order_id": "#1006"
+      },
+      "payment_intent": "pi_3Sandbox1006",
+      "receipt_email": "omar.haddad@example.com"
+    },
+    {
+      "id": "ch_3Sandbox1008",
+      "object": "charge",
+      "amount": 21000,
+      "amount_captured": 21000,
+      "amount_refunded": 0,
+      "currency": "usd",
+      "created": 1791620160,
+      "status": "succeeded",
+      "paid": true,
+      "captured": true,
+      "refunded": false,
+      "disputed": false,
+      "livemode": false,
+      "description": "Order #1008",
+      "metadata": {
+        "order_id": "#1008"
+      },
+      "payment_intent": "pi_3Sandbox1008",
+      "receipt_email": "noah.bennett@example.com"
+    },
+    {
+      "id": "ch_3Sandbox1009",
+      "object": "charge",
+      "amount": 5400,
+      "amount_captured": 5400,
+      "amount_refunded": 0,
+      "currency": "usd",
+      "created": 1791641820,
+      "status": "succeeded",
+      "paid": true,
+      "captured": true,
+      "refunded": false,
+      "disputed": false,
+      "livemode": false,
+      "description": "Online store payment",
+      "metadata": {},
+      "payment_intent": "pi_3Sandbox1009",
+      "receipt_email": "sofia.rossi@example.com"
+    },
+    {
+      "id": "ch_3Sandbox1010",
+      "object": "charge",
+      "amount": 42000,
+      "amount_captured": 42000,
+      "amount_refunded": 0,
+      "currency": "usd",
+      "created": 1791720780,
+      "status": "succeeded",
+      "paid": true,
+      "captured": true,
+      "refunded": false,
+      "disputed": false,
+      "livemode": false,
+      "description": "Order #1010",
+      "metadata": {
+        "order_id": "#1010"
+      },
+      "payment_intent": "pi_3Sandbox1010",
+      "receipt_email": "ahmed.said@example.com"
+    },
+    {
+      "id": "ch_3Sandbox1011",
+      "object": "charge",
+      "amount": 1899,
+      "amount_captured": 1899,
+      "amount_refunded": 0,
+      "currency": "usd",
+      "created": 1791746040,
+      "status": "succeeded",
+      "paid": true,
+      "captured": true,
+      "refunded": false,
+      "disputed": false,
+      "livemode": false,
+      "description": "Order #1011",
+      "metadata": {
+        "order_id": "#1011"
+      },
+      "payment_intent": "pi_3Sandbox1011",
+      "receipt_email": "chloe.martin@example.com"
+    },
+    {
+      "id": "ch_3Sandbox1012",
+      "object": "charge",
+      "amount": 9800,
+      "amount_captured": 9800,
+      "amount_refunded": 0,
+      "currency": "usd",
+      "created": 1791800100,
+      "status": "succeeded",
+      "paid": true,
+      "captured": true,
+      "refunded": false,
+      "disputed": false,
+      "livemode": false,
+      "description": "Order #1012",
+      "metadata": {
+        "order_id": "#1012"
+      },
+      "payment_intent": "pi_3Sandbox1012",
+      "receipt_email": "jack.nguyen@example.com"
+    }
+  ]
+}

@@ -62,9 +62,22 @@ class Pack(Model):
     risk_class: Literal["low", "medium", "high"]
     regions: list[str]
     runs30d: int | Opt = Field(default=None, alias="runs30d")
+    # From the pack definition: a taxonomy function id and industry ids (none for packs without one).
+    function: str | Opt = None
+    industries: list[str] = Field(default_factory=list)
 
 
 class Suggestion(Model):
     pack: Pack | Opt = None
     steps: list[str]
     simulated: bool
+
+
+class TaxonomyEntry(Model):
+    id: str
+    name: str
+
+
+class Taxonomy(Model):
+    functions: list[TaxonomyEntry]
+    industries: list[TaxonomyEntry]

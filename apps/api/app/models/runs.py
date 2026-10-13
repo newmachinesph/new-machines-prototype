@@ -244,3 +244,30 @@ class Run(Model):
             summary=self.summary,
             has_detail=True,
         )
+
+
+class PinnedVersion(Model):
+    kind: str
+    key: str
+    version: int
+    digest: str
+
+
+class ReceiptItem(Model):
+    seq: int
+    at: str
+    type: str
+    node_id: str | Opt = None
+    summary: str
+    hash: str
+
+
+class Receipt(Model):
+    """A real run's hash-chained work receipt; `verified` is the chain recomputed now."""
+
+    run_id: str
+    verified: bool
+    entries: int
+    head_hash: str
+    pinned: list[PinnedVersion]
+    items: list[ReceiptItem]

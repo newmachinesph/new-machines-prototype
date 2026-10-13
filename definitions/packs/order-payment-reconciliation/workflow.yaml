@@ -1,0 +1,149 @@
+# The reconciliation graph. Values starting with "=" are CEL over the run state
+# (input, nodes.<id>.output, memory). Routes name the next node for each outcome.
+kind: workflow
+key: order-payment-reconciliation
+schema_version: nm.workflow.v1
+workflow_id: order-payment-reconciliation
+version: "1"
+entry_node_id: start
+default_policy_ref: policy/default
+work_contract_ref: order-payment-reconciliation
+limits:
+  max_duration_s: 172800
+  max_cost_minor: 2500
+  currency: USD
+  max_parallel_nodes: 1
+  max_total_node_attempts: 30
+
+nodes:
+  - id: start
+    type: trigger
+    version: "1"
+    config: {}
+    routes: {next: recall}
+
+  - id: recall
+    type: memory
+    version: "1"
+    config:
+      op: recall
+      space: retail-commerce
+      query: reconciliation fees tolerance refunds
+    routes: {next: orders}
+
+  - id: orders
+    type: connector
+    version: "1"
+    config:
+      tool: shopify.list_orders
+      args:
+        created_at_min: =input.since + "T00:00:00Z"
+        created_at_max: =input.until + "T23:59:59Z"
+        status: any
+        limit: 250
+    routes: {next: payments}
+
+  - id: payments
+    type: connector
+    version: "1"
+    config:
+      tool: stripe.list_charges
+      args:
+        created:
+          gte: =int(timestamp(input.since + "T00:00:00Z"))
+          lte: =int(timestamp(input.until + "T23:59:59Z"))
+        limit: 100
+    routes: {next: match}
+
+  - id: match
+    type: agent
+    version: "1"
+    config:
+      agent: finance-agent
+      task: >-
+        Match every order to its payment and list everything that does not match. Use the company
+        knowledge in rules. Submit the result in the required shape.
+      inputs:
+        orders: =nodes.orders.output
+        charges: =nodes.payments.output
+        rules: =memory
+      output_schema: order-payment-reconciliation/match
+    routes: {next: check}
+
+  - id: check
+    type: decision
+    version: "1"
+    config:
+      rules: recon-exceptions
+    routes: {approved: report, human_review: review, blocked: failed}
+
+  - id: review
+    type: human_workforce
+    version: "1"
+    config:
+      title: Resolve order and payment mismatches
+      instructions: >-
+        For each mismatch, decide whether it is explained (for example a fee, a refund or a timing
+        difference) or still open, and add a short note. Resolve the task when every item has a decision,
+        or reject it if the data cannot be trusted.
+      show: =nodes.match.output.mismatches
+      timeout_s: 86400
+    routes: {resolved: report, rejected: failed, timeout: failed}
+
+  - id: report
+    type: agent
+    version: "1"
+    config:
+      agent: ops-agent
+      task: >-
+        Write the reconciliation report: a short summary and one sheet row per order or payment.
+        Use the reviewer notes for mismatches when they exist. Submit the result in the required shape.
+      inputs:
+        match: =nodes.match.output
+        review: "=has(nodes.review) ? nodes.review.output : null"
+      output_schema: order-payment-reconciliation/report
+    routes: {next: approve_write}
+
+  - id: approve_write
+    type: approval
+    version: "1"
+    config:
+      title: Write the reconciliation report to the Sheet
+      summary: =nodes.report.output.summary
+      timeout_s: 86400
+    routes: {granted: write, denied: failed, timeout: failed}
+
+  - id: write
+    type: connector
+    version: "1"
+    config:
+      tool: googlesheets.append_rows
+      args:
+        spreadsheetId: demo-reconciliation-sheet
+        range: Reconciliation!A:F
+        valueInputOption: RAW
+        values: =nodes.report.output.rows
+    routes: {ok: verify, denied: failed, error: failed}
+
+  - id: verify
+    type: verification
+    version: "1"
+    config:
+      schema: order-payment-reconciliation/output
+      value: =nodes.report.output
+      checks:
+        - =size(nodes.report.output.rows) >= 1
+    routes: {pass: done, fail: failed}
+
+  - id: done
+    type: end
+    version: "1"
+    config:
+      status: COMPLETED
+      deliverable: =nodes.report.output
+
+  - id: failed
+    type: end
+    version: "1"
+    config:
+      status: FAILED

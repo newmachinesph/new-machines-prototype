@@ -1,0 +1,19 @@
+kind: pack
+key: order-payment-reconciliation
+slug: order-payment-reconciliation
+name: Order & Payment Reconciliation
+version: 1.0.0
+publisher: New Machines Labs
+function: finance-ops
+industries: [retail-commerce, manufacturing]
+outcome: Every order matched to a payment, with exceptions reviewed by a person.
+description: >-
+  Reads your orders and payment records, matches them line by line, and sends anything that does not
+  add up to a qualified reviewer. You get a reconciliation report with the evidence behind every match.
+risk_class: medium
+price_note: About $0.60 to $2.40 of AI work per run, plus up to $7.50 of reviewer time when a mismatch needs a person.
+workflow: order-payment-reconciliation
+contract: order-payment-reconciliation
+agents: [finance-agent, ops-agent]
+connectors: [shopify, stripe, googlesheets]
+human_review: Mismatches go to an invoice reviewer. Policy requires a person for any payment mismatch.

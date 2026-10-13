@@ -1,0 +1,29 @@
+# Build context for apps/api/Dockerfile is the demo-app root; the image needs only apps/api (app, migrations,
+# pyproject.toml, uv.lock) and definitions/. Keep secrets, dependencies and the other apps out.
+.git
+.gitignore
+.gitattributes
+.env
+.env.*
+**/.env
+**/.env.*
+**/node_modules
+**/.next
+**/.next-*
+**/.venv
+**/__pycache__
+**/*.py[cod]
+**/.pytest_cache
+**/.ruff_cache
+**/.mypy_cache
+**/*.log
+docs
+scripts
+apps/web
+apps/ops
+apps/api/tests
+apps/api/scripts
+apps/api/openapi.json
+compose.yaml
+README.md
+skills-lock.json

@@ -43,7 +43,19 @@ const WAITING: Record<NonNullable<OpsRun["waitingOn"]>, { tone: Tone; label: str
 };
 
 const columns: Column<OpsRun>[] = [
-  { key: "id", header: "Run", cell: (r) => <Id>{r.id}</Id> },
+  {
+    key: "id",
+    header: "Run",
+    // Only runs from the runtime have a step record and a receipt to open.
+    cell: (r) =>
+      r.real ? (
+        <Link href={`/runs/${r.id}`} className="underline underline-offset-2 hover:text-ink">
+          <Id>{r.id}</Id>
+        </Link>
+      ) : (
+        <Id>{r.id}</Id>
+      ),
+  },
   {
     key: "tenant",
     header: "Tenant",

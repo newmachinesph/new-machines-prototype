@@ -15,6 +15,11 @@ export function targetHref(type: AuditEntry["targetType"], id: string): string {
       return "/guardrails";
     case "incident":
       return "/health";
+    case "definition":
+      // `{kind}/{key}`; a schema key has a slash of its own, which stays a path separator.
+      return `/definitions/${id.split("/").map(encodeURIComponent).join("/")}`;
+    case "memory":
+      return "/memory";
   }
 }
 

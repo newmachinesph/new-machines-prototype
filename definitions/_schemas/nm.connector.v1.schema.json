@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.newmachin.es/nm.connector.v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "app",
+    "toolkit",
+    "tools",
+    "defaults"
+  ],
+  "properties": {
+    "app": {
+      "type": "string",
+      "minLength": 1
+    },
+    "toolkit": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tools": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "slug",
+          "action_class",
+          "capability",
+          "description",
+          "input_schema"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_-]*$"
+          },
+          "slug": {
+            "type": "string",
+            "minLength": 1
+          },
+          "action_class": {
+            "enum": [
+              "read",
+              "write",
+              "delete",
+              "money"
+            ]
+          },
+          "capability": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_.-]+$"
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "input_schema": {
+            "type": "object"
+          }
+        }
+      },
+      "minItems": 1
+    },
+    "defaults": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "read",
+        "write",
+        "delete",
+        "money"
+      ],
+      "properties": {
+        "read": {
+          "enum": [
+            "permit",
+            "require_approval",
+            "deny"
+          ]
+        },
+        "write": {
+          "enum": [
+            "permit",
+            "require_approval",
+            "deny"
+          ]
+        },
+        "delete": {
+          "enum": [
+            "permit",
+            "require_approval",
+            "deny"
+          ]
+        },
+        "money": {
+          "enum": [
+            "permit",
+            "require_approval",
+            "deny"
+          ]
+        }
+      }
+    }
+  }
+}

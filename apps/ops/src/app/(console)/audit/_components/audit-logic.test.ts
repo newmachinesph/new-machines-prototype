@@ -23,6 +23,10 @@ describe("targetHref", () => {
     expect(targetHref("reviewer", "rev_1")).toBe("/workforce");
     expect(targetHref("guardrail", "pause_all_runs")).toBe("/guardrails");
     expect(targetHref("incident", "inc_0042")).toBe("/health");
+    expect(targetHref("definition", "schema/order-payment-reconciliation/input")).toBe(
+      "/definitions/schema/order-payment-reconciliation/input",
+    );
+    expect(targetHref("memory", "mem_12")).toBe("/memory");
   });
 });
 

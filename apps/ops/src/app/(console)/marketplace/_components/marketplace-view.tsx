@@ -50,6 +50,22 @@ const COLUMNS: Column<PackListing>[] = [
     ),
   },
   {
+    key: "function",
+    header: "Function",
+    className: "hidden lg:table-cell",
+    cell: (p) =>
+      p.function ? (
+        <span className="block">
+          {p.function.name}
+          {p.industries?.length ? (
+            <span className="block text-xs text-muted">{p.industries.map((i) => i.name).join(", ")}</span>
+          ) : null}
+        </span>
+      ) : (
+        <span className="text-muted">Not classified</span>
+      ),
+  },
+  {
     key: "status",
     header: "Status",
     cell: (p) => (

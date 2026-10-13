@@ -1,0 +1,21 @@
+kind: agent
+key: helper-agent
+schema_version: nm.agent.manifest.v1.1
+agent_id: helper-agent
+version: "1.0.0"
+publisher_id: new-machines
+capabilities: [demo.triage]
+runtime:
+  adapter: hosted
+  model_profile: reasoning
+  instructions: instructions.md
+  skills: [skills/lookup.md]
+  tools: [shop.list_orders]
+  max_turns: 4
+input_schema_ref: demo-pack/input
+output_schema_ref: demo-pack/output
+requested_tool_capabilities: [shop.orders.read]
+data_processing:
+  supported_regions: [sg]
+  data_classes: [INTERNAL]
+  retention_policy_ref: retention.default

@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.newmachin.es/nm.model_profiles.v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "profiles"
+  ],
+  "properties": {
+    "profiles": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "envs",
+          "price_per_mtok"
+        ],
+        "properties": {
+          "envs": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "test",
+              "dev",
+              "prod"
+            ],
+            "properties": {
+              "test": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "provider",
+                  "model"
+                ],
+                "properties": {
+                  "provider": {
+                    "const": "fake"
+                  },
+                  "model": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              },
+              "dev": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "provider",
+                  "model"
+                ],
+                "properties": {
+                  "provider": {
+                    "enum": [
+                      "fake",
+                      "provider",
+                      "gemini",
+                      "vertex"
+                    ]
+                  },
+                  "model": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              },
+              "prod": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "provider",
+                  "model"
+                ],
+                "properties": {
+                  "provider": {
+                    "enum": [
+                      "fake",
+                      "provider",
+                      "gemini",
+                      "vertex"
+                    ]
+                  },
+                  "model": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              }
+            }
+          },
+          "price_per_mtok": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "input_minor",
+              "output_minor",
+              "currency"
+            ],
+            "properties": {
+              "input_minor": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "output_minor": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "currency": {
+                "type": "string",
+                "pattern": "^[A-Z]{3}$"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

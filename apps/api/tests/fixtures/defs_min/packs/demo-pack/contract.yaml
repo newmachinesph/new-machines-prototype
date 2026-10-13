@@ -1,0 +1,19 @@
+kind: contract
+key: demo-pack
+schema_version: nm.work_contract.v1
+contract_id: demo-pack
+version: 1
+org_id: "{org}"
+capability: demo.triage
+input_schema_ref: demo-pack/input
+output_schema_ref: demo-pack/output
+acceptance:
+  verification_ruleset_ref: rules.default
+  buyer_acceptance_required: false
+authorization:
+  tool_capabilities: [shop.orders.read]
+  region_policy_ref: region.default
+  policy_ref: policy.default
+budget: {currency: USD, maximum_minor: 1000}
+limits: {max_attempts: 1, deadline_s: 600}
+routes: {success: finish, failure: finish, timeout: finish}

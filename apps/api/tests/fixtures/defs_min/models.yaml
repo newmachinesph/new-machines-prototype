@@ -1,0 +1,9 @@
+kind: models
+key: default
+profiles:
+  reasoning:
+    envs:
+      test: {provider: fake, model: fake-reasoning}
+      dev: {provider: provider, model: model-dev}
+      prod: {provider: vertex, model: model-prod}
+    price_per_mtok: {input_minor: 300, output_minor: 1500, currency: USD}

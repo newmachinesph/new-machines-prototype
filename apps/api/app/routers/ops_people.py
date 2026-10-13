@@ -1,9 +1,11 @@
 """Operator console: reviewers (the workforce), cross-tenant runs, platform guardrails and billing."""
 
+from collections.abc import Sequence
 from typing import Annotated
 
 from fastapi import Query
 
+from app import real_runs, settings
 from app.auth import CurrentOps, OpsActor, OpsWriter
 from app.errors import ApiProblem
 from app.models.ops import (
@@ -18,7 +20,7 @@ from app.models.ops import (
     SetGuardrailRequest,
     SetLevelRequest,
 )
-from app.models.runs import RunStatus
+from app.models.runs import RunStatus, RunSummary
 from app.routers.ops_params import PathId
 from app.routers.ops_tenants import dollars
 from app.routing import ApiRouter
@@ -115,11 +117,18 @@ def ops_set_reviewer_level(reviewer_id: PathId, body: SetLevelRequest, actor: Op
 # Runs --------------------------------------------------------------------------------------------------
 
 
-def all_runs(store: Store) -> list[OpsRun]:
-    """The demo tenant's real runs mapped across, plus the seeded runs of the other tenants. Newest first."""
+def all_runs(store: Store, real: Sequence[tuple[str, RunSummary]] = ()) -> list[OpsRun]:
+    """Real runs (given, when the runtime is on), the demo tenant's fixture runs, and the seeded runs of the
+    other tenants. Newest first."""
     demo = store.tenants.get(store.org.id)
     demo_name = demo.name if demo else store.org.name
-    runs = [OpsRun.of(r, store.org.id, demo_name) for r in store.run_summaries]
+    runs = [
+        OpsRun.of(r, org_id, t.name if (t := store.tenants.get(org_id)) else org_id).model_copy(
+            update={"real": True}
+        )
+        for org_id, r in real
+    ]
+    runs += [OpsRun.of(r, store.org.id, demo_name) for r in store.run_summaries]
     runs += [r.model_copy() for r in store.ops_runs]
     return sorted(runs, key=lambda r: r.started_at, reverse=True)
 
@@ -130,10 +139,11 @@ def ops_list_runs(
     status: RunStatus | None = None,
     tenant: Annotated[str | None, Query(max_length=100)] = None,
 ) -> list[OpsRun]:
+    real = real_runs.ops_runs() if settings.runtime_enabled() else []  # before the lock: it reads Postgres
     with locked_store() as store:
         return [
             r
-            for r in all_runs(store)
+            for r in all_runs(store, real)
             if (status is None or r.status == status) and (tenant is None or r.tenant_id == tenant)
         ]
 

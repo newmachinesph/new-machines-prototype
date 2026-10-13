@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.newmachin.es/nm.decision_rules.v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "question",
+    "rules",
+    "default"
+  ],
+  "properties": {
+    "question": {
+      "type": "string",
+      "minLength": 1
+    },
+    "rules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "when",
+          "verdict",
+          "route",
+          "reason_code",
+          "explanation"
+        ],
+        "properties": {
+          "when": {
+            "type": "string",
+            "minLength": 1
+          },
+          "verdict": {
+            "enum": [
+              "APPROVED",
+              "HUMAN_REVIEW",
+              "BLOCKED",
+              "REJECTED"
+            ]
+          },
+          "route": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reason_code": {
+            "type": "string",
+            "minLength": 1
+          },
+          "explanation": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "default": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "verdict",
+        "route",
+        "reason_code",
+        "explanation"
+      ],
+      "properties": {
+        "verdict": {
+          "enum": [
+            "APPROVED",
+            "HUMAN_REVIEW",
+            "BLOCKED",
+            "REJECTED"
+          ]
+        },
+        "route": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reason_code": {
+          "type": "string",
+          "minLength": 1
+        },
+        "explanation": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

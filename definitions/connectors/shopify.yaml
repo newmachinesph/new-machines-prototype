@@ -1,0 +1,32 @@
+kind: connector
+key: shopify
+app: Shopify
+toolkit: shopify
+
+tools:
+  - id: list_orders
+    slug: SHOPIFY_GET_ORDERS_WITH_FILTERS
+    action_class: read
+    capability: orders.read
+    description: List store orders created in a date range, with totals, currency, payment status and refunds.
+    input_schema:
+      type: object
+      properties:
+        created_at_min:
+          type: string
+          description: Only orders created at or after this ISO 8601 timestamp.
+        created_at_max:
+          type: string
+          description: Only orders created at or before this ISO 8601 timestamp.
+        status:
+          type: string
+          enum: [open, closed, cancelled, any]
+          description: Order status filter. Use any to include every status.
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 250
+          description: Orders per page.
+
+# What an action class does when Ops has not overridden it.
+defaults: {read: permit, write: require_approval, delete: deny, money: deny}
