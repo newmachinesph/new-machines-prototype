@@ -633,3 +633,14 @@ class OpsRunDetail(Model):
 
     run: Run
     receipt: Receipt
+
+
+class RuntimeStatus(Model):
+    """Reachability of the runtime's parts; carries no connection strings or secrets."""
+
+    runtime: Literal["on", "off"]
+    workspace: Literal["demo", "live"]
+    database: Literal["ok", "error", "off"]
+    temporal: Literal["ok", "error", "off"]
+    worker: Literal["running", "stopped", "not_embedded"]
+    definitions_applied: int

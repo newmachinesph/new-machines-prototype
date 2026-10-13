@@ -1,12 +1,13 @@
 from typing import Literal
 
 from app.models.common import Actor, Model, Money, Opt
+from app.models.runs import Spent
 
 
 class Grant(Model):
     install: str
     capability: str
-    access: Literal["read", "write (approval)", "denied"]
+    access: Literal["read", "write (approval)", "write", "denied"]
 
 
 class Connection(Model):
@@ -18,6 +19,10 @@ class Connection(Model):
     grants: list[Grant]
     last_used: str | Opt = None
     health: str | Opt = None
+    # Live workspace: the connector definition key (what `:connect` takes) and how the app is reached
+    # (sandbox data, or the customer's own account through Composio).
+    key: str | Opt = None
+    mode: Literal["sandbox", "composio"] | Opt = None
 
 
 class MemoryItem(Model):
@@ -44,12 +49,14 @@ class LedgerLine(Model):
 class LedgerTxn(Model):
     id: str
     at: str
-    kind: Literal["plan", "ai_usage", "tool_usage", "human_pay", "refund", "hold"]
+    # "run": the live workspace's one line per run, with that run's spend split in `spent`.
+    kind: Literal["plan", "ai_usage", "tool_usage", "human_pay", "refund", "hold", "run"]
     description: str
     run_id: str | Opt = None
     amount: Money
     status: Literal["POSTED", "PENDING", "ELIGIBLE", "HELD"]
     lines: list[LedgerLine]
+    spent: Spent | Opt = None
 
 
 class McpToken(Model):
@@ -60,6 +67,8 @@ class McpToken(Model):
     created_at: str
     expires_at: str
     last_used: str
+    # The secret's first characters (live workspace), so a token can be recognised without its secret.
+    prefix: str | Opt = None
 
 
 class Member(Model):
@@ -92,3 +101,30 @@ class AttentionItem(Model):
     detail: str
     href: str
     when: str
+
+
+MemberRole = Literal["owner", "admin", "member"]
+
+
+class PendingInvitation(Model):
+    """An invitation to another workspace, waiting for the user to accept or decline it."""
+
+    org_id: str
+    org_name: str
+    role: MemberRole
+    invited_at: str
+
+
+class Me(Model):
+    """The signed-in user and the workspace they act in."""
+
+    user_id: str
+    email: str | Opt = None
+    name: str | Opt = None
+    org_id: str
+    org_name: str
+    role: MemberRole
+    # "live": the user's own org on Postgres; "demo": the seeded sample workspace.
+    workspace: Literal["demo", "live"] = "demo"
+    # Live workspace, verified email only: invitations to the user's email. Always empty in the demo.
+    invitations: list[PendingInvitation] = []

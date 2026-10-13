@@ -533,7 +533,12 @@ def test_a_real_human_task_is_offered_claimed_and_submitted(api, rec, db):
     assert rec.calls[-1] == ("human", run["id"], task_id, "resolved", "Both explained.", resolutions)
     [row] = _rows(db, "SELECT status, decided_by, decided_at, result FROM run_tasks")
     assert row["status"] == "resolved" and row["decided_by"] == "user_demo" and row["decided_at"]
-    assert row["result"] == {"outcome": "resolved", "note": "Both explained.", "resolutions": resolutions}
+    assert row["result"] == {
+        "outcome": "resolved",
+        "note": "Both explained.",
+        "resolutions": resolutions,
+        "verdict": "APPROVED",
+    }
 
     # Submitting the same outcome again re-signals the recorded review (not the new text); another is a 409.
     resend = {**review, "feedbackText": "Changed my mind about the wording.", "recordCalls": {}}
@@ -618,6 +623,22 @@ def test_memory_lists_real_items_first(api):
     assert len(real) == 4 and items[: len(real)] == real
     assert all(m["state"] == "APPROVED" and m["scope"] == "Organization" for m in real)
     assert len(items) == len(get_store().memory) + 4
+
+
+def test_demo_memory_leaves_out_other_orgs_and_quarantined_items(api, db):
+    db.execute(
+        "INSERT INTO memory_items (id, space, text, source, created_by, org_id, status) "
+        "SELECT 'mem_other', space, 'Another org', 'run:run_x:n:1', 'run', 'org_other', 'active' "
+        "FROM memory_items LIMIT 1"
+    )
+    db.execute(
+        "INSERT INTO memory_items (id, space, text, source, created_by, org_id, status) "
+        "SELECT 'mem_quarantined', space, 'Lost run', 'run:run_y:n:1', 'run', NULL, 'quarantined' "
+        "FROM memory_items LIMIT 1"
+    )
+    db.commit()
+    ids = {m["id"] for m in api.get("/v1/memory").json()}
+    assert "mem_other" not in ids and "mem_quarantined" not in ids
 
 
 # --- runtime off and startup ----------------------------------------------------------------------------

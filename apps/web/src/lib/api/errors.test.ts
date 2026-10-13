@@ -7,6 +7,12 @@ describe("toApiError", () => {
     expect(e).toBeInstanceOf(ApiError);
     expect(e).toMatchObject({ status: 409, code: "CONFLICT", detail: "Already granted." });
   });
+  it("keeps a problem's located errors", () => {
+    const issue = { kind: "input", key: "recon", path: "since", message: "'since' is a required property" };
+    const e = toApiError({ status: 422, code: "INVALID_INPUT", detail: "The input is not valid.", errors: [issue] });
+    expect(e.issues).toEqual([issue]);
+    expect(toApiError({ status: 409, code: "CONFLICT", detail: "x", errors: null }).issues).toEqual([]);
+  });
   it("turns network failures into a reachability error", () => {
     expect(toApiError(new TypeError("Failed to fetch"))).toMatchObject({ status: 0, code: "UNREACHABLE" });
   });

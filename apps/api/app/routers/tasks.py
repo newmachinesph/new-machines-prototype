@@ -1,4 +1,4 @@
-from app import run_tasks, temporal_client
+from app import live_work, run_tasks, temporal_client, workspace
 from app.auth import Actor, CurrentActor
 from app.errors import ApiProblem
 from app.models.common import Money, money_text
@@ -31,7 +31,8 @@ OBLIGATIONS = [
 
 
 def find_task(task_id: str) -> HumanTask:
-    task = get_store().tasks.get(task_id)
+    """A fixture task; never one in the live workspace."""
+    task = None if workspace.live() else get_store().tasks.get(task_id)
     if task is None:
         raise ApiProblem(404, "NOT_FOUND", f"No task {task_id}.")
     return task
@@ -91,7 +92,9 @@ def real_task(row: dict) -> HumanTask:
         skill="Exception review",
         state=_state(row),
         pay=Money(amount_minor=0),
-        pay_terms="Demo run: no reviewer pay",
+        pay_terms="Simulated pay: reviewer payouts are not live yet"
+        if workspace.live()
+        else "Demo run: no reviewer pay",
         est_minutes=max(MINUTES_PER_RECORD, MINUTES_PER_RECORD * len(records)),
         deadline=str(payload.get("expires_at") or posted_at),
         posted_at=posted_at,
@@ -112,9 +115,8 @@ def real_task(row: dict) -> HumanTask:
 def list_eligible_human_tasks(actor: CurrentActor) -> list[HumanTask]:
     # Offers show sanitized metadata only; records arrive with the task itself (API.md section 3).
     real = [real_task(row) for row in run_tasks.list_rows(actor.org_id, "human")]
-    offered = [t for t in real if t.state == "OFFERED"] + [
-        t for t in get_store().tasks.values() if t.state == "OFFERED"
-    ]
+    fixtures = [] if workspace.live() else list(get_store().tasks.values())
+    offered = [t for t in real if t.state == "OFFERED"] + [t for t in fixtures if t.state == "OFFERED"]
     return [t.model_copy(update={"records": []}) for t in offered]
 
 
@@ -125,7 +127,10 @@ def get_human_task(task_id: str, actor: CurrentActor) -> HumanTask:
 
 
 @router.get("/reviewer/earnings", operation_id="listEarnings", response_model=list[Earning])
-def list_earnings(_: CurrentActor) -> list[Earning]:
+def list_earnings(actor: CurrentActor) -> list[Earning]:
+    """In the live workspace: the caller's decided tasks of the org's runs, simulated (no money moves)."""
+    if workspace.live():
+        return live_work.earnings(actor)
     return get_store().earnings
 
 
@@ -151,7 +156,7 @@ def _submit_real(row: dict, body: SubmitReviewRequest, actor: Actor) -> HumanTas
         {"order_id": record_id[:MAX_TEXT], "resolution": call[:MAX_TEXT], "note": ""}
         for record_id, call in calls
     ]
-    result = {"outcome": outcome, "note": note, "resolutions": resolutions}
+    result = {"outcome": outcome, "note": note, "resolutions": resolutions, "verdict": body.verdict}
     updated = run_tasks.decide(actor.org_id, "human", row["id"], outcome, actor.user_id, result)
     stored = updated["result"] or {}  # a repeated submit re-signals the decision first recorded
     run_tasks.signal(

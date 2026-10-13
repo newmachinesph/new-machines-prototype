@@ -2,17 +2,18 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
-import { ORG_ID } from "@/lib/api/client";
 import {
   getAgentOptions,
   getCatalogTaxonomyOptions,
   getWorkflowPackOptions,
   installWorkflowPackMutation,
+  listConnectionsQueryKey,
   listAgentsOptions,
   listWorkflowPacksOptions,
   listWorkflowPacksQueryKey,
   suggestWorkflowPackMutation,
 } from "@/lib/api/gen/@tanstack/react-query.gen";
+import { byOperation } from "./me";
 
 export const usePacks = (enabled = true) => useQuery({ ...listWorkflowPacksOptions(), enabled });
 export const usePack = (slug: string) => useQuery(getWorkflowPackOptions({ path: { slug } }));
@@ -46,13 +47,11 @@ export function useInstallPack() {
       Promise.all([
         qc.invalidateQueries({ queryKey: listWorkflowPacksQueryKey() }),
         // Every cached pack detail, whatever its slug.
-        qc.invalidateQueries({
-          predicate: (q) => (q.queryKey[0] as { _id?: string } | undefined)?._id === "getWorkflowPack",
-        }),
+        qc.invalidateQueries({ predicate: byOperation("getWorkflowPack") }),
+        // A hire changes which apps the org needs, and the overview's checklist.
+        qc.invalidateQueries({ queryKey: listConnectionsQueryKey() }),
       ]),
   });
 }
 
 export const useSuggestPack = () => useMutation(suggestWorkflowPackMutation());
-
-export { ORG_ID };

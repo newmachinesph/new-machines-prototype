@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import Field
 
@@ -89,6 +89,12 @@ class Pack(Model):
     # From the pack definition: a taxonomy function id and industry ids (none for packs without one).
     function: str | Opt = None
     industries: list[str] = Field(default_factory=list)
+    # Live workspace (pack definitions): the pack's price note, and on the detail response the JSON Schema
+    # of the input a run takes.
+    price_note: str | Opt = None
+    input_schema: dict[str, Any] | Opt = None
+    # Live workspace, hired packs only: the per-run spending cap the org set when it hired the pack.
+    per_run_cap: Money | Opt = None
 
 
 class Suggestion(Model):

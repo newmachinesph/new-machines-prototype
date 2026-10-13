@@ -117,7 +117,7 @@ def _failure_only_targets(nodes: list[dict]) -> set[str]:
     return {target for target, labels in incoming.items() if labels <= FAILURE_ROUTES}
 
 
-def _describe_input(value: dict) -> str:
+def describe_input(value: dict) -> str:
     if "since" in value and "until" in value:
         return f"{value['since']} to {value['until']}"
     return ", ".join(f"{k}: {v}" for k, v in value.items())
@@ -157,7 +157,7 @@ def initial_projection(run_id: str, snapshot: dict, input: dict, started_by: str
         "status": "RUNNING",
         "startedAt": now,
         "startedBy": started_by,
-        "input": _describe_input(input),
+        "input": describe_input(input),
         "workflowRef": workflow_ref,
         "contractRef": contract_ref,
         "budget": _money(budget_minor),
@@ -177,7 +177,7 @@ def initial_projection(run_id: str, snapshot: dict, input: dict, started_by: str
                 "actor": "buyer",
                 "who": started_by,
                 "title": "Started the run",
-                "detail": _describe_input(input),
+                "detail": describe_input(input),
                 "nodeId": workflow.get("entry_node_id", nodes[0]["id"] if nodes else None),
             },
             {

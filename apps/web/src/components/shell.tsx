@@ -31,8 +31,11 @@ import { usePathname } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
 import { Mark } from "@/design-system/logo/Mark";
 import { useSession } from "@/lib/auth/session";
+import { ClockProvider } from "@/lib/clock";
 import { cn } from "@/lib/cn";
 import { useAgentName, usePackName, usePacks } from "@/lib/queries/catalog";
+import { useIsDemo, useIsLive, useMe } from "@/lib/queries/me";
+import { useOrg } from "@/lib/queries/org";
 import { useEligibleTasks } from "@/lib/queries/tasks";
 import { useApprovals, useMemory } from "@/lib/queries/workspace";
 import { useUi } from "@/stores/ui";
@@ -206,16 +209,38 @@ function NavLink({
   );
 }
 
+/** The first letter of a name, for the small workspace and person badges. */
+const initial = (name: string | undefined) => (name?.trim()[0] ?? "").toUpperCase();
+
+/** Who is signed in: their name, else their email, else the demo operator (demo) or a plain "You" (live). */
+function usePerson() {
+  const t = useTranslations("nav");
+  const me = useMe().data;
+  const demo = useIsDemo();
+  const known = me?.name || me?.email || "";
+  const name = known || (me ? (demo ? t("demoOperator") : t("you")) : "");
+  return { name, known, role: me ? t(`roles.${me.role}`) : "" };
+}
+
 function WorkspaceMenu({ work }: { work: boolean }) {
   const { signOut } = useSession();
   const toast = useToast();
   const t = useTranslations("nav");
-  const name = work ? t("reviewerName") : "Harbor & Pine Supply Co.";
+  const meQuery = useMe();
+  const me = meQuery.data;
+  const plan = useOrg().data?.plan;
+  const demo = useIsDemo();
+  const person = usePerson();
+  const failed = meQuery.isError;
+  const orgName = me?.orgName ?? "";
+  const name = work ? t("reviewerName") : failed ? t("workspaceUnavailable") : orgName;
+  // Until /v1/me answers there is no name to show, but the control still needs one.
+  const label = name || t("workspaceLoading");
   return (
     <MenuRoot>
       <MenuTrigger
         className="flex h-10 w-full items-center gap-2.5 rounded-md px-2 text-left hover:bg-grey-50 data-[popup-open]:bg-grey-100"
-        aria-label={t("switchWorkspace", { name })}
+        aria-label={t("switchWorkspace", { name: label })}
       >
         <span
           className={cn(
@@ -224,28 +249,30 @@ function WorkspaceMenu({ work }: { work: boolean }) {
           )}
           aria-hidden
         >
-          {work ? "R" : "H"}
+          {work ? "R" : failed ? "!" : initial(orgName)}
         </span>
-        <span className="min-w-0 flex-1 truncate text-sm font-medium">
-          {work ? t("reviewerName") : "Harbor & Pine"}
+        <span className={cn("min-w-0 flex-1 truncate text-sm font-medium", failed && !work && "text-blocked")}>
+          {name}
         </span>
-        {work ? null : (
+        {work || !plan ? null : (
           <span className="rounded-full bg-machine-soft px-1.5 text-[11px] leading-[18px] font-medium text-machine">
-            Pro
+            {plan}
           </span>
         )}
         <ChevronsUpDown className="size-3.5 text-grey-500" aria-hidden />
       </MenuTrigger>
       <MenuPopup align="start" className="w-64">
-        <MenuLabel>{t("signedInAs")}</MenuLabel>
+        <MenuLabel>
+          {demo ? t("signedInAs") : person.known ? t("signedInAsUser", { who: person.known }) : t("signedIn")}
+        </MenuLabel>
         <MenuLink href="/app">
           <span
             className="grid size-5 place-items-center rounded bg-ink text-[10px] font-semibold text-paper"
             aria-hidden
           >
-            H
+            {initial(orgName)}
           </span>
-          <span className="flex-1">Harbor &amp; Pine Supply Co.</span>
+          <span className="min-w-0 flex-1 truncate">{orgName}</span>
           {work ? null : <Check className="size-3.5" aria-label={t("current")} />}
         </MenuLink>
         <MenuLink href="/work">
@@ -313,6 +340,7 @@ function SwitchWorkspaceLink({ work, onNavigate }: { work: boolean; onNavigate?:
 function Sidebar({ work, path }: { work: boolean; path: string }) {
   const setPaletteOpen = useUi((s) => s.setPaletteOpen);
   const t = useTranslations("nav");
+  const person = usePerson();
   return (
     <aside className="hidden w-[248px] shrink-0 border-r border-rule bg-paper lg:block">
       <div className="sticky top-0 flex h-dvh flex-col">
@@ -338,11 +366,11 @@ function Sidebar({ work, path }: { work: boolean; path: string }) {
               className="grid size-6 place-items-center rounded-full bg-grey-100 text-[11px] font-semibold"
               aria-hidden
             >
-              {work ? "R" : "D"}
+              {work ? "R" : initial(person.name)}
             </span>
             <div className="min-w-0 text-xs leading-tight">
-              <div className="truncate font-medium text-ink">{work ? t("reviewerName") : t("demoOperator")}</div>
-              <div className="truncate text-muted">{work ? t("reviewerRole") : t("owner")}</div>
+              <div className="truncate font-medium text-ink">{work ? t("reviewerName") : person.name}</div>
+              <div className="truncate text-muted">{work ? t("reviewerRole") : person.role}</div>
             </div>
           </div>
         </div>
@@ -408,6 +436,24 @@ function MobileNav({ work, path }: { work: boolean; path: string }) {
   );
 }
 
+/** What is simulated here: the whole seeded demo, or a live workspace's sandbox apps and billing. */
+function SimulationBadge() {
+  const t = useTranslations("nav");
+  const me = useMe();
+  const demo = useIsDemo();
+  if (!me.data) return null;
+  return (
+    <Tooltip label={demo ? t("demoTooltip") : t("sandboxTooltip")} side="bottom">
+      <button
+        type="button"
+        className="hidden items-center rounded-full border border-dashed border-sim/40 bg-sim-soft px-2.5 py-1 text-xs text-sim md:inline-flex"
+      >
+        {demo ? t("demoBadge") : t("sandboxBadge")}
+      </button>
+    </Tooltip>
+  );
+}
+
 function TopBar({ work, path }: { work: boolean; path: string }) {
   const setPaletteOpen = useUi((s) => s.setPaletteOpen);
   const t = useTranslations("nav");
@@ -419,14 +465,7 @@ function TopBar({ work, path }: { work: boolean; path: string }) {
       </Link>
       <Breadcrumbs path={path} work={work} />
       <div className="ml-auto flex items-center gap-2">
-        <Tooltip label={t("demoTooltip")} side="bottom">
-          <button
-            type="button"
-            className="hidden items-center rounded-full border border-dashed border-sim/40 bg-sim-soft px-2.5 py-1 text-xs text-sim md:inline-flex"
-          >
-            {t("demoBadge")}
-          </button>
-        </Tooltip>
+        <SimulationBadge />
         <button
           type="button"
           onClick={() => setPaletteOpen(true)}
@@ -482,6 +521,7 @@ export function StartRunMenu() {
 }
 
 export function AppShell({ children, mode = "business" }: { children: ReactNode; mode?: "business" | "work" }) {
+  const live = useIsLive();
   const path = usePathname();
   const work = mode === "work";
   const t = useTranslations("nav");
@@ -489,15 +529,17 @@ export function AppShell({ children, mode = "business" }: { children: ReactNode;
     .flat()
     .map(({ href, label, icon }) => ({ href, label: t(label), icon }));
   return (
-    <div className="flex min-h-dvh">
-      <Sidebar work={work} path={path} />
-      <CommandPalette pages={pages} />
-      <div className="min-w-0 flex-1">
-        <TopBar work={work} path={path} />
-        <main id="main" className="px-4 py-6 sm:px-6 lg:px-8 lg:py-7">
-          <div className="mx-auto max-w-[2000px]">{children}</div>
-        </main>
+    <ClockProvider live={live}>
+      <div className="flex min-h-dvh">
+        <Sidebar work={work} path={path} />
+        <CommandPalette pages={pages} />
+        <div className="min-w-0 flex-1">
+          <TopBar work={work} path={path} />
+          <main id="main" className="px-4 py-6 sm:px-6 lg:px-8 lg:py-7">
+            <div className="mx-auto max-w-[2000px]">{children}</div>
+          </main>
+        </div>
       </div>
-    </div>
+    </ClockProvider>
   );
 }

@@ -10,6 +10,7 @@ import { useErrorText } from "@/lib/api/use-error-text";
 import { utc, WORKER_TZ } from "@/lib/format";
 import { INTL_TAGS, resolveLocale } from "@/i18n/locales";
 import { useFormat } from "@/lib/use-format";
+import { useIsDemo } from "@/lib/queries/me";
 import { useClaimTask, useSubmitReview } from "@/lib/queries/tasks";
 import type { HumanTask, RedactedRecord, ReviewVerdict } from "@/lib/types";
 
@@ -59,6 +60,7 @@ function openingPhase(task: HumanTask): Phase {
 export function TaskWorkspace({ task, buyer }: { task: HumanTask; buyer: string }) {
   const t = useTranslations("task");
   const { money } = useFormat();
+  const demo = useIsDemo();
   const errorText = useErrorText();
   const toast = useToast();
   const claimTask = useClaimTask();
@@ -153,7 +155,10 @@ export function TaskWorkspace({ task, buyer }: { task: HumanTask; buyer: string 
           {holding && timed ? <LeaseTimer seconds={left} /> : null}
           <div className="text-right">
             <Amount value={task.pay} className="block text-2xl font-semibold tracking-tight" />
-            <span className="text-xs text-muted">{t("simulatedPay", { terms: task.payTerms })}</span>
+            <span className="text-xs text-muted">
+              {/* The API's pay terms describe the demo's fixtures; a live task's pay is only simulated. */}
+              {demo ? t("simulatedPay", { terms: task.payTerms }) : t("simulatedPayLive")}
+            </span>
           </div>
         </div>
       </header>

@@ -316,16 +316,23 @@ export function Checkbox({
   checked,
   onCheckedChange,
   children,
+  describedBy,
+  invalid,
 }: {
   checked: boolean;
   onCheckedChange: (v: boolean) => void;
   children: ReactNode;
+  /** Ids of help or error text for this box. */
+  describedBy?: string;
+  invalid?: boolean;
 }) {
   return (
     <label className="flex cursor-pointer items-start gap-3 text-sm">
       <BaseCheckbox.Root
         checked={checked}
         onCheckedChange={(v) => onCheckedChange(Boolean(v))}
+        aria-describedby={describedBy}
+        aria-invalid={invalid || undefined}
         className="mt-0.5 grid size-4 shrink-0 place-items-center rounded-[4px] border border-grey-300 bg-paper data-[checked]:border-ink data-[checked]:bg-ink"
       >
         <BaseCheckbox.Indicator>

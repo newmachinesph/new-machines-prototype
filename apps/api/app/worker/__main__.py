@@ -6,14 +6,10 @@ import logging
 from concurrent.futures import ThreadPoolExecutor
 
 from temporalio.client import Client
-from temporalio.worker import Worker
 
 from app import db, settings
 from app.temporal_client import connect  # one set of connection rules for the API and the worker
-from app.worker.activities import PackActivities
-from app.worker.workflow import PackRunner
-
-ACTIVITY_THREADS = db.POOL_MAX_SIZE  # one pooled DB connection per concurrent activity
+from app.worker.runtime import activity_threads, build_worker
 
 log = logging.getLogger("app.worker")
 
@@ -26,19 +22,8 @@ async def main() -> None:
         db.reset_pool()  # close Postgres connections before the interpreter shuts down
 
 
-def build_worker(client: Client, executor: ThreadPoolExecutor) -> Worker:
-    return Worker(
-        client,
-        task_queue=settings.task_queue(),
-        workflows=[PackRunner],
-        activities=PackActivities().all(),
-        activity_executor=executor,
-        max_concurrent_activities=ACTIVITY_THREADS,  # never more activities than threads or connections
-    )
-
-
 async def _serve(client: Client) -> None:
-    with ThreadPoolExecutor(max_workers=ACTIVITY_THREADS) as pool:
+    with ThreadPoolExecutor(max_workers=activity_threads()) as pool:
         worker = build_worker(client, pool)
         log.info(
             "worker polling %s on %s (namespace %s, models %s, connectors %s)",

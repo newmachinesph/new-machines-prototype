@@ -11,6 +11,7 @@
           "catalog"
         ],
         "summary": "List Workflow Packs",
+        "description": "The marketplace. In the live workspace: every pack definition, `installed` for the caller's org.",
         "operationId": "listWorkflowPacks",
         "responses": {
           "200": {
@@ -91,6 +92,7 @@
           "catalog"
         ],
         "summary": "Get Workflow Pack",
+        "description": "One pack; in the live workspace with `inputSchema`, the JSON Schema of the input a run takes.",
         "operationId": "getWorkflowPack",
         "security": [
           {
@@ -423,7 +425,7 @@
           "catalog"
         ],
         "summary": "Suggest Workflow Pack",
-        "description": "Keyword match for the static API. The dynamic backend asks Gemini and keeps this response shape.",
+        "description": "Keyword match for the static API. The dynamic backend asks Gemini and keeps this response shape.\nThe live workspace matches over the pack definitions.",
         "operationId": "suggestWorkflowPack",
         "requestBody": {
           "content": {
@@ -607,7 +609,7 @@
           "runs"
         ],
         "summary": "List Workflow Runs",
-        "description": "Real runs (newest first, when the runtime is on), then the fixtures.",
+        "description": "Real runs (newest first, when the runtime is on), then the fixtures; the live workspace has real runs\nonly.",
         "operationId": "listWorkflowRuns",
         "security": [
           {
@@ -686,7 +688,7 @@
           "runs"
         ],
         "summary": "Start Workflow Run",
-        "description": "Returns 202: the run is registered and started, not finished (API.md section 3). With the runtime on,\na pack that has a definition runs for real on Temporal; any other pack keeps the fixture behaviour.",
+        "description": "Returns 202: the run is registered and started, not finished (API.md section 3). With the runtime on,\na pack that has a definition runs for real on Temporal; any other pack keeps the fixture behaviour. In\nthe live workspace every run is real: the org must have hired the pack and connected its apps, the\ninput must match the pack's input schema and the month's spend must be below the monthly cap.",
         "operationId": "startWorkflowRun",
         "security": [
           {
@@ -976,7 +978,7 @@
           "approvals"
         ],
         "summary": "List Approvals",
-        "description": "Approvals of real runs (newest first), then the fixtures.",
+        "description": "Approvals of real runs (newest first), then the fixtures (none in the live workspace).",
         "operationId": "listApprovals",
         "responses": {
           "200": {
@@ -1398,6 +1400,7 @@
           "reviewers"
         ],
         "summary": "List Earnings",
+        "description": "In the live workspace: the caller's decided tasks of the org's runs, simulated (no money moves).",
         "operationId": "listEarnings",
         "responses": {
           "200": {
@@ -1662,7 +1665,7 @@
           "memory"
         ],
         "summary": "List Memory",
-        "description": "Fixture memory, after the items of real memory spaces when the runtime is on.",
+        "description": "Fixture memory, after the items of real memory spaces when the runtime is on. The live workspace has\nthe org's own items and the shared seed and console items only.",
         "operationId": "listMemory",
         "responses": {
           "200": {
@@ -1840,6 +1843,7 @@
           "memory"
         ],
         "summary": "Retract Memory",
+        "description": "In the live workspace: retract one of the org's own items, so runs no longer recall it.",
         "operationId": "retractMemory",
         "security": [
           {
@@ -1927,6 +1931,7 @@
           "connections"
         ],
         "summary": "List Connections",
+        "description": "In the live workspace: the apps the org's hired packs use, connected or not.",
         "operationId": "listConnections",
         "responses": {
           "200": {
@@ -1999,6 +2004,94 @@
             "HTTPBearer": []
           }
         ]
+      }
+    },
+    "/v1/connections/{app_name}:connect": {
+      "post": {
+        "tags": [
+          "connections"
+        ],
+        "summary": "Connect Connection",
+        "description": "Connect an app (a connector key or app name) for the org. Sandbox connector mode connects it to\nsandbox data; live app connections are not available yet (409). The demo workspace has none to make.",
+        "operationId": "connectConnection",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "app_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "App Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Connection"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/v1/connections/{app_name}:disconnect": {
@@ -2132,6 +2225,263 @@
         "responses": {
           "204": {
             "description": "Successful Response"
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/me": {
+      "get": {
+        "tags": [
+          "organization"
+        ],
+        "summary": "Get Me",
+        "description": "The signed-in user and their workspace: their own org in the live workspace, the seeded org in the\ndemo. `invitations` lists pending invitations to other workspaces for the user's verified email (live\nworkspace only).",
+        "operationId": "getMe",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Me"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v1/invitations/{org_id}:accept": {
+      "post": {
+        "tags": [
+          "organization"
+        ],
+        "summary": "Accept Invitation",
+        "description": "Join the workspace that invited the user's verified email; the user leaves their current one (an\nempty workspace is deleted, any other keeps its data). 403 when the email is not verified, 404 when there\nis no such pending invitation, and always 404 in the demo workspace.",
+        "operationId": "acceptInvitation",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "The org that sent the invitation.",
+              "title": "Org Id"
+            },
+            "description": "The org that sent the invitation."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Me"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/invitations/{org_id}:decline": {
+      "post": {
+        "tags": [
+          "organization"
+        ],
+        "summary": "Decline Invitation",
+        "description": "Decline a pending invitation for the user's verified email; it is deleted. 403 when the email is not\nverified, 404 when there is no such invitation, and always 404 in the demo workspace.",
+        "operationId": "declineInvitation",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "The org that sent the invitation.",
+              "title": "Org Id"
+            },
+            "description": "The org that sent the invitation."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Me"
+                }
+              }
+            }
           },
           "401": {
             "description": "Sign in required",
@@ -7092,6 +7442,82 @@
         }
       }
     },
+    "/v1/ops/runtime/status": {
+      "get": {
+        "tags": [
+          "ops"
+        ],
+        "summary": "Ops Get Runtime Status",
+        "operationId": "opsGetRuntimeStatus",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RuntimeStatus"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/v1/ops/tenants": {
       "get": {
         "tags": [
@@ -8406,6 +8832,18 @@
           "health": {
             "type": "string",
             "title": "Health"
+          },
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "sandbox",
+              "composio"
+            ],
+            "title": "Mode"
           }
         },
         "type": "object",
@@ -9260,6 +9698,10 @@
               "IN_REVIEW"
             ],
             "title": "Status"
+          },
+          "simulated": {
+            "type": "boolean",
+            "title": "Simulated"
           }
         },
         "type": "object",
@@ -9379,6 +9821,7 @@
             "enum": [
               "read",
               "write (approval)",
+              "write",
               "denied"
             ],
             "title": "Access"
@@ -9911,7 +10354,8 @@
               "tool_usage",
               "human_pay",
               "refund",
-              "hold"
+              "hold",
+              "run"
             ],
             "title": "Kind"
           },
@@ -9942,6 +10386,9 @@
             },
             "type": "array",
             "title": "Lines"
+          },
+          "spent": {
+            "$ref": "#/components/schemas/Spent"
           }
         },
         "type": "object",
@@ -9988,6 +10435,10 @@
           "lastUsed": {
             "type": "string",
             "title": "Lastused"
+          },
+          "prefix": {
+            "type": "string",
+            "title": "Prefix"
           }
         },
         "type": "object",
@@ -10001,6 +10452,65 @@
           "lastUsed"
         ],
         "title": "McpToken"
+      },
+      "Me": {
+        "properties": {
+          "userId": {
+            "type": "string",
+            "title": "Userid"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "orgId": {
+            "type": "string",
+            "title": "Orgid"
+          },
+          "orgName": {
+            "type": "string",
+            "title": "Orgname"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "owner",
+              "admin",
+              "member"
+            ],
+            "title": "Role"
+          },
+          "workspace": {
+            "type": "string",
+            "enum": [
+              "demo",
+              "live"
+            ],
+            "title": "Workspace",
+            "default": "demo"
+          },
+          "invitations": {
+            "items": {
+              "$ref": "#/components/schemas/PendingInvitation"
+            },
+            "type": "array",
+            "title": "Invitations",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "userId",
+          "orgId",
+          "orgName",
+          "role"
+        ],
+        "title": "Me",
+        "description": "The signed-in user and the workspace they act in."
       },
       "Member": {
         "properties": {
@@ -10724,6 +11234,19 @@
             },
             "type": "array",
             "title": "Industries"
+          },
+          "priceNote": {
+            "type": "string",
+            "title": "Pricenote"
+          },
+          "inputSchema": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Inputschema"
+          },
+          "perRunCap": {
+            "$ref": "#/components/schemas/Money",
+            "title": "Perruncap"
           }
         },
         "type": "object",
@@ -11178,6 +11701,40 @@
           "status"
         ],
         "title": "Payout"
+      },
+      "PendingInvitation": {
+        "properties": {
+          "orgId": {
+            "type": "string",
+            "title": "Orgid"
+          },
+          "orgName": {
+            "type": "string",
+            "title": "Orgname"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "owner",
+              "admin",
+              "member"
+            ],
+            "title": "Role"
+          },
+          "invitedAt": {
+            "type": "string",
+            "title": "Invitedat"
+          }
+        },
+        "type": "object",
+        "required": [
+          "orgId",
+          "orgName",
+          "role",
+          "invitedAt"
+        ],
+        "title": "PendingInvitation",
+        "description": "An invitation to another workspace, waiting for the user to accept or decline it."
       },
       "PinnedVersion": {
         "properties": {
@@ -11962,6 +12519,68 @@
         ],
         "title": "RunSummary"
       },
+      "RuntimeStatus": {
+        "properties": {
+          "runtime": {
+            "type": "string",
+            "enum": [
+              "on",
+              "off"
+            ],
+            "title": "Runtime"
+          },
+          "workspace": {
+            "type": "string",
+            "enum": [
+              "demo",
+              "live"
+            ],
+            "title": "Workspace"
+          },
+          "database": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "error",
+              "off"
+            ],
+            "title": "Database"
+          },
+          "temporal": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "error",
+              "off"
+            ],
+            "title": "Temporal"
+          },
+          "worker": {
+            "type": "string",
+            "enum": [
+              "running",
+              "stopped",
+              "not_embedded"
+            ],
+            "title": "Worker"
+          },
+          "definitionsApplied": {
+            "type": "integer",
+            "title": "Definitionsapplied"
+          }
+        },
+        "type": "object",
+        "required": [
+          "runtime",
+          "workspace",
+          "database",
+          "temporal",
+          "worker",
+          "definitionsApplied"
+        ],
+        "title": "RuntimeStatus",
+        "description": "Reachability of the runtime's parts; carries no connection strings or secrets."
+      },
       "ServiceStatus": {
         "properties": {
           "key": {
@@ -12232,9 +12851,17 @@
             "title": "Packslug"
           },
           "input": {
-            "type": "string",
-            "maxLength": 200,
-            "minLength": 1,
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "minLength": 1
+              },
+              {
+                "additionalProperties": true,
+                "type": "object"
+              }
+            ],
             "title": "Input"
           },
           "budgetMinor": {
@@ -12256,7 +12883,8 @@
           "input",
           "budgetMinor"
         ],
-        "title": "StartRunRequest"
+        "title": "StartRunRequest",
+        "description": "`input` is either the pack's input object (checked against its input JSON Schema) or, for the\nreconciliation pack's older form, free text such as \"2026-10-06..2026-10-12\" or \"last 7 days\"."
       },
       "SubmitReviewRequest": {
         "properties": {

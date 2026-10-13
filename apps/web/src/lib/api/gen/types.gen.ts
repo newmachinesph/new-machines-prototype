@@ -409,6 +409,14 @@ export type Connection = {
      * Health
      */
     health?: string;
+    /**
+     * Key
+     */
+    key?: string;
+    /**
+     * Mode
+     */
+    mode?: 'sandbox' | 'composio';
 };
 
 /**
@@ -906,6 +914,10 @@ export type Earning = {
      * Status
      */
     status: 'OWED' | 'ELIGIBLE' | 'PAID_SIMULATED' | 'IN_REVIEW';
+    /**
+     * Simulated
+     */
+    simulated?: boolean;
 };
 
 /**
@@ -985,7 +997,7 @@ export type Grant = {
     /**
      * Access
      */
-    access: 'read' | 'write (approval)' | 'denied';
+    access: 'read' | 'write (approval)' | 'write' | 'denied';
 };
 
 /**
@@ -1343,7 +1355,7 @@ export type LedgerTxn = {
     /**
      * Kind
      */
-    kind: 'plan' | 'ai_usage' | 'tool_usage' | 'human_pay' | 'refund' | 'hold';
+    kind: 'plan' | 'ai_usage' | 'tool_usage' | 'human_pay' | 'refund' | 'hold' | 'run';
     /**
      * Description
      */
@@ -1361,6 +1373,7 @@ export type LedgerTxn = {
      * Lines
      */
     lines: Array<LedgerLine>;
+    spent?: Spent;
 };
 
 /**
@@ -1395,6 +1408,50 @@ export type McpToken = {
      * Lastused
      */
     lastUsed: string;
+    /**
+     * Prefix
+     */
+    prefix?: string;
+};
+
+/**
+ * Me
+ *
+ * The signed-in user and the workspace they act in.
+ */
+export type Me = {
+    /**
+     * Userid
+     */
+    userId: string;
+    /**
+     * Email
+     */
+    email?: string;
+    /**
+     * Name
+     */
+    name?: string;
+    /**
+     * Orgid
+     */
+    orgId: string;
+    /**
+     * Orgname
+     */
+    orgName: string;
+    /**
+     * Role
+     */
+    role: 'owner' | 'admin' | 'member';
+    /**
+     * Workspace
+     */
+    workspace?: 'demo' | 'live';
+    /**
+     * Invitations
+     */
+    invitations?: Array<PendingInvitation>;
 };
 
 /**
@@ -1896,6 +1953,20 @@ export type Pack = {
      * Industries
      */
     industries?: Array<string>;
+    /**
+     * Pricenote
+     */
+    priceNote?: string;
+    /**
+     * Inputschema
+     */
+    inputSchema?: {
+        [key: string]: unknown;
+    };
+    /**
+     * Perruncap
+     */
+    perRunCap?: Money;
 };
 
 /**
@@ -2187,6 +2258,30 @@ export type Payout = {
      * Status
      */
     status: 'scheduled' | 'paid' | 'held';
+};
+
+/**
+ * PendingInvitation
+ *
+ * An invitation to another workspace, waiting for the user to accept or decline it.
+ */
+export type PendingInvitation = {
+    /**
+     * Orgid
+     */
+    orgId: string;
+    /**
+     * Orgname
+     */
+    orgName: string;
+    /**
+     * Role
+     */
+    role: 'owner' | 'admin' | 'member';
+    /**
+     * Invitedat
+     */
+    invitedAt: string;
 };
 
 /**
@@ -2709,6 +2804,38 @@ export type RunSummary = {
 };
 
 /**
+ * RuntimeStatus
+ *
+ * Reachability of the runtime's parts; carries no connection strings or secrets.
+ */
+export type RuntimeStatus = {
+    /**
+     * Runtime
+     */
+    runtime: 'on' | 'off';
+    /**
+     * Workspace
+     */
+    workspace: 'demo' | 'live';
+    /**
+     * Database
+     */
+    database: 'ok' | 'error' | 'off';
+    /**
+     * Temporal
+     */
+    temporal: 'ok' | 'error' | 'off';
+    /**
+     * Worker
+     */
+    worker: 'running' | 'stopped' | 'not_embedded';
+    /**
+     * Definitionsapplied
+     */
+    definitionsApplied: number;
+};
+
+/**
  * ServiceStatus
  */
 export type ServiceStatus = {
@@ -2864,6 +2991,9 @@ export type Stages = {
 
 /**
  * StartRunRequest
+ *
+ * `input` is either the pack's input object (checked against its input JSON Schema) or, for the
+ * reconciliation pack's older form, free text such as "2026-10-06..2026-10-12" or "last 7 days".
  */
 export type StartRunRequest = {
     /**
@@ -2873,7 +3003,9 @@ export type StartRunRequest = {
     /**
      * Input
      */
-    input: string;
+    input: string | {
+        [key: string]: unknown;
+    };
     /**
      * Budgetminor
      */
@@ -4440,6 +4572,52 @@ export type ListConnectionsResponses = {
 
 export type ListConnectionsResponse = ListConnectionsResponses[keyof ListConnectionsResponses];
 
+export type ConnectConnectionData = {
+    body?: never;
+    path: {
+        /**
+         * App Name
+         */
+        app_name: string;
+    };
+    query?: never;
+    url: '/v1/connections/{app_name}:connect';
+};
+
+export type ConnectConnectionErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type ConnectConnectionError = ConnectConnectionErrors[keyof ConnectConnectionErrors];
+
+export type ConnectConnectionResponses = {
+    /**
+     * Successful Response
+     */
+    200: Connection;
+};
+
+export type ConnectConnectionResponse = ConnectConnectionResponses[keyof ConnectConnectionResponses];
+
 export type DisconnectConnectionData = {
     body?: never;
     path: {
@@ -4539,6 +4717,143 @@ export type RevokeGrantResponses = {
 };
 
 export type RevokeGrantResponse = RevokeGrantResponses[keyof RevokeGrantResponses];
+
+export type GetMeData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/me';
+};
+
+export type GetMeErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type GetMeError = GetMeErrors[keyof GetMeErrors];
+
+export type GetMeResponses = {
+    /**
+     * Successful Response
+     */
+    200: Me;
+};
+
+export type GetMeResponse = GetMeResponses[keyof GetMeResponses];
+
+export type AcceptInvitationData = {
+    body?: never;
+    path: {
+        /**
+         * Org Id
+         *
+         * The org that sent the invitation.
+         */
+        org_id: string;
+    };
+    query?: never;
+    url: '/v1/invitations/{org_id}:accept';
+};
+
+export type AcceptInvitationErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type AcceptInvitationError = AcceptInvitationErrors[keyof AcceptInvitationErrors];
+
+export type AcceptInvitationResponses = {
+    /**
+     * Successful Response
+     */
+    200: Me;
+};
+
+export type AcceptInvitationResponse = AcceptInvitationResponses[keyof AcceptInvitationResponses];
+
+export type DeclineInvitationData = {
+    body?: never;
+    path: {
+        /**
+         * Org Id
+         *
+         * The org that sent the invitation.
+         */
+        org_id: string;
+    };
+    query?: never;
+    url: '/v1/invitations/{org_id}:decline';
+};
+
+export type DeclineInvitationErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type DeclineInvitationError = DeclineInvitationErrors[keyof DeclineInvitationErrors];
+
+export type DeclineInvitationResponses = {
+    /**
+     * Successful Response
+     */
+    200: Me;
+};
+
+export type DeclineInvitationResponse = DeclineInvitationResponses[keyof DeclineInvitationResponses];
 
 export type GetOrganizationData = {
     body?: never;
@@ -6918,6 +7233,47 @@ export type OpsGetRunResponses = {
 };
 
 export type OpsGetRunResponse = OpsGetRunResponses[keyof OpsGetRunResponses];
+
+export type OpsGetRuntimeStatusData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/ops/runtime/status';
+};
+
+export type OpsGetRuntimeStatusErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type OpsGetRuntimeStatusError = OpsGetRuntimeStatusErrors[keyof OpsGetRuntimeStatusErrors];
+
+export type OpsGetRuntimeStatusResponses = {
+    /**
+     * Successful Response
+     */
+    200: RuntimeStatus;
+};
+
+export type OpsGetRuntimeStatusResponse = OpsGetRuntimeStatusResponses[keyof OpsGetRuntimeStatusResponses];
 
 export type OpsListTenantsData = {
     body?: never;

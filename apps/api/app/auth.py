@@ -1,7 +1,9 @@
+import logging
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Annotated, Any
 
+import psycopg
 import requests
 from cachecontrol import CacheControl
 from fastapi import Depends
@@ -10,15 +12,26 @@ from google.auth.exceptions import TransportError
 from google.auth.transport.requests import Request
 from google.oauth2 import id_token
 
+from app import workspace
 from app.errors import ApiProblem
 from app.models.ops import OpsRole
 from app.store import get_store
 
+log = logging.getLogger(__name__)
+
 
 @dataclass(frozen=True)
 class Actor:
+    """Who is calling and the org they act in. Two actors are the same when user and org match; role,
+    email and name describe the user."""
+
     user_id: str
     org_id: str
+    role: str = field(default="owner", compare=False)
+    email: str | None = field(default=None, compare=False)
+    name: str | None = field(default=None, compare=False)
+    org_name: str | None = field(default=None, compare=False)  # set in the live workspace
+    email_verified: bool = field(default=False, compare=False)
 
 
 DEMO_ORG_ID = "org_hp01"
@@ -78,32 +91,58 @@ def _verified_claims(token: str) -> dict[str, Any]:
     return claims
 
 
-def _verified_user_id(token: str) -> str:
-    return _verified_claims(token)["sub"]
-
-
 def _bearer_token(credentials: HTTPAuthorizationCredentials | None) -> str:
     if credentials is None or credentials.scheme.lower() != "bearer":
         raise ApiProblem(401, "AUTHENTICATION_REQUIRED", "Sign in to continue.")
     return credentials.credentials
 
 
-def _signed_in_actor(credentials: HTTPAuthorizationCredentials | None) -> Actor:
+def _suspended() -> ApiProblem:
+    return ApiProblem(403, "TENANT_SUSPENDED", "This workspace is suspended. Contact New Machines support.")
+
+
+def _demo_actor(credentials: HTTPAuthorizationCredentials | None) -> Actor:
     if is_dev_mode():
         return DEMO_ACTOR
-    return Actor(user_id=_verified_user_id(_bearer_token(credentials)), org_id=DEMO_ORG_ID)
+    who = workspace.identity_from_claims(_verified_claims(_bearer_token(credentials)))
+    return Actor(user_id=who.user_id, org_id=DEMO_ORG_ID, email=who.email, name=who.name)
+
+
+def _live_actor(credentials: HTTPAuthorizationCredentials | None) -> Actor:
+    if is_dev_mode():
+        who = workspace.DEV_IDENTITY
+    else:
+        who = workspace.identity_from_claims(_verified_claims(_bearer_token(credentials)))
+    try:
+        member = workspace.membership(who)
+    except psycopg.OperationalError as error:
+        log.warning("The workspace of %s could not be read: %s", who.user_id, type(error).__name__)
+        detail = "Your workspace can't be reached right now. Try again shortly."
+        raise ApiProblem(503, "WORKSPACE_UNAVAILABLE", detail) from error
+    if member.org_status == "suspended":
+        raise _suspended()
+    return Actor(
+        user_id=who.user_id,
+        org_id=member.org_id,
+        role=member.role,
+        email=who.email,
+        name=who.name,
+        org_name=member.org_name,
+        email_verified=who.email_verified,
+    )
 
 
 def get_actor(credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer)]) -> Actor:
     """Swappable auth seam for customer routes. AUTH_MODE=dev accepts any token or none; otherwise Firebase
-    ID tokens are verified. Every signed-in user works in the one seeded demo workspace, and a workspace an
-    operator has suspended is locked out of every customer route."""
-    actor = _signed_in_actor(credentials)
+    ID tokens are verified. In the demo workspace every signed-in user works in the one seeded org; in the
+    live workspace each user works in their own org (`workspace.membership`), and the dev user is
+    `dev-user`. A workspace that is suspended is locked out of every customer route."""
+    if workspace.live():
+        return _live_actor(credentials)
+    actor = _demo_actor(credentials)
     tenant = get_store().tenants.get(actor.org_id)
     if tenant is not None and tenant.status == "suspended":
-        raise ApiProblem(
-            403, "TENANT_SUSPENDED", "This workspace is suspended. Contact New Machines support."
-        )
+        raise _suspended()
     return actor
 
 

@@ -1,4 +1,4 @@
-from app import settings
+from app import live_catalog, workspace
 from app.auth import CurrentActor
 from app.catalog import agents as agent_catalog
 from app.catalog.packs import SandboxForecast, with_definition
@@ -63,20 +63,26 @@ def _classified(packs: list[Pack]) -> list[Pack]:
 
 def _sample_aliases() -> dict[str, str]:
     """Demo sample agents folded into the definition agent of the same name (none in the live workspace)."""
-    if settings.workspace_mode() == "live":
+    if workspace.live():
         return {}
     return agent_catalog.sample_aliases(get_store().agents)
 
 
 @router.get("/workflow-packs", operation_id="listWorkflowPacks", response_model=list[Pack])
-def list_workflow_packs(_: CurrentActor) -> list[Pack]:
+def list_workflow_packs(actor: CurrentActor) -> list[Pack]:
+    """The marketplace. In the live workspace: every pack definition, `installed` for the caller's org."""
+    if workspace.live():
+        return live_catalog.list_packs(actor.org_id)
     with locked_store() as store:
         listed = [p for p in store.packs if is_listed(store, p)]
     return _classified(listed)
 
 
 @router.get("/workflow-packs/{slug}", operation_id="getWorkflowPack", response_model=Pack)
-def get_workflow_pack(slug: str, _: CurrentActor) -> Pack:
+def get_workflow_pack(slug: str, actor: CurrentActor) -> Pack:
+    """One pack; in the live workspace with `inputSchema`, the JSON Schema of the input a run takes."""
+    if workspace.live():
+        return live_catalog.get_pack(actor.org_id, slug)
     with locked_store():
         pack = find_pack(slug)
     return _classified([pack])[0]
@@ -96,7 +102,7 @@ def get_catalog_taxonomy(_: CurrentActor) -> Taxonomy:
 def _agents() -> list[Agent]:
     """The live workspace lists agent definitions only, used by pack definitions. The demo workspace adds the
     sample agents, and usage comes from the marketplace packs it lists."""
-    if settings.workspace_mode() == "live":
+    if workspace.live():
         return agent_catalog.catalog(agent_catalog.definition_pack_uses(), samples=[])
     with locked_store() as store:
         listed = [p for p in store.packs if is_listed(store, p)]
@@ -122,8 +128,11 @@ def get_agent(agent_id: str, _: CurrentActor) -> Agent:
 
 
 @router.post("/workflow-packs:suggest", operation_id="suggestWorkflowPack", response_model=Suggestion)
-def suggest_workflow_pack(body: SuggestRequest, _: CurrentActor) -> Suggestion:
-    """Keyword match for the static API. The dynamic backend asks Gemini and keeps this response shape."""
+def suggest_workflow_pack(body: SuggestRequest, actor: CurrentActor) -> Suggestion:
+    """Keyword match for the static API. The dynamic backend asks Gemini and keeps this response shape.
+    The live workspace matches over the pack definitions."""
+    if workspace.live():
+        return live_catalog.suggest(actor.org_id, body.text)
     words = set(body.text.lower().replace(",", " ").split())
     with locked_store() as store:
         listed = [p.slug for p in store.packs if p.slug in WORDS and is_listed(store, p)]
@@ -151,6 +160,8 @@ def suggest_workflow_pack(body: SuggestRequest, _: CurrentActor) -> Suggestion:
 )
 def install_workflow_pack(org_id: str, body: InstallRequest, actor: CurrentActor) -> Installation:
     require_org(org_id, actor)
+    if workspace.live():
+        return live_catalog.install(actor, body)
     with locked_store():
         pack = find_pack(body.pack_slug)
         pack.installed = True

@@ -13,9 +13,7 @@ from app import settings
 
 MIGRATIONS_DIR = Path(__file__).resolve().parents[1] / "migrations"
 
-# The worker runs one activity per thread and each holds at most one connection, so its thread count is
-# this size (see app/worker/__main__.py).
-POOL_MAX_SIZE = 8
+POOL_CLOSE_TIMEOUT_S = 1.0  # shutdown must fit Cloud Run's 10 s with the worker stop
 MIGRATE_LOCK = 7_204_100_002  # pg advisory lock key; app.defs.registry uses ...001
 
 _pool: ConnectionPool | None = None
@@ -29,7 +27,7 @@ def get_pool() -> ConnectionPool:
             _pool = ConnectionPool(
                 settings.database_url(),
                 min_size=1,
-                max_size=POOL_MAX_SIZE,
+                max_size=settings.db_pool_max(),
                 open=True,
                 kwargs={"row_factory": dict_row, "autocommit": False},
             )
@@ -42,7 +40,7 @@ def reset_pool() -> None:
     with _lock:
         pool, _pool = _pool, None
     if pool is not None:
-        pool.close()
+        pool.close(timeout=POOL_CLOSE_TIMEOUT_S)
 
 
 @contextmanager
@@ -54,6 +52,16 @@ def connect(url: str | None = None) -> Iterator[psycopg.Connection]:
         return
     with get_pool().connection() as conn:
         yield conn
+
+
+def probe(timeout: float) -> int:
+    """Count the applied definitions (distinct kind and key), waiting at most `timeout` seconds for a pooled
+    connection. Raises when the database cannot be reached; for the ops status route."""
+    with get_pool().connection(timeout=timeout) as conn:
+        row = conn.execute(
+            "SELECT count(*) AS n FROM (SELECT DISTINCT kind, key FROM definition_versions) d"
+        ).fetchone()
+    return int(row["n"])
 
 
 def migrate(conn: psycopg.Connection) -> list[str]:

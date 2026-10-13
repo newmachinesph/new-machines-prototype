@@ -11,6 +11,8 @@ vi.mock("@/lib/queries/tasks", () => ({
   useSubmitReview: () => ({ mutate: done, isPending: false }),
 }));
 vi.mock("@/components/base", async (orig) => ({ ...(await orig<object>()), useToast: () => vi.fn() }));
+const workspace = vi.hoisted(() => ({ demo: true }));
+vi.mock("@/lib/queries/me", () => ({ useIsDemo: () => workspace.demo }));
 
 const task = {
   id: "ht_011",
@@ -44,7 +46,10 @@ const task = {
   ],
 } as unknown as HumanTask;
 
-afterEach(() => vi.useRealTimers());
+afterEach(() => {
+  vi.useRealTimers();
+  workspace.demo = true;
+});
 
 // The check after a submit is simulated with a timer, so tests drive it with fake timers.
 async function submitReview(
@@ -159,5 +164,19 @@ describe("TaskWorkspace submit flow", () => {
   it("shows a neutral view for an unknown state", () => {
     renderWithIntl(<TaskWorkspace task={{ ...task, state: "CANCELLED" }} buyer={task.buyer} />);
     expect(screen.getByText("This task is no longer available")).toBeInTheDocument();
+  });
+});
+
+describe("TaskWorkspace pay terms", () => {
+  it("shows the demo's pay terms in the demo", () => {
+    renderWithIntl(<TaskWorkspace task={task} buyer={task.buyer} />);
+    expect(screen.getByText("Simulated pay, human_terms@3")).toBeInTheDocument();
+  });
+
+  it("drops the API's demo pay terms in a live workspace", () => {
+    workspace.demo = false;
+    renderWithIntl(<TaskWorkspace task={{ ...task, payTerms: "Demo run: no reviewer pay" }} buyer={task.buyer} />);
+    expect(screen.getByText("Simulated pay")).toBeInTheDocument();
+    expect(screen.queryByText(/Demo run/)).not.toBeInTheDocument();
   });
 });

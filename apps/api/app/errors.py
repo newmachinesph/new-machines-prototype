@@ -29,7 +29,7 @@ class Problem(BaseModel):
     status: int
     code: str
     detail: str
-    errors: list[ProblemIssue] | None = None  # only on INVALID_DEFINITION
+    errors: list[ProblemIssue] | None = None  # INVALID_DEFINITION, and INVALID_INPUT field errors
 
 
 class ApiProblem(Exception):

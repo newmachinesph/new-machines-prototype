@@ -4,8 +4,9 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { QueryState } from "@/components/query-state";
 import { Skeleton } from "@/components/skeleton";
-import { Amount, PageHeader, Pill, SimTag } from "@/components/ui";
+import { Amount, ButtonLink, EmptyState, PageHeader, Pill, SimTag } from "@/components/ui";
 import { sumMoney, utc, WORKER_TZ } from "@/lib/format";
+import { useIsDemo } from "@/lib/queries/me";
 import { useEarnings, useEligibleTasks } from "@/lib/queries/tasks";
 import { useFormat } from "@/lib/use-format";
 
@@ -25,6 +26,7 @@ export function WorkView() {
   const t = useTranslations("work");
   const nav = useTranslations("nav");
   const { money, dateTime, until } = useFormat();
+  const demo = useIsDemo();
   const tasks = useEligibleTasks();
   const earnings = useEarnings();
   return (
@@ -32,59 +34,73 @@ export function WorkView() {
       <PageHeader
         title={nav("availableTasks")}
         lede={t("lede")}
-        actions={<SimTag className="px-2 py-1 text-xs">{t("simulatedPay")}</SimTag>}
+        actions={<SimTag className="px-2 py-1 text-xs">{t(demo ? "simulatedPay" : "simulatedPayLive")}</SimTag>}
       />
       <QueryState query={tasks} skeleton={<TasksSkeleton />}>
         {(openTasks) => (
           <QueryState query={earnings} skeleton={<TasksSkeleton />}>
             {(paidWork) => (
               <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
-                <ul className="grid [grid-template-columns:repeat(auto-fill,minmax(min(100%,560px),1fr))] gap-3">
-                  {openTasks.map((task) => (
-                    <li key={task.id} className="min-w-0">
-                      <Link
-                        href={`/work/tasks/${task.id}`}
-                        className="group panel flex h-full flex-col p-5 transition-colors hover:border-grey-300"
-                      >
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="min-w-0">
-                            <div className="text-[15px] font-semibold break-words">{task.title}</div>
-                            <div className="mt-1 text-sm break-words text-muted">
-                              {t("byline", { buyer: task.buyer, pack: task.packName, skill: task.skill })}
+                {openTasks.length === 0 ? (
+                  <div className="panel">
+                    <EmptyState
+                      action={
+                        <ButtonLink href="/work/earnings" variant="secondary" className="h-8">
+                          {t("seeEarnings")}
+                        </ButtonLink>
+                      }
+                    >
+                      {t("empty")}
+                    </EmptyState>
+                  </div>
+                ) : (
+                  <ul className="grid [grid-template-columns:repeat(auto-fill,minmax(min(100%,560px),1fr))] gap-3">
+                    {openTasks.map((task) => (
+                      <li key={task.id} className="min-w-0">
+                        <Link
+                          href={`/work/tasks/${task.id}`}
+                          className="group panel flex h-full flex-col p-5 transition-colors hover:border-grey-300"
+                        >
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="min-w-0">
+                              <div className="text-[15px] font-semibold break-words">{task.title}</div>
+                              <div className="mt-1 text-sm break-words text-muted">
+                                {t("byline", { buyer: task.buyer, pack: task.packName, skill: task.skill })}
+                              </div>
                             </div>
+                            <Amount value={task.pay} className="shrink-0 text-2xl font-semibold tracking-tight" />
                           </div>
-                          <Amount value={task.pay} className="shrink-0 text-2xl font-semibold tracking-tight" />
-                        </div>
-                        <dl className="mt-4 mb-4 grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1.5 text-sm">
-                          <dt className="text-muted">{t("fields.type")}</dt>
-                          <dd>
-                            <Pill tone="human">{t(`mode.${task.mode}`)}</Pill>
-                          </dd>
-                          <dt className="text-muted">{t("fields.time")}</dt>
-                          <dd className="text-grey-700">{t("aboutMin", { n: task.estMinutes })}</dd>
-                          <dt className="text-muted">{t("fields.due")}</dt>
-                          <dd className="text-grey-700">
-                            {t("due", {
-                              when: dateTime(task.deadline, WORKER_TZ),
-                              utc: utc(task.deadline),
-                              until: until(task.deadline),
-                            })}
-                          </dd>
-                          <dt className="text-muted">{t("fields.data")}</dt>
-                          <dd className="text-grey-700">
-                            {task.dataClass === "CONFIDENTIAL" ? t("dataConfidential") : t("dataNone")}
-                          </dd>
-                        </dl>
-                        <div className="mt-auto flex items-center justify-between gap-3 border-t border-rule pt-3 text-xs text-muted">
-                          {t("paidOnAccept")}
-                          <span className="shrink-0 font-medium text-ink underline decoration-grey-300 underline-offset-[3px] group-hover:decoration-current">
-                            {t("readTask")}
-                          </span>
-                        </div>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
+                          <dl className="mt-4 mb-4 grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1.5 text-sm">
+                            <dt className="text-muted">{t("fields.type")}</dt>
+                            <dd>
+                              <Pill tone="human">{t(`mode.${task.mode}`)}</Pill>
+                            </dd>
+                            <dt className="text-muted">{t("fields.time")}</dt>
+                            <dd className="text-grey-700">{t("aboutMin", { n: task.estMinutes })}</dd>
+                            <dt className="text-muted">{t("fields.due")}</dt>
+                            <dd className="text-grey-700">
+                              {t("due", {
+                                when: dateTime(task.deadline, WORKER_TZ),
+                                utc: utc(task.deadline),
+                                until: until(task.deadline),
+                              })}
+                            </dd>
+                            <dt className="text-muted">{t("fields.data")}</dt>
+                            <dd className="text-grey-700">
+                              {task.dataClass === "CONFIDENTIAL" ? t("dataConfidential") : t("dataNone")}
+                            </dd>
+                          </dl>
+                          <div className="mt-auto flex items-center justify-between gap-3 border-t border-rule pt-3 text-xs text-muted">
+                            {t("paidOnAccept")}
+                            <span className="shrink-0 font-medium text-ink underline decoration-grey-300 underline-offset-[3px] group-hover:decoration-current">
+                              {t("readTask")}
+                            </span>
+                          </div>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
                 <aside className="space-y-4 xl:sticky xl:top-20">
                   <section className="panel overflow-hidden">
                     <div className="border-b border-rule px-4 py-3 text-sm font-medium">{t("yourWork")}</div>

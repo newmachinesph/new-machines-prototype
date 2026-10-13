@@ -3,7 +3,7 @@
 import { useTranslations } from "next-intl";
 import { QueryState } from "@/components/query-state";
 import { Skeleton } from "@/components/skeleton";
-import { Amount, Id, PageHeader, Pill, Section, SimTag } from "@/components/ui";
+import { Amount, ButtonLink, EmptyState, Id, PageHeader, Pill, Section, SimTag } from "@/components/ui";
 import { sumMoney, WORKER_TZ } from "@/lib/format";
 import { useEarnings } from "@/lib/queries/tasks";
 import { useFormat } from "@/lib/use-format";
@@ -54,28 +54,40 @@ export function EarningsView() {
                 </div>
               </div>
               <Section title={t("tasks")}>
-                <ul className="divide-y divide-rule">
-                  {rows.map((e) => (
-                    <li
-                      key={e.taskId}
-                      className="grid gap-2 px-5 py-3.5 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center sm:gap-6"
-                    >
-                      <div className="min-w-0">
-                        <div className="text-sm font-medium break-words">{e.title}</div>
-                        <div className="mt-0.5 flex flex-wrap gap-x-3 text-xs text-muted">
-                          <Id className="text-[11px]">{e.taskId}</Id>
-                          <span>{t(`verdict.${e.verdict}`)}</span>
-                          <span>{dateTime(e.at, WORKER_TZ)}</span>
+                {rows.length === 0 ? (
+                  <EmptyState
+                    action={
+                      <ButtonLink href="/work" variant="secondary" className="h-8">
+                        {t("seeTasks")}
+                      </ButtonLink>
+                    }
+                  >
+                    {t("empty")}
+                  </EmptyState>
+                ) : (
+                  <ul className="divide-y divide-rule">
+                    {rows.map((e) => (
+                      <li
+                        key={e.taskId}
+                        className="grid gap-2 px-5 py-3.5 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center sm:gap-6"
+                      >
+                        <div className="min-w-0">
+                          <div className="text-sm font-medium break-words">{e.title}</div>
+                          <div className="mt-0.5 flex flex-wrap gap-x-3 text-xs text-muted">
+                            <Id className="text-[11px]">{e.taskId}</Id>
+                            <span>{t(`verdict.${e.verdict}`)}</span>
+                            <span>{dateTime(e.at, WORKER_TZ)}</span>
+                          </div>
+                          {e.taskId === "ht_010" ? (
+                            <p className="mt-1 text-xs text-grey-700">{t("failedCheck")}</p>
+                          ) : null}
                         </div>
-                        {e.taskId === "ht_010" ? (
-                          <p className="mt-1 text-xs text-grey-700">{t("failedCheck")}</p>
-                        ) : null}
-                      </div>
-                      <Pill tone={STATUS_TONE[e.status]}>{t(`status.${e.status}`)}</Pill>
-                      <Amount value={e.amount} className="text-sm font-medium sm:w-16 sm:text-right" />
-                    </li>
-                  ))}
-                </ul>
+                        <Pill tone={STATUS_TONE[e.status]}>{t(`status.${e.status}`)}</Pill>
+                        <Amount value={e.amount} className="text-sm font-medium sm:w-16 sm:text-right" />
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </Section>
             </div>
           );

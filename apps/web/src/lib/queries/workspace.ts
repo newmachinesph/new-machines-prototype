@@ -8,7 +8,6 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { ORG_ID } from "@/lib/api/client";
 import * as q from "@/lib/api/gen/@tanstack/react-query.gen";
 import type {
   ListApprovalsResponse,
@@ -16,8 +15,8 @@ import type {
   ListMemoryResponse,
   ListTokensResponse,
 } from "@/lib/api/gen/types.gen";
-
-const org = { path: { org_id: ORG_ID } };
+import { byOperation, orgScoped } from "./me";
+import { useOrgPath } from "./org";
 
 /** Apply `update` to cached data now; return a rollback for onError. */
 export async function optimistic<T>(qc: QueryClient, key: QueryKey, update: (old: T) => T) {
@@ -52,7 +51,7 @@ function useListMutation<TData, TError, TVars, T>(
 
 /** Deciding an approval changes what the overview, the palette and the run page show. */
 function invalidateApprovalViews(qc: QueryClient) {
-  void qc.invalidateQueries({ queryKey: q.listAttentionQueryKey(org) });
+  void qc.invalidateQueries({ predicate: byOperation("listAttention") });
   void qc.invalidateQueries({ queryKey: q.listWorkflowRunsQueryKey() });
   void qc.invalidateQueries({
     predicate: (query) => {
@@ -65,10 +64,22 @@ function invalidateApprovalViews(qc: QueryClient) {
 export const useApprovals = (enabled = true) =>
   useQuery({ ...q.listApprovalsOptions(), refetchInterval: 10_000, enabled });
 export const useMemory = (enabled = true) => useQuery({ ...q.listMemoryOptions(), enabled });
-export const useMembers = () => useQuery(q.listMembersOptions(org));
 export const useTokens = () => useQuery(q.listTokensOptions());
-export const usePolicies = () => useQuery(q.listPoliciesOptions(org));
-export const useUsage = () => useQuery(q.getUsageOptions(org));
+
+export function useMembers() {
+  const { me, path, ready } = useOrgPath();
+  return orgScoped(me, useQuery({ ...q.listMembersOptions(path), enabled: ready }));
+}
+
+export function usePolicies() {
+  const { me, path, ready } = useOrgPath();
+  return orgScoped(me, useQuery({ ...q.listPoliciesOptions(path), enabled: ready }));
+}
+
+export function useUsage() {
+  const { me, path, ready } = useOrgPath();
+  return orgScoped(me, useQuery({ ...q.getUsageOptions(path), enabled: ready }));
+}
 
 export function useDecideApproval(decision: "approve" | "decline") {
   const status = decision === "approve" ? "GRANTED" : "DECLINED";
@@ -105,6 +116,22 @@ export const useDisconnect = () =>
     old.map((c) => (c.app === vars.path.app_name ? { ...c, status: "not_connected" as const, grants: [] } : c)),
   );
 
+/** Connect an app (sandbox data in sandbox connector mode). The answer replaces the app's card at once. */
+export function useConnectApp() {
+  const qc = useQueryClient();
+  const key = q.listConnectionsQueryKey();
+  return useMutation({
+    ...q.connectConnectionMutation(),
+    onSuccess: (conn) =>
+      qc.setQueryData<ListConnectionsResponse>(key, (old) =>
+        old?.map((c) => ((c.key ?? c.app) === (conn.key ?? conn.app) ? conn : c)),
+      ),
+    onSettled: () => {
+      void qc.invalidateQueries({ queryKey: key });
+    },
+  });
+}
+
 export const useRevokeGrant = () =>
   useListMutation(q.revokeGrantMutation(), q.listConnectionsQueryKey(), (old: ListConnectionsResponse, vars) =>
     old.map((c) =>
@@ -129,7 +156,7 @@ export function useInvite() {
   return useMutation({
     ...q.inviteMemberMutation(),
     onSettled: () => {
-      void qc.invalidateQueries({ queryKey: q.listMembersQueryKey(org) });
+      void qc.invalidateQueries({ predicate: byOperation("listMembers") });
     },
   });
 }
@@ -141,5 +168,24 @@ export function useCreateToken() {
     onSettled: () => {
       void qc.invalidateQueries({ queryKey: q.listTokensQueryKey() });
     },
+  });
+}
+
+/** Joining another workspace changes the org behind every query: drop the whole cache so nothing from the
+ * old workspace is shown, and let the active queries load again for the new one. */
+export function useAcceptInvitation() {
+  const qc = useQueryClient();
+  return useMutation({
+    ...q.acceptInvitationMutation(),
+    onSuccess: () => qc.resetQueries(),
+  });
+}
+
+/** Declining deletes the invitation; the answer is the updated /v1/me, so the notice goes at once. */
+export function useDeclineInvitation() {
+  const qc = useQueryClient();
+  return useMutation({
+    ...q.declineInvitationMutation(),
+    onSuccess: (me) => qc.setQueryData(q.getMeQueryKey(), me),
   });
 }

@@ -440,6 +440,7 @@ export const zGrant = z.object({
     access: z.enum([
         'read',
         'write (approval)',
+        'write',
         'denied'
     ])
 });
@@ -460,7 +461,9 @@ export const zConnection = z.object({
     oauthScopes: z.array(z.string()),
     grants: z.array(zGrant),
     lastUsed: z.string().optional(),
-    health: z.string().optional()
+    health: z.string().optional(),
+    key: z.string().optional(),
+    mode: z.enum(['sandbox', 'composio']).optional()
 });
 
 /**
@@ -610,7 +613,8 @@ export const zMcpToken = z.object({
     scopes: z.array(z.string()),
     createdAt: z.string(),
     expiresAt: z.string(),
-    lastUsed: z.string()
+    lastUsed: z.string(),
+    prefix: z.string().optional()
 });
 
 /**
@@ -721,7 +725,8 @@ export const zEarning = z.object({
         'ELIGIBLE',
         'PAID_SIMULATED',
         'IN_REVIEW'
-    ])
+    ]),
+    simulated: z.boolean().optional()
 });
 
 /**
@@ -739,32 +744,6 @@ export const zInvoice = z.object({
         'overdue',
         'void'
     ])
-});
-
-/**
- * LedgerTxn
- */
-export const zLedgerTxn = z.object({
-    id: z.string(),
-    at: z.string(),
-    kind: z.enum([
-        'plan',
-        'ai_usage',
-        'tool_usage',
-        'human_pay',
-        'refund',
-        'hold'
-    ]),
-    description: z.string(),
-    runId: z.string().optional(),
-    amount: zMoney,
-    status: z.enum([
-        'POSTED',
-        'PENDING',
-        'ELIGIBLE',
-        'HELD'
-    ]),
-    lines: z.array(zLedgerLine)
 });
 
 /**
@@ -1011,6 +990,42 @@ export const zBillingSummary = z.object({
 });
 
 /**
+ * PendingInvitation
+ *
+ * An invitation to another workspace, waiting for the user to accept or decline it.
+ */
+export const zPendingInvitation = z.object({
+    orgId: z.string(),
+    orgName: z.string(),
+    role: z.enum([
+        'owner',
+        'admin',
+        'member'
+    ]),
+    invitedAt: z.string()
+});
+
+/**
+ * Me
+ *
+ * The signed-in user and the workspace they act in.
+ */
+export const zMe = z.object({
+    userId: z.string(),
+    email: z.string().optional(),
+    name: z.string().optional(),
+    orgId: z.string(),
+    orgName: z.string(),
+    role: z.enum([
+        'owner',
+        'admin',
+        'member'
+    ]),
+    workspace: z.enum(['demo', 'live']).optional().default('demo'),
+    invitations: z.array(zPendingInvitation).optional().default([])
+});
+
+/**
  * PinnedVersion
  */
 export const zPinnedVersion = z.object({
@@ -1238,6 +1253,32 @@ export const zRunEdge = z.object({
 });
 
 /**
+ * RuntimeStatus
+ *
+ * Reachability of the runtime's parts; carries no connection strings or secrets.
+ */
+export const zRuntimeStatus = z.object({
+    runtime: z.enum(['on', 'off']),
+    workspace: z.enum(['demo', 'live']),
+    database: z.enum([
+        'ok',
+        'error',
+        'off'
+    ]),
+    temporal: z.enum([
+        'ok',
+        'error',
+        'off'
+    ]),
+    worker: z.enum([
+        'running',
+        'stopped',
+        'not_embedded'
+    ]),
+    definitionsApplied: z.int()
+});
+
+/**
  * ServiceStatus
  */
 export const zServiceStatus = z.object({
@@ -1321,6 +1362,34 @@ export const zSpent = z.object({
 });
 
 /**
+ * LedgerTxn
+ */
+export const zLedgerTxn = z.object({
+    id: z.string(),
+    at: z.string(),
+    kind: z.enum([
+        'plan',
+        'ai_usage',
+        'tool_usage',
+        'human_pay',
+        'refund',
+        'hold',
+        'run'
+    ]),
+    description: z.string(),
+    runId: z.string().optional(),
+    amount: zMoney,
+    status: z.enum([
+        'POSTED',
+        'PENDING',
+        'ELIGIBLE',
+        'HELD'
+    ]),
+    lines: z.array(zLedgerLine),
+    spent: zSpent.optional()
+});
+
+/**
  * StageNotes
  */
 export const zStageNotes = z.object({
@@ -1392,10 +1461,16 @@ export const zRunSummary = z.object({
 
 /**
  * StartRunRequest
+ *
+ * `input` is either the pack's input object (checked against its input JSON Schema) or, for the
+ * reconciliation pack's older form, free text such as "2026-10-06..2026-10-12" or "last 7 days".
  */
 export const zStartRunRequest = z.object({
     packSlug: z.string(),
-    input: z.string().min(1).max(200),
+    input: z.union([
+        z.string().min(1).max(200),
+        z.record(z.string(), z.unknown())
+    ]),
     budgetMinor: z.int().gt(0).lte(100000),
     note: z.string().max(500).optional()
 });
@@ -1737,7 +1812,10 @@ export const zPack = z.object({
     regions: z.array(z.string()),
     runs30d: z.int().optional(),
     function: z.string().optional(),
-    industries: z.array(z.string()).optional()
+    industries: z.array(z.string()).optional(),
+    priceNote: z.string().optional(),
+    inputSchema: z.record(z.string(), z.unknown()).optional(),
+    perRunCap: zMoney.optional()
 });
 
 /**
@@ -2103,6 +2181,15 @@ export const zRetractMemoryResponse = zMemoryItem;
  */
 export const zListConnectionsResponse = z.array(zConnection);
 
+export const zConnectConnectionPath = z.object({
+    app_name: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zConnectConnectionResponse = zConnection;
+
 export const zDisconnectConnectionPath = z.object({
     app_name: z.string()
 });
@@ -2122,6 +2209,29 @@ export const zRevokeGrantQuery = z.object({
  * Successful Response
  */
 export const zRevokeGrantResponse = z.void();
+
+/**
+ * Successful Response
+ */
+export const zGetMeResponse = zMe;
+
+export const zAcceptInvitationPath = z.object({
+    org_id: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zAcceptInvitationResponse = zMe;
+
+export const zDeclineInvitationPath = z.object({
+    org_id: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zDeclineInvitationResponse = zMe;
 
 export const zGetOrganizationPath = z.object({
     org_id: z.string()
@@ -2686,6 +2796,11 @@ export const zOpsGetRunPath = z.object({
  * Successful Response
  */
 export const zOpsGetRunResponse = zOpsRunDetail;
+
+/**
+ * Successful Response
+ */
+export const zOpsGetRuntimeStatusResponse = zRuntimeStatus;
 
 export const zOpsListTenantsQuery = z.object({
     status: z.enum([

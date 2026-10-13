@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Annotated, Any, Literal
 
 from pydantic import Field
 
@@ -25,8 +25,11 @@ class Installation(Model):
 
 
 class StartRunRequest(RequestModel):
+    """`input` is either the pack's input object (checked against its input JSON Schema) or, for the
+    reconciliation pack's older form, free text such as "2026-10-06..2026-10-12" or "last 7 days"."""
+
     pack_slug: str
-    input: str = Field(min_length=1, max_length=200)
+    input: Annotated[str, Field(min_length=1, max_length=200)] | dict[str, Any]
     budget_minor: int = Field(gt=0, le=100_000)
     note: str | Opt = Field(default=None, max_length=500)
 

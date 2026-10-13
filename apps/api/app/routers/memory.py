@@ -1,10 +1,10 @@
-from app import db, settings
+from app import db, live_work, settings, workspace
 from app.auth import CurrentActor
-from app.defs.current import latest_bodies
 from app.errors import ApiProblem
 from app.models.org import MemoryItem
 from app.models.requests import MemoryReviewRequest
 from app.routing import ApiRouter
+from app.runtime.memory import READABLE_BY_ORG, SHARED_SOURCES
 from app.store import get_store, iso, locked_store
 
 router = ApiRouter(prefix="/v1", tags=["memory"])
@@ -18,27 +18,23 @@ def find_memory(memory_id: str) -> MemoryItem:
 
 
 REAL_ITEMS_LIMIT = 200
-SOURCES = {"seed": "Definitions seed"}
-
-
-def _readable_spaces(org_id: str) -> dict[str, dict]:
-    """Memory space definitions this org may read: `readers` lists "*" or the org id."""
-    return {
-        key: body
-        for key, body in latest_bodies("memory_space").items()
-        if {"*", org_id} & set(body.get("readers") or [])
-    }
 
 
 def _real_memory(org_id: str) -> list[MemoryItem]:
-    spaces = _readable_spaces(org_id)
+    spaces = live_work.readable_spaces(org_id)
     if not spaces:
         return []
     with db.connect() as conn:
         rows = conn.execute(
             "SELECT id, space, text, source, created_by, created_at FROM memory_items "
-            "WHERE space = ANY(%s) ORDER BY created_at DESC, id DESC LIMIT %s",
-            (list(spaces), REAL_ITEMS_LIMIT),
+            f"WHERE space = ANY(%(spaces)s) AND {READABLE_BY_ORG} AND status <> 'quarantined' "
+            "ORDER BY created_at DESC, id DESC LIMIT %(limit)s",
+            {
+                "spaces": list(spaces),
+                "org": org_id,
+                "shared": list(SHARED_SOURCES),
+                "limit": REAL_ITEMS_LIMIT,
+            },
         ).fetchall()
     return [
         MemoryItem(
@@ -47,7 +43,7 @@ def _real_memory(org_id: str) -> list[MemoryItem]:
             scope="Organization",
             scope_name=str(spaces[r["space"]].get("name") or r["space"]),
             state="APPROVED",
-            source=SOURCES.get(r["source"], r["source"]),
+            source=live_work.source_label(r["source"])[0],
             proposed_by=r["created_by"],
             created_at=iso(r["created_at"]),
         )
@@ -57,7 +53,10 @@ def _real_memory(org_id: str) -> list[MemoryItem]:
 
 @router.get("/memory", operation_id="listMemory", response_model=list[MemoryItem])
 def list_memory(actor: CurrentActor) -> list[MemoryItem]:
-    """Fixture memory, after the items of real memory spaces when the runtime is on."""
+    """Fixture memory, after the items of real memory spaces when the runtime is on. The live workspace has
+    the org's own items and the shared seed and console items only."""
+    if workspace.live():
+        return live_work.list_memory(actor.org_id)
     real = _real_memory(actor.org_id) if settings.runtime_enabled() else []
     return real + get_store().memory
 
@@ -65,7 +64,11 @@ def list_memory(actor: CurrentActor) -> list[MemoryItem]:
 @router.post(
     "/memory-candidates/{memory_id}:review", operation_id="reviewMemoryCandidate", response_model=MemoryItem
 )
-def review_memory_candidate(memory_id: str, body: MemoryReviewRequest, _: CurrentActor) -> MemoryItem:
+def review_memory_candidate(memory_id: str, body: MemoryReviewRequest, actor: CurrentActor) -> MemoryItem:
+    if workspace.live():
+        if live_work.memory_exists(actor.org_id, memory_id):
+            raise ApiProblem(409, "CONFLICT", "Only candidates can be reviewed.")
+        raise ApiProblem(404, "NOT_FOUND", f"No memory {memory_id}.")
     with locked_store():
         item = find_memory(memory_id)
         if item.state != "CANDIDATE":
@@ -82,7 +85,10 @@ def review_memory_candidate(memory_id: str, body: MemoryReviewRequest, _: Curren
 
 
 @router.post("/memory/{memory_id}:retract", operation_id="retractMemory", response_model=MemoryItem)
-def retract_memory(memory_id: str, _: CurrentActor) -> MemoryItem:
+def retract_memory(memory_id: str, actor: CurrentActor) -> MemoryItem:
+    """In the live workspace: retract one of the org's own items, so runs no longer recall it."""
+    if workspace.live():
+        return live_work.retract_memory(actor, memory_id)
     with locked_store():
         item = find_memory(memory_id)
         item.retracted = True

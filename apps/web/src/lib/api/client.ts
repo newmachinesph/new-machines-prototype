@@ -2,8 +2,6 @@ import { env } from "@/lib/env";
 import { client } from "./gen/client.gen";
 import { toApiError } from "./errors";
 
-export const ORG_ID = "org_hp01";
-
 type TokenSource = () => Promise<string | null>;
 let tokenSource: TokenSource = async () => null;
 
