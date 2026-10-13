@@ -87,11 +87,13 @@ function IncidentCard({
   incident,
   names,
   canWrite,
+  live,
   onDone,
 }: {
   incident: Incident;
   names: Map<string, string>;
   canWrite: boolean;
+  live: boolean;
   onDone: () => void;
 }) {
   const open = incident.status !== "resolved";
@@ -116,7 +118,7 @@ function IncidentCard({
             .
           </p>
         </div>
-        {open ? (
+        {open && !live ? (
           canWrite ? (
             <PostUpdate incident={incident} onDone={onDone} />
           ) : (
@@ -146,11 +148,14 @@ export function IncidentList({
   incidents,
   names,
   canWrite,
+  live = false,
   aside,
 }: {
   incidents: Incident[];
   names: Map<string, string>;
   canWrite: boolean;
+  /** The live workspace's incidents are samples: no updates can be posted. */
+  live?: boolean;
   aside: React.ReactNode;
 }) {
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -158,11 +163,13 @@ export function IncidentList({
   return (
     <Section title="Incidents" aside={aside} headingRef={headingRef}>
       {incidents.length === 0 ? (
-        <p className="px-5 py-8 text-sm text-muted">No incidents. Declare one if something is wrong.</p>
+        <p className="px-5 py-8 text-sm text-muted">
+          {live ? "No incidents." : "No incidents. Declare one if something is wrong."}
+        </p>
       ) : (
         <ul className="divide-y divide-rule">
           {incidents.map((i) => (
-            <IncidentCard key={i.id} incident={i} names={names} canWrite={canWrite} onDone={focusHeading} />
+            <IncidentCard key={i.id} incident={i} names={names} canWrite={canWrite} live={live} onDone={focusHeading} />
           ))}
         </ul>
       )}

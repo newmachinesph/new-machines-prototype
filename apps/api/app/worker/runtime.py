@@ -7,6 +7,7 @@ from temporalio.client import Client
 from temporalio.worker import Worker
 
 from app import settings
+from app.runtime import adk_agent
 from app.worker.activities import PackActivities
 from app.worker.workflow import PackRunner
 
@@ -19,6 +20,8 @@ def activity_threads() -> int:
 
 
 def build_worker(client: Client, executor: ThreadPoolExecutor) -> Worker:
+    """The client carries GoogleAdkPlugin (see temporal_client.connect); the Worker inherits it."""
+    adk_agent.warm_up()  # ADK's first-turn imports happen here, not inside a workflow activation
     return Worker(
         client,
         task_queue=settings.task_queue(),

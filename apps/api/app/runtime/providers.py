@@ -7,7 +7,7 @@ models.yaml pick the provider and model per environment and carry the price used
 import json
 import re
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from functools import cache
 from typing import Any, Protocol
@@ -344,15 +344,264 @@ def fake_report(inputs: dict) -> dict:
     }
 
 
-_DEFAULT_SCRIPT = {"finance-agent": fake_match, "ops-agent": fake_report}
+# --- seed packs: collections, refunds and the shared writer ------------------------------------------------
+
+_GENTLE_MAX_DAYS = 14  # overdue 1-14 days: gentle; 15-44: firm; 45 or more: final notice
+_FIRM_MAX_DAYS = 44
+_OPENED_OR_USED = re.compile(r"\b(?:opened|used)\b", re.IGNORECASE)  # the partial refund rule
+_AMOUNT = re.compile(r"\$\s?(\d[\d,]*(?:\.\d{1,2})?)")
+_EMAIL = re.compile(r"[^<>\s]+@[^<>\s]+")
+_MS_TIMESTAMP_MIN = 10**11  # numeric timestamps above this are milliseconds
+SIGN_OFF = "Kind regards,\nAccounts team"
+_STAGES = {"gentle": "gentle", "firm": "firm", "final": "final notice"}
+_BANDS = {"gentle": "1 to 14", "firm": "15 to 44", "final": "45 or more"}
+_REFUND_FLAGS = {
+    "approve": "Proposed: approve",
+    "partial": "Proposed: partial 50%",
+    "decline": "Proposed: decline",
+}
+
+
+def _money(minor: int, currency: str) -> str:
+    """Minor units for people: 125000, "USD" -> "1,250.00 USD"."""
+    sign = "-" if minor < 0 else ""
+    return f"{sign}{abs(minor) // 100:,}.{abs(minor) % 100:02d} {currency}"
+
+
+def _instant(value: Any) -> datetime:
+    """A UTC datetime from a Unix timestamp (seconds or milliseconds) or an ISO 8601 string."""
+    if isinstance(value, int | float) or str(value).isdigit():
+        seconds = int(value)
+        seconds = seconds // 1000 if seconds > _MS_TIMESTAMP_MIN else seconds
+        return datetime.fromtimestamp(seconds, UTC)
+    return datetime.fromisoformat(str(value)).astimezone(UTC)
+
+
+def _day(value: Any) -> date:
+    """The UTC calendar day of a Unix timestamp (seconds or milliseconds) or an ISO 8601 string."""
+    return _instant(value).date()
+
+
+def _stage(days: int) -> str:
+    if days <= _GENTLE_MAX_DAYS:
+        return "gentle"
+    return "firm" if days <= _FIRM_MAX_DAYS else "final"
+
+
+def _overdue_invoice(inv: dict, as_of: date) -> tuple[dict, dict] | None:
+    """(message, review item) for an invoice overdue on `as_of`, else None."""
+    if inv.get("status") != "open" or not inv.get("due_date"):
+        return None
+    due = _day(inv["due_date"])
+    days = (as_of - due).days
+    if days < 1:
+        return None
+    stage, number = _stage(days), str(inv.get("number") or inv["id"])
+    currency, amount = str(inv.get("currency") or "usd").upper(), int(inv.get("amount_due") or 0)
+    message = {
+        "to": str(inv["customer_email"]),
+        "about": f"Invoice {number} is {days} days overdue",
+        "ref": number,
+        "facts": [
+            f"Invoice number: {number}",
+            f"Amount due: {_money(amount, currency)}",
+            f"Due date: {due.isoformat()}",
+            f"Stage: {_STAGES[stage]} ({days} days overdue)",
+        ],
+    }
+    item = {
+        "ref": number,
+        "date": due.isoformat(),
+        "amount_minor": amount,
+        "currency": currency,
+        "flag": f"Overdue {days} days ({_STAGES[stage]})",
+        "note": f"{days} days past due, which is in the {_BANDS[stage]} day band, so the reminder is "
+        f"{_STAGES[stage]}.",
+    }
+    return message, item
+
+
+def fake_collections(inputs: dict) -> dict:
+    """A deterministic collections-agent plan per the stage-overdue skill."""
+    as_of = date.fromisoformat(str(inputs.get("as_of")))
+    invoices = _records(inputs.get("invoices"), "data")
+    planned = [p for p in (_overdue_invoice(inv, as_of) for inv in invoices) if p is not None]
+    messages, items = [m for m, _ in planned], [i for _, i in planned]
+    if not planned:
+        summary = f"Checked {len(invoices)} invoices as of {as_of}: none is overdue."
+    else:
+        counts = {
+            s: sum(1 for i in items if i["flag"].endswith(f"({label})")) for s, label in _STAGES.items()
+        }
+        summary = (
+            f"Checked {len(invoices)} invoices as of {as_of}: {len(planned)} are overdue "
+            f"({counts['gentle']} gentle, {counts['firm']} firm, {counts['final']} final notice)."
+        )
+    return {"summary": summary, "messages": messages, "review_items": items}
+
+
+def _refund_request(msg: dict) -> dict:
+    preview = msg.get("preview") or {}
+    text = f"{msg.get('subject') or ''} {msg.get('messageText') or preview.get('body') or ''}"
+    ref, amount = _ORDER_REF.search(text), _AMOUNT.search(text)
+    sender = _EMAIL.search(str(msg.get("sender") or ""))
+    asked = int((Decimal(amount.group(1).replace(",", "")) * 100).to_integral_value()) if amount else None
+    return {
+        "thread_id": str(msg.get("threadId") or msg.get("messageId")),
+        "from": sender.group(0) if sender else str(msg.get("sender") or ""),
+        "ref": ref.group(0) if ref else None,
+        "asked_minor": asked,
+        "opened_or_used": bool(_OPENED_OR_USED.search(text)),
+        "at": _instant(msg["messageTimestamp"]),
+    }
+
+
+def _refunded_orders(orders: dict[str, dict], raw_charges: Any) -> set[str]:
+    """Order names whose payment is already refunded, per the find-order skill."""
+    refunded = {name for name, o in orders.items() if o.get("financial_status") == "refunded"}
+    for charge, c in zip(_records(raw_charges, "data"), _charges(raw_charges), strict=True):
+        amount = int(charge.get("amount") or 0)
+        if c["ref"] and (charge.get("refunded") or int(charge.get("amount_refunded") or 0) >= amount > 0):
+            refunded.add(c["ref"])
+    return refunded
+
+
+def _refund_decision(
+    request: dict, order: dict | None, repeats: str | None, refunded: bool
+) -> tuple[str, int, int, str, str]:
+    """(recommendation, requested minor, proposed minor, currency, reason) per the refund policy."""
+    if order is None:
+        named = f"No order {request['ref']} was found" if request["ref"] else "The request names no order"
+        return "decline", request["asked_minor"] or 0, 0, "USD", f"{named}, so the request is declined."
+    total = int((Decimal(str(order["total_price"])) * 100).to_integral_value())
+    requested = request["asked_minor"] or total
+    capped, currency = min(requested, total), str(order["currency"]).upper()
+    if repeats:
+        reason = f"This repeats the earlier request {repeats} for order {order['name']}, so it is declined."
+        return "decline", requested, 0, currency, reason
+    if refunded:
+        reason = f"The payment for order {order['name']} is already refunded, so the request is declined."
+        return "decline", requested, 0, currency, reason
+    if request["opened_or_used"]:
+        reason = "The customer says the item was opened or used, so the refund is 50% of the amount asked."
+        return "partial", requested, capped // 2, currency, reason
+    reason = f"Order {order['name']} is found, paid and not refunded, so the refund is approved in full."
+    return "approve", requested, capped, currency, reason
+
+
+def _refund_triage(request: dict, decision: tuple, charge_id: str | None) -> tuple[dict, dict, dict]:
+    """(case, reply message, review item) for one refund request."""
+    recommendation, requested, amount, currency, reason = decision
+    case = {
+        "thread_id": request["thread_id"],
+        "from": request["from"],
+        "order_id": request["order"]["name"] if request["order"] else None,
+        "charge_id": charge_id,
+        "requested_minor": requested,
+        "currency": currency,
+        "recommendation": recommendation,
+        "amount_minor": amount,
+        "reason": reason,
+    }
+    proposal = {
+        "approve": f"approve the full refund of {_money(amount, currency)}",
+        "partial": f"refund 50% ({_money(amount, currency)})",
+        "decline": "decline the refund",
+    }[recommendation]
+    about = "Your refund request" + (f" for order {request['ref']}" if request["ref"] else "")
+    message = {
+        "to": request["from"],
+        "about": about,
+        "facts": [
+            f"Order number: {request['ref'] or 'not given'}",
+            f"Requested refund: {_money(requested, currency)}",
+            f"Proposed decision: {proposal}. {reason}",
+            "This decision is proposed and a member of our team will confirm it. "
+            "No refund has been issued yet.",
+        ],
+        "ref": request["review_ref"],  # pairs the reply with its review item, so a reviewer's note reaches it
+    }
+    item = {
+        "ref": request["review_ref"],
+        "date": request["at"].date().isoformat(),
+        "amount_minor": requested,
+        "currency": currency,
+        "flag": _REFUND_FLAGS[recommendation],
+        "note": reason,
+    }
+    if charge_id:
+        item["counterpart_ref"] = charge_id
+    return case, message, item
+
+
+def fake_refunds(inputs: dict) -> dict:
+    """A deterministic refunds-agent triage per the find-order and apply-refund-policy skills."""
+    orders = {str(o["name"]): o for o in _records(inputs.get("orders"), "orders")}
+    charges = {c["ref"]: c["charge_id"] for c in reversed(_charges(inputs.get("charges"))) if c["ref"]}
+    refunded = _refunded_orders(orders, inputs.get("charges"))
+    threads = _records(inputs.get("threads"), "messages")
+    requests = sorted((_refund_request(m) for m in threads), key=lambda r: r["at"])  # oldest first
+    first_request: dict[str, str] = {}  # order name -> the thread that asked first
+    triaged = []
+    for r in requests:
+        order = orders.get(r["ref"] or "")
+        repeats = first_request.get(order["name"]) if order else None
+        if order and not repeats:
+            first_request[order["name"]] = r["thread_id"]
+        own_ref = r["ref"] if r["ref"] and not repeats else r["thread_id"]
+        request = r | {"order": order, "review_ref": own_ref}
+        decision = _refund_decision(r, order, repeats, bool(order) and order["name"] in refunded)
+        triaged.append(_refund_triage(request, decision, charges.get(order["name"]) if order else None))
+    cases = [c for c, _, _ in triaged]
+    count = {r: sum(1 for c in cases if c["recommendation"] == r) for r in _REFUND_FLAGS}
+    summary = (
+        f"Triaged {len(cases)} refund requests: {count['approve']} proposed for approval, {count['partial']} "
+        f"for a partial refund and {count['decline']} for decline. No refund has been issued."
+    )
+    return {
+        "summary": summary,
+        "cases": cases,
+        "messages": [m for _, m, _ in triaged],
+        "review_items": [i for _, _, i in triaged],
+    }
+
+
+def fake_writer(inputs: dict) -> dict:
+    """A deterministic writer-agent result per the write-drafts skill: one draft per item."""
+    drafts = []
+    for item in inputs.get("items") or []:
+        facts = [str(f) for f in item.get("facts") or []]
+        sentences = " ".join(f if f.endswith((".", "!", "?")) else f"{f}." for f in facts)
+        first = facts[0] if facts else ""
+        ref = item.get("ref") or (first.split(": ", 1)[1] if ": " in first else str(item["about"]))
+        body = f"Hello,\n\n{sentences}\n\nPlease reply to this email if you have any questions.\n\n{SIGN_OFF}"
+        drafts.append(
+            {
+                "to": str(item["to"]),
+                "subject": str(item["about"])[:150],
+                "body": body[:4000],
+                "ref": str(ref),
+            }
+        )
+    return {"drafts": drafts}
+
+
+_DEFAULT_SCRIPT = {
+    "finance-agent": fake_match,
+    "ops-agent": fake_report,
+    "collections-agent": fake_collections,
+    "refunds-agent": fake_refunds,
+    "writer-agent": fake_writer,
+}
 
 
 class FakeProvider:
     """Scripted provider. The turn returned is chosen by agent id (system prompt marker "agent:<id>") and by
     how many assistant turns the conversation already has, so it is stateless across activity calls.
 
-    Without a script entry, finance-agent and ops-agent submit a deterministic result computed from their
-    inputs (valid against the reconciliation pack's match and report schemas).
+    Without a script entry, the agents in _DEFAULT_SCRIPT (the reconciliation, overdue invoice and refund
+    triage agents, and the shared writer) submit a deterministic result computed from their inputs, valid
+    against their output schemas.
     """
 
     def __init__(self, script: dict[str, list[ModelTurn]] | None = None) -> None:

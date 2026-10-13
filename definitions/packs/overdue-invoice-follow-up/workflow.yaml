@@ -1,0 +1,146 @@
+# The overdue invoice follow-up graph. Values starting with "=" are CEL over the run state
+# (input, nodes.<id>.output, memory; `item` inside a for_each). Routes name the next node for each outcome.
+kind: workflow
+key: overdue-invoice-follow-up
+schema_version: nm.workflow.v1
+workflow_id: overdue-invoice-follow-up
+version: "1"
+entry_node_id: start
+default_policy_ref: policy/default
+work_contract_ref: overdue-invoice-follow-up
+limits:
+  max_duration_s: 172800
+  max_cost_minor: 1500
+  currency: USD
+  max_parallel_nodes: 1
+  max_total_node_attempts: 30
+
+nodes:
+  - id: start
+    type: trigger
+    version: "1"
+    config: {}
+    routes: {next: recall}
+
+  - id: recall
+    type: memory
+    version: "1"
+    config:
+      op: recall
+      space: customer-accounts
+      query: collections reminders tone overdue
+    routes: {next: invoices}
+
+  - id: invoices
+    type: connector
+    version: "1"
+    config:
+      tool: stripe.list_invoices
+      args:
+        status: open
+        limit: 100
+    routes: {next: plan, denied: failed, error: failed}
+
+  - id: plan
+    type: agent
+    version: "1"
+    config:
+      agent: collections-agent
+      task: >-
+        Find the invoices that are overdue as of the given day, decide each one's reminder stage, and plan one
+        reminder per overdue invoice with the facts it must state. Use the company knowledge in rules. Submit
+        the result in the required shape.
+      inputs:
+        invoices: =nodes.invoices.output
+        as_of: =input.as_of
+        rules: =memory
+      output_schema: overdue-invoice-follow-up/plan
+    routes: {next: check}
+
+  - id: check
+    type: decision
+    version: "1"
+    config:
+      rules: overdue-invoices
+    routes: {nothing: nothing, human_review: review}
+
+  - id: review
+    type: human_workforce
+    version: "1"
+    config:
+      title: Check the overdue invoice reminders
+      instructions: >-
+        For each invoice, check that it is really overdue and that the reminder stage fits how late it is.
+        Add a note where the reminder should say something different. Resolve the task when every invoice has
+        a decision, or reject it if the invoices cannot be trusted.
+      show: =nodes.plan.output.review_items
+      timeout_s: 86400
+    routes: {resolved: draft, rejected: failed, timeout: failed}
+
+  - id: draft
+    type: agent
+    version: "1"
+    config:
+      agent: writer-agent
+      task: >-
+        Write one short, polite email draft per item, using only its facts. Follow the reviewer notes when
+        there are any. Submit the result in the required shape.
+      inputs:
+        items: =nodes.plan.output.messages
+        review: =nodes.review.output
+        tone: firm but friendly
+      output_schema: shared/drafts
+    routes: {next: approve}
+
+  - id: approve
+    type: approval
+    version: "1"
+    config:
+      title: Save the reminder emails as drafts
+      summary: ='Create ' + string(size(nodes.draft.output.drafts)) + ' email drafts in Gmail'
+      timeout_s: 86400
+    routes: {granted: send, denied: failed, timeout: failed}
+
+  - id: send
+    type: connector
+    version: "1"
+    config:
+      tool: gmail.create_draft
+      for_each: =nodes.draft.output.drafts
+      args:
+        recipient_email: =item.to
+        subject: =item.subject
+        body: =item.body
+    routes: {ok: verify, denied: failed, error: failed}
+
+  - id: verify
+    type: verification
+    version: "1"
+    config:
+      schema: shared/drafts
+      value: =nodes.draft.output
+      checks:
+        - =size(nodes.draft.output.drafts) >= 1
+        - =size(nodes.send.output.results) == size(nodes.draft.output.drafts)
+        - =size(nodes.draft.output.drafts) == size(nodes.plan.output.messages)
+    routes: {pass: done, fail: failed}
+
+  - id: nothing
+    type: end
+    version: "1"
+    config:
+      status: COMPLETED
+      deliverable: =nodes.plan.output
+
+  - id: done
+    type: end
+    version: "1"
+    config:
+      status: COMPLETED
+      deliverable: =nodes.draft.output
+
+  - id: failed
+    type: end
+    version: "1"
+    config:
+      status: FAILED

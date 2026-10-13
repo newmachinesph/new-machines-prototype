@@ -1,3 +1,5 @@
+import re
+
 from app import live_work, run_tasks, temporal_client, workspace
 from app.auth import Actor, CurrentActor
 from app.errors import ApiProblem
@@ -30,6 +32,25 @@ OBLIGATIONS = [
 ]
 
 
+# An agent's free-text note or flag may quote the customer. Reviewers see neither email addresses nor phone
+# numbers: an email-like token, and a run of 9 to 15 digits written as a phone number (a lone ISO date, an
+# amount or an order number does not qualify), read "Hidden".
+EMAIL_LIKE = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
+PHONE_LIKE = re.compile(r"(?<![\w#$.,/-])\+?\(?\d[\d\s().-]{7,}\d(?!\w)")
+PHONE_DIGITS = range(9, 16)
+HIDDEN = "Hidden"
+
+
+def _phone(match: re.Match[str]) -> str:
+    text = match.group(0)
+    return HIDDEN if sum(c.isdigit() for c in text) in PHONE_DIGITS else text
+
+
+def _redacted(text: str) -> str:
+    """`text` with email-like and phone-like tokens shown as "Hidden"."""
+    return PHONE_LIKE.sub(_phone, EMAIL_LIKE.sub(HIDDEN, text))
+
+
 def find_task(task_id: str) -> HumanTask:
     """A fixture task; never one in the live workspace."""
     task = None if workspace.live() else get_store().tasks.get(task_id)
@@ -38,9 +59,35 @@ def find_task(task_id: str) -> HumanTask:
     return task
 
 
+def _generic_record(item: dict) -> RedactedRecord:
+    """A shared review item ({ref, date, amount_minor, currency, flag, note, counterpart_ref?}, the
+    `shared/review-items` schema) as a reviewer record keyed by its `ref`."""
+    ref = str(item["ref"])
+    counterpart = str(item.get("counterpart_ref") or "None")
+    amount = int(item.get("amount_minor") or 0)
+    order = OrderSide(
+        ref=ref,
+        date=str(item.get("date") or ""),
+        customer="Hidden",
+        amount=money_text(amount, str(item.get("currency") or "USD")),
+        payment_ref=counterpart,
+    )
+    payment = PaymentSide(ref=counterpart, date="", payer="Hidden", amount="", batch="")
+    return RedactedRecord(
+        id=ref,
+        order=order,
+        payment=payment,
+        flag=_redacted(str(item.get("flag") or "Needs review")),
+        agent_note=_redacted(str(item.get("note") or "")),
+    )
+
+
 def _record(item: dict, index: int) -> RedactedRecord:
-    """One mismatch the match step found ({order_id, charge_id, kind, date, amount_minor, amount_diff_minor,
-    currency, explanation}) as a reviewer record. The record id is what the reviewer's calls are keyed by."""
+    """One item a review task shows, as a reviewer record. The record id is what the reviewer's calls are
+    keyed by. A shared review item has a `ref`; a reconciliation mismatch ({order_id, charge_id, kind, date,
+    amount_minor, amount_diff_minor, currency, explanation}) keeps its own mapping."""
+    if item.get("ref"):
+        return _generic_record(item)
     order_id, charge_id = item.get("order_id"), item.get("charge_id")
     currency = str(item.get("currency") or "USD")
     day = str(item.get("date") or "")

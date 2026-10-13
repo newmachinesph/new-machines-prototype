@@ -15,7 +15,7 @@ import {
   useHealthCheckConnector,
   useSetConnectorDefaults,
 } from "@/lib/queries/connectors";
-import { useCanWrite } from "@/lib/queries/ops";
+import { useCanWrite, useOpsWorkspace } from "@/lib/queries/ops";
 import { cn } from "@/lib/cn";
 import {
   ACTION_CLASSES,
@@ -74,12 +74,16 @@ function DrawerBody({ connector }: { connector: ConnectorEntry }) {
   const focusTitle = () => focusAfterClose(() => titleRef.current);
   const check = connector.lastHealthCheck;
   const disabled = connector.status === "disabled";
+  // Health checks are simulated: the live workspace has no probe, and a connector without a check offers none.
+  const live = useOpsWorkspace() === "live";
+  const showHealth = !live && check != null;
 
   async function runHealthCheck() {
     try {
       const next = await healthCheck.mutateAsync({ path: { connector_id: connector.id } });
       const result = next.lastHealthCheck;
-      if (result.ok) toast(`${connector.app} is healthy`, `${result.latencyMs} ms. Simulated result.`, "sim");
+      if (!result) toast(`Health check for ${connector.app} did not run`, "No result came back.", "blocked");
+      else if (result.ok) toast(`${connector.app} is healthy`, `${result.latencyMs} ms. Simulated result.`, "sim");
       else toast(`${connector.app} failed its health check`, result.note ?? "Simulated result.", "blocked");
     } catch (e) {
       toast(`Health check for ${connector.app} did not run`, errorText(e), "blocked");
@@ -88,10 +92,12 @@ function DrawerBody({ connector }: { connector: ConnectorEntry }) {
 
   const actionButtons = canWrite ? (
     <>
-      <Button variant="secondary" onClick={runHealthCheck} disabled={healthCheck.isPending}>
-        <Activity className="size-4" aria-hidden />
-        Run health check
-      </Button>
+      {showHealth ? (
+        <Button variant="secondary" onClick={runHealthCheck} disabled={healthCheck.isPending}>
+          <Activity className="size-4" aria-hidden />
+          Run health check
+        </Button>
+      ) : null}
       {disabled ? (
         <ConfirmAction
           trigger={<Button variant="secondary">Enable connector</Button>}
@@ -123,12 +129,14 @@ function DrawerBody({ connector }: { connector: ConnectorEntry }) {
     </>
   ) : (
     <>
-      <ReadOnly>
-        <Button variant="secondary" disabled>
-          <Activity className="size-4" aria-hidden />
-          Run health check
-        </Button>
-      </ReadOnly>
+      {showHealth ? (
+        <ReadOnly>
+          <Button variant="secondary" disabled>
+            <Activity className="size-4" aria-hidden />
+            Run health check
+          </Button>
+        </ReadOnly>
+      ) : null}
       <ReadOnly>
         <Button variant="secondary" disabled>
           {disabled ? "Enable connector" : "Disable connector"}
@@ -163,23 +171,33 @@ function DrawerBody({ connector }: { connector: ConnectorEntry }) {
         </div>
         <div className="flex flex-wrap gap-2">{actionButtons}</div>
 
-        <section aria-labelledby="drawer-health">
-          <h3 id="drawer-health" className="h-section flex items-center gap-2">
-            Health <SimTag>simulated</SimTag>
-          </h3>
+        <section aria-labelledby={showHealth ? "drawer-health" : "drawer-usage"}>
+          {showHealth ? (
+            <h3 id="drawer-health" className="h-section flex items-center gap-2">
+              Health <SimTag>simulated</SimTag>
+            </h3>
+          ) : (
+            <h3 id="drawer-usage" className="h-section">
+              Usage
+            </h3>
+          )}
           <KeyValues
             rows={[
-              {
-                label: "Last check",
-                value: (
-                  <span className="flex flex-wrap items-center gap-2">
-                    <Pill tone={check.ok ? "ink" : "blocked"}>{check.ok ? "Passed" : "Failed"}</Pill>
-                    <span className="tnum">{check.latencyMs} ms</span>
-                    <span className="text-muted">{ago(check.at)}</span>
-                  </span>
-                ),
-              },
-              ...(check.note ? [{ label: "Note", value: check.note }] : []),
+              ...(showHealth && check
+                ? [
+                    {
+                      label: "Last check",
+                      value: (
+                        <span className="flex flex-wrap items-center gap-2">
+                          <Pill tone={check.ok ? "ink" : "blocked"}>{check.ok ? "Passed" : "Failed"}</Pill>
+                          <span className="tnum">{check.latencyMs} ms</span>
+                          <span className="text-muted">{ago(check.at)}</span>
+                        </span>
+                      ),
+                    },
+                    ...(check.note ? [{ label: "Note", value: check.note }] : []),
+                  ]
+                : []),
               {
                 label: "Error rate",
                 value: (

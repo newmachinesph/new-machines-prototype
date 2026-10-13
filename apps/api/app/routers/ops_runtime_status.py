@@ -3,8 +3,7 @@
 Both probes run at once and each is bounded, so the route answers within a few seconds even in an outage."""
 
 import logging
-from concurrent.futures import ThreadPoolExecutor
-from concurrent.futures import TimeoutError as FutureTimeout
+from concurrent.futures import ThreadPoolExecutor, wait
 
 from app import db, settings, temporal_client
 from app.auth import CurrentOps
@@ -41,12 +40,15 @@ def _probe_both() -> tuple[bool, int, bool]:
     pool = ThreadPoolExecutor(max_workers=2, thread_name_prefix="status-probe")
     try:
         futures = {"database": pool.submit(_database), "temporal": pool.submit(_temporal)}
+        # One deadline shared by both probes, so two hung probes cost one bound, not two.
+        wait(futures.values(), timeout=PROBE_TIMEOUT_S + 1)
         results: dict[str, object] = {}
         for name, future in futures.items():
-            try:
-                results[name] = future.result(timeout=PROBE_TIMEOUT_S + 1)
-            except FutureTimeout:
+            if not future.done():
                 log.warning("runtime status: %s check did not finish in time", name)
+                continue
+            try:
+                results[name] = future.result()
             except Exception as exc:
                 log.warning("runtime status: %s check failed (%s)", name, type(exc).__name__)
     finally:

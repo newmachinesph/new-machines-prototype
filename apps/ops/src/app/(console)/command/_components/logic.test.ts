@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { OpsAttentionItem } from "@/lib/api/gen/types.gen";
-import { CAP_FULL, CAP_WARN, isSimulated, maxHourTotal, sortAttention } from "./logic";
+import { CAP_FULL, CAP_WARN, failedToday, fieldTag, isSimulated, maxHourTotal, sortAttention } from "./logic";
 
 const item = (title: string, severity: OpsAttentionItem["severity"], at: string): OpsAttentionItem => ({
   kind: "incident",
@@ -45,5 +45,23 @@ describe("chart helpers", () => {
   it("checks simulated fields by name", () => {
     expect(isSimulated(["kpis.runsToday"], "kpis.runsToday")).toBe(true);
     expect(isSimulated(["kpis.runsToday"], "kpis.aiSpendToday")).toBe(false);
+  });
+});
+
+describe("live overview helpers", () => {
+  it("sums today's failed runs from the hourly series", () => {
+    expect(failedToday([])).toBe(0);
+    expect(
+      failedToday([
+        { hour: 0, completed: 3, failed: 1, waiting: 1 },
+        { hour: 1, completed: 2, failed: 4, waiting: 0 },
+      ]),
+    ).toBe(5);
+  });
+  it("tags listed fields Simulated in the demo and Sample in the live workspace", () => {
+    const fields = ["kpis.incidentsOpen"];
+    expect(fieldTag(fields, "kpis.incidentsOpen", false)).toEqual({ simulated: true, sample: false });
+    expect(fieldTag(fields, "kpis.incidentsOpen", true)).toEqual({ simulated: false, sample: true });
+    expect(fieldTag(fields, "kpis.runsToday", true)).toEqual({ simulated: false, sample: false });
   });
 });

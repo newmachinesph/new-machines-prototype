@@ -54,6 +54,10 @@ HTTP_CODES = {
     405: "SCHEMA_INVALID",
     409: "CONFLICT",
 }
+# 409: an ops action the live workspace does not offer (yet); the demo workspace still simulates it.
+NOT_AVAILABLE_LIVE = "NOT_AVAILABLE_LIVE"
+# 409: an ops change that would leave the target exactly as it is.
+NO_CHANGE = "NO_CHANGE"
 
 
 # Declared on every route (see `ApiRouter`), so clients get a typed `Problem` error. Declaring 422 replaces
@@ -62,6 +66,12 @@ ERROR_STATUSES = (401, 403, 404, 409, 422)
 ERROR_RESPONSES: dict[int | str, dict[str, Any]] = {
     status: {"model": Problem, "description": TITLES[status]} for status in ERROR_STATUSES
 }
+
+
+def conflicts(*codes: str) -> dict[int | str, dict[str, Any]]:
+    """A route's own 409 response naming the problem codes it can send (`responses=conflicts(NO_CHANGE)`).
+    It replaces the generic 409 that `ApiRouter` declares."""
+    return {409: {"model": Problem, "description": f"{TITLES[409]} ({', '.join(codes)})."}}
 
 
 def problem(

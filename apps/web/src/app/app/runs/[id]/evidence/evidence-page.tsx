@@ -1,6 +1,6 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { QueryState } from "@/components/query-state";
@@ -11,6 +11,7 @@ import { sumMoney } from "@/lib/format";
 import { useRun } from "@/lib/queries/runs";
 import type { Run } from "@/lib/types";
 import { useFormat } from "@/lib/use-format";
+import { RECONCILIATION_PACK, changed, toolKey, toolUse } from "./run-facts";
 
 export function EvidencePage({ id }: { id: string }) {
   const run = useRun(id);
@@ -40,6 +41,8 @@ function Evidence({ run }: { run: Run }) {
 
   // PRODUCT.md WORK-04: the evidence viewer answers seven questions.
   const who = run.timeline.filter((e) => e.actor !== "system");
+  // The reconciliation pack's page keeps its written copy; any other pack's is built from the run itself.
+  const written = run.packSlug === RECONCILIATION_PACK;
 
   return (
     <>
@@ -69,6 +72,24 @@ function Evidence({ run }: { run: Run }) {
               </dl>
             </Section>
 
+            {d.items && d.items.length > 0 ? (
+              <Section
+                title={t("items")}
+                aside={<span className="text-xs text-muted">{t("itemCount", { n: d.items.length })}</span>}
+              >
+                <ul className="divide-y divide-rule">
+                  {d.items.map((item, i) => (
+                    <li key={i} className="px-5 py-3">
+                      <div className="text-sm font-medium break-words">{item.label}</div>
+                      <p className="mt-1 text-[13px] leading-snug break-words whitespace-pre-line text-grey-700">
+                        {item.detail}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              </Section>
+            ) : null}
+
             <Section title={t("requested")}>
               <div className="px-5 py-2">
                 <KeyValues
@@ -76,13 +97,23 @@ function Evidence({ run }: { run: Run }) {
                     { label: t("input"), value: run.input },
                     {
                       label: t("contract"),
-                      value: (
+                      value: written ? (
                         <span>
                           {t.rich("contractValue", {
                             ref: run.contractRef,
                             mono: (chunks) => <Id>{chunks}</Id>,
                           })}
                         </span>
+                      ) : run.outcome ? (
+                        <span>
+                          {t.rich("contractOutcome", {
+                            ref: run.contractRef,
+                            outcome: run.outcome,
+                            mono: (chunks) => <Id>{chunks}</Id>,
+                          })}
+                        </span>
+                      ) : (
+                        <Id>{run.contractRef}</Id>
                       ),
                     },
                     { label: t("requestedBy"), value: `${run.startedBy}, ${dateTime(run.startedAt)}` },
@@ -109,10 +140,14 @@ function Evidence({ run }: { run: Run }) {
             </Section>
 
             <Section title={t("permitted")}>
-              <div className="px-5 py-4 text-sm leading-relaxed">
-                <p>{t("permittedBody")}</p>
-                <p className="mt-2 text-muted">{t("permittedNote")}</p>
-              </div>
+              {written ? (
+                <div className="px-5 py-4 text-sm leading-relaxed">
+                  <p>{t("permittedBody")}</p>
+                  <p className="mt-2 text-muted">{t("permittedNote")}</p>
+                </div>
+              ) : (
+                <ToolUseList run={run} />
+              )}
             </Section>
           </div>
 
@@ -158,7 +193,7 @@ function Evidence({ run }: { run: Run }) {
                     { label: t("total"), value: <span className="tnum font-semibold">{money(total)}</span> },
                     {
                       label: t("basis"),
-                      value: t("basisValue"),
+                      value: written ? <WrittenBasis run={run} /> : <Basis run={run} />,
                     },
                   ]}
                 />
@@ -170,3 +205,71 @@ function Evidence({ run }: { run: Run }) {
     </>
   );
 }
+
+/** What the run did outside New Machines, from its own tool calls: each app and action, read or write, how
+ * many times, whether a write ran after your approval and whether it used sandbox data. */
+function ToolUseList({ run }: { run: Run }) {
+  const t = useTranslations("run.evidence");
+  const gap = sentenceGap(useLocale());
+  const uses = toolUse(run);
+  return (
+    <div className="px-5 py-4 text-sm leading-relaxed">
+      {uses.length > 0 ? (
+        <ul className="space-y-1.5">
+          {uses.map((u) => (
+            <li key={toolKey(u)}>
+              <span className="font-medium">{t("toolLine", { app: u.app, action: u.action })}</span>
+              <span className="text-grey-700">
+                {gap}
+                {t("toolUse", {
+                  kind: u.kind,
+                  n: u.ran,
+                  approval: u.approval === "n/a" ? "na" : u.approval,
+                  sandbox: u.sandbox,
+                })}
+                {u.notRun > 0 ? `${gap}${t("toolNotRun", { n: u.notRun })}` : null}
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      <p className={uses.length > 0 ? "mt-2 text-muted" : "text-muted"}>{t(`changed.${changed(uses)}`)}</p>
+    </div>
+  );
+}
+
+/** Why the run is billable, from its outcome stages. */
+function Basis({ run }: { run: Run }) {
+  const t = useTranslations("run.evidence");
+  const gap = sentenceGap(useLocale());
+  const { stages } = run;
+  // "not_required": the run ended without a verification node (a pack's nothing-to-do path).
+  const parts = [
+    stages.verified === "done"
+      ? t("basisVerified")
+      : stages.verified === "not_required"
+        ? t("basisNoCheck")
+        : t("basisNotVerified"),
+  ];
+  if (stages.accepted === "done") parts.push(t("basisAccepted"));
+  else if (stages.accepted === "not_required") parts.push(t("basisNoAcceptance"));
+  else if (stages.accepted === "pending") parts.push(t("basisPendingAcceptance"));
+  else parts.push(t("basisAcceptanceNotGiven"));
+  if (reviewerPaid(run)) parts.push(t("basisReviewerPay"));
+  return <>{parts.join(gap)}</>;
+}
+
+/** The reconciliation pack's written basis; its reviewer pay sentence only when a reviewer was paid. */
+function WrittenBasis({ run }: { run: Run }) {
+  const t = useTranslations("run.evidence");
+  const gap = sentenceGap(useLocale());
+  const parts = [t("basisValue", { accepted: run.stages.accepted })];
+  if (reviewerPaid(run)) parts.push(t("basisValueReviewerPay"));
+  return <>{parts.join(gap)}</>;
+}
+
+/** Whether a person was paid to review this run's work. */
+const reviewerPaid = (run: Run) => run.spent.human.amountMinor > 0;
+
+/** What goes between two sentences: Japanese sentences run on without a space. */
+const sentenceGap = (locale: string) => (locale === "ja" ? "" : " ");

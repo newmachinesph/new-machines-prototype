@@ -1,16 +1,19 @@
 """Operator console: customer tenants. Suspending a tenant locks it out of every customer route (see
-`auth.get_actor`); the demo tenant's numbers and lists come from the live customer store."""
+`auth.get_actor`); the demo tenant's numbers and lists come from the live customer store. In the live
+workspace the tenants are the `orgs` rows in Postgres (`app.ops_live`)."""
 
 import hashlib
 import secrets
 import string
+from collections.abc import Callable
 from datetime import UTC, date, datetime, timedelta
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import Query
 
+from app import db, ops_live, workspace
 from app.auth import CurrentOps, OpsWriter
-from app.errors import ApiProblem
+from app.errors import NO_CHANGE, NOT_AVAILABLE_LIVE, ApiProblem, conflicts
 from app.models.common import Money
 from app.models.ops import (
     CreateTenantRequest,
@@ -134,6 +137,9 @@ def ops_list_tenants(
     status: TenantStatus | None = None,
     q: Annotated[str | None, Query(max_length=100)] = None,
 ) -> list[Tenant]:
+    if workspace.live():
+        with db.connect() as conn:
+            return ops_live.list_tenants(conn, status, q)
     with locked_store() as store:
         return [
             tenant_view(store, t)
@@ -144,6 +150,9 @@ def ops_list_tenants(
 
 @router.get("/tenants/{tenant_id}", operation_id="opsGetTenant", response_model=TenantDetail)
 def ops_get_tenant(tenant_id: PathId, _: CurrentOps) -> TenantDetail:
+    if workspace.live():
+        with db.connect() as conn:
+            return ops_live.get_tenant(conn, tenant_id)
     with locked_store() as store:
         return tenant_detail(store, find_tenant(store, tenant_id))
 
@@ -151,8 +160,24 @@ def ops_get_tenant(tenant_id: PathId, _: CurrentOps) -> TenantDetail:
 # Mutations ---------------------------------------------------------------------------------------------
 
 
-@router.post("/tenants", operation_id="opsCreateTenant", response_model=Tenant, status_code=201)
+def live_action(act: Callable[[Any], Tenant]) -> Tenant:
+    """Run one live tenant action (`act(conn)` writes the change and its audit entry) in one transaction."""
+    with db.connect() as conn:
+        tenant = act(conn)
+        conn.commit()
+    return tenant
+
+
+@router.post(
+    "/tenants",
+    operation_id="opsCreateTenant",
+    responses=conflicts(NOT_AVAILABLE_LIVE),
+    response_model=Tenant,
+    status_code=201,
+)
 def ops_create_tenant(body: CreateTenantRequest, actor: OpsWriter) -> Tenant:
+    if workspace.live():
+        raise ApiProblem(409, NOT_AVAILABLE_LIVE, "In the live workspace, orgs are created at sign-up.")
     now = datetime.now(UTC)
     trial_ends_at = None
     if body.trial_days:
@@ -194,8 +219,17 @@ def ops_create_tenant(body: CreateTenantRequest, actor: OpsWriter) -> Tenant:
         return tenant_view(store, tenant)
 
 
-@router.post("/tenants/{tenant_id}:suspend", operation_id="opsSuspendTenant", response_model=Tenant)
+@router.post(
+    "/tenants/{tenant_id}:suspend",
+    operation_id="opsSuspendTenant",
+    responses=conflicts("ALREADY_SUSPENDED", "INVALID_TRANSITION"),
+    response_model=Tenant,
+)
 def ops_suspend_tenant(tenant_id: PathId, body: ReasonRequest, actor: OpsWriter) -> Tenant:
+    if workspace.live():
+        return live_action(
+            lambda conn: ops_live.suspend(conn, tenant_id, actor.email, body.reason, actor_role=actor.role)
+        )
     with locked_store() as store:
         tenant = find_tenant(store, tenant_id)
         if tenant.status == "suspended":
@@ -210,9 +244,18 @@ def ops_suspend_tenant(tenant_id: PathId, body: ReasonRequest, actor: OpsWriter)
         return tenant_view(store, tenant)
 
 
-@router.post("/tenants/{tenant_id}:reactivate", operation_id="opsReactivateTenant", response_model=Tenant)
+@router.post(
+    "/tenants/{tenant_id}:reactivate",
+    operation_id="opsReactivateTenant",
+    responses=conflicts("NOT_SUSPENDED"),
+    response_model=Tenant,
+)
 def ops_reactivate_tenant(tenant_id: PathId, body: ReasonRequest, actor: OpsWriter) -> Tenant:
     """The tenant returns to the status it had when suspended. One seeded as suspended becomes active."""
+    if workspace.live():
+        return live_action(
+            lambda conn: ops_live.reactivate(conn, tenant_id, actor.email, body.reason, actor_role=actor.role)
+        )
     with locked_store() as store:
         tenant = find_tenant(store, tenant_id)
         if tenant.status != "suspended":
@@ -224,15 +267,22 @@ def ops_reactivate_tenant(tenant_id: PathId, body: ReasonRequest, actor: OpsWrit
         return tenant_view(store, tenant)
 
 
-@router.post("/tenants/{tenant_id}:setPlan", operation_id="opsSetTenantPlan", response_model=Tenant)
+@router.post(
+    "/tenants/{tenant_id}:setPlan",
+    operation_id="opsSetTenantPlan",
+    responses=conflicts(NOT_AVAILABLE_LIVE, "INVALID_TRANSITION", NO_CHANGE),
+    response_model=Tenant,
+)
 def ops_set_tenant_plan(tenant_id: PathId, body: SetPlanRequest, actor: OpsWriter) -> Tenant:
+    if workspace.live():
+        raise ApiProblem(409, NOT_AVAILABLE_LIVE, "In the live workspace, the plan cannot be changed yet.")
     with locked_store() as store:
         tenant = find_tenant(store, tenant_id)
         if tenant.status == "churned":
             raise ApiProblem(409, "INVALID_TRANSITION", f"{tenant.name} has churned and cannot change plan.")
         before = tenant.plan
         if body.plan == before:
-            raise ApiProblem(409, "NO_CHANGE", f"{tenant.name} is already on {before}.")
+            raise ApiProblem(409, NO_CHANGE, f"{tenant.name} is already on {before}.")
         tenant.plan = body.plan
         if is_demo(store, tenant):
             store.org.plan = body.plan
@@ -242,8 +292,20 @@ def ops_set_tenant_plan(tenant_id: PathId, body: SetPlanRequest, actor: OpsWrite
         return tenant_view(store, tenant)
 
 
-@router.post("/tenants/{tenant_id}:setSpendCap", operation_id="opsSetTenantSpendCap", response_model=Tenant)
+@router.post(
+    "/tenants/{tenant_id}:setSpendCap",
+    operation_id="opsSetTenantSpendCap",
+    responses=conflicts("INVALID_TRANSITION", NO_CHANGE),
+    response_model=Tenant,
+)
 def ops_set_tenant_spend_cap(tenant_id: PathId, body: SetSpendCapRequest, actor: OpsWriter) -> Tenant:
+    if workspace.live():
+        cap = body.monthly_cap_minor
+        return live_action(
+            lambda conn: ops_live.set_cap(
+                conn, tenant_id, cap, actor.email, body.reason, actor_role=actor.role
+            )
+        )
     with locked_store() as store:
         tenant = find_tenant(store, tenant_id)
         if tenant.status == "churned":
@@ -252,7 +314,7 @@ def ops_set_tenant_spend_cap(tenant_id: PathId, body: SetSpendCapRequest, actor:
             )
         before = tenant_view(store, tenant).monthly_cap.amount_minor
         if body.monthly_cap_minor == before:
-            raise ApiProblem(409, "NO_CHANGE", f"The monthly cap is already {dollars(before)}.")
+            raise ApiProblem(409, NO_CHANGE, f"The monthly cap is already {dollars(before)}.")
         cap = Money(amount_minor=body.monthly_cap_minor)
         tenant.monthly_cap = cap
         if is_demo(store, tenant):

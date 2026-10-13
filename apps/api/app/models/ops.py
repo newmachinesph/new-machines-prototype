@@ -32,6 +32,7 @@ class OpsMe(Model):
     user_id: str
     email: str
     role: OpsRole
+    workspace: Literal["demo", "live"]  # which data the console shows: the demo fixtures or live Postgres
 
 
 class OpsTeamMember(Model):
@@ -142,7 +143,7 @@ class TenantDetail(Tenant):
     connectors_list: list[TenantConnection]
     recent_runs: list[OpsRun]
     usage_by_day: list[UsagePoint]
-    simulated: Literal[True]  # usageByDay is simulated
+    simulated: bool  # usageByDay is simulated (demo fixtures); a live tenant's is its runs' real spend
 
 
 class TenantSeedDetail(Model):
@@ -286,7 +287,7 @@ class ConnectorEntry(Model):
     tenants_connected: int
     calls_today: int
     error_rate: float = Field(ge=0, le=1)
-    last_health_check: HealthCheck
+    last_health_check: HealthCheck | Opt = None  # none in the live workspace, which has no health probe yet
     defaults: ConnectorDefaults
     scopes: list[str]
 
@@ -496,12 +497,22 @@ class HourPoint(Model):
     waiting: int
 
 
+class PackCount(Model):
+    slug: str
+    name: str
+    runs: int
+
+
 class OpsOverview(Model):
     kpis: OpsKpis
     attention: list[OpsAttentionItem]
     recent_audit: list[AuditEntry]
     runs_by_hour: list[HourPoint]
     simulated_fields: list[str]  # the kpis and series that are simulated, not derived from the store
+    # Live workspace only (absent in the demo): the most-run packs of the last 30 days and what every org's
+    # runs spent this calendar month.
+    top_packs: list[PackCount] | Opt = None
+    spend_month: Money | Opt = None
 
 
 # Definitions (config as code) --------------------------------------------------------------------------

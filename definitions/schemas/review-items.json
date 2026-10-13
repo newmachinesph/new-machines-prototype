@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Review items",
+  "description": "What a reviewer is shown: one item per record that needs a person's decision.",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["ref", "date", "amount_minor", "currency", "flag", "note"],
+    "properties": {
+      "ref": {"type": "string", "minLength": 1, "description": "The record's id, such as an invoice number."},
+      "date": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"},
+      "amount_minor": {"type": "integer", "description": "Amount in minor units (cents)."},
+      "currency": {"type": "string", "pattern": "^[A-Z]{3}$"},
+      "flag": {"type": "string", "minLength": 1, "description": "Why the item needs a look, in a few words."},
+      "note": {"type": "string", "minLength": 1, "description": "The agent's reasoning in one sentence."},
+      "counterpart_ref": {"type": "string", "minLength": 1, "description": "The related record, such as a charge id."}
+    }
+  }
+}

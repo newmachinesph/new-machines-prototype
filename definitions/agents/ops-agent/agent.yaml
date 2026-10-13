@@ -2,7 +2,7 @@ kind: agent
 key: ops-agent
 schema_version: nm.agent.manifest.v1.1
 agent_id: ops-agent
-version: "1.0.0"
+version: "1.1.0"
 publisher_id: new-machines-labs
 publisher_name: New Machines Labs
 name: Operations Agent
@@ -10,7 +10,7 @@ summary: >-
   Turns checked reconciliation results into one row per order or payment for your team's sheet, with a short summary of what matched, what needed attention and the net difference.
 capabilities: [operations.report]
 runtime:
-  adapter: hosted
+  adapter: google_adk
   model_profile: reasoning
   instructions: instructions.md
   skills: [skills/write-report.md]

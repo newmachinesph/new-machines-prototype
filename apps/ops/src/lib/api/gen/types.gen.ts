@@ -503,7 +503,10 @@ export type ConnectorEntry = {
      * Errorrate
      */
     errorRate: number;
-    lastHealthCheck: HealthCheck;
+    /**
+     * Lasthealthcheck
+     */
+    lastHealthCheck?: HealthCheck;
     defaults: ConnectorDefaults;
     /**
      * Scopes
@@ -855,6 +858,24 @@ export type Deliverable = {
      * Evidence
      */
     evidence: Array<EvidenceItem>;
+    /**
+     * Items
+     */
+    items?: Array<DeliverableItem>;
+};
+
+/**
+ * DeliverableItem
+ */
+export type DeliverableItem = {
+    /**
+     * Label
+     */
+    label: string;
+    /**
+     * Detail
+     */
+    detail: string;
 };
 
 /**
@@ -1718,6 +1739,10 @@ export type OpsMe = {
      * Role
      */
     role: 'owner' | 'admin' | 'support';
+    /**
+     * Workspace
+     */
+    workspace: 'demo' | 'live';
 };
 
 /**
@@ -1741,6 +1766,14 @@ export type OpsOverview = {
      * Simulatedfields
      */
     simulatedFields: Array<string>;
+    /**
+     * Toppacks
+     */
+    topPacks?: Array<PackCount>;
+    /**
+     * Spendmonth
+     */
+    spendMonth?: Money;
 };
 
 /**
@@ -1999,6 +2032,24 @@ export type PackConnectorInput = {
      * Access
      */
     access: 'read' | 'write (approval)' | 'write';
+};
+
+/**
+ * PackCount
+ */
+export type PackCount = {
+    /**
+     * Slug
+     */
+    slug: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Runs
+     */
+    runs: number;
 };
 
 /**
@@ -2640,6 +2691,10 @@ export type Run = {
      */
     summary: string;
     /**
+     * Outcome
+     */
+    outcome?: string;
+    /**
      * Nodes
      */
     nodes: Array<RunNode>;
@@ -2992,8 +3047,9 @@ export type Stages = {
 /**
  * StartRunRequest
  *
- * `input` is either the pack's input object (checked against its input JSON Schema) or, for the
- * reconciliation pack's older form, free text such as "2026-10-06..2026-10-12" or "last 7 days".
+ * `input` is either the pack's input object (checked against its input JSON Schema) or free text: a
+ * date range such as "2026-10-06..2026-10-12" or "last 7 days", or for a pack whose input is one date, a
+ * day such as "2026-10-13" or "today".
  */
 export type StartRunRequest = {
     /**
@@ -3300,7 +3356,7 @@ export type TenantDetail = {
     /**
      * Simulated
      */
-    simulated: true;
+    simulated: boolean;
 };
 
 /**
@@ -3377,6 +3433,10 @@ export type ToolCall = {
      * Mocked
      */
     mocked?: boolean;
+    /**
+     * Actionclass
+     */
+    actionClass?: string;
 };
 
 /**
@@ -5336,7 +5396,7 @@ export type OpsCreatePackErrors = {
      */
     404: Problem;
     /**
-     * Conflict
+     * Conflict (NOT_AVAILABLE_LIVE, SLUG_TAKEN).
      */
     409: Problem;
     /**
@@ -5428,7 +5488,7 @@ export type OpsSubmitPackErrors = {
      */
     404: Problem;
     /**
-     * Conflict
+     * Conflict (NOT_AVAILABLE_LIVE, INVALID_TRANSITION).
      */
     409: Problem;
     /**
@@ -5474,7 +5534,7 @@ export type OpsApprovePackErrors = {
      */
     404: Problem;
     /**
-     * Conflict
+     * Conflict (NOT_AVAILABLE_LIVE, INVALID_TRANSITION).
      */
     409: Problem;
     /**
@@ -5520,7 +5580,7 @@ export type OpsRejectPackErrors = {
      */
     404: Problem;
     /**
-     * Conflict
+     * Conflict (NOT_AVAILABLE_LIVE, INVALID_TRANSITION).
      */
     409: Problem;
     /**
@@ -5566,7 +5626,7 @@ export type OpsDeprecatePackErrors = {
      */
     404: Problem;
     /**
-     * Conflict
+     * Conflict (NOT_AVAILABLE_LIVE, INVALID_TRANSITION).
      */
     409: Problem;
     /**
@@ -5612,7 +5672,7 @@ export type OpsRepublishPackErrors = {
      */
     404: Problem;
     /**
-     * Conflict
+     * Conflict (NOT_AVAILABLE_LIVE, INVALID_TRANSITION).
      */
     409: Problem;
     /**
@@ -5658,7 +5718,7 @@ export type OpsCertifyPackErrors = {
      */
     404: Problem;
     /**
-     * Conflict
+     * Conflict (NOT_AVAILABLE_LIVE, INVALID_TRANSITION).
      */
     409: Problem;
     /**
@@ -5742,7 +5802,7 @@ export type OpsAddConnectorErrors = {
      */
     404: Problem;
     /**
-     * Conflict
+     * Conflict (NOT_AVAILABLE_LIVE, ALREADY_ADDED).
      */
     409: Problem;
     /**
@@ -5831,7 +5891,7 @@ export type OpsEnableConnectorErrors = {
      */
     404: Problem;
     /**
-     * Conflict
+     * Conflict (NO_CHANGE).
      */
     409: Problem;
     /**
@@ -5877,7 +5937,7 @@ export type OpsDisableConnectorErrors = {
      */
     404: Problem;
     /**
-     * Conflict
+     * Conflict (NO_CHANGE).
      */
     409: Problem;
     /**
@@ -5923,7 +5983,7 @@ export type OpsSetConnectorDefaultsErrors = {
      */
     404: Problem;
     /**
-     * Conflict
+     * Conflict (NO_CHANGE).
      */
     409: Problem;
     /**
@@ -5969,7 +6029,7 @@ export type OpsHealthCheckConnectorErrors = {
      */
     404: Problem;
     /**
-     * Conflict
+     * Conflict (NOT_AVAILABLE_LIVE).
      */
     409: Problem;
     /**
@@ -6181,7 +6241,7 @@ export type OpsPublishDefinitionErrors = {
      */
     404: Problem;
     /**
-     * Conflict
+     * Conflict (VERSION_CONFLICT, NO_CHANGE).
      */
     409: Problem;
     /**
@@ -6328,7 +6388,7 @@ export type OpsDeclareIncidentErrors = {
      */
     404: Problem;
     /**
-     * Conflict
+     * Conflict (NOT_AVAILABLE_LIVE).
      */
     409: Problem;
     /**
@@ -6374,7 +6434,7 @@ export type OpsUpdateIncidentErrors = {
      */
     404: Problem;
     /**
-     * Conflict
+     * Conflict (NOT_AVAILABLE_LIVE, INCIDENT_RESOLVED, INVALID_TRANSITION).
      */
     409: Problem;
     /**
@@ -6708,7 +6768,7 @@ export type OpsApproveReviewerErrors = {
      */
     404: Problem;
     /**
-     * Conflict
+     * Conflict (NOT_AVAILABLE_LIVE, INVALID_TRANSITION).
      */
     409: Problem;
     /**
@@ -6754,7 +6814,7 @@ export type OpsSuspendReviewerErrors = {
      */
     404: Problem;
     /**
-     * Conflict
+     * Conflict (NOT_AVAILABLE_LIVE, INVALID_TRANSITION).
      */
     409: Problem;
     /**
@@ -6800,7 +6860,7 @@ export type OpsReinstateReviewerErrors = {
      */
     404: Problem;
     /**
-     * Conflict
+     * Conflict (NOT_AVAILABLE_LIVE, INVALID_TRANSITION).
      */
     409: Problem;
     /**
@@ -6846,7 +6906,7 @@ export type OpsSetReviewerLevelErrors = {
      */
     404: Problem;
     /**
-     * Conflict
+     * Conflict (NOT_AVAILABLE_LIVE, INVALID_TRANSITION, NO_CHANGE).
      */
     409: Problem;
     /**
@@ -6987,7 +7047,7 @@ export type OpsSetGuardrailErrors = {
      */
     404: Problem;
     /**
-     * Conflict
+     * Conflict (NOT_AVAILABLE_LIVE, NO_CHANGE).
      */
     409: Problem;
     /**
@@ -7348,7 +7408,7 @@ export type OpsCreateTenantErrors = {
      */
     404: Problem;
     /**
-     * Conflict
+     * Conflict (NOT_AVAILABLE_LIVE).
      */
     409: Problem;
     /**
@@ -7440,7 +7500,7 @@ export type OpsSuspendTenantErrors = {
      */
     404: Problem;
     /**
-     * Conflict
+     * Conflict (ALREADY_SUSPENDED, INVALID_TRANSITION).
      */
     409: Problem;
     /**
@@ -7486,7 +7546,7 @@ export type OpsReactivateTenantErrors = {
      */
     404: Problem;
     /**
-     * Conflict
+     * Conflict (NOT_SUSPENDED).
      */
     409: Problem;
     /**
@@ -7532,7 +7592,7 @@ export type OpsSetTenantPlanErrors = {
      */
     404: Problem;
     /**
-     * Conflict
+     * Conflict (NOT_AVAILABLE_LIVE, INVALID_TRANSITION, NO_CHANGE).
      */
     409: Problem;
     /**
@@ -7578,7 +7638,7 @@ export type OpsSetTenantSpendCapErrors = {
      */
     404: Problem;
     /**
-     * Conflict
+     * Conflict (INVALID_TRANSITION, NO_CHANGE).
      */
     409: Problem;
     /**

@@ -25,8 +25,9 @@ class Installation(Model):
 
 
 class StartRunRequest(RequestModel):
-    """`input` is either the pack's input object (checked against its input JSON Schema) or, for the
-    reconciliation pack's older form, free text such as "2026-10-06..2026-10-12" or "last 7 days"."""
+    """`input` is either the pack's input object (checked against its input JSON Schema) or free text: a
+    date range such as "2026-10-06..2026-10-12" or "last 7 days", or for a pack whose input is one date, a
+    day such as "2026-10-13" or "today"."""
 
     pack_slug: str
     input: Annotated[str, Field(min_length=1, max_length=200)] | dict[str, Any]

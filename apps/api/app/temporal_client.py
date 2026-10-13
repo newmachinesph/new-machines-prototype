@@ -28,14 +28,21 @@ _lock = threading.Lock()
 async def connect() -> Client:
     """Connect to TEMPORAL_TARGET / TEMPORAL_NAMESPACE. With TEMPORAL_API_KEY set the connection uses TLS and
     the key, whatever the host (tmprl.cloud:7233 or a regional *.api.temporal.io:7233); without one it is
-    plaintext, which is the local dev server."""
+    plaintext, which is the local dev server.
+
+    Both carry GoogleAdkPlugin (ADK's payload converter and sandbox passthrough); workers built from the
+    client inherit it. Imported here, not at module load: google.adk takes seconds to import."""
+    from temporalio.contrib.google_adk_agents import GoogleAdkPlugin
+
     target, namespace = settings.temporal_target(), settings.temporal_namespace()
     api_key = settings.temporal_api_key()
     if api_key:
-        return await Client.connect(target, namespace=namespace, api_key=api_key, tls=True)
+        return await Client.connect(
+            target, namespace=namespace, api_key=api_key, tls=True, plugins=[GoogleAdkPlugin()]
+        )
     if target.endswith(CLOUD_SUFFIX):
         raise RuntimeError("TEMPORAL_API_KEY is required for a Temporal Cloud namespace")
-    return await Client.connect(target, namespace=namespace)
+    return await Client.connect(target, namespace=namespace, plugins=[GoogleAdkPlugin()])
 
 
 def _background_loop() -> asyncio.AbstractEventLoop:

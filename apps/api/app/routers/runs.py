@@ -2,7 +2,7 @@ from typing import Annotated
 
 from fastapi import Header
 
-from app import live_work, real_runs, settings, workspace
+from app import db, live_work, ops_state, real_runs, settings, workspace
 from app.auth import Actor, CurrentActor
 from app.errors import ApiProblem, Problem
 from app.idempotency import once
@@ -28,10 +28,22 @@ def find_run(run_id: str) -> Run:
     return run
 
 
+def _paused() -> ApiProblem:
+    return ApiProblem(409, "PLATFORM_PAUSED", "New Machines has paused all new runs. Try again later.")
+
+
 def _check_not_paused(store: Store) -> None:
     """The platform guardrail: Ops can pause every new run. Call inside `locked_store()`."""
     if store.guardrails["pause_all_runs"].enabled:
-        raise ApiProblem(409, "PLATFORM_PAUSED", "New Machines has paused all new runs. Try again later.")
+        raise _paused()
+
+
+def _check_live_not_paused() -> None:
+    """The platform guardrail in the live workspace, from the persisted ops state."""
+    with db.connect() as conn:
+        paused = ops_state.is_paused(conn)
+    if paused:
+        raise _paused()
 
 
 def _startable_pack(store: Store, slug: str) -> Pack:
@@ -111,10 +123,8 @@ def _new_real_run(body: StartRunRequest, actor: Actor) -> Run:
 
 
 def _new_live_run(body: StartRunRequest, actor: Actor) -> Run:
-    with locked_store() as store:
-        _check_not_paused(store)
-        catalog = list(store.connector_catalog.values())
-    return live_work.start_run(body, actor, catalog)
+    _check_live_not_paused()
+    return live_work.start_run(body, actor)
 
 
 @router.get("/workflow-runs", operation_id="listWorkflowRuns", response_model=list[RunSummary])

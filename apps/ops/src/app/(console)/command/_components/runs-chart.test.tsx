@@ -15,6 +15,15 @@ describe("RunsChart", () => {
     expect(screen.getByRole("table", { name: /Runs by hour/ })).toBeInTheDocument();
   });
 
+  it("drops the tag for live data and tags a live fixture Sample", () => {
+    const { unmount } = render(<RunsChart points={points} tag={null} />);
+    expect(screen.queryByText("Simulated")).toBeNull();
+    expect(screen.getByRole("img", { name: /10 in total/ })).not.toHaveAccessibleName(/Simulated/);
+    unmount();
+    render(<RunsChart points={points} tag="sample" />);
+    expect(screen.getByText("Sample")).toBeInTheDocument();
+  });
+
   it("draws a rect per non-empty segment", () => {
     const { container } = render(<RunsChart points={points} />);
     expect(container.querySelectorAll("svg rect")).toHaveLength(4);

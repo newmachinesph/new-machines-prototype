@@ -1,6 +1,6 @@
-"""Live smoke: order-payment-reconciliation end to end on the local stack.
+"""Live smoke: one pack (order-payment-reconciliation by default) end to end on the local stack.
 
-    uv run --project apps/api python scripts/smoke_recon.py [--model-env test|dev] [--live]
+    uv run --project apps/api python scripts/smoke_recon.py [--pack SLUG] [--model-env test|dev] [--live]
 
 Needs `docker compose up -d` (Postgres 5442, Temporal 7243). Loads demo-app/.env into the process
 environment without printing values, migrates the database, applies the definitions, starts a worker
@@ -22,8 +22,28 @@ from typing import NoReturn
 
 ROOT = Path(__file__).resolve().parents[1]
 API_DIR = ROOT / "apps" / "api"
-PACK = "order-payment-reconciliation"
-RUN_INPUT = "2026-10-06..2026-10-12"
+# Per pack: the run input, the budget, the review records the sandbox data gives with the fake models
+# (checked with --model-env test only) and the reviewer's note.
+PACKS = {
+    "order-payment-reconciliation": {
+        "input": "2026-10-06..2026-10-12",
+        "budget": 2000,
+        "records": ["#1004", "#1007"],
+        "feedback": "Checked each flagged order against its payment.",
+    },
+    "overdue-invoice-follow-up": {
+        "input": {"as_of": "2026-10-13"},
+        "budget": 1500,
+        "records": ["INV-0107", "INV-0098", "INV-0086", "INV-0104"],
+        "feedback": "Checked each overdue invoice and its reminder stage.",
+    },
+    "refund-triage": {
+        "input": {"since": "2026-10-06", "until": "2026-10-13"},
+        "budget": 2000,
+        "records": ["#1003", "#1005", "#1088", "18f3a0c1d2e41103"],
+        "feedback": "Checked each proposed refund decision against the policy.",
+    },
+}
 WAIT_SECONDS = 180
 # Run statuses the run can never leave; reaching one that was not awaited fails the smoke at once.
 TERMINAL = {"COMPLETED", "FAILED", "CANCELLED"}
@@ -77,12 +97,14 @@ def money(m: dict) -> str:
     return f"{m['amountMinor']} {m['currency']} (minor units)"
 
 
-def drive(api) -> int:
-    res = api.post("/v1/workflow-runs", json={"packSlug": PACK, "input": RUN_INPUT, "budgetMinor": 2000})
+def drive(api, pack: str, model_env: str) -> int:
+    spec = PACKS[pack]
+    body = {"packSlug": pack, "input": spec["input"], "budgetMinor": spec["budget"]}
+    res = api.post("/v1/workflow-runs", json=body)
     if res.status_code >= 300:
         fail(f"start run returned {res.status_code}: {res.text[:300]}")
     run_id = res.json()["id"]
-    print("started", run_id)
+    print("started", run_id, "pack", pack)
 
     poll(api, run_id, {"WAITING_FOR_HUMAN"})
     tasks = [t for t in api.get("/v1/human-tasks/eligible").json() if t["runId"] == run_id]
@@ -92,13 +114,15 @@ def drive(api) -> int:
     full = api.get(f"/v1/human-tasks/{task['id']}").json()
     records = [r["id"] for r in full["records"]]
     print("human task", task["id"], "records", records)
+    if model_env == "test" and records != spec["records"]:
+        fail(f"review records {records}, expected {spec['records']}")
     if api.post(f"/v1/human-tasks/{task['id']}:claim").status_code >= 300:
         fail("claim failed")
     sub = api.post(
         f"/v1/human-tasks/{task['id']}:submit",
         json={
             "verdict": "APPROVED",
-            "feedbackText": "Checked each flagged order against its payment.",
+            "feedbackText": spec["feedback"],
             "recordCalls": {r: "explained" for r in records},
         },
     )
@@ -142,6 +166,7 @@ def drive(api) -> int:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--pack", default="order-payment-reconciliation", choices=sorted(PACKS))
     parser.add_argument("--model-env", default="dev", choices=["test", "dev", "prod"])
     parser.add_argument("--live", action="store_true", help="use live connectors instead of the sandbox")
     args = parser.parse_args()
@@ -161,7 +186,7 @@ def main() -> int:
     if args.model_env == "dev" and not os.environ.get("MODEL_API_KEY"):
         fail("MODEL_API_KEY is not set in demo-app/.env (needed for --model-env dev)")
     connectors, queue = os.environ["NM_CONNECTOR_MODE"], os.environ["NM_TASK_QUEUE"]
-    print(f"model env {args.model_env}, connectors {connectors}, queue {queue}")
+    print(f"pack {args.pack}, model env {args.model_env}, connectors {connectors}, queue {queue}")
 
     require_port("127.0.0.1", 5442, "Postgres")
     require_port("127.0.0.1", 7243, "Temporal")
@@ -192,7 +217,7 @@ def main() -> int:
         from app.main import create_app
 
         with TestClient(create_app()) as api:
-            return drive(api)
+            return drive(api, args.pack, args.model_env)
     finally:
         worker.terminate()
         try:

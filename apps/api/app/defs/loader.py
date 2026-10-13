@@ -5,7 +5,7 @@ from pathlib import Path
 
 import yaml
 
-from app.defs.model import Bundle, Definition
+from app.defs.model import SHARED_SCHEMAS, Bundle, Definition
 
 
 class LoadError(ValueError):
@@ -41,7 +41,8 @@ def _from_file(kind: str, path: Path, root: Path, files: dict[str, str] | None =
     rel = path.relative_to(root).as_posix()
     text = _read(path)
     if kind == "schema":
-        key = f"{path.parent.parent.name}/{path.stem}"
+        # packs/<slug>/schemas/<stem>.json is <slug>/<stem>; schemas/<stem>.json is shared/<stem>
+        key = f"{path.parent.parent.name if rel.startswith('packs/') else SHARED_SCHEMAS}/{path.stem}"
     else:
         try:
             raw = yaml.safe_load(text)
@@ -85,7 +86,7 @@ def load_bundle(root: Path) -> Bundle:
     for kind in ("pack", "workflow", "contract"):
         for p in sorted(root.glob(f"packs/*/{kind}.yaml")):
             found.append(_from_file(kind, p, root))
-    for p in sorted(root.glob("packs/*/schemas/*.json")):
+    for p in [*sorted(root.glob("packs/*/schemas/*.json")), *sorted(root.glob("schemas/*.json"))]:
         found.append(_from_file("schema", p, root))
     for p in sorted(root.glob("agents/*/agent.yaml")):
         found.append(_from_file("agent", p, root, _agent_files(p)))

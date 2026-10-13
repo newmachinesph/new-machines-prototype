@@ -1,0 +1,18 @@
+# Where an overdue invoice follow-up goes after planning. Rules run in order; the first whose `when` is true wins.
+kind: decision_rules
+key: overdue-invoices
+
+question: Are there overdue invoices to follow up?
+
+rules:
+  - when: size(nodes.plan.output.messages) == 0
+    verdict: APPROVED
+    route: nothing
+    reason_code: NOTHING_OVERDUE
+    explanation: No open invoice is past its due date, so there is nobody to remind.
+
+default:
+  verdict: HUMAN_REVIEW
+  route: human_review
+  reason_code: REMINDERS_PLANNED
+  explanation: Some invoices are overdue, so a person checks the reminder plan before any draft is written.

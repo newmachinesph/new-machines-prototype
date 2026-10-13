@@ -10,7 +10,8 @@ import { Skeleton } from "@/components/skeleton";
 import { Button, Id, PageHeader, Pill, Section, type Tone } from "@/components/ui";
 import { ago, count, pct } from "@/lib/format";
 import { usePacks } from "@/lib/queries/marketplace";
-import { useCanWrite, useMe } from "@/lib/queries/ops";
+import { LiveSampleNote } from "@/components/live-sample-note";
+import { useCanWrite, useMe, useOpsWorkspace } from "@/lib/queries/ops";
 import type { PackListing } from "@/lib/api/gen/types.gen";
 import { NewPackDialog } from "./new-pack-dialog";
 import { defaultTab, STATUS_LABEL, TAB_EMPTY, TAB_LABEL, TABS, tabCounts, tabFor } from "./pack-state";
@@ -115,15 +116,18 @@ export function MarketplaceView() {
   const packsQuery = usePacks();
   const canWrite = useCanWrite();
   const roleKnown = useMe().isSuccess;
+  const live = useOpsWorkspace() === "live";
+  // Listings are fixtures in the live workspace, where packs are published as definitions instead.
+  const canCreate = canWrite && !live;
   const [tabParam, setTab] = useQueryState("tab", parseAsStringLiteral(TABS));
   const [action, setAction] = useQueryState("action", parseAsStringLiteral(["new"] as const));
 
-  // Support cannot create packs, so a link carrying ?action=new must not open the dialog for them.
+  // Support and the live workspace cannot create packs, so a link carrying ?action=new must not linger.
   useEffect(() => {
-    if (roleKnown && !canWrite && action) void setAction(null);
-  }, [roleKnown, canWrite, action, setAction]);
+    if (roleKnown && !canCreate && action) void setAction(null);
+  }, [roleKnown, canCreate, action, setAction]);
 
-  const newPack = canWrite ? (
+  const newPack = live ? undefined : canWrite ? (
     <Button onClick={() => void setAction("new")}>
       <Plus className="size-4" aria-hidden />
       New pack
@@ -141,13 +145,18 @@ export function MarketplaceView() {
     <>
       <PageHeader
         title="Marketplace"
-        lede="Workflow packs by listing status. Approve what is ready, retire what is not."
+        lede={
+          live
+            ? "Workflow packs by listing status. In the live workspace, packs are published from Definitions, so listings are read-only here."
+            : "Workflow packs by listing status. Approve what is ready, retire what is not."
+        }
         actions={newPack}
+        below={<LiveSampleNote>Pack listings here are sample data, not the live catalog.</LiveSampleNote>}
       />
       <QueryState query={packsQuery} skeleton={<Skeleton className="h-96" />}>
         {(packs) => <PackTabs packs={packs} tabParam={tabParam} onTab={(t) => void setTab(t)} />}
       </QueryState>
-      {canWrite ? (
+      {canCreate ? (
         <NewPackDialog open={action === "new"} onOpenChange={(open) => void setAction(open ? "new" : null)} />
       ) : null}
     </>

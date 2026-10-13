@@ -8,7 +8,8 @@ import { StartRunFields, StartRunForm, makeStartRunSchema, refusalFor } from "./
 
 const detail = vi.hoisted(() => ({ query: { isPending: true, isError: false } as Record<string, unknown> }));
 vi.mock("@/lib/queries/catalog", () => ({ usePack: () => detail.query }));
-vi.mock("@/lib/queries/runs", () => ({ useStartRun: () => ({ mutate: vi.fn(), isPending: false }) }));
+const start = vi.hoisted(() => ({ mutate: vi.fn() }));
+vi.mock("@/lib/queries/runs", () => ({ useStartRun: () => ({ mutate: start.mutate, isPending: false }) }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 vi.mock("@/components/base", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/components/base")>()),
@@ -346,5 +347,40 @@ describe("StartRunForm", () => {
     expect(screen.getByText("page error: pack unavailable")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Start run" })).not.toBeInTheDocument();
     vi.mocked(console.error).mockRestore();
+  });
+
+  it("builds the overdue pack's form from its input schema: one As of date, sent as as_of", async () => {
+    // definitions/packs/overdue-invoice-follow-up/schemas/input.json
+    const overdueSchema = {
+      $schema: "https://json-schema.org/draft/2020-12/schema",
+      title: "Overdue invoice follow-up request",
+      type: "object",
+      additionalProperties: false,
+      required: ["as_of"],
+      properties: {
+        as_of: {
+          type: "string",
+          pattern: "^\\d{4}-\\d{2}-\\d{2}$",
+          description: "The day to measure lateness from (YYYY-MM-DD). Invoices due before this day are overdue.",
+        },
+      },
+    };
+    detail.query = { isPending: false, isError: false, data: { inputSchema: overdueSchema } };
+    start.mutate.mockClear();
+    const overdue = [{ slug: "overdue-invoice-follow-up", name: "Overdue Invoice Follow-up", inputs: [] }];
+    const { container } = renderWithIntl(<StartRunForm packs={overdue} />);
+    const asOf = screen.getByLabelText("As of");
+    expect(asOf).toHaveAttribute("type", "date");
+    expect(container.querySelectorAll("input[type=date]")).toHaveLength(1);
+    expect(container.querySelector("#run-input")).toBeNull(); // no free-text input
+    fireEvent.change(asOf, { target: { value: "2026-10-13" } });
+    await userEvent.click(screen.getByRole("button", { name: "Start run" }));
+    await waitFor(() => expect(start.mutate).toHaveBeenCalledTimes(1));
+    expect(start.mutate.mock.calls[0][0].body).toEqual({
+      packSlug: "overdue-invoice-follow-up",
+      input: { as_of: "2026-10-13" },
+      budgetMinor: 5000,
+      note: undefined,
+    });
   });
 });

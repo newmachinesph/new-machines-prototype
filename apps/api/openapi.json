@@ -92,7 +92,7 @@
           "catalog"
         ],
         "summary": "Get Workflow Pack",
-        "description": "One pack; in the live workspace with `inputSchema`, the JSON Schema of the input a run takes.",
+        "description": "One pack. `inputSchema` is the JSON Schema of the input a run takes: for every pack in the live\nworkspace, and in the demo workspace for a pack that runs for real (the runtime is on and it has a\ndefinition).",
         "operationId": "getWorkflowPack",
         "security": [
           {
@@ -3491,7 +3491,7 @@
             }
           },
           "409": {
-            "description": "Conflict",
+            "description": "Conflict (NOT_AVAILABLE_LIVE, SLUG_TAKEN).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3677,7 +3677,7 @@
             }
           },
           "409": {
-            "description": "Conflict",
+            "description": "Conflict (NOT_AVAILABLE_LIVE, INVALID_TRANSITION).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3775,7 +3775,7 @@
             }
           },
           "409": {
-            "description": "Conflict",
+            "description": "Conflict (NOT_AVAILABLE_LIVE, INVALID_TRANSITION).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3873,7 +3873,7 @@
             }
           },
           "409": {
-            "description": "Conflict",
+            "description": "Conflict (NOT_AVAILABLE_LIVE, INVALID_TRANSITION).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3971,7 +3971,7 @@
             }
           },
           "409": {
-            "description": "Conflict",
+            "description": "Conflict (NOT_AVAILABLE_LIVE, INVALID_TRANSITION).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -4069,7 +4069,7 @@
             }
           },
           "409": {
-            "description": "Conflict",
+            "description": "Conflict (NOT_AVAILABLE_LIVE, INVALID_TRANSITION).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -4167,7 +4167,7 @@
             }
           },
           "409": {
-            "description": "Conflict",
+            "description": "Conflict (NOT_AVAILABLE_LIVE, INVALID_TRANSITION).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -4195,6 +4195,7 @@
           "ops"
         ],
         "summary": "Ops List Connectors",
+        "description": "The live workspace lists its connector definitions with the settings Ops persisted and today's usage\n(UTC); the demo workspace lists its fixture catalog.",
         "operationId": "opsListConnectors",
         "responses": {
           "200": {
@@ -4326,7 +4327,7 @@
             }
           },
           "409": {
-            "description": "Conflict",
+            "description": "Conflict (NOT_AVAILABLE_LIVE, ALREADY_ADDED).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -4510,7 +4511,7 @@
             }
           },
           "409": {
-            "description": "Conflict",
+            "description": "Conflict (NO_CHANGE).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -4608,7 +4609,7 @@
             }
           },
           "409": {
-            "description": "Conflict",
+            "description": "Conflict (NO_CHANGE).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -4706,7 +4707,7 @@
             }
           },
           "409": {
-            "description": "Conflict",
+            "description": "Conflict (NO_CHANGE).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -4734,7 +4735,7 @@
           "ops"
         ],
         "summary": "Ops Health Check Connector",
-        "description": "Simulated and deterministic: healthy unless the connector is disabled.",
+        "description": "Simulated and deterministic: healthy unless the connector is disabled. Not available in the live\nworkspace, which has no health probe yet.",
         "operationId": "opsHealthCheckConnector",
         "security": [
           {
@@ -4795,7 +4796,7 @@
             }
           },
           "409": {
-            "description": "Conflict",
+            "description": "Conflict (NOT_AVAILABLE_LIVE).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -5275,7 +5276,7 @@
             }
           },
           "409": {
-            "description": "Conflict",
+            "description": "Conflict (VERSION_CONFLICT, NO_CHANGE).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -5581,7 +5582,7 @@
             }
           },
           "409": {
-            "description": "Conflict",
+            "description": "Conflict (NOT_AVAILABLE_LIVE).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -5684,7 +5685,7 @@
             }
           },
           "409": {
-            "description": "Conflict",
+            "description": "Conflict (NOT_AVAILABLE_LIVE, INCIDENT_RESOLVED, INVALID_TRANSITION).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -6364,7 +6365,7 @@
             }
           },
           "409": {
-            "description": "Conflict",
+            "description": "Conflict (NOT_AVAILABLE_LIVE, INVALID_TRANSITION).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -6462,7 +6463,7 @@
             }
           },
           "409": {
-            "description": "Conflict",
+            "description": "Conflict (NOT_AVAILABLE_LIVE, INVALID_TRANSITION).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -6560,7 +6561,7 @@
             }
           },
           "409": {
-            "description": "Conflict",
+            "description": "Conflict (NOT_AVAILABLE_LIVE, INVALID_TRANSITION).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -6658,7 +6659,7 @@
             }
           },
           "409": {
-            "description": "Conflict",
+            "description": "Conflict (NOT_AVAILABLE_LIVE, INVALID_TRANSITION, NO_CHANGE).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -6811,6 +6812,7 @@
           "ops"
         ],
         "summary": "Ops List Guardrails",
+        "description": "In the live workspace the pause switch is persisted; the other guardrails stay fixtures.",
         "operationId": "opsListGuardrails",
         "responses": {
           "200": {
@@ -6961,7 +6963,7 @@
             }
           },
           "409": {
-            "description": "Conflict",
+            "description": "Conflict (NOT_AVAILABLE_LIVE, NO_CHANGE).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -7221,7 +7223,7 @@
           "ops"
         ],
         "summary": "Ops List Audit",
-        "description": "Newest first. Entries with the same timestamp keep the order they were written in, newest first.",
+        "description": "Newest first. Entries with the same timestamp keep the order they were written in, newest first.\nThe live workspace reads the persisted ops audit log.",
         "operationId": "opsListAudit",
         "security": [
           {
@@ -7701,7 +7703,7 @@
             }
           },
           "409": {
-            "description": "Conflict",
+            "description": "Conflict (NOT_AVAILABLE_LIVE).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -7887,7 +7889,7 @@
             }
           },
           "409": {
-            "description": "Conflict",
+            "description": "Conflict (ALREADY_SUSPENDED, INVALID_TRANSITION).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -7986,7 +7988,7 @@
             }
           },
           "409": {
-            "description": "Conflict",
+            "description": "Conflict (NOT_SUSPENDED).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -8084,7 +8086,7 @@
             }
           },
           "409": {
-            "description": "Conflict",
+            "description": "Conflict (NOT_AVAILABLE_LIVE, INVALID_TRANSITION, NO_CHANGE).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -8182,7 +8184,7 @@
             }
           },
           "409": {
-            "description": "Conflict",
+            "description": "Conflict (INVALID_TRANSITION, NO_CHANGE).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -9010,7 +9012,8 @@
             "title": "Errorrate"
           },
           "lastHealthCheck": {
-            "$ref": "#/components/schemas/HealthCheck"
+            "$ref": "#/components/schemas/HealthCheck",
+            "title": "Lasthealthcheck"
           },
           "defaults": {
             "$ref": "#/components/schemas/ConnectorDefaults"
@@ -9034,7 +9037,6 @@
           "tenantsConnected",
           "callsToday",
           "errorRate",
-          "lastHealthCheck",
           "defaults",
           "scopes"
         ],
@@ -9608,6 +9610,13 @@
             },
             "type": "array",
             "title": "Evidence"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/DeliverableItem"
+            },
+            "type": "array",
+            "title": "Items"
           }
         },
         "type": "object",
@@ -9621,6 +9630,24 @@
           "evidence"
         ],
         "title": "Deliverable"
+      },
+      "DeliverableItem": {
+        "properties": {
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "required": [
+          "label",
+          "detail"
+        ],
+        "title": "DeliverableItem"
       },
       "DeliverableRow": {
         "properties": {
@@ -10888,13 +10915,22 @@
               "support"
             ],
             "title": "Role"
+          },
+          "workspace": {
+            "type": "string",
+            "enum": [
+              "demo",
+              "live"
+            ],
+            "title": "Workspace"
           }
         },
         "type": "object",
         "required": [
           "userId",
           "email",
-          "role"
+          "role",
+          "workspace"
         ],
         "title": "OpsMe"
       },
@@ -10930,6 +10966,17 @@
             },
             "type": "array",
             "title": "Simulatedfields"
+          },
+          "topPacks": {
+            "items": {
+              "$ref": "#/components/schemas/PackCount"
+            },
+            "type": "array",
+            "title": "Toppacks"
+          },
+          "spendMonth": {
+            "$ref": "#/components/schemas/Money",
+            "title": "Spendmonth"
           }
         },
         "type": "object",
@@ -11321,6 +11368,29 @@
           "access"
         ],
         "title": "PackConnectorInput"
+      },
+      "PackCount": {
+        "properties": {
+          "slug": {
+            "type": "string",
+            "title": "Slug"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "runs": {
+            "type": "integer",
+            "title": "Runs"
+          }
+        },
+        "type": "object",
+        "required": [
+          "slug",
+          "name",
+          "runs"
+        ],
+        "title": "PackCount"
       },
       "PackEstimate": {
         "properties": {
@@ -12236,6 +12306,10 @@
             "type": "string",
             "title": "Summary"
           },
+          "outcome": {
+            "type": "string",
+            "title": "Outcome"
+          },
           "nodes": {
             "items": {
               "$ref": "#/components/schemas/RunNode"
@@ -12884,7 +12958,7 @@
           "budgetMinor"
         ],
         "title": "StartRunRequest",
-        "description": "`input` is either the pack's input object (checked against its input JSON Schema) or, for the\nreconciliation pack's older form, free text such as \"2026-10-06..2026-10-12\" or \"last 7 days\"."
+        "description": "`input` is either the pack's input object (checked against its input JSON Schema) or free text: a\ndate range such as \"2026-10-06..2026-10-12\" or \"last 7 days\", or for a pack whose input is one date, a\nday such as \"2026-10-13\" or \"today\"."
       },
       "SubmitReviewRequest": {
         "properties": {
@@ -13302,7 +13376,6 @@
           },
           "simulated": {
             "type": "boolean",
-            "const": true,
             "title": "Simulated"
           }
         },
@@ -13442,6 +13515,10 @@
           "mocked": {
             "type": "boolean",
             "title": "Mocked"
+          },
+          "actionClass": {
+            "type": "string",
+            "title": "Actionclass"
           }
         },
         "type": "object",

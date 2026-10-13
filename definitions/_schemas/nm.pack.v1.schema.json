@@ -96,6 +96,62 @@
     "human_review": {
       "type": "string",
       "minLength": 1
+    },
+    "deliverable_view": {
+      "description": "How the run page shows the result. Strings starting with \"=\" are CEL over {deliverable}; item fields also see `item`.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "summary", "facts"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "facts": {
+          "type": "array",
+          "maxItems": 8,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["label", "value"],
+            "properties": {
+              "label": {
+                "type": "string",
+                "minLength": 1
+              },
+              "value": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        "items": {
+          "description": "One entry per element of `from` (at most 50 are shown).",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["from", "label", "detail"],
+          "properties": {
+            "from": {
+              "type": "string",
+              "minLength": 1
+            },
+            "label": {
+              "type": "string",
+              "minLength": 1
+            },
+            "detail": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
     }
   }
 }

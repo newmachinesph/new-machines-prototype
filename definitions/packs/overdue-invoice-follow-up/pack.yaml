@@ -1,0 +1,36 @@
+kind: pack
+key: overdue-invoice-follow-up
+slug: overdue-invoice-follow-up
+name: Overdue Invoice Follow-up
+version: 1.1.1
+publisher: New Machines Labs
+function: finance-ops
+industries: [retail-commerce, manufacturing]
+outcome: Every overdue invoice gets a reminder of the right firmness, drafted and ready for you to send.
+description: >-
+  Reads your open invoices, works out how late each one is and how firm its reminder should be, and has a
+  reviewer check the plan. Then it writes one short, polite reminder per invoice and saves them as email
+  drafts once you approve. Nothing is sent without you.
+risk_class: medium
+price_note: About $0.20 to $1.00 of AI work per run, plus up to $5.00 of reviewer time to check the reminder plan.
+workflow: overdue-invoice-follow-up
+contract: overdue-invoice-follow-up
+agents: [collections-agent, writer-agent]
+connectors: [stripe, gmail]
+human_review: A reviewer checks which invoices are overdue and how firm each reminder is before any draft is written.
+# How the run page shows the result. Strings starting with "=" are CEL over {deliverable, mocked} (the end
+# node's deliverable, and whether any tool call used sandbox data; item fields also see `item`).
+# With nothing overdue, the run ends with the plan instead of drafts.
+deliverable_view:
+  kind: Email drafts
+  summary: >-
+    =!has(deliverable.drafts) ? deliverable.summary : (size(deliverable.drafts) == 1 ? '1 reminder email
+    was drafted' : string(size(deliverable.drafts)) + ' reminder emails were drafted') + (mocked ? ' on
+    sandbox data. No email was created in Gmail.' : ', ready for you to check and send.')
+  facts:
+    - label: Drafts created
+      value: "=has(deliverable.drafts) ? string(size(deliverable.drafts)) : '0'"
+  items:
+    from: "=has(deliverable.drafts) ? deliverable.drafts : []"
+    label: "=item.to + ' — ' + item.subject"
+    detail: =item.body

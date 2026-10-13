@@ -12,7 +12,7 @@ from app import settings
 from app.defs import registry
 from app.defs.digest import canonical, digest
 from app.defs.loader import LoadError, load_bundle, parse_definition
-from app.defs.model import Bundle
+from app.defs.model import Bundle, path_for
 from app.defs.validate import validate_bundle
 
 FIXTURE = Path(__file__).parent / "fixtures" / "defs_min"
@@ -66,6 +66,15 @@ def test_loads_every_definition_with_kind_and_key(bundle):
     assert [d.key for d in bundle.of("schema")] == ["demo-pack/input", "demo-pack/output"]
 
 
+def test_shared_schemas_load_under_the_shared_prefix():
+    real = load_bundle(settings.defs_dir())
+    drafts = real.get("schema", "shared/drafts")
+    assert drafts is not None and drafts.path == "schemas/drafts.json"
+    assert path_for("schema", "shared/drafts") == "schemas/drafts.json"
+    assert path_for("schema", "demo-pack/input") == "packs/demo-pack/schemas/input.json"
+    assert real.get("schema", "shared/review-items") is not None
+
+
 def test_fixture_bundle_is_valid(bundle):
     assert validate_bundle(bundle) == []
 
@@ -104,6 +113,45 @@ def test_cel_syntax_error_in_decision_rule(bundle):
 def test_cel_syntax_error_in_workflow_argument(bundle):
     bad = mutated(bundle, "workflow", "demo-pack", lambda b, f: b["nodes"][1]["config"].update(input="=run."))
     only_error(bad, mentions="config.input", kind="workflow")
+
+
+def _view(**items) -> dict:
+    return {
+        "kind": "Email drafts",
+        "summary": "=string(size(deliverable.drafts)) + ' drafts'",
+        "facts": [{"label": "Drafts created", "value": "=size(deliverable.drafts)"}],
+        "items": {"from": "=deliverable.drafts", "label": "=item.to", "detail": "=item.body"} | items,
+    }
+
+
+def test_a_pack_deliverable_view_is_valid(bundle):
+    good = mutated(bundle, "pack", "demo-pack", lambda b, f: b.update(deliverable_view=_view()))
+    assert validate_bundle(good) == []
+
+
+def test_cel_syntax_error_in_pack_deliverable_view(bundle):
+    bad = mutated(bundle, "pack", "demo-pack", lambda b, f: b.update(deliverable_view=_view(label="=item.")))
+    only_error(bad, mentions="deliverable_view.items.label", kind="pack")
+
+
+def test_pack_deliverable_view_kind_and_labels_are_not_cel(bundle):
+    view = _view() | {"kind": "=Drafts ("}
+    view["facts"][0]["label"] = "=Count ("
+    ok = mutated(bundle, "pack", "demo-pack", lambda b, f: b.update(deliverable_view=view))
+    assert validate_bundle(ok) == []  # shown as written, never compiled
+
+
+def test_cel_syntax_error_in_a_deliverable_view_fact_value(bundle):
+    view = _view()
+    view["facts"][0]["value"] = "=size("
+    bad = mutated(bundle, "pack", "demo-pack", lambda b, f: b.update(deliverable_view=view))
+    only_error(bad, mentions="deliverable_view.facts[0].value", kind="pack")
+
+
+def test_pack_deliverable_view_shape_is_checked(bundle):
+    view = _view() | {"kind": "x" * 41}
+    bad = mutated(bundle, "pack", "demo-pack", lambda b, f: b.update(deliverable_view=view))
+    only_error(bad, mentions="deliverable_view.kind", kind="pack")
 
 
 def test_pack_industry_not_in_taxonomy(bundle):
@@ -192,6 +240,66 @@ def test_apply_bundle_is_idempotent_and_seeds_memory(db, bundle):
     seeded = db.execute("SELECT id, space, source FROM memory_items").fetchall()
     assert [(r["space"], r["source"]) for r in seeded] == [("notes", "seed")]
     assert seeded[0]["id"].startswith("mem_") and len(seeded[0]["id"]) == 16
+
+
+def _memory(db) -> list[tuple[str, str, str, str]]:
+    """Every memory row (ids aside), sorted: a list, so a duplicated row shows up."""
+    db.commit()
+    rows = db.execute("SELECT space, text, source, org_id FROM memory_items").fetchall()
+    return sorted((r["space"], r["text"], r["source"], r["org_id"] or "") for r in rows)
+
+
+def test_apply_keeps_seed_items_equal_to_the_file(db, bundle):
+    registry.apply_bundle(db, bundle)
+    [old] = bundle.get("memory_space", "notes").body["seed_items"]
+    others = [
+        ("mem_console0001", "notes", "Added by an operator.", "console", None),
+        ("mem_org00000001", "notes", "Learned in a run.", "run:run_1", "org_a"),
+        ("mem_other000001", "other-space", old, "seed", None),
+    ]
+    for row in others:
+        db.execute(
+            "INSERT INTO memory_items (id, space, text, source, created_by, org_id) "
+            "VALUES (%s, %s, %s, %s, 'x', %s)",
+            row,
+        )
+    db.commit()
+    reworded = mutated(
+        bundle,
+        "memory_space",
+        "notes",
+        lambda b, f: b.update(seed_items=["Orders over 200 USD need a look.", "New."]),
+    )
+    registry.apply_bundle(db, reworded)
+    after = _memory(db)
+    # The reworded seed replaces the old one; the operator's, the org's and another space's rows stay.
+    assert after == sorted(
+        [
+            ("notes", "Orders over 200 USD need a look.", "seed", ""),
+            ("notes", "New.", "seed", ""),
+            *((space, text, source, org or "") for _, space, text, source, org in others),
+        ]
+    )
+    registry.apply_bundle(db, reworded)
+    assert _memory(db) == after  # a second apply changes nothing
+
+
+def test_apply_leaves_the_seeds_of_a_console_published_memory_space_alone(db, bundle, caplog):
+    registry.apply_bundle(db, bundle)
+    notes = bundle.get("memory_space", "notes")
+    [old] = notes.body["seed_items"]
+    registry.publish(db, replace(notes, body={**notes.body, "seed_items": [old, "Console seed."]}), "a", "r")
+    db.commit()
+    before = _memory(db)
+    reworded = mutated(bundle, "memory_space", "notes", lambda b, f: b.update(seed_items=["From the file."]))
+    with caplog.at_level("INFO", logger="app.defs.registry"):
+        registry.apply_bundle(db, reworded)
+    # The operator's version stays the space's definition, so the file's seed_items do not replace its seeds.
+    assert _memory(db) == before
+    skipped = [r for r in caplog.records if r.levelname == "INFO" and "memory_space/notes" in r.getMessage()]
+    assert len(skipped) == 1
+    registry.apply_bundle(db, reworded, force=True)  # force applies the file, seeds included
+    assert _memory(db) == [("notes", "From the file.", "seed", "")]
 
 
 def test_publish_edit_creates_version_two_and_unchanged_raises(db, bundle):

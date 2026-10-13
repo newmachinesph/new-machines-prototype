@@ -4,18 +4,26 @@ import Link from "next/link";
 import { QueryState } from "@/components/query-state";
 import { Skeleton } from "@/components/skeleton";
 import { PageHeader, Section } from "@/components/ui";
+import { cn } from "@/lib/cn";
+import { useOpsWorkspace } from "@/lib/queries/ops";
 import { useOverview } from "@/lib/queries/overview";
 import { AttentionQueue } from "./attention-queue";
 import { AuditFeed } from "./audit-feed";
 import { KpiStrip } from "./kpi-strip";
+import { fieldTag } from "./logic";
 import { QuickActions } from "./quick-actions";
-import { RunsChart } from "./runs-chart";
+import { RunsChart, type ChartTag } from "./runs-chart";
+import { TopPacks } from "./top-packs";
 
-function CommandSkeleton() {
+/** Tile counts per workspace, matching `KpiStrip`, so the page does not shift when the data arrives. */
+const DEMO_TILES = 6;
+const LIVE_TILES = 8;
+
+export function CommandSkeleton({ live = false }: { live?: boolean }) {
   return (
     <div aria-busy="true" aria-label="Loading the command center" className="space-y-4">
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
-        {Array.from({ length: 6 }, (_, i) => (
+      <div className={cn("grid grid-cols-2 gap-3 md:grid-cols-3", live ? "xl:grid-cols-4" : "xl:grid-cols-6")}>
+        {Array.from({ length: live ? LIVE_TILES : DEMO_TILES }, (_, i) => (
           <Skeleton key={i} className="h-24" />
         ))}
       </div>
@@ -27,27 +35,38 @@ function CommandSkeleton() {
   );
 }
 
+function chartTag(fields: readonly string[], live: boolean): ChartTag {
+  const t = fieldTag(fields, "runsByHour", live);
+  return t.sample ? "sample" : t.simulated ? "simulated" : null;
+}
+
 export function CommandView() {
   const overview = useOverview();
+  const live = useOpsWorkspace() === "live";
   return (
     <>
       <PageHeader
         title="Command center"
         lede="What needs an operator now, across every tenant."
-        actions={<QuickActions />}
+        actions={<QuickActions live={live} />}
       />
-      <QueryState query={overview} skeleton={<CommandSkeleton />}>
+      <QueryState query={overview} skeleton={<CommandSkeleton live={live} />}>
         {(o) => (
           <div className="space-y-4">
-            <KpiStrip overview={o} />
+            <KpiStrip overview={o} live={live} />
             <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
               <Section title="Needs attention" aside={<span className="label tnum">{o.attention.length} open</span>}>
                 <AttentionQueue items={o.attention} />
               </Section>
               <div className="space-y-4">
                 <Section title="Runs by hour today">
-                  <RunsChart points={o.runsByHour} />
+                  <RunsChart points={o.runsByHour} tag={chartTag(o.simulatedFields, live)} />
                 </Section>
+                {o.topPacks ? (
+                  <Section title="Top packs, last 30 days">
+                    <TopPacks packs={o.topPacks} />
+                  </Section>
+                ) : null}
                 <Section
                   title="Recent operator actions"
                   aside={

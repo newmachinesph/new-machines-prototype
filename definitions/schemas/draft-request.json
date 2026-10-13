@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Draft request",
+  "description": "What a writer is asked to draft: one message per item, the reviewer's input and the tone.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["items", "review", "tone"],
+  "properties": {
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["to", "about", "facts"],
+        "properties": {
+          "to": {"type": "string", "minLength": 3},
+          "about": {"type": "string", "minLength": 1, "maxLength": 150},
+          "facts": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+          "ref": {"type": "string", "minLength": 1, "description": "The record the message is about, the same ref as its review item. The writer copies it to the draft."}
+        }
+      }
+    },
+    "review": {"type": ["object", "null"]},
+    "tone": {"type": "string", "minLength": 1}
+  }
+}

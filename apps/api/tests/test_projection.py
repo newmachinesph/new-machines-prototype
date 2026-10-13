@@ -1,0 +1,345 @@
+"""A run's result as the run page shows it: a pack's `deliverable_view`, its fallback, and the reconciliation
+mapping that packs without a view keep."""
+
+import copy
+import logging
+from functools import cache
+
+import pytest
+
+from app import settings
+from app.defs.digest import digest
+from app.defs.loader import load_bundle
+from app.models.runs import Run
+from app.runtime import projection
+
+RECON = "order-payment-reconciliation"
+REFUNDS = "refund-triage"
+OVERDUE = "overdue-invoice-follow-up"
+
+
+@cache
+def _bundle():
+    return load_bundle(settings.defs_dir())
+
+
+def _snapshot(pack: str) -> dict:
+    """A run snapshot that pins `pack` and every shared definition (enough for the projection)."""
+    defs: dict = {}
+    versions = []
+    for (kind, key), d in sorted(_bundle().items.items()):
+        if kind in ("pack", "workflow", "contract") and key != pack:
+            continue
+        defs.setdefault(kind, {})[key] = {"body": copy.deepcopy(d.body), "files": d.files}
+        versions.append({"kind": kind, "key": key, "version": 1, "digest": digest(d)})
+    return {"org_id": "org_demo", "versions": versions, "defs": defs, "overrides": {}, "disabled": []}
+
+
+def _completed(pack: str, deliverable: dict, *, view: dict | None = None, mocked: bool = True) -> Run:
+    snapshot = _snapshot(pack)
+    if view is None:
+        view = projection.deliverable_view(snapshot["defs"]["pack"])
+    p = projection.initial_projection(
+        "run_v", snapshot, {"since": "2026-10-06", "until": "2026-10-12"}, "You", 2500
+    )
+    event = {
+        "seq": 9,
+        "at": "2026-10-13T10:00:09.000000Z",
+        "type": "run.completed",
+        "node_id": "done",
+        "data": {"deliverable": deliverable, "mocked": mocked},
+    }
+    return Run.model_validate(projection.apply_event(p, event, view))
+
+
+def _drafts(n: int, body: str = "Hello,\n\nYour invoice is overdue.") -> dict:
+    return {
+        "drafts": [
+            {
+                "to": f"c{i}@example.com",
+                "subject": f"Invoice INV-{i} is overdue",
+                "body": body,
+                "ref": f"INV-{i}",
+            }
+            for i in range(n)
+        ]
+    }
+
+
+# --- the view ---------------------------------------------------------------------------------------
+
+
+def test_the_seed_packs_describe_their_deliverable_view():
+    for pack in (REFUNDS, OVERDUE):
+        view = projection.deliverable_view(_snapshot(pack)["defs"]["pack"])
+        assert view is not None and view["kind"] == "Email drafts"
+        assert [f["label"] for f in view["facts"]] == ["Drafts created"]
+    assert projection.deliverable_view(_snapshot(RECON)["defs"]["pack"]) is None
+    assert projection.deliverable_view(None) is None
+
+
+def test_a_view_renders_kind_summary_facts_and_one_item_per_draft():
+    long_body = "Hello, " + "x" * 300
+    run = _completed(
+        OVERDUE, _drafts(3) | {"drafts": [*_drafts(2)["drafts"], _drafts(1, long_body)["drafts"][0]]}
+    )
+    d = run.deliverable
+    assert d.kind == "Email drafts" and d.title == run.title
+    assert d.summary == "3 reminder emails were drafted on sandbox data. No email was created in Gmail."
+    assert run.summary == d.summary
+    assert [(r.label, r.value) for r in d.rows] == [("Drafts created", "3")]
+    assert [i.label for i in d.items] == [
+        "c0@example.com — Invoice INV-0 is overdue",
+        "c1@example.com — Invoice INV-1 is overdue",
+        "c0@example.com — Invoice INV-0 is overdue",
+    ]
+    assert d.items[0].detail == "Hello,\n\nYour invoice is overdue."
+    assert d.items[2].detail == long_body[:160] and len(d.items[2].detail) == 160
+    assert d.limitations == [projection.SIMULATED_LIMITATION] and d.unresolved == [] and d.evidence == []
+
+
+def test_a_view_summary_counts_one_draft_in_the_singular():
+    assert _completed(OVERDUE, _drafts(1), mocked=False).deliverable.summary == (
+        "1 reminder email was drafted, ready for you to check and send."
+    )
+    assert _completed(REFUNDS, _drafts(1), mocked=False).deliverable.summary == (
+        "1 refund reply was drafted, ready for you to check and send. No refund has been issued."
+    )
+    assert _completed(REFUNDS, _drafts(2), mocked=False).deliverable.summary.startswith(
+        "2 refund replies were drafted, ready"
+    )
+
+
+def test_a_sandbox_run_says_its_drafts_were_made_on_sandbox_data():
+    assert _completed(OVERDUE, _drafts(4)).deliverable.summary == (
+        "4 reminder emails were drafted on sandbox data. No email was created in Gmail."
+    )
+    assert _completed(OVERDUE, _drafts(1)).deliverable.summary == (
+        "1 reminder email was drafted on sandbox data. No email was created in Gmail."
+    )
+    assert _completed(REFUNDS, _drafts(2)).deliverable.summary == (
+        "2 refund replies were drafted on sandbox data. No email was created in Gmail and no refund has "
+        "been issued."
+    )
+    assert _completed(REFUNDS, _drafts(1)).deliverable.summary == (
+        "1 refund reply was drafted on sandbox data. No email was created in Gmail and no refund has been "
+        "issued."
+    )
+
+
+def test_a_run_with_a_sandbox_tool_call_is_mocked_even_if_the_completion_does_not_say_so():
+    call = {
+        "id": "tc_1",
+        "tool_ref": "gmail.create_draft",
+        "policy": {"verdict": "PERMIT", "reason_codes": []},
+        "ok": True,
+        "mocked": True,
+    }
+    run = _fold(
+        OVERDUE,
+        ("tool.call", "send", call),
+        ("run.completed", "done", {"deliverable": _drafts(2), "mocked": False}),
+    )
+    assert run.deliverable.summary.endswith("on sandbox data. No email was created in Gmail.")
+    assert run.deliverable.limitations == [projection.SIMULATED_LIMITATION]
+    live = _fold(
+        OVERDUE,
+        ("tool.call", "send", {**call, "mocked": False}),
+        ("run.completed", "done", {"deliverable": _drafts(2), "mocked": False}),
+    )
+    assert live.deliverable.summary == "2 reminder emails were drafted, ready for you to check and send."
+    assert live.deliverable.limitations == []
+
+
+def test_any_error_in_a_view_falls_back_and_never_fails_the_fold(monkeypatch):
+    def boom(*_args, **_kw):
+        raise RuntimeError("unexpected")
+
+    monkeypatch.setattr(projection.cel, "evaluate", boom)
+    run = _completed(OVERDUE, {"summary": "Own summary.", "drafts": []})
+    assert run.status == "COMPLETED" and run.deliverable.summary == "Own summary."
+    assert run.deliverable.rows == [] and run.deliverable.items is None
+
+
+def test_a_run_carries_its_pinned_pack_outcome_and_tool_action_classes():
+    snapshot = _snapshot(REFUNDS)
+    p = projection.initial_projection(
+        "run_v", snapshot, {"since": "2026-10-06", "until": "2026-10-12"}, "You", 2500
+    )
+    data = {
+        "id": "tc_1",
+        "tool_ref": "gmail.create_draft",
+        "app": "Gmail",
+        "action": "create draft",
+        "capability": "mail.write",
+        "action_class": "write",
+        "policy": {"verdict": "PERMIT", "reason_codes": ["APPROVAL_GRANTED"]},
+        "ok": True,
+        "mocked": True,
+    }
+    event = {"seq": 1, "at": "2026-10-13T10:00:01Z", "type": "tool.call", "node_id": "send", "data": data}
+    run = Run.model_validate(projection.apply_event(p, event))
+    assert run.outcome == snapshot["defs"]["pack"][REFUNDS]["body"]["outcome"]
+    [call] = next(n for n in run.nodes if n.id == "send").tool_calls
+    assert call.action_class == "write"
+    older = {**data}
+    older.pop("action_class")
+    run = Run.model_validate(projection.apply_event(p, {**event, "data": older}))
+    assert next(n for n in run.nodes if n.id == "send").tool_calls[0].action_class is None
+
+
+def _fold(pack: str, *events: tuple[str, str | None, dict]) -> Run:
+    p = projection.initial_projection("run_v", _snapshot(pack), {"as_of": "2026-10-13"}, "You", 2500)
+    for seq, (type_, node, data) in enumerate(events, 1):
+        event = {
+            "seq": seq,
+            "at": f"2026-10-13T10:00:{seq:02d}Z",
+            "type": type_,
+            "node_id": node,
+            "data": data,
+        }
+        p = projection.apply_event(p, event, projection.deliverable_view(_snapshot(pack)["defs"]["pack"]))
+    return Run.model_validate(p)
+
+
+def test_a_run_that_ends_without_a_verification_node_was_not_verified():
+    plan = {"summary": "Checked 9 invoices: none is overdue.", "messages": [], "review_items": []}
+    run = _fold(
+        OVERDUE,
+        ("node.completed", "check", {"route": "nothing"}),
+        ("run.completed", "nothing", {"deliverable": plan}),
+    )
+    assert run.status == "COMPLETED" and run.stages.verified == "not_required"
+    assert run.stages.executed == "done" and run.deliverable.summary == plan["summary"]
+
+
+def test_a_run_whose_verification_passed_is_verified():
+    run = _fold(
+        OVERDUE,
+        ("node.completed", "verify", {"route": "pass"}),
+        ("run.completed", "done", {"deliverable": _drafts(1)}),
+    )
+    assert run.stages.verified == "done"
+
+
+def test_a_view_shows_at_most_fifty_items():
+    run = _completed(REFUNDS, _drafts(60))
+    assert len(run.deliverable.items) == 50
+    assert run.deliverable.rows[0].value == "60"
+    assert "no refund has been issued" in run.deliverable.summary
+
+
+def test_a_view_over_a_run_that_ended_without_drafts_shows_its_own_summary():
+    plan = {
+        "summary": "Checked 9 invoices as of 2026-08-01: none is overdue.",
+        "messages": [],
+        "review_items": [],
+    }
+    run = _completed(OVERDUE, plan, mocked=False)
+    d = run.deliverable
+    assert d.summary == plan["summary"] and run.summary == plan["summary"]
+    assert [(r.label, r.value) for r in d.rows] == [("Drafts created", "0")]
+    assert d.items == [] and d.limitations == []
+
+
+def test_a_cel_error_in_the_view_falls_back_to_the_summary_only(caplog):
+    view = {
+        "kind": "Email drafts",
+        "summary": "='Saved ' + string(size(deliverable.drafts)) + ' drafts.'",
+        "facts": [{"label": "Drafts created", "value": "=size(deliverable.nope)"}],
+        "items": {"from": "=deliverable.drafts", "label": "=item.to", "detail": "=item.body"},
+    }
+    with caplog.at_level(logging.WARNING, logger="app.runtime.projection"):
+        run = _completed(OVERDUE, _drafts(2), view=view)
+    d = run.deliverable
+    assert run.status == "COMPLETED"
+    # The summary evaluated, so it stays; the facts and items are dropped together.
+    assert d.kind == "Email drafts" and d.summary == "Saved 2 drafts." and d.rows == [] and d.items is None
+    assert run.summary == "Saved 2 drafts."
+    assert any("deliverable view did not evaluate" in r.getMessage() for r in caplog.records)
+
+
+def test_a_failing_view_summary_keeps_the_deliverable_own_summary():
+    view = {"kind": "Plan", "summary": "=deliverable.missing", "facts": []}
+    run = _completed(OVERDUE, {"summary": "Checked 9 invoices.", "messages": []}, view=view)
+    assert run.deliverable.summary == "Checked 9 invoices." and run.deliverable.rows == []
+
+
+@pytest.mark.parametrize(
+    "items",
+    [
+        {"from": "=deliverable.drafts[0]", "label": "=item.to", "detail": "=item.body"},  # not a list
+        {"from": "=deliverable.drafts", "label": "=item.missing", "detail": "=item.body"},
+    ],
+)
+def test_bad_view_items_fall_back_too(items):
+    view = {
+        "kind": "Email drafts",
+        "summary": "Done.",
+        "facts": [{"label": "A", "value": "1"}],
+        "items": items,
+    }
+    d = _completed(OVERDUE, _drafts(1), view=view).deliverable
+    assert d.summary == "Done." and d.rows == [] and d.items is None
+
+
+def test_view_literals_are_shown_as_written():
+    view = {"kind": "Notes", "summary": "All done.", "facts": [{"label": "Mode", "value": "sandbox"}]}
+    d = _completed(OVERDUE, {"anything": 1}, view=view).deliverable
+    assert (d.kind, d.summary, [(r.label, r.value) for r in d.rows], d.items) == (
+        "Notes",
+        "All done.",
+        [("Mode", "sandbox")],
+        None,
+    )
+
+
+# --- packs without a view keep the reconciliation mapping -------------------------------------------------
+
+REPORT = {
+    "summary": "Checked 12 orders.",
+    "rows": [
+        ["2026-10-06", "#1001", "matched", "45.00", "matched", ""],
+        ["2026-10-07", "#1002", "mismatch", "129.00", "open", "Short by the fee"],
+        ["short row"],
+    ],
+    "totals": {
+        "orders_count": 12,
+        "matched_count": 10,
+        "mismatch_count": 2,
+        "net_difference_minor": -7040,
+        "currency": "USD",
+    },
+}
+
+
+def test_a_pack_without_a_view_keeps_the_reconciliation_mapping():
+    run = _completed(RECON, REPORT)
+    assert run.deliverable.model_dump(by_alias=True, exclude_none=True) == {
+        "title": run.title,
+        "kind": "Report rows",
+        "summary": "Checked 12 orders.",
+        "rows": [
+            {"label": "Orders checked", "value": "12"},
+            {"label": "Matched", "value": "10"},
+            {"label": "Mismatches", "value": "2"},
+            {"label": "Net difference", "value": "-70.40 USD"},
+            {"label": "Rows in the report", "value": "2"},
+        ],
+        "limitations": [projection.SIMULATED_LIMITATION],
+        "unresolved": ["#1002: Short by the fee"],
+        "evidence": [],
+    }
+    assert run.summary == "Checked 12 orders."
+
+
+def test_folding_without_a_view_is_unchanged_for_any_pack():
+    """Runs pinned before packs had views fold without one, exactly as before."""
+    snapshot = _snapshot(RECON)
+    p = projection.initial_projection(
+        "run_v", snapshot, {"since": "2026-10-06", "until": "2026-10-12"}, "You", 2500
+    )
+    event = {"seq": 1, "at": "2026-10-13T10:00:01Z", "type": "run.completed", "node_id": "done", "data": {}}
+    assert projection.apply_event(p, event) == projection.apply_event(p, event, None)
+    done = projection.apply_event(p, event)
+    assert done["summary"] == "Completed." and "deliverable" not in done

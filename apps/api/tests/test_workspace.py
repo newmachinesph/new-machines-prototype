@@ -552,7 +552,7 @@ def test_org_reports_plan_cap_and_this_months_spend(live, db):
         "plan": "Trial",
         "monthlyCap": _money(2500),
         "monthSpent": _money(555),
-        "region": "us-central1",
+        "region": "asia-south1",
     }
 
 
@@ -562,6 +562,23 @@ def test_policies_are_the_built_in_defaults(live):
     refs = [p["ref"] for p in policies]
     assert refs == [p.ref for p in workspace.DEFAULT_POLICIES]
     assert "refunds@2" not in refs and all(p["summary"] and p["updated"] for p in policies)
+
+
+def test_the_region_policy_names_where_data_lives_and_that_model_requests_are_not_pinned(live):
+    org = me(live, "ana")["orgId"]
+    policies = live.get(f"/v1/organizations/{org}/policies", headers=as_("ana")).json()
+    region = next(p for p in policies if p["ref"] == "region@1")
+    assert region["summary"] == (
+        "Customer data is stored and processed in asia-south1 (Mumbai). AI model requests are sent to the "
+        "model provider and are not pinned to a region."
+    )
+
+
+def test_the_ops_console_and_the_customer_app_share_one_region():
+    from app import ops_live
+
+    assert workspace.REGION == "asia-south1"
+    assert ops_live.REGION is workspace.REGION
 
 
 # --- tokens --------------------------------------------------------------------------------------------

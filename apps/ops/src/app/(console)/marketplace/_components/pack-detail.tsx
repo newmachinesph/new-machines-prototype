@@ -5,6 +5,7 @@ import Link from "next/link";
 import { type Column, DataTable } from "@/components/data-table";
 import { QueryState } from "@/components/query-state";
 import { Skeleton } from "@/components/skeleton";
+import { LiveSampleNote } from "@/components/live-sample-note";
 import { Amount, Callout, Id, KeyValues, PageHeader, Pill, Section, type Tone } from "@/components/ui";
 import { ApiError } from "@/lib/api/errors";
 import type { PackConnector, PackListingDetail } from "@/lib/api/gen/types.gen";
@@ -91,6 +92,7 @@ function PackBody({ pack }: { pack: PackListingDetail }) {
         }
         lede={p.outcome}
         actions={<PackActions pack={pack} />}
+        below={<LiveSampleNote>This pack listing is sample data, not the live catalog.</LiveSampleNote>}
       >
         <BackLink />
       </PageHeader>

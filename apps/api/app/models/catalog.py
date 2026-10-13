@@ -89,9 +89,10 @@ class Pack(Model):
     # From the pack definition: a taxonomy function id and industry ids (none for packs without one).
     function: str | Opt = None
     industries: list[str] = Field(default_factory=list)
-    # Live workspace (pack definitions): the pack's price note, and on the detail response the JSON Schema
-    # of the input a run takes.
+    # Live workspace (pack definitions): the pack's price note.
     price_note: str | Opt = None
+    # On the detail response, the JSON Schema of the input a run takes: every live pack, and in the demo
+    # workspace a pack that runs for real.
     input_schema: dict[str, Any] | Opt = None
     # Live workspace, hired packs only: the per-run spending cap the org set when it hired the pack.
     per_run_cap: Money | Opt = None

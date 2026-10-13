@@ -1,0 +1,62 @@
+{
+  "messages": [
+    {
+      "messageId": "18f3a0c1d2e41103",
+      "threadId": "18f3a0c1d2e41103",
+      "messageTimestamp": "2026-10-13T10:05:00Z",
+      "labelIds": ["INBOX", "UNREAD"],
+      "sender": "Priya Nair <priya.nair@example.com>",
+      "to": "support@shop.example.com",
+      "subject": "Second request: refund for order #1003",
+      "messageText": "Hi again, I am writing a second time about the cracked mug from order #1003. Please refund the $23.50. Priya",
+      "preview": {
+        "subject": "Second request: refund for order #1003",
+        "body": "Hi again, I am writing a second time about the cracked mug from order #1003. Please refund the $23.50."
+      }
+    },
+    {
+      "messageId": "18f3a0c1d2e41088",
+      "threadId": "18f3a0c1d2e41088",
+      "messageTimestamp": "2026-10-13T08:30:00Z",
+      "labelIds": ["INBOX", "UNREAD"],
+      "sender": "Daniel Price <daniel.price@example.com>",
+      "to": "support@shop.example.com",
+      "subject": "Refund please - order #1088",
+      "messageText": "Hi, I returned the candle set from order #1088 last week. Can you refund the $45.00? Thanks, Daniel",
+      "preview": {
+        "subject": "Refund please - order #1088",
+        "body": "Hi, I returned the candle set from order #1088 last week. Can you refund the $45.00?"
+      }
+    },
+    {
+      "messageId": "18f3a0c1d2e41005",
+      "threadId": "18f3a0c1d2e41005",
+      "messageTimestamp": "2026-10-12T09:45:00Z",
+      "labelIds": ["INBOX", "UNREAD"],
+      "sender": "Lena Fischer <lena.fischer@example.com>",
+      "to": "support@shop.example.com",
+      "subject": "Refund for my lamp",
+      "messageText": "Hi, I opened the lamp from order #1005 and used it twice, but it flickers. I would like a refund of $150.00 if possible. Best, Lena",
+      "preview": {
+        "subject": "Refund for my lamp",
+        "body": "Hi, I opened the lamp from order #1005 and used it twice, but it flickers. I would like a refund of $150.00 if possible."
+      }
+    },
+    {
+      "messageId": "18f3a0c1d2e41003",
+      "threadId": "18f3a0c1d2e41003",
+      "messageTimestamp": "2026-10-12T08:10:00Z",
+      "labelIds": ["INBOX", "UNREAD"],
+      "sender": "Priya Nair <priya.nair@example.com>",
+      "to": "support@shop.example.com",
+      "subject": "Refund request for order #1003",
+      "messageText": "Hello, the mug from order #1003 arrived cracked. Could I get a refund of $23.50, please? Thank you, Priya",
+      "preview": {
+        "subject": "Refund request for order #1003",
+        "body": "Hello, the mug from order #1003 arrived cracked. Could I get a refund of $23.50, please?"
+      }
+    }
+  ],
+  "nextPageToken": null,
+  "resultSizeEstimate": 4
+}

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui";
 import type { TenantDetail } from "@/lib/api/gen/types.gen";
 import { money } from "@/lib/format";
 import { DOLLARS_HINT, minorToDollarsInput, parseDollarsToMinor } from "@/lib/money";
-import { useCanWrite } from "@/lib/queries/ops";
+import { useCanWrite, useOpsWorkspace } from "@/lib/queries/ops";
 import { useReactivateTenant, useSetTenantPlan, useSetTenantSpendCap, useSuspendTenant } from "@/lib/queries/tenants";
 
 const PLANS = ["Starter", "Pro", "Enterprise"] as const;
@@ -17,6 +17,9 @@ type Dialog = "plan" | "cap" | "suspend" | "reactivate" | null;
 
 export function TenantActions({ tenant }: { tenant: TenantDetail }) {
   const canWrite = useCanWrite();
+  const live = useOpsWorkspace() === "live";
+  // The live workspace cannot change a plan yet (the API answers 409), so it offers no Change plan.
+  const canChangePlan = !live;
   const toast = useToast();
   const suspend = useSuspendTenant();
   const reactivate = useReactivateTenant();
@@ -54,7 +57,7 @@ export function TenantActions({ tenant }: { tenant: TenantDetail }) {
     <>
       <div className="flex flex-wrap gap-2">
         {canReactivate ? trigger("Reactivate tenant", "reactivate", "primary") : null}
-        {!churned ? trigger("Change plan", "plan", "secondary") : null}
+        {!churned && canChangePlan ? trigger("Change plan", "plan", "secondary") : null}
         {!churned ? trigger("Set spend cap", "cap", "secondary") : null}
         {canSuspend ? trigger("Suspend tenant", "suspend", "danger") : null}
       </div>
@@ -63,7 +66,11 @@ export function TenantActions({ tenant }: { tenant: TenantDetail }) {
         open={open === "suspend"}
         onOpenChange={onOpenChange("suspend")}
         title={`Suspend ${tenant.name}?`}
-        consequence={`Everyone at ${tenant.name} loses access to the app and runs stop starting until you reactivate.`}
+        consequence={
+          `Everyone at ${tenant.name} loses access to the app and runs stop starting until you reactivate.` +
+          // A live suspend does not cancel open runs: they stop at the next human or approval step.
+          (live ? " Runs already in progress keep going until they reach a step this company has to act on." : "")
+        }
         confirmLabel="Suspend tenant"
         destructive
         reasonPlaceholder="Chargeback dispute opened by the card issuer"

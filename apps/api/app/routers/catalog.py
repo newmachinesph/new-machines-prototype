@@ -1,4 +1,4 @@
-from app import live_catalog, workspace
+from app import live_catalog, real_runs, workspace
 from app.auth import CurrentActor
 from app.catalog import agents as agent_catalog
 from app.catalog.packs import SandboxForecast, with_definition
@@ -80,12 +80,16 @@ def list_workflow_packs(actor: CurrentActor) -> list[Pack]:
 
 @router.get("/workflow-packs/{slug}", operation_id="getWorkflowPack", response_model=Pack)
 def get_workflow_pack(slug: str, actor: CurrentActor) -> Pack:
-    """One pack; in the live workspace with `inputSchema`, the JSON Schema of the input a run takes."""
+    """One pack. `inputSchema` is the JSON Schema of the input a run takes: for every pack in the live
+    workspace, and in the demo workspace for a pack that runs for real (the runtime is on and it has a
+    definition)."""
     if workspace.live():
         return live_catalog.get_pack(actor.org_id, slug)
     with locked_store():
         pack = find_pack(slug)
-    return _classified([pack])[0]
+    detail = _classified([pack])[0]
+    schema = real_runs.real_input_schema(slug)
+    return detail.model_copy(update={"input_schema": schema}) if schema else detail
 
 
 @router.get("/catalog/taxonomy", operation_id="getCatalogTaxonomy", response_model=Taxonomy)

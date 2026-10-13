@@ -5,6 +5,7 @@ import { MarketplaceView } from "./marketplace-view";
 
 const state = vi.hoisted(() => ({
   canWrite: true,
+  workspace: "demo" as "demo" | "live",
   roleKnown: true,
   action: "new" as string | null,
   setAction: vi.fn(),
@@ -18,6 +19,7 @@ vi.mock("nuqs", () => ({
 vi.mock("@/lib/queries/ops", () => ({
   useCanWrite: () => state.canWrite,
   useMe: () => ({ isSuccess: state.roleKnown }),
+  useOpsWorkspace: () => state.workspace,
 }));
 vi.mock("@/lib/queries/marketplace", () => ({
   usePacks: () => ({ isPending: false, isError: false, data: state.packs }),
@@ -34,6 +36,7 @@ const renderView = () =>
 describe("MarketplaceView ?action=new", () => {
   beforeEach(() => {
     state.canWrite = true;
+    state.workspace = "demo";
     state.roleKnown = true;
     state.action = "new";
     state.setAction.mockClear();
@@ -52,6 +55,40 @@ describe("MarketplaceView ?action=new", () => {
     expect(screen.queryByTestId("new-pack-dialog")).toBeNull();
     expect(state.setAction).toHaveBeenCalledWith(null);
     expect(screen.getByRole("button", { name: "New pack" })).toBeDisabled();
+  });
+
+  it("hides New pack in the live workspace and tags the page Sample under its heading", () => {
+    state.workspace = "live";
+    renderView();
+    expect(screen.queryByRole("button", { name: "New pack" })).toBeNull();
+    expect(screen.queryByTestId("new-pack-dialog")).toBeNull();
+    expect(state.setAction).toHaveBeenCalledWith(null);
+    const heading = screen.getByRole("heading", { level: 1, name: "Marketplace" });
+    const note = screen.getByText("Pack listings here are sample data, not the live catalog.");
+    expect(heading.compareDocumentPosition(note) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("shows no Sample note in the demo", () => {
+    renderView();
+    expect(screen.queryByText("Sample")).toBeNull();
+  });
+
+  it("gives the live workspace a lede that invites no listing actions", () => {
+    state.workspace = "live";
+    renderView();
+    expect(screen.queryByText(/Approve what is ready/)).toBeNull();
+    expect(
+      screen.getByText(
+        "Workflow packs by listing status. In the live workspace, packs are published from Definitions, so listings are read-only here.",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("keeps the demo lede", () => {
+    renderView();
+    expect(
+      screen.getByText("Workflow packs by listing status. Approve what is ready, retire what is not."),
+    ).toBeInTheDocument();
   });
 
   it("leaves the parameter alone until the role is known", () => {

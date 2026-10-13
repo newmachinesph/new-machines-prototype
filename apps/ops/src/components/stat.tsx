@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
-import { SimTag } from "./ui";
+import { SampleTag, SimTag } from "./ui";
 
 const VALUE_TONE = {
   default: "text-ink",
@@ -19,6 +19,8 @@ export type StatProps = {
   sub?: ReactNode;
   /** Adds a Simulated tag next to the label. Required for billing and health figures. */
   simulated?: boolean;
+  /** Adds a Sample tag instead: a fixture figure shown in the live workspace. */
+  sample?: boolean;
   /** Colours the value when it needs attention: human = waiting on people, blocked = failing or over a limit. */
   tone?: keyof typeof VALUE_TONE;
   /** Makes the whole tile a link to the page behind the figure. */
@@ -27,12 +29,12 @@ export type StatProps = {
 };
 
 /** A KPI tile: label, value, optional sub line and Simulated tag. Lay several out in a responsive grid. */
-export function Stat({ label, value, sub, simulated, tone = "default", href, className }: StatProps) {
+export function Stat({ label, value, sub, simulated, sample, tone = "default", href, className }: StatProps) {
   const body = (
     <>
       <div className="flex min-h-5 items-center justify-between gap-2">
         <span className="text-[13px] leading-tight text-muted">{label}</span>
-        {simulated ? <SimTag /> : null}
+        {sample ? <SampleTag /> : simulated ? <SimTag /> : null}
       </div>
       <div className={cn("tnum mt-1.5 text-2xl leading-tight font-semibold tracking-tight", VALUE_TONE[tone])}>
         {value}

@@ -44,14 +44,26 @@ def _access(action_class: str, defaults: dict) -> str:
     return "write (approval)" if verdict == "require_approval" else "denied"
 
 
-def pack_grants(connector: dict, pack_name: str) -> list[dict]:
-    """One grant per capability of the connector's tools, for the hired pack `pack_name`."""
+def contract_capabilities(pack: dict, contracts: dict[str, dict]) -> set[str] | None:
+    """The tool capabilities the pack's Work Contract grants; None when its contract is unknown."""
+    contract = contracts.get(str(pack.get("contract") or ""))
+    if not isinstance(contract, dict):
+        return None
+    return {str(c) for c in (contract.get("authorization") or {}).get("tool_capabilities") or []}
+
+
+def pack_grants(connector: dict, pack_name: str, capabilities: set[str] | None = None) -> list[dict]:
+    """One grant per capability of the connector's tools, for the hired pack `pack_name`. With
+    `capabilities` (the pack contract's), only the tools the pack may use: one connector can serve packs
+    that use different tools of it."""
     defaults = connector.get("defaults") if isinstance(connector.get("defaults"), dict) else {}
     grants: dict[str, dict] = {}
     for tool in connector.get("tools") or []:
         if not isinstance(tool, dict) or not tool.get("capability"):
             continue
         capability = str(tool["capability"])
+        if capabilities is not None and capability not in capabilities:
+            continue
         grants.setdefault(
             capability,
             {
@@ -77,12 +89,18 @@ def _hired_packs(conn, org_id: str, packs: dict[str, dict]) -> list[dict]:
     return [packs[r["pack_slug"]] for r in rows if r["pack_slug"] in packs]
 
 
-def _grants_for(connectors: dict[str, dict], key: str, packs: list[dict]) -> list[dict]:
+def _grants_for(
+    connectors: dict[str, dict], key: str, packs: list[dict], contracts: dict[str, dict]
+) -> list[dict]:
     return [
         g
         for pack in packs
         if key in (pack.get("connectors") or [])
-        for g in pack_grants(connectors.get(key) or {}, str(pack.get("name") or pack.get("slug")))
+        for g in pack_grants(
+            connectors.get(key) or {},
+            str(pack.get("name") or pack.get("slug")),
+            contract_capabilities(pack, contracts),
+        )
     ]
 
 
@@ -137,9 +155,9 @@ def connect(org_id: str, user_id: str, name: str) -> Connection:
     key = _resolve(connectors, name)
     if settings.connector_mode() != "sandbox":
         raise ApiProblem(409, "LIVE_CONNECT_UNAVAILABLE", f"{LIVE_UNAVAILABLE}.")
-    bodies = _pack_bodies()
+    bodies, contracts = _pack_bodies(), latest_bodies("contract")
     with db.connect() as conn:
-        grants = _grants_for(connectors, key, _hired_packs(conn, org_id, bodies))
+        grants = _grants_for(connectors, key, _hired_packs(conn, org_id, bodies), contracts)
         conn.execute(
             "INSERT INTO connections (org_id, app, status, mode, grants, connected_by) "
             "VALUES (%s, %s, 'sandbox', 'sandbox', %s, %s) ON CONFLICT (org_id, app) DO UPDATE SET "
@@ -185,10 +203,13 @@ def revoke_grant(org_id: str, name: str, install: str, capability: str) -> None:
         conn.commit()
 
 
-def grant_pack(conn, connectors: dict[str, dict], org_id: str, pack: dict) -> None:
+def grant_pack(
+    conn, connectors: dict[str, dict], org_id: str, pack: dict, contracts: dict[str, dict]
+) -> None:
     """A pack was hired: the org's apps it uses that are already connected gain its grants (those it holds
     already are left as they are). Runs on the caller's connection and does not commit."""
     name = str(pack.get("name") or pack.get("slug"))
+    capabilities = contract_capabilities(pack, contracts)
     for key in [str(c) for c in pack.get("connectors") or []]:
         row = conn.execute(
             "SELECT grants, status FROM connections WHERE org_id = %s AND app = %s FOR UPDATE", (org_id, key)
@@ -198,7 +219,9 @@ def grant_pack(conn, connectors: dict[str, dict], org_id: str, pack: dict) -> No
         grants = list(row["grants"] or [])
         held = {(g.get("install"), g.get("capability")) for g in grants}
         added = [
-            g for g in pack_grants(connectors.get(key) or {}, name) if (name, g["capability"]) not in held
+            g
+            for g in pack_grants(connectors.get(key) or {}, name, capabilities)
+            if (name, g["capability"]) not in held
         ]
         if added:
             conn.execute(

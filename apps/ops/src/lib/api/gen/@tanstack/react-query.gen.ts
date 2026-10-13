@@ -64,7 +64,9 @@ export const getWorkflowPackQueryKey = (options: Options<GetWorkflowPackData>) =
 /**
  * Get Workflow Pack
  *
- * One pack; in the live workspace with `inputSchema`, the JSON Schema of the input a run takes.
+ * One pack. `inputSchema` is the JSON Schema of the input a run takes: for every pack in the live
+ * workspace, and in the demo workspace for a pack that runs for real (the runtime is on and it has a
+ * definition).
  */
 export const getWorkflowPackOptions = (options: Options<GetWorkflowPackData>) => queryOptions<GetWorkflowPackResponse, GetWorkflowPackError, GetWorkflowPackResponse, ReturnType<typeof getWorkflowPackQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
@@ -911,6 +913,9 @@ export const opsListConnectorsQueryKey = (options?: Options<OpsListConnectorsDat
 
 /**
  * Ops List Connectors
+ *
+ * The live workspace lists its connector definitions with the settings Ops persisted and today's usage
+ * (UTC); the demo workspace lists its fixture catalog.
  */
 export const opsListConnectorsOptions = (options?: Options<OpsListConnectorsData>) => queryOptions<OpsListConnectorsResponse, OpsListConnectorsError, OpsListConnectorsResponse, ReturnType<typeof opsListConnectorsQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
@@ -1016,7 +1021,8 @@ export const opsSetConnectorDefaultsMutation = (options?: Partial<Options<OpsSet
 /**
  * Ops Health Check Connector
  *
- * Simulated and deterministic: healthy unless the connector is disabled.
+ * Simulated and deterministic: healthy unless the connector is disabled. Not available in the live
+ * workspace, which has no health probe yet.
  */
 export const opsHealthCheckConnectorMutation = (options?: Partial<Options<OpsHealthCheckConnectorData>>): UseMutationOptions<OpsHealthCheckConnectorResponse, OpsHealthCheckConnectorError, Options<OpsHealthCheckConnectorData>> => {
     const mutationOptions: UseMutationOptions<OpsHealthCheckConnectorResponse, OpsHealthCheckConnectorError, Options<OpsHealthCheckConnectorData>> = {
@@ -1392,6 +1398,8 @@ export const opsListGuardrailsQueryKey = (options?: Options<OpsListGuardrailsDat
 
 /**
  * Ops List Guardrails
+ *
+ * In the live workspace the pause switch is persisted; the other guardrails stay fixtures.
  */
 export const opsListGuardrailsOptions = (options?: Options<OpsListGuardrailsData>) => queryOptions<OpsListGuardrailsResponse, OpsListGuardrailsError, OpsListGuardrailsResponse, ReturnType<typeof opsListGuardrailsQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
@@ -1483,6 +1491,7 @@ export const opsListAuditQueryKey = (options?: Options<OpsListAuditData>) => cre
  * Ops List Audit
  *
  * Newest first. Entries with the same timestamp keep the order they were written in, newest first.
+ * The live workspace reads the persisted ops audit log.
  */
 export const opsListAuditOptions = (options?: Options<OpsListAuditData>) => queryOptions<OpsListAuditResponse, OpsListAuditError, OpsListAuditResponse, ReturnType<typeof opsListAuditQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {

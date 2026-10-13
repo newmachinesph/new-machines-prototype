@@ -34,7 +34,9 @@ from app.store import iso
 
 log = logging.getLogger(__name__)
 
-REGION = "us-central1"
+# Where the database and API run. Model requests go to the model provider and are not pinned to it.
+REGION = "asia-south1"
+REGION_NAME = "Mumbai"
 TOKEN_DAYS = 30
 TOKEN_PREFIX = "nm_pat_"
 TOKEN_PREFIX_SHOWN = len(TOKEN_PREFIX) + 4  # nm_pat_ plus the first four characters of the random part
@@ -295,11 +297,18 @@ def _month_start(now: datetime | None = None) -> datetime:
     return now.astimezone(UTC).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
 
+def _next_month(month_start: datetime) -> datetime:
+    return (month_start + timedelta(days=32)).replace(day=1)
+
+
 def _part(name: str) -> str:
     return f"COALESCE((projection #>> '{{spent,{name},amountMinor}}')::bigint, 0)"
 
 
 _AI, _TOOLS, _HUMAN = _part("ai"), _part("tools"), _part("human")
+# A run's spend (AI, tools and human review) read from its projection, as SQL over the `runs` table.
+RUN_SPENT_SQL = f"({_AI} + {_TOOLS} + {_HUMAN})"
+RUN_AI_SPENT_SQL = _AI  # the AI part alone
 
 
 def _org_row(conn, org_id: str) -> dict:
@@ -311,13 +320,23 @@ def _org_row(conn, org_id: str) -> dict:
     return row
 
 
-def _month_spent(conn, org_id: str) -> int:
-    row = conn.execute(
-        f"SELECT COALESCE(SUM({_AI} + {_TOOLS} + {_HUMAN}), 0) AS spent FROM runs "
-        "WHERE org_id = %s AND created_at >= %s",
-        (org_id, _month_start()),
-    ).fetchone()
-    return int(row["spent"])
+def month_spent_by_org(conn, *, now: datetime | None = None, org_id: str | None = None) -> dict[str, int]:
+    """{org id: what its runs spent this calendar month (UTC), in minor units} in one query, for every org
+    with runs this month (or only `org_id`). The one definition of a month's spend: the customer app and
+    the operator console both read it."""
+    start = _month_start(now)
+    rows = conn.execute(
+        f"SELECT org_id, SUM({RUN_SPENT_SQL}) AS spent FROM runs "
+        "WHERE created_at >= %(since)s AND created_at < %(until)s "
+        "AND (%(org)s::text IS NULL OR org_id = %(org)s) GROUP BY org_id",
+        {"since": start, "until": _next_month(start), "org": org_id},
+    ).fetchall()
+    return {r["org_id"]: int(r["spent"]) for r in rows}
+
+
+def month_spent(conn, org_id: str) -> int:
+    """What the org's runs spent this calendar month (UTC), in minor units (`month_spent_by_org`)."""
+    return month_spent_by_org(conn, org_id=org_id).get(org_id, 0)
 
 
 def _organization(conn, org_id: str) -> Organization:
@@ -328,7 +347,7 @@ def _organization(conn, org_id: str) -> Organization:
         short=row["name"],
         plan=str(row["plan"]).capitalize(),
         monthly_cap=Money(amount_minor=int(row["monthly_cap_minor"])),
-        month_spent=Money(amount_minor=_month_spent(conn, org_id)),
+        month_spent=Money(amount_minor=month_spent(conn, org_id)),
         region=REGION,
     )
 
@@ -356,7 +375,12 @@ DEFAULT_POLICIES = (
         summary="New runs do not start once this month's spend reaches the workspace's monthly cap.",
         updated="",
     ),
-    Policy(ref="region@1", summary=f"Customer data is processed in {REGION}.", updated=""),
+    Policy(
+        ref="region@1",
+        summary=f"Customer data is stored and processed in {REGION} ({REGION_NAME}). AI model requests are "
+        "sent to the model provider and are not pinned to a region.",
+        updated="",
+    ),
 )
 
 
@@ -379,15 +403,20 @@ def _member(row: dict) -> Member:
     )
 
 
+def org_members(conn, org_id: str) -> list[Member]:
+    """Active members, then pending invitations, each oldest first."""
+    rows = conn.execute(
+        "SELECT email, name, role, status FROM org_members WHERE org_id = %s AND status <> 'inactive' "
+        "ORDER BY status = 'invited', created_at, email",
+        (org_id,),
+    ).fetchall()
+    return [_member(r) for r in rows]
+
+
 def members(org_id: str) -> list[Member]:
     """Active members, then pending invitations, each oldest first."""
     with db.connect() as conn:
-        rows = conn.execute(
-            "SELECT email, name, role, status FROM org_members WHERE org_id = %s AND status <> 'inactive' "
-            "ORDER BY status = 'invited', created_at, email",
-            (org_id,),
-        ).fetchall()
-    return [_member(r) for r in rows]
+        return org_members(conn, org_id)
 
 
 def invite(org_id: str, inviter_role: str, email: str, role: str) -> Member:

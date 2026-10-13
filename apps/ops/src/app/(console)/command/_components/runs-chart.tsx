@@ -1,4 +1,4 @@
-import { SimTag } from "@/components/ui";
+import { SampleTag, SimTag } from "@/components/ui";
 import type { HourPoint } from "@/lib/api/gen/types.gen";
 import { count } from "@/lib/format";
 import { maxHourTotal } from "./logic";
@@ -16,8 +16,16 @@ const MIN_SEGMENT = 2;
 
 const hh = (hour: number) => String(hour).padStart(2, "0");
 
-/** Runs per hour (UTC) today as stacked inline-SVG bars. The visually hidden table is the accessible version. */
-export function RunsChart({ points }: { points: HourPoint[] }) {
+export type ChartTag = "simulated" | "sample" | null;
+
+const TAG_TEXT: Record<Exclude<ChartTag, null>, string> = { simulated: "Simulated", sample: "Sample" };
+
+/**
+ * Runs per hour (UTC) today as stacked inline-SVG bars. The visually hidden table is the accessible version.
+ * `tag` says where the series comes from: simulated (the demo), sample (a live fixture) or none (live data).
+ */
+export function RunsChart({ points, tag = "simulated" }: { points: HourPoint[]; tag?: ChartTag }) {
+  const tagText = tag ? ` ${TAG_TEXT[tag]}.` : "";
   const max = maxHourTotal(points);
   const innerW = W - PAD.left - PAD.right;
   const innerH = H - PAD.top - PAD.bottom;
@@ -36,12 +44,12 @@ export function RunsChart({ points }: { points: HourPoint[] }) {
             </li>
           ))}
         </ul>
-        <SimTag />
+        {tag === "simulated" ? <SimTag /> : tag === "sample" ? <SampleTag /> : null}
       </div>
       <svg
         viewBox={`0 0 ${W} ${H}`}
         role="img"
-        aria-label={`Runs by hour today, UTC, ${count(total)} in total. Stacked bars of completed, waiting and failed runs. Simulated data.`}
+        aria-label={`Runs by hour today, UTC, ${count(total)} in total. Stacked bars of completed, waiting and failed runs.${tag ? ` ${TAG_TEXT[tag]} data.` : ""}`}
         className="block h-auto w-full"
       >
         <line x1={PAD.left} x2={W - PAD.right} y1={H - PAD.bottom} y2={H - PAD.bottom} stroke="var(--color-rule)" />
@@ -67,7 +75,7 @@ export function RunsChart({ points }: { points: HourPoint[] }) {
         })}
       </svg>
       <table className="sr-only">
-        <caption>Runs by hour today, UTC. Simulated.</caption>
+        <caption>{`Runs by hour today, UTC.${tagText}`}</caption>
         <thead>
           <tr>
             <th scope="col">Hour</th>

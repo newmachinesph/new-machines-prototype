@@ -5,6 +5,7 @@ import { ConnectorsView } from "./connectors-view";
 
 const state = vi.hoisted(() => ({
   canWrite: true,
+  workspace: "demo" as "demo" | "live",
   action: "add" as string | null,
   selected: null as string | null,
   setAction: vi.fn(),
@@ -20,6 +21,7 @@ vi.mock("nuqs", () => ({
 vi.mock("@/lib/queries/ops", () => ({
   useCanWrite: () => state.canWrite,
   useMe: () => ({ isSuccess: true }),
+  useOpsWorkspace: () => state.workspace,
 }));
 const connector = vi.hoisted(() => ({
   id: "stripe",
@@ -51,6 +53,7 @@ const renderView = () =>
 describe("ConnectorsView", () => {
   beforeEach(() => {
     state.canWrite = true;
+    state.workspace = "demo";
     state.action = "add";
     state.selected = null;
     state.setAction.mockClear();
@@ -73,6 +76,25 @@ describe("ConnectorsView", () => {
     renderView();
     expect(screen.getByText("High")).toBeVisible();
     expect(screen.getByText("7%")).toBeInTheDocument();
+  });
+
+  it("shows Add connector and the simulated Last check column in the demo", () => {
+    renderView();
+    expect(screen.getByRole("button", { name: "Add connector" })).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: /Last check/ })).toBeInTheDocument();
+    expect(screen.getByText(/how healthy each one is/)).toBeInTheDocument();
+  });
+
+  it("hides Last check and Add connector in the live workspace and says how connectors are added", () => {
+    state.workspace = "live";
+    renderView();
+    expect(screen.queryByRole("columnheader", { name: /Last check/ })).toBeNull();
+    expect(screen.queryByText(/Last check/)).toBeNull();
+    expect(screen.queryByRole("button", { name: "Add connector" })).toBeNull();
+    expect(screen.queryByTestId("add-dialog")).toBeNull();
+    expect(screen.getByText("Connectors are added by publishing a definition.")).toBeInTheDocument();
+    expect(screen.queryByText(/how healthy/)).toBeNull();
+    expect(state.setAction).toHaveBeenCalledWith(null);
   });
 
   it("clears an unknown connector id from the URL", () => {

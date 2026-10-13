@@ -69,7 +69,8 @@
             "google_adk_cloud_run",
             "a2a_external",
             "approved_http",
-            "hosted"
+            "hosted",
+            "google_adk"
           ]
         },
         "endpoint_ref": {
@@ -109,7 +110,10 @@
       "if": {
         "properties": {
           "adapter": {
-            "const": "hosted"
+            "enum": [
+              "hosted",
+              "google_adk"
+            ]
           }
         },
         "required": [

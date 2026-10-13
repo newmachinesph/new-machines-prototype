@@ -72,7 +72,8 @@ def test_the_database_url_is_returned_untouched(monkeypatch):
 def connect_calls(monkeypatch):
     calls = []
 
-    async def fake_connect(target, **kwargs):
+    async def fake_connect(target, *, plugins, **kwargs):
+        assert [type(p).__name__ for p in plugins] == ["GoogleAdkPlugin"]  # every client carries ADK's plugin
         calls.append((target, kwargs))
         return "client"
 
@@ -260,7 +261,8 @@ def test_a_hung_probe_reports_error_within_a_few_seconds(client, monkeypatch):
     started = time.monotonic()
     r = client.get("/v1/ops/runtime/status")
     release.set()
-    assert time.monotonic() - started < 3
+    # Both probes share one deadline (0.3 + 1 s); waiting on them one after the other would take about 2.6 s.
+    assert time.monotonic() - started < 2
     assert r.json()["database"] == "error" and r.json()["temporal"] == "error"
 
 

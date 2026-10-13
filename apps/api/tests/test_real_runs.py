@@ -7,6 +7,7 @@ import threading
 import time
 from datetime import date
 
+import psycopg
 import pytest
 from fastapi.testclient import TestClient
 from psycopg.types.json import Jsonb
@@ -24,6 +25,7 @@ from app.worker import activities
 
 PACK = "order-payment-reconciliation"
 START = {"packSlug": PACK, "input": "2026-10-06..2026-10-12", "budgetMinor": 2000}
+SEED_MEMORY = 10  # seed items of the retail-commerce (4) and customer-accounts (6) memory spaces
 MISMATCHES = [
     {
         "order_id": "#1004",
@@ -202,7 +204,8 @@ def test_a_pack_not_hired_is_refused(api, rec):
 
 def test_a_pack_without_a_definition_keeps_the_fixture_path(api, rec):
     res = api.post(
-        "/v1/workflow-runs", json={"packSlug": "refund-triage", "input": "last week", "budgetMinor": 500}
+        "/v1/workflow-runs",
+        json={"packSlug": "weekly-inventory-report", "input": "last week", "budgetMinor": 500},
     )
     assert res.status_code == 202 and res.json()["id"] == "run_1048"
     assert rec.calls == []
@@ -317,6 +320,95 @@ def test_bad_date_input_is_refused(text):
     with pytest.raises(ApiProblem) as err:
         real_runs.parse_run_input(text, today=date(2026, 10, 13))
     assert err.value.status == 422 and err.value.code == "INVALID_INPUT"
+
+
+def _pack_input_schema(pack: str) -> dict:
+    bundle = load_bundle(settings.defs_dir())
+    return bundle.get("schema", f"{pack}/input").body
+
+
+OVERDUE = "overdue-invoice-follow-up"
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("2026-10-01", "2026-10-01"),
+        ("as of 2026-09-30 please", "2026-09-30"),
+        ("today", "2026-10-13"),
+        ("Chase what is late today", "2026-10-13"),
+        ("", "2026-10-13"),
+        ("   ", "2026-10-13"),
+    ],
+)
+def test_free_text_for_a_one_date_pack_becomes_that_date(text, expected):
+    schema = _pack_input_schema(OVERDUE)
+    assert real_runs.single_date_field(schema) == "as_of"
+    assert real_runs.parse_run_input(text, today=date(2026, 10, 13), schema=schema) == {"as_of": expected}
+
+
+@pytest.mark.parametrize("text", ["next week", "2026-13-01"])
+def test_free_text_for_a_one_date_pack_without_a_day_is_refused(text):
+    with pytest.raises(ApiProblem) as err:
+        real_runs.parse_run_input(text, today=date(2026, 10, 13), schema=_pack_input_schema(OVERDUE))
+    assert err.value.status == 422 and err.value.code == "INVALID_INPUT"
+
+
+def test_free_text_keeps_the_date_range_for_other_schemas():
+    for pack in (PACK, "refund-triage"):
+        schema = _pack_input_schema(pack)
+        assert real_runs.single_date_field(schema) is None
+        got = real_runs.parse_run_input("last 3 days", today=date(2026, 10, 13), schema=schema)
+        assert got == {"since": "2026-10-11", "until": "2026-10-13"}
+    one_optional = {"type": "object", "properties": {"day": {"type": "string", "format": "date"}}}
+    assert real_runs.single_date_field(one_optional) is None
+    one_text = {"type": "object", "required": ["name"], "properties": {"name": {"type": "string"}}}
+    assert real_runs.single_date_field(one_text) is None
+    assert real_runs.single_date_field(
+        {"required": ["d"], "properties": {"d": {"type": "string", "format": "date"}}}
+    )
+
+
+def test_free_text_for_the_overdue_pack_passes_its_input_schema():
+    assert real_runs.check_input(OVERDUE, "2026-10-13", _pack_input_schema(OVERDUE)) == {
+        "as_of": "2026-10-13"
+    }
+
+
+def test_a_free_text_start_of_the_overdue_pack_runs_for_real(api, rec):
+    """A start that sends free text (a pack page without the form's fields) must not fail with 422."""
+    res = api.post(
+        "/v1/workflow-runs", json={"packSlug": OVERDUE, "input": "2026-10-13", "budgetMinor": 1000}
+    )
+    assert res.status_code == 202, res.text
+    [(kind, _, _, input)] = rec.calls
+    assert (kind, input) == ("start", {"as_of": "2026-10-13"})
+
+
+def test_every_real_pack_detail_carries_its_input_schema(api):
+    for pack, required in (
+        (PACK, ["since", "until"]),
+        (OVERDUE, ["as_of"]),
+        ("refund-triage", ["since", "until"]),
+    ):
+        detail = api.get(f"/v1/workflow-packs/{pack}").json()
+        assert detail["inputSchema"]["required"] == required, pack
+    assert "inputSchema" not in api.get("/v1/workflow-packs/weekly-inventory-report").json()
+
+
+def test_a_database_error_loading_the_input_schema_still_serves_the_detail(api, monkeypatch, caplog):
+    def down(*_args):
+        raise psycopg.OperationalError("connection lost")
+
+    monkeypatch.setattr(real_runs, "input_schema", down)
+    res = api.get(f"/v1/workflow-packs/{OVERDUE}")
+    assert res.status_code == 200 and res.json()["slug"] == OVERDUE
+    assert "inputSchema" not in res.json()
+    assert any("Could not load the input schema" in r.getMessage() for r in caplog.records)
+
+
+def test_a_pack_detail_has_no_input_schema_when_the_runtime_is_off(client):
+    assert "inputSchema" not in client.get(f"/v1/workflow-packs/{OVERDUE}").json()
 
 
 # --- read -----------------------------------------------------------------------------------------------
@@ -611,7 +703,7 @@ def test_packs_carry_function_and_industries(api):
     pack = api.get(f"/v1/workflow-packs/{PACK}").json()
     assert pack["function"] == "finance-ops"
     assert pack["industries"] == ["retail-commerce", "manufacturing"]
-    other = api.get("/v1/workflow-packs/refund-triage").json()
+    other = api.get("/v1/workflow-packs/weekly-inventory-report").json()
     assert other["industries"] == [] and "function" not in other
     listed = {p["slug"]: p for p in api.get("/v1/workflow-packs").json()}
     assert listed[PACK]["function"] == "finance-ops"
@@ -619,10 +711,12 @@ def test_packs_carry_function_and_industries(api):
 
 def test_memory_lists_real_items_first(api):
     items = api.get("/v1/memory").json()
-    real = [m for m in items if m["scopeName"] == "Retail & Commerce company knowledge"]
-    assert len(real) == 4 and items[: len(real)] == real
+    spaces = {"Retail & Commerce company knowledge", "Customer accounts policies"}
+    real = [m for m in items if m["scopeName"] in spaces]
+    assert len(real) == SEED_MEMORY and items[: len(real)] == real
+    assert {m["scopeName"] for m in real} == spaces
     assert all(m["state"] == "APPROVED" and m["scope"] == "Organization" for m in real)
-    assert len(items) == len(get_store().memory) + 4
+    assert len(items) == len(get_store().memory) + SEED_MEMORY
 
 
 def test_demo_memory_leaves_out_other_orgs_and_quarantined_items(api, db):
@@ -656,4 +750,4 @@ def test_startup_migrates_and_applies_definitions_when_auto_apply_is_on(db, monk
     with TestClient(create_app()) as api:
         assert api.get("/healthz").status_code == 200
     assert _rows(db, "SELECT 1 FROM definition_versions WHERE kind = 'pack' AND key = %s", PACK)
-    assert len(_rows(db, "SELECT 1 FROM memory_items")) == 4
+    assert len(_rows(db, "SELECT 1 FROM memory_items")) == SEED_MEMORY

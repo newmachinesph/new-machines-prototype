@@ -12,16 +12,17 @@ import pytest
 from psycopg.types.json import Jsonb
 from temporalio import activity
 from temporalio.client import WorkflowFailureError, WorkflowHandle
+from temporalio.contrib.google_adk_agents import GoogleAdkPlugin
 from temporalio.exceptions import ApplicationError
 from temporalio.testing import WorkflowEnvironment
-from temporalio.worker import Worker
+from temporalio.worker import Replayer, Worker
 
 from app import settings
 from app.defs import registry
 from app.defs.loader import load_bundle
 from app.defs.snapshot import build_snapshot
 from app.models.runs import Run
-from app.runtime import projection, providers, receipt
+from app.runtime import adk_agent, projection, providers, receipt
 from app.runtime.providers import SUBMIT_TOOL, FakeProvider, ModelTurn
 from app.worker import activities
 from app.worker.activities import PackActivities
@@ -42,15 +43,18 @@ def runtime_env(db, monkeypatch):
     return db
 
 
-def _new_run(conn) -> tuple[str, dict]:
-    """What the API does before starting the workflow (Task 6): pin a snapshot and insert the runs row."""
-    snapshot = build_snapshot(conn, PACK, "org_demo", {}, set())
+def _new_run(conn, edit=None, pack: str = PACK, input: dict = INPUT) -> tuple[str, dict]:
+    """What the API does before starting the workflow (Task 6): pin a snapshot and insert the runs row.
+    `edit(snapshot) -> snapshot` changes the pinned snapshot before the insert."""
+    snapshot = build_snapshot(conn, pack, "org_demo", {}, set())
+    if edit is not None:
+        snapshot = edit(snapshot)
     run_id = f"run_{uuid.uuid4().hex[:8]}"
-    initial = projection.initial_projection(run_id, snapshot, INPUT, "Demo buyer", 2500)
+    initial = projection.initial_projection(run_id, snapshot, input, "Demo buyer", 2500)
     conn.execute(
         "INSERT INTO runs (id, org_id, pack_slug, status, snapshot, projection, input) "
         "VALUES (%s, 'org_demo', %s, 'RUNNING', %s, %s, %s)",
-        (run_id, PACK, Jsonb(snapshot), Jsonb(initial), Jsonb(INPUT)),
+        (run_id, pack, Jsonb(snapshot), Jsonb(initial), Jsonb(input)),
     )
     conn.commit()
     return run_id, snapshot
@@ -68,9 +72,15 @@ async def _waiting(handle: WorkflowHandle, node_id: str) -> dict:
     raise AssertionError(f"run never waited at {node_id}")
 
 
+def adk_plugins() -> list:
+    """What `temporal_client.connect` gives production clients; a Worker built from the client inherits it."""
+    return [GoogleAdkPlugin()]
+
+
 async def _drive(provider, scenario, acts: PackActivities | None = None) -> str:
     """Run one PackRunner execution on a fresh time-skipping server; `scenario(env)` drives the signals."""
-    async with await WorkflowEnvironment.start_time_skipping() as env:
+    adk_agent.warm_up()  # as build_worker does: keeps ADK's first-turn imports out of the workflow
+    async with await WorkflowEnvironment.start_time_skipping(plugins=adk_plugins()) as env:
         with ThreadPoolExecutor(max_workers=8) as pool:
             acts = acts or PackActivities(provider=provider)
             async with Worker(
@@ -83,10 +93,10 @@ async def _drive(provider, scenario, acts: PackActivities | None = None) -> str:
                 return await scenario(env)
 
 
-def _start(client, run_id: str, snapshot: dict):
+def _start(client, run_id: str, snapshot: dict, input: dict = INPUT):
     return client.start_workflow(
         PackRunner.run,
-        RunInput(run_id=run_id, snapshot=snapshot, input=INPUT),
+        RunInput(run_id=run_id, snapshot=snapshot, input=input),
         id=run_id,
         task_queue=QUEUE,
     )
@@ -478,7 +488,8 @@ def test_worker_connect_uses_api_key_and_tls_only_for_temporal_cloud(monkeypatch
 
     calls = []
 
-    async def fake_connect(target, **kwargs):
+    async def fake_connect(target, *, plugins, **kwargs):
+        assert [type(p) for p in plugins] == [GoogleAdkPlugin]  # every client carries the ADK plugin
         calls.append((target, kwargs))
         return "client"
 
@@ -625,4 +636,145 @@ def test_model_calls_ride_out_a_burst_of_rate_limits(runtime_env):
         return await _run_to_end(env, run_id, snapshot)
 
     assert asyncio.run(_drive(provider, scenario)) == "COMPLETED"
+    _assert_sealed(conn, run_id, snapshot, "COMPLETED")
+
+
+# --- agent adapters ------------------------------------------------------------------------------------
+
+ADK_IDENTITY = "Your internal name is"  # ADK appends this to the instruction it sends the model
+
+
+class _RecordingProvider(FakeProvider):
+    """The fake provider, keeping each system prompt and conversation the model received."""
+
+    def __init__(self, script: dict | None = None) -> None:
+        super().__init__(script=script)
+        self.systems: list[str] = []
+        self.conversations: list[list[dict]] = []
+
+    def call(self, **kwargs) -> ModelTurn:
+        self.systems.append(kwargs["system"])
+        self.conversations.append(kwargs["messages"])
+        return super().call(**kwargs)
+
+
+def _hosted(snapshot: dict) -> dict:
+    """A snapshot pinned before google_adk existed: every agent body says adapter: hosted."""
+    agents = {
+        key: {**d, "body": {**d["body"], "runtime": {**d["body"]["runtime"], "adapter": "hosted"}}}
+        for key, d in snapshot["defs"]["agent"].items()
+    }
+    return {**snapshot, "defs": {**snapshot["defs"], "agent": agents}}
+
+
+def test_agents_run_through_google_adk(runtime_env):
+    conn = runtime_env
+    run_id, snapshot = _new_run(conn)
+    assert {d["body"]["runtime"]["adapter"] for d in snapshot["defs"]["agent"].values()} == {"google_adk"}
+    provider = _RecordingProvider()
+
+    async def scenario(env):
+        status = await _run_to_end(env, run_id, snapshot)
+        # ADK's ids and clocks come from the workflow (GoogleAdkPlugin), so the run replays deterministically.
+        history = await env.client.get_workflow_handle(run_id).fetch_history()
+        await Replayer(workflows=[PackRunner], plugins=adk_plugins()).replay_workflow(history)
+        return status
+
+    assert asyncio.run(_drive(provider, scenario)) == "COMPLETED"
+    assert provider.systems and all(ADK_IDENTITY in s for s in provider.systems)
+    assert {s.splitlines()[0] for s in provider.systems} == {"agent:finance-agent", "agent:ops-agent"}
+    _assert_sealed(conn, run_id, snapshot, "COMPLETED")
+
+
+def test_a_run_pinned_to_the_hosted_adapter_still_completes(runtime_env):
+    conn = runtime_env
+    run_id, snapshot = _new_run(conn, edit=_hosted)
+    assert snapshot["defs"]["agent"]["finance-agent"]["body"]["runtime"]["adapter"] == "hosted"
+    provider = _RecordingProvider()
+
+    async def scenario(env):
+        return await _run_to_end(env, run_id, snapshot)
+
+    assert asyncio.run(_drive(provider, scenario)) == "COMPLETED"
+    assert provider.systems and not any(ADK_IDENTITY in s for s in provider.systems)
+    _assert_sealed(conn, run_id, snapshot, "COMPLETED")
+
+
+def test_an_agent_that_never_submits_fails_with_turns_exhausted(runtime_env):
+    conn = runtime_env
+    run_id, snapshot = _new_run(conn)
+    chatter = _turn([{"type": "text", "text": "Still looking at the orders."}])
+
+    async def scenario(env):
+        handle = await _start(env.client, run_id, snapshot)
+        return await handle.result()
+
+    assert asyncio.run(_drive(FakeProvider(script={"finance-agent": [chatter]}), scenario)) == "FAILED"
+    entries = _entries(conn, run_id)
+    [failed] = [e for e in entries if e["type"] == "run.failed"]
+    assert failed["data"]["reason"].startswith("TURNS_EXHAUSTED")
+    usage = [e for e in entries if e["type"] == "model.usage" and e["node_id"] == "match"]
+    assert len(usage) == snapshot["defs"]["agent"]["finance-agent"]["body"]["runtime"]["max_turns"]
+    assert _nodes(_run_row(conn, run_id)["projection"])["match"]["status"] == "FAILED"
+    _assert_sealed(conn, run_id, snapshot, "FAILED")
+
+
+def _finance_with_tools(snapshot: dict) -> dict:
+    """finance-agent is offered shopify.list_orders and stripe.list_charges (the contract grants orders.read
+    and payments.read)."""
+    finance = snapshot["defs"]["agent"]["finance-agent"]
+    runtime = {**finance["body"]["runtime"], "tools": ["shopify.list_orders", "stripe.list_charges"]}
+    agents = {
+        **snapshot["defs"]["agent"],
+        "finance-agent": {**finance, "body": {**finance["body"], "runtime": runtime}},
+    }
+    return {**snapshot, "defs": {**snapshot["defs"], "agent": agents}}
+
+
+def test_an_adk_agent_calls_offered_tools_through_the_gateway(runtime_env):
+    conn = runtime_env
+    run_id, snapshot = _new_run(conn, edit=_finance_with_tools)
+    granted = snapshot["defs"]["contract"][PACK]["body"]["authorization"]["tool_capabilities"]
+    assert {"orders.read", "payments.read"} <= set(granted)
+    orders = {"type": "tool_use", "id": "toolu_orders", "name": "shopify__list_orders", "input": {"limit": 5}}
+    charges = {"type": "tool_use", "id": "toolu_charges", "name": "stripe__list_charges", "input": {}}
+    submit = _all_matched_script()["finance-agent"][1]
+    provider = _RecordingProvider(script={"finance-agent": [_turn([orders, charges]), submit]})
+
+    async def scenario(env):
+        handle = await _start(env.client, run_id, snapshot)
+        approval = await _waiting(handle, "approve_write")
+        await handle.signal(PackRunner.approval, args=[approval["task_id"], "granted", "buyer@demo"])
+        return await handle.result()
+
+    assert asyncio.run(_drive(provider, scenario)) == "COMPLETED"
+    calls = [e for e in _entries(conn, run_id) if e["type"] == "tool.call" and e["node_id"] == "match"]
+    # ADK runs a turn's tool calls concurrently, so the receipt holds them in completion order.
+    assert sorted((e["data"]["id"], e["data"]["tool_ref"]) for e in calls) == [
+        ("toolu_charges", "stripe.list_charges"),
+        ("toolu_orders", "shopify.list_orders"),
+    ]
+    assert all(e["data"]["policy"]["verdict"] == "PERMIT" and e["data"]["ok"] for e in calls)
+    finance = [
+        c for s, c in zip(provider.systems, provider.conversations, strict=True) if "finance-agent" in s
+    ]
+    assert len(finance) == 2
+    assert finance[1][-2] == {"role": "assistant", "content": [orders, charges]}
+    assert finance[1][-1] == {
+        "role": "user",
+        "content": [
+            {
+                "type": "tool_result",
+                "tool_use_id": "toolu_orders",
+                "content": json.dumps(_sandbox("shopify", "list_orders"), ensure_ascii=False),
+                "is_error": False,
+            },
+            {
+                "type": "tool_result",
+                "tool_use_id": "toolu_charges",
+                "content": json.dumps(_sandbox("stripe", "list_charges"), ensure_ascii=False),
+                "is_error": False,
+            },
+        ],
+    }
     _assert_sealed(conn, run_id, snapshot, "COMPLETED")

@@ -1,8 +1,9 @@
 """Operator console: platform service health and incidents (simulated). Declaring an incident degrades the
 services it names; resolving the last open incident on a service restores it."""
 
+from app import workspace
 from app.auth import CurrentOps, OpsWriter
-from app.errors import ApiProblem
+from app.errors import NOT_AVAILABLE_LIVE, ApiProblem, conflicts
 from app.models.ops import (
     DeclareIncidentRequest,
     Incident,
@@ -16,6 +17,8 @@ from app.routing import ApiRouter
 from app.store import Store, locked_store, utc_now
 
 router = ApiRouter(prefix="/v1/ops", tags=["ops"])
+
+LIVE_INCIDENTS = "Incidents are not tracked in the live workspace yet."
 
 # investigating -> monitoring -> resolved; resolving straight from investigating is allowed.
 NEXT_STATUSES: dict[IncidentStatus, tuple[IncidentStatus, ...]] = {
@@ -32,6 +35,12 @@ def find_incident(store: Store, incident_id: str) -> Incident:
     return incident
 
 
+def refuse_live_incident_writes() -> None:
+    """Incidents are fixtures; the live workspace refuses to change them (no store change, no audit)."""
+    if workspace.live():
+        raise ApiProblem(409, NOT_AVAILABLE_LIVE, LIVE_INCIDENTS)
+
+
 @router.get("/health", operation_id="opsGetHealth", response_model=OpsHealth)
 def ops_get_health(_: CurrentOps) -> OpsHealth:
     with locked_store() as store:
@@ -42,8 +51,15 @@ def ops_get_health(_: CurrentOps) -> OpsHealth:
         )
 
 
-@router.post("/incidents", operation_id="opsDeclareIncident", response_model=Incident, status_code=201)
+@router.post(
+    "/incidents",
+    operation_id="opsDeclareIncident",
+    responses=conflicts(NOT_AVAILABLE_LIVE),
+    response_model=Incident,
+    status_code=201,
+)
 def ops_declare_incident(body: DeclareIncidentRequest, actor: OpsWriter) -> Incident:
+    refuse_live_incident_writes()
     services = list(dict.fromkeys(body.services))
     with locked_store() as store:
         unknown = [key for key in services if key not in store.services]
@@ -75,8 +91,14 @@ def ops_declare_incident(body: DeclareIncidentRequest, actor: OpsWriter) -> Inci
         return incident.model_copy(deep=True)
 
 
-@router.post("/incidents/{incident_id}:update", operation_id="opsUpdateIncident", response_model=Incident)
+@router.post(
+    "/incidents/{incident_id}:update",
+    operation_id="opsUpdateIncident",
+    responses=conflicts(NOT_AVAILABLE_LIVE, "INCIDENT_RESOLVED", "INVALID_TRANSITION"),
+    response_model=Incident,
+)
 def ops_update_incident(incident_id: PathId, body: UpdateIncidentRequest, actor: OpsWriter) -> Incident:
+    refuse_live_incident_writes()
     with locked_store() as store:
         incident = find_incident(store, incident_id)
         before = incident.status
