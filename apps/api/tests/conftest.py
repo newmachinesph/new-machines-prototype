@@ -9,8 +9,10 @@ import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 from psycopg import sql  # noqa: E402
 
+from app import auth, settings  # noqa: E402
 from app import db as app_db  # noqa: E402
-from app import settings  # noqa: E402
+from app.defs import registry  # noqa: E402
+from app.defs.loader import load_bundle  # noqa: E402
 from app.main import create_app  # noqa: E402
 from app.store import reset_store  # noqa: E402
 
@@ -48,3 +50,28 @@ def db(monkeypatch: pytest.MonkeyPatch):
         conn.commit()
         yield conn
     app_db.reset_pool()
+
+
+@pytest.fixture
+def defs(db):
+    """`db` with every definition file published, as the live workspace has them."""
+    registry.apply_bundle(db, load_bundle(settings.defs_dir()))
+    db.commit()
+    return db
+
+
+@pytest.fixture
+def live_ops(defs, monkeypatch) -> TestClient:
+    """The API in the live workspace, signed in as an ops admin with `tests.test_ops_state.OPS`."""
+    from tests.test_live_catalog import PROJECT
+    from tests.test_ops_state import OPS_EMAIL, _verify
+
+    monkeypatch.setenv("NM_WORKSPACE", "live")
+    monkeypatch.setenv("NM_RUNTIME", "temporal")
+    monkeypatch.setenv("NM_CONNECTOR_MODE", "sandbox")
+    monkeypatch.setenv("AUTH_MODE", "firebase")
+    monkeypatch.setenv("FIREBASE_PROJECT_ID", PROJECT)
+    monkeypatch.setenv("OPS_ADMIN_EMAILS", OPS_EMAIL)
+    monkeypatch.setattr(auth.id_token, "verify_firebase_token", _verify)
+    reset_store()
+    return TestClient(create_app())

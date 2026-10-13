@@ -298,7 +298,9 @@ def install(actor: Actor, body: InstallRequest) -> Installation:
             "reviewer_pool = EXCLUDED.reviewer_pool",
             (actor.org_id, slug, version.version, body.cap_minor, pool, actor.user_id),
         )
-        live_connections.grant_pack(conn, defs.bodies("connector"), actor.org_id, version.body)
+        live_connections.grant_pack(
+            conn, defs.bodies("connector"), actor.org_id, version.body, defs.bodies("contract")
+        )
         conn.commit()
     reviewers = "your team and the New Machines reviewer pool" if body.reviewer_pool else "your team only"
     summary = f"Spending cap ${body.cap_minor / 100:.2f} per run. Reviewers: {reviewers}."

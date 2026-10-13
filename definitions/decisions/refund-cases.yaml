@@ -1,0 +1,18 @@
+# Where a refund triage goes after the cases are proposed. Rules run in order; the first whose `when` is true wins.
+kind: decision_rules
+key: refund-cases
+
+question: Are there refund requests to decide?
+
+rules:
+  - when: size(nodes.triage.output.cases) == 0
+    verdict: APPROVED
+    route: nothing
+    reason_code: NO_REQUESTS
+    explanation: No refund requests were found, so there is nothing to decide.
+
+default:
+  verdict: HUMAN_REVIEW
+  route: human_review
+  reason_code: CASES_PROPOSED
+  explanation: Refund decisions are proposed, and a person confirms each one before any reply is drafted.

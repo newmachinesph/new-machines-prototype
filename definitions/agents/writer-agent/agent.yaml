@@ -1,0 +1,25 @@
+kind: agent
+key: writer-agent
+schema_version: nm.agent.manifest.v1.1
+agent_id: writer-agent
+version: "1.0.0"
+publisher_id: new-machines-labs
+publisher_name: New Machines Labs
+name: Writer Agent
+summary: >-
+  Writes one short, polite email draft per customer from the facts it is given, following any reviewer notes. It never promises refunds or payment terms that are not in the facts, and it only drafts: a person sends.
+capabilities: [communications.draft]
+runtime:
+  adapter: google_adk
+  model_profile: fast
+  instructions: instructions.md
+  skills: [skills/write-drafts.md]
+  tools: []
+  max_turns: 4
+input_schema_ref: shared/draft-request
+output_schema_ref: shared/drafts
+requested_tool_capabilities: []
+data_processing:
+  supported_regions: ["asia-south1"]
+  data_classes: ["CONFIDENTIAL"]
+  retention_policy_ref: retention/30d

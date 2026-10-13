@@ -1,6 +1,7 @@
 """Bundle validation: JSON Schema per kind, then cross references and CEL compilation."""
 
 import json
+from collections.abc import Iterator
 from functools import cache
 from pathlib import Path, PurePosixPath
 
@@ -83,6 +84,19 @@ def _cel_strings(value, where: str):
             yield from _cel_strings(v, f"{where}[{i}]")
 
 
+def _view_cel(view: dict) -> Iterator[tuple[str, str]]:
+    """(location, expression) for the fields of a pack's deliverable view that the projection evaluates:
+    the summary, each fact's value and the item fields. `kind` and fact labels are shown as written."""
+    at = "deliverable_view"
+    fields = [(f"{at}.summary", view.get("summary"))]
+    fields += [(f"{at}.facts[{i}].value", f.get("value")) for i, f in enumerate(view.get("facts") or [])]
+    items = view.get("items") or {}
+    fields += [(f"{at}.items.{k}", items.get(k)) for k in ("from", "label", "detail")]
+    for where, value in fields:
+        if isinstance(value, str) and value.startswith("="):
+            yield where, value[1:]
+
+
 class _Checker:
     def __init__(self, bundle: Bundle):
         self.b = bundle
@@ -147,6 +161,9 @@ class _Checker:
         for i, c in enumerate(body["connectors"]):
             if not self.has("connector", c):
                 self.err(d, f"connectors[{i}]: connector {c!r} does not exist")
+        for where, expr in _view_cel(body.get("deliverable_view") or {}):
+            if (msg := compile_cel(expr)) is not None:
+                self.err(d, f"{where}: CEL does not compile: {msg}")
 
     def workflow(self, d: Definition) -> None:
         body = d.body

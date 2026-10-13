@@ -39,7 +39,7 @@ vi.mock("@/lib/queries/marketplace", () => ({
   usePack: () => ({ isPending: false, isError: false, data: PACK }),
   usePackAction: () => vi.fn(),
 }));
-vi.mock("@/lib/queries/ops", () => ({ useCanWrite: () => true }));
+vi.mock("@/lib/queries/ops", () => ({ useCanWrite: () => true, useOpsWorkspace: () => "demo" }));
 
 describe("PackDetail", () => {
   it("shows the pack's function and industries", () => {

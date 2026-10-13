@@ -28,6 +28,7 @@ DEFAULT_TASK_TIMEOUT_S = 86400
 MODELS_KEY = "default"
 MAX_REPORTED_ERRORS = 5
 MAX_ERROR_CHARS = 300
+MAX_FOR_EACH_ITEMS = 50  # a connector node's for_each makes at most this many calls
 SAFE_ERROR_TYPES = {"ConfigError", "CelError", "InputInvalid", "OutputInvalid"}  # messages written here
 _OUTCOMES = {"human": {"resolved", "rejected", "timeout"}, "approval": {"granted", "denied", "timeout"}}
 REVIEW_VERDICTS = {"HUMAN_REVIEW", "ESCALATED", "REVISION_REQUIRED"}
@@ -76,6 +77,20 @@ class ToolUse:
     step: int
     block: dict  # a model tool_use block {"id", "name", "input"}
     offered: list[str]  # tool names the agent was given; anything else is refused
+
+
+@dataclass
+class ItemCall:
+    """One for_each item of a connector node: its args are already resolved by plan_for_each."""
+
+    run_id: str
+    snapshot: dict
+    node_id: str
+    attempt: int
+    step: int
+    index: int
+    args: dict
+    approved: bool  # the node's approval covers every item
 
 
 @dataclass
@@ -143,16 +158,19 @@ def record_events(conn, run_id: str, events: list[tuple[str, str, str | None, di
     A run's final event (run.completed / run.failed) is followed by a `receipt.sealed` entry, so every
     finished run's receipt ends with its seal. Returns how many entries were new (0 on a retry)."""
     row = conn.execute(
-        "SELECT projection, snapshot->'versions' AS versions FROM runs WHERE id = %s FOR UPDATE", (run_id,)
+        "SELECT projection, snapshot->'versions' AS versions, snapshot->'defs'->'pack' AS packs "
+        "FROM runs WHERE id = %s FOR UPDATE",
+        (run_id,),
     ).fetchone()
     if row is None:
         raise LookupError(f"run {run_id} does not exist")
     _refuse_after_seal(conn, run_id, [key for key, *_ in events])
     current, added, seal = row["projection"], 0, None
+    view = projection.deliverable_view(row["packs"])
     for key, type_, node_id, data in events:
         entry = receipt.append(conn, run_id, key, type_, node_id, data)
         if entry is not None:
-            current = projection.apply_event(current, entry)
+            current = projection.apply_event(current, entry, view)
             added += 1
             if type_ in FINAL_STATUS:
                 seal = (f"{key}:sealed", node_id, FINAL_STATUS[type_])
@@ -177,7 +195,15 @@ def record(run_id: str, event_key: str, type: str, node_id: str | None, data: di
 
 
 def _keyed(call, events: list[Event]) -> list[tuple[str, str, str | None, dict]]:
-    return [(event_key(call.node_id, call.attempt, t, call.step), t, call.node_id, d) for t, d in events]
+    """Keys for one step's events. A type that repeats in the step gets `.<n>` on its second and later
+    keys, so no event is dropped as a retry and the first keeps the key it always had."""
+    seen: dict[str, int] = {}
+    out = []
+    for t, d in events:
+        n = seen[t] = seen.get(t, -1) + 1
+        key = event_key(call.node_id, call.attempt, t, call.step) + (f".{n}" if n else "")
+        out.append((key, t, call.node_id, d))
+    return out
 
 
 def _commit(call, events: list[Event], write: Callable[[Any], None] | None = None) -> None:
@@ -288,6 +314,7 @@ def _tool_event(snapshot: dict, ref: str, call_id: str, decision, result: ToolRe
         "app": connector.get("app", connector_key),
         "action": tool_id.replace("_", " "),
         "capability": tool.get("capability", ""),
+        "action_class": tool.get("action_class", ""),
         "policy": {"verdict": decision.verdict, "reason_codes": decision.reason_codes, "ref": decision.ref},
         "ok": bool(result and result.ok),
         "mocked": bool(result and result.mocked),
@@ -355,26 +382,105 @@ def _memory(call: NodeCall, node: dict) -> Step:
     return Step({"text": text}, route, [("node.completed", {"route": route, "summary": summary})], write)
 
 
-def _connector(call: NodeCall, node: dict) -> Step:
-    cfg = node.get("config") or {}
-    ref = cfg["tool"]
-    args = cel.resolve(cfg.get("args") or {}, call.state)
-    approved = bool((call.state.get("approvals") or {}).get(call.node_id))
+def _recorded_tool_call(run_id: str, key: str, call_id: str) -> tuple[dict, Any] | None:
+    """(the tool.call entry's data, the call's kept result or None) when a call with this event key and id
+    already committed; None when it has not."""
+    with db.connect() as conn:
+        row = conn.execute(
+            "SELECT e.data, r.result FROM receipt_entries e "
+            "LEFT JOIN tool_results r ON r.run_id = e.run_id AND r.event_key = e.event_key "
+            "WHERE e.run_id = %s AND e.event_key = %s AND e.type = 'tool.call' AND e.data->>'id' = %s",
+            (run_id, key, call_id),
+        ).fetchone()
+    return (row["data"], row["result"]) if row else None
+
+
+def _keep_result(run_id: str, key: str, result: Any) -> Callable[[Any], None]:
+    """A `write(conn)` that keeps a permitted call's result in `tool_results`, so it lands in the same
+    transaction as the call's tool.call entry: both exist or neither does. The table exists only for retry
+    idempotency (the sealed receipt never holds connector data) and its rows can be pruned once the run
+    reaches a terminal status. No API reads it."""
+
+    def write(conn) -> None:
+        conn.execute(
+            "INSERT INTO tool_results (run_id, event_key, result) VALUES (%s, %s, %s) "
+            "ON CONFLICT (run_id, event_key) DO NOTHING",
+            (run_id, key, Jsonb(result)),
+        )
+
+    return write
+
+
+@dataclass
+class ToolOutcome:
+    event: Event  # the tool.call receipt entry
+    failed: Event | None  # node.failed when the call was denied or failed
+    data: Any  # the connector's data (None unless the call was permitted and succeeded)
+    write: Callable[[Any], None] | None = None  # keeps `data` in tool_results; commit it with `event`
+
+
+def _tool_outcome(entry: dict, data: Any) -> ToolOutcome:
+    policy = entry["policy"]
+    if policy["verdict"] != gateway.PERMIT:
+        error = ", ".join(policy["reason_codes"])
+        failed = {"status": "BLOCKED", "route": "denied", "error": error}
+        return ToolOutcome(("tool.call", entry), ("node.failed", failed), None)
+    if not entry["ok"]:
+        failed = {"route": "error", "error": entry.get("error", "the tool call failed")}
+        return ToolOutcome(("tool.call", entry), ("node.failed", failed), None)
+    return ToolOutcome(("tool.call", entry), None, data)
+
+
+def _tool_call(call: NodeCall | ItemCall, ref: str, args: dict, call_id: str, approved: bool) -> ToolOutcome:
+    """One gateway call. `approved` is the node's approval (`state.approvals[node_id]`), which covers it.
+
+    At most once per step: when an activity is retried after its commit landed (its result was lost), the
+    tool.call entry is already recorded under this step's key, so the outcome is rebuilt from it and from the
+    result kept in `tool_results`, and the connector is not called again (a live retry would otherwise repeat
+    a real side effect). The caller commits `write` with the events."""
+    key = event_key(call.node_id, call.attempt, "tool.call", call.step)  # its key in _keyed: first tool.call
+    recorded = _recorded_tool_call(call.run_id, key, call_id)
+    if recorded is not None:
+        return _tool_outcome(*recorded)
     decision, result = gateway.call_tool(
         snapshot=call.snapshot, tool_ref=ref, args=args, approved=approved, mode=settings.connector_mode()
     )
-    data = _tool_event(call.snapshot, ref, f"tc_{call.node_id}_{call.attempt}", decision, result)
-    events: list[Event] = [("tool.call", data)]
-    if decision.verdict != gateway.PERMIT:
-        error = ", ".join(decision.reason_codes)
-        failed = {"status": "BLOCKED", "route": "denied", "error": error}
-        return Step(None, "denied", [*events, ("node.failed", failed)])
-    if result is None or not result.ok:
-        failed = {"route": "error", "error": data.get("error", "the tool call failed")}
-        return Step(None, "error", [*events, ("node.failed", failed)])
+    data = result.data if result is not None else None
+    outcome = _tool_outcome(_tool_event(call.snapshot, ref, call_id, decision, result), data)
+    if outcome.failed is not None:
+        return outcome
+    return replace(outcome, write=_keep_result(call.run_id, key, outcome.data))
+
+
+def _approved(state: dict, node_id: str) -> bool:
+    return bool((state.get("approvals") or {}).get(node_id))
+
+
+def _connector(call: NodeCall, node: dict) -> Step:
+    """A connector node without `for_each`: one call. (With `for_each` the workflow runs plan_for_each,
+    one for_each_call per item and finish_for_each instead.)"""
+    cfg = node.get("config") or {}
+    if "for_each" in cfg:
+        raise ValueError("a for_each connector node runs one activity per item, not run_node")
+    args = cel.resolve(cfg.get("args") or {}, call.state)
+    call_id = f"tc_{call.node_id}_{call.attempt}"
+    outcome = _tool_call(call, cfg["tool"], args, call_id, _approved(call.state, call.node_id))
+    if outcome.failed is not None:
+        return Step(None, outcome.failed[1]["route"], [outcome.event, outcome.failed])
     route = _success_route(node)
-    done = {"route": route, "summary": _records_summary(result.data)}
-    return Step(result.data, route, [*events, ("node.completed", _compact(done))])
+    done = {"route": route, "summary": _records_summary(outcome.data)}
+    return Step(outcome.data, route, [outcome.event, ("node.completed", _compact(done))], outcome.write)
+
+
+def _for_each_args(call: NodeCall, node: dict) -> list[dict] | str:
+    """Every item's resolved `config.args` (with `item` bound to it), or why `config.for_each` is unusable.
+    A CEL error in any item raises before any call is made."""
+    cfg = node["config"]
+    items = cel.resolve(cfg["for_each"], call.state)
+    if not isinstance(items, list) or len(items) > MAX_FOR_EACH_ITEMS:
+        found = f"{len(items)} items" if isinstance(items, list) else "a value that is not a list"
+        return f"for_each must give a list of at most {MAX_FOR_EACH_ITEMS} items, not {found}"
+    return [cel.resolve(cfg.get("args") or {}, {**call.state, "item": item}) for item in items]
 
 
 def _decision(call: NodeCall, node: dict) -> Step:
@@ -551,6 +657,9 @@ class PackActivities:
     def all(self) -> list[Callable]:
         return [
             self.run_node,
+            self.plan_for_each,
+            self.for_each_call,
+            self.finish_for_each,
             self.start_agent,
             self.model_call,
             self.tool_call,
@@ -571,6 +680,40 @@ class PackActivities:
             step = executor(call, node)
         _commit(call, [("node.started", {}), *step.events], step.write)
         return {"output": step.output, "route": step.route}
+
+    @activity.defn
+    def plan_for_each(self, call: NodeCall) -> dict:
+        """Start a for_each connector node: resolve its list and every item's args before any call.
+        Returns {"route": None, "items": [args...]}, or {"route": "error"} when the list is unusable."""
+        with _config_errors():
+            planned = _for_each_args(call, _node(call.snapshot, call.node_id))
+        if isinstance(planned, str):
+            _commit(call, [("node.started", {}), ("node.failed", {"route": "error", "error": planned})])
+            return {"route": "error", "items": None}
+        _commit(call, [("node.started", {})])
+        return {"route": None, "items": planned}
+
+    @activity.defn
+    def for_each_call(self, call: ItemCall) -> dict:
+        """One item's tool call, committed on its own so a retry never repeats an earlier item. A denied or
+        failed call also fails the node: {"route": "denied" | "error"}; otherwise {"route": None, "data"}."""
+        with _config_errors():
+            ref = (_node(call.snapshot, call.node_id).get("config") or {})["tool"]
+        call_id = f"tc_{call.node_id}_{call.attempt}_{call.index}"
+        outcome = _tool_call(call, ref, call.args, call_id, call.approved)
+        failed = outcome.failed
+        _commit(call, [outcome.event] if failed is None else [outcome.event, failed], outcome.write)
+        return {"route": failed[1]["route"] if failed else None, "data": outcome.data}
+
+    @activity.defn
+    def finish_for_each(self, call: AgentResult) -> dict:
+        """Complete a for_each connector node whose items all succeeded: output {"results": [...]}."""
+        with _config_errors():
+            node = _node(call.snapshot, call.node_id)
+        route = _success_route(node)
+        done = {"route": route, "summary": f"Made {len(call.result)} calls, one per item."}
+        _commit(call, [("node.completed", done)])
+        return {"output": {"results": call.result}, "route": route}
 
     @activity.defn
     def start_agent(self, call: NodeCall) -> dict:
@@ -594,6 +737,8 @@ class PackActivities:
                 "profile": profile,
                 "model": model,
                 "max_turns": int(runtime.get("max_turns", 6)),
+                "adapter": runtime.get("adapter", "hosted"),
+                "agent_id": body["agent_id"],
             }
         _commit(call, [("node.started", {})])
         return spec

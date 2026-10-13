@@ -1,9 +1,11 @@
 import json
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
 from pydantic import BaseModel, ValidationError
 
+from app import errors
 from app import store as store_module
 from app.auth import Actor
 from app.idempotency import MAX_KEYS, once
@@ -15,6 +17,29 @@ OTHER_ORG = "/v1/organizations/org_other"
 
 
 # Errors ------------------------------------------------------------------------------------------------
+
+
+def test_shared_error_codes_are_defined_once_in_errors():
+    """NO_CHANGE is written once (app/errors.py) and imported, so its 409s cannot drift apart."""
+    app_dir = Path(errors.__file__).parent
+    defined = [
+        str(path.relative_to(app_dir))
+        for path in sorted(app_dir.rglob("*.py"))
+        if '"NO_CHANGE"' in path.read_text("utf-8") and path != Path(errors.__file__)
+    ]
+    assert defined == []
+    assert errors.NO_CHANGE == "NO_CHANGE"
+
+
+def test_tool_results_are_read_only_by_the_worker_retry_path():
+    """`tool_results` holds raw connector data for retry idempotency: no API module may read it."""
+    app_dir = Path(errors.__file__).parent
+    readers = [
+        str(path.relative_to(app_dir).as_posix())
+        for path in sorted(app_dir.rglob("*.py"))
+        if "tool_results" in path.read_text("utf-8")
+    ]
+    assert readers == ["worker/activities.py"]
 
 
 def test_unexpected_error_is_problem_json_500_with_cors(monkeypatch):

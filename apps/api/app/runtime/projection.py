@@ -5,11 +5,14 @@
 """
 
 import copy
+import logging
 from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Any
 
 from psycopg.types.json import Jsonb
+
+from app.runtime import cel
 
 X_STEP = 210
 FAILURE_ROW_Y = 140
@@ -31,6 +34,10 @@ NODE_FAILURE_STATUSES = {"FAILED", "REJECTED", "TIMED_OUT", "BLOCKED", "CANCELLE
 TERMINAL_RUN_STATUSES = {"COMPLETED", "FAILED", "CANCELLED"}
 OPEN_ROW_STATUSES = {"open", "unreviewed"}
 SIMULATED_LIMITATION = "Simulated: connector data came from sandbox responses, not a live account."
+VIEW_ITEMS_MAX = 50  # a pack's deliverable view shows at most this many items
+VIEW_DETAIL_MAX = 160  # characters of an item's detail
+
+log = logging.getLogger(__name__)
 
 
 def _money(amount_minor: int) -> dict:
@@ -169,6 +176,7 @@ def initial_projection(run_id: str, snapshot: dict, input: dict, started_by: str
             "settlement": "pending",
         },
         "summary": "Starting.",
+        **({"outcome": str(pack["outcome"])} if pack.get("outcome") else {}),
         "nodes": nodes,
         "edges": edges,
         "timeline": [
@@ -310,6 +318,8 @@ def _on_tool_call(p: dict, event: dict, data: dict) -> None:
         "detail": detail or action,
         "mocked": mocked,
     }
+    if data.get("action_class"):
+        call["actionClass"] = str(data["action_class"])
     node["toolCalls"] = [*node.get("toolCalls", []), call]
     _add_money(p["spent"], "tools", int(data.get("cost_minor") or 0))
     tone = {"PERMIT": "ok", "REQUIRE_APPROVAL": "warn"}.get(verdict, "blocked")
@@ -454,7 +464,8 @@ def _on_approval(p: dict, event: dict, data: dict) -> None:
 
 
 def _deliverable(p: dict, report: dict, mocked: bool) -> dict:
-    """Turn the report output ({summary, rows, totals}) into the Deliverable the run page shows."""
+    """Turn the reconciliation report ({summary, rows, totals}) into the Deliverable the run page shows; used
+    for a pack without a `deliverable_view`."""
     totals = report.get("totals") or {}
     rows = [r for r in report.get("rows") or [] if isinstance(r, list) and len(r) >= 6]
     facts = [
@@ -478,15 +489,93 @@ def _deliverable(p: dict, report: dict, mocked: bool) -> dict:
     }
 
 
-def _on_run_completed(p: dict, event: dict, data: dict) -> None:
+def deliverable_view(packs: dict | None) -> dict | None:
+    """The pinned pack's `deliverable_view`, from a snapshot's `defs.pack`; None when it has none."""
+    bodies = [(entry or {}).get("body") or {} for entry in (packs or {}).values()]
+    view = bodies[0].get("deliverable_view") if len(bodies) == 1 else None
+    return view if isinstance(view, dict) else None
+
+
+def _view_value(value: Any, state: dict) -> Any:
+    """A view field: CEL when it starts with "=", else the literal."""
+    return cel.evaluate(value, state) if isinstance(value, str) and value.startswith("=") else value
+
+
+def _text(value: Any) -> str:
+    return "" if value is None else str(value)
+
+
+def _view_items(spec: dict, state: dict) -> list[dict]:
+    source = _view_value(spec["from"], state)
+    if not isinstance(source, list):
+        raise cel.CelError(f"items.from gave {type(source).__name__}, not a list")
+    items = []
+    for item in source[:VIEW_ITEMS_MAX]:
+        scope = {**state, "item": item}
+        detail = _text(_view_value(spec["detail"], scope))
+        items.append({"label": _text(_view_value(spec["label"], scope)), "detail": detail[:VIEW_DETAIL_MAX]})
+    return items
+
+
+def _viewed_deliverable(p: dict, view: dict, deliverable: dict, mocked: bool) -> dict:
+    """The Deliverable a pack describes with its `deliverable_view`. A view that fails to evaluate never
+    fails the projection: it falls back to the summary alone (the deliverable's own when the view's fails).
+    The view's CEL sees {deliverable, mocked}; `mocked` is true when any tool call in the run used sandbox
+    data."""
+    state = {"deliverable": deliverable, "mocked": mocked}
+    own_summary = deliverable.get("summary")
+    out = {
+        "title": p["title"],
+        "kind": _text(view.get("kind")) or "Result",
+        "summary": own_summary if isinstance(own_summary, str) else "",
+        "rows": [],
+        "limitations": [SIMULATED_LIMITATION] if mocked else [],
+        "unresolved": [],
+        "evidence": [],
+    }
+    try:
+        out["summary"] = _text(_view_value(view.get("summary", ""), state))
+        rows = [
+            {"label": _text(f.get("label")), "value": _text(_view_value(f.get("value"), state))}
+            for f in view.get("facts") or []
+        ]
+        items = _view_items(view["items"], state) if isinstance(view.get("items"), dict) else None
+    except Exception:  # nothing in a pack's view may fail the projection (and so record_events)
+        log.warning(
+            "Run %s: its pack's deliverable view did not evaluate; showing the summary only.",
+            p["id"],
+            exc_info=True,
+        )
+        return out
+    out["rows"] = rows
+    if items is not None:
+        out["items"] = items
+    return out
+
+
+def _any_mocked_call(p: dict) -> bool:
+    """Whether any tool.call receipt entry folded into this run ran against sandbox data."""
+    return any(call.get("mocked") for node in p["nodes"] for call in node.get("toolCalls") or [])
+
+
+def _on_run_completed(p: dict, event: dict, data: dict, view: dict | None = None) -> None:
     p["status"] = "COMPLETED"
     p["endedAt"] = event["at"]
     p.pop("attention", None)
-    p["stages"].update(executed="done", verified="done", accepted="not_required", settlement="not_required")
+    stages = p["stages"]
+    stages.update(executed="done", accepted="not_required", settlement="not_required")
+    # Verified only when a verification node passed in this run (it sets "done"); a run that ended without
+    # one, such as a pack's "nothing to do" path, had no independent check. A recorded failure stays.
+    if stages.get("verified") not in ("done", "failed"):
+        stages["verified"] = "not_required"
     report = data.get("deliverable")
     if isinstance(report, dict):
-        p["deliverable"] = _deliverable(p, report, bool(data.get("mocked")))
-    p["summary"] = data.get("summary") or (report or {}).get("summary") or "Completed."
+        mocked = bool(data.get("mocked")) or _any_mocked_call(p)
+        if view is not None:
+            p["deliverable"] = _viewed_deliverable(p, view, report, mocked)
+        else:
+            p["deliverable"] = _deliverable(p, report, mocked)
+    p["summary"] = data.get("summary") or (p.get("deliverable") or {}).get("summary") or "Completed."
     _say(p, event, "system", "Workflow engine", "Completed the run", tone="ok")
 
 
@@ -515,16 +604,19 @@ _HANDLERS: dict[str, Callable[[dict, dict, dict], None]] = {
     "model.usage": _on_model_usage,
     "human.task": _on_human_task,
     "approval": _on_approval,
-    "run.completed": _on_run_completed,
     "run.failed": _on_run_failed,
 }
 
 
-def apply_event(projection: dict, event: dict) -> dict:
+def apply_event(projection: dict, event: dict, view: dict | None = None) -> dict:
+    """Fold one event into a copy of `projection`. `view` is the pinned pack's `deliverable_view` (see
+    `deliverable_view`); without one, a completed run's deliverable is read as a reconciliation report."""
     updated = copy.deepcopy(projection)
-    handler = _HANDLERS.get(event["type"])
-    if handler is not None:
-        handler(updated, event, event.get("data") or {})
+    data = event.get("data") or {}
+    if event["type"] == "run.completed":
+        _on_run_completed(updated, event, data, view)
+    elif (handler := _HANDLERS.get(event["type"])) is not None:
+        handler(updated, event, data)
     return updated
 
 

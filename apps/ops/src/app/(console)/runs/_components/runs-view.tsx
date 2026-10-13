@@ -42,11 +42,11 @@ const WAITING: Record<NonNullable<OpsRun["waitingOn"]>, { tone: Tone; label: str
   policy: { tone: "policy", label: "Policy" },
 };
 
-const columns: Column<OpsRun>[] = [
+const COLUMNS: Column<OpsRun>[] = [
   {
     key: "id",
     header: "Run",
-    // Only runs from the runtime have a step record and a receipt to open.
+    // Only runs from the runtime have a step record and a receipt to open. The live workspace lists only those.
     cell: (r) =>
       r.real ? (
         <Link href={`/runs/${r.id}`} className="underline underline-offset-2 hover:text-ink">
@@ -132,7 +132,7 @@ export function RunsView() {
           <Section>
             <DataTable
               label="Runs"
-              columns={columns}
+              columns={COLUMNS}
               rows={rows}
               rowKey={(r) => r.id}
               empty={status || tenant ? "No runs match these filters. Clear a filter to see more." : "No runs yet."}

@@ -84,13 +84,17 @@ function AuditList({ entries, tenantId }: { entries: AuditEntry[]; tenantId: str
   );
 }
 
+/** Live orgs carry no country yet; the API sends "--" for it. */
+const hasCountry = (country: string) => Boolean(country) && country !== "--";
+
 function Header({ t }: { t: TenantDetail }) {
   return (
     <PageHeader
       title={t.name}
       lede={
         <>
-          {t.ownerEmail} · {t.region}, {t.country}
+          {t.ownerEmail} · {t.region}
+          {hasCountry(t.country) ? `, ${t.country}` : null}
         </>
       }
       actions={<TenantActions tenant={t} />}
@@ -147,7 +151,11 @@ function Body({ t }: { t: TenantDetail }) {
             {t.notes ? <p className="text-sm text-grey-700">{t.notes}</p> : null}
           </div>
         </Section>
-        <Section title="Daily spend, last 14 days" aside={<SimTag />} className="xl:col-span-2">
+        <Section
+          title="Daily spend, last 14 days"
+          aside={t.simulated ? <SimTag /> : undefined}
+          className="xl:col-span-2"
+        >
           <UsageChart points={t.usageByDay} />
         </Section>
       </div>

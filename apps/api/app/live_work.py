@@ -9,7 +9,6 @@ from app.auth import Actor
 from app.defs.current import latest_bodies
 from app.errors import ApiProblem
 from app.models.common import Money, money_text
-from app.models.ops import ConnectorEntry
 from app.models.org import MemoryItem
 from app.models.requests import StartRunRequest
 from app.models.runs import Run
@@ -32,8 +31,9 @@ def _and(names: list[str]) -> str:
 # --- runs -----------------------------------------------------------------------------------------------
 
 
-def start_run(body: StartRunRequest, actor: Actor, catalog: list[ConnectorEntry]) -> Run:
-    """Start a real run for the actor's org after the hire, connection, input and spend checks."""
+def start_run(body: StartRunRequest, actor: Actor) -> Run:
+    """Start a real run for the actor's org after the hire, connection, input and spend checks. The run
+    pins the persisted ops connector settings (`ops_state.snapshot_policy`)."""
     defs = live_catalog.definitions()
     version = defs.pack(body.pack_slug)
     if version is None:
@@ -66,7 +66,7 @@ def start_run(body: StartRunRequest, actor: Actor, catalog: list[ConnectorEntry]
             f"This month's spend has reached the workspace's monthly cap of {money_text(cap)}. "
             "New runs start again next month.",
         )
-    return real_runs.start_real_run(body.model_copy(update={"pack_slug": slug}), actor, catalog, inp)
+    return real_runs.start_real_run(body.model_copy(update={"pack_slug": slug}), actor, None, inp)
 
 
 # --- memory ---------------------------------------------------------------------------------------------

@@ -19,7 +19,14 @@ from temporalio.client import WorkflowHistory
 from temporalio.worker import Replayer
 
 from app.worker.workflow import PackRunner
-from tests.test_workflow import _drive, _new_run, _start, _waiting, runtime_env  # noqa: F401  (fixture)
+from tests.test_workflow import (  # noqa: F401  (fixture)
+    _drive,
+    _new_run,
+    _start,
+    _waiting,
+    adk_plugins,
+    runtime_env,
+)
 
 # Gzipped: every activity input carries the pinned snapshot, so the JSON is about 0.8 MB.
 HISTORY = Path(__file__).parent / "fixtures" / "histories" / "pack_runner_review_approval.json.gz"
@@ -29,7 +36,7 @@ RECORD = os.environ.get("NM_RECORD_HISTORY") == "1"
 def _replay(path: Path) -> None:
     data = json.loads(gzip.decompress(path.read_bytes()))
     history = WorkflowHistory.from_json(data["workflow_id"], data["history"])
-    asyncio.run(Replayer(workflows=[PackRunner]).replay_workflow(history))
+    asyncio.run(Replayer(workflows=[PackRunner], plugins=adk_plugins()).replay_workflow(history))
 
 
 @pytest.mark.skipif(RECORD, reason="re-recording")

@@ -2,9 +2,13 @@
 A listing's status decides what customers see (see `routers.catalog.is_listed`); a connector enabled or
 disabled here adds or clears the demo tenant's connection."""
 
+from collections.abc import Callable
+
+from app import db, ops_live, ops_state, workspace
 from app.auth import CurrentOps, OpsActor, OpsWriter
+from app.defs import registry
 from app.defs.current import latest_bodies
-from app.errors import ApiProblem
+from app.errors import NO_CHANGE, NOT_AVAILABLE_LIVE, ApiProblem, conflicts
 from app.models.catalog import Pack, PackConnector, PackEstimate, TaxonomyEntry
 from app.models.common import Money
 from app.models.ops import (
@@ -32,6 +36,7 @@ router = ApiRouter(prefix="/v1/ops", tags=["ops"])
 BASE_LATENCY_MS = 180
 LATENCY_MS_PER_ID_CHAR = 7
 MANUAL_HEALTH_CHECK = "Manual health check"
+LIVE_PACKS = "In the live workspace, packs are published as definitions."
 
 
 # Packs -------------------------------------------------------------------------------------------------
@@ -76,6 +81,7 @@ def move_pack(
     target: PackStatus,
 ) -> PackListingDetail:
     """One state-machine step: check the current status, change it, audit it, all under the lock."""
+    refuse_live_pack_writes()
     with locked_store() as store:
         listing = find_listing(store, slug)
         before = listing.status
@@ -141,8 +147,15 @@ def ops_get_pack(slug: PathId, _: CurrentOps) -> PackListingDetail:
     return classified([detail])[0]
 
 
-@router.post("/packs", operation_id="opsCreatePack", response_model=PackListingDetail, status_code=201)
+@router.post(
+    "/packs",
+    operation_id="opsCreatePack",
+    responses=conflicts(NOT_AVAILABLE_LIVE, "SLUG_TAKEN"),
+    response_model=PackListingDetail,
+    status_code=201,
+)
 def ops_create_pack(body: CreatePackRequest, actor: OpsWriter) -> PackListingDetail:
+    refuse_live_pack_writes()
     with locked_store() as store:
         if body.slug in store.pack_listings or any(p.slug == body.slug for p in store.packs):
             raise ApiProblem(409, "SLUG_TAKEN", f"A pack called {body.slug} already exists.")
@@ -190,33 +203,64 @@ def ops_create_pack(body: CreatePackRequest, actor: OpsWriter) -> PackListingDet
         return pack_detail(store, listing)
 
 
-@router.post("/packs/{slug}:submit", operation_id="opsSubmitPack", response_model=PackListingDetail)
+@router.post(
+    "/packs/{slug}:submit",
+    operation_id="opsSubmitPack",
+    responses=conflicts(NOT_AVAILABLE_LIVE, "INVALID_TRANSITION"),
+    response_model=PackListingDetail,
+)
 def ops_submit_pack(slug: PathId, body: ReasonRequest, actor: OpsWriter) -> PackListingDetail:
     return move_pack(slug, body, actor, "submit", ("draft", "rejected"), "in_review")
 
 
-@router.post("/packs/{slug}:approve", operation_id="opsApprovePack", response_model=PackListingDetail)
+@router.post(
+    "/packs/{slug}:approve",
+    operation_id="opsApprovePack",
+    responses=conflicts(NOT_AVAILABLE_LIVE, "INVALID_TRANSITION"),
+    response_model=PackListingDetail,
+)
 def ops_approve_pack(slug: PathId, body: ReasonRequest, actor: OpsWriter) -> PackListingDetail:
     return move_pack(slug, body, actor, "approve", ("in_review",), "published")
 
 
-@router.post("/packs/{slug}:reject", operation_id="opsRejectPack", response_model=PackListingDetail)
+@router.post(
+    "/packs/{slug}:reject",
+    operation_id="opsRejectPack",
+    responses=conflicts(NOT_AVAILABLE_LIVE, "INVALID_TRANSITION"),
+    response_model=PackListingDetail,
+)
 def ops_reject_pack(slug: PathId, body: ReasonRequest, actor: OpsWriter) -> PackListingDetail:
     return move_pack(slug, body, actor, "reject", ("in_review",), "rejected")
 
 
-@router.post("/packs/{slug}:deprecate", operation_id="opsDeprecatePack", response_model=PackListingDetail)
+@router.post(
+    "/packs/{slug}:deprecate",
+    operation_id="opsDeprecatePack",
+    responses=conflicts(NOT_AVAILABLE_LIVE, "INVALID_TRANSITION"),
+    response_model=PackListingDetail,
+)
 def ops_deprecate_pack(slug: PathId, body: ReasonRequest, actor: OpsWriter) -> PackListingDetail:
     return move_pack(slug, body, actor, "deprecate", ("published",), "deprecated")
 
 
-@router.post("/packs/{slug}:republish", operation_id="opsRepublishPack", response_model=PackListingDetail)
+@router.post(
+    "/packs/{slug}:republish",
+    operation_id="opsRepublishPack",
+    responses=conflicts(NOT_AVAILABLE_LIVE, "INVALID_TRANSITION"),
+    response_model=PackListingDetail,
+)
 def ops_republish_pack(slug: PathId, body: ReasonRequest, actor: OpsWriter) -> PackListingDetail:
     return move_pack(slug, body, actor, "republish", ("deprecated",), "published")
 
 
-@router.post("/packs/{slug}:certify", operation_id="opsCertifyPack", response_model=PackListingDetail)
+@router.post(
+    "/packs/{slug}:certify",
+    operation_id="opsCertifyPack",
+    responses=conflicts(NOT_AVAILABLE_LIVE, "INVALID_TRANSITION"),
+    response_model=PackListingDetail,
+)
 def ops_certify_pack(slug: PathId, body: ReasonRequest, actor: OpsWriter) -> PackListingDetail:
+    refuse_live_pack_writes()
     with locked_store() as store:
         listing = find_listing(store, slug)
         if listing.status != "published":
@@ -265,14 +309,63 @@ def disconnect_demo_tenant(store: Store, entry: ConnectorEntry) -> None:
             conn.grants = []
 
 
+# Live workspace: a connector is a connector definition (its key is the id) plus the settings Ops persisted
+# and its usage (`ops_live.list_connectors`).
+
+
+def _live_definition(conn, connector_id: str) -> dict:
+    version = registry.latest(conn, "connector", connector_id)
+    if version is None:
+        raise ApiProblem(404, "NOT_FOUND", f"No connector {connector_id}.")
+    return version.body
+
+
+def live_connector_write(
+    connector_id: str, write: Callable[[object], None], no_change: Callable[[str], str]
+) -> ConnectorEntry:
+    """Apply one persisted connector write (`write(conn)`, which also audits) in one transaction and return
+    the connector as it now is. 404 for an unknown connector; 409 NO_CHANGE with `no_change(app)`."""
+    with db.connect() as conn:
+        definition = _live_definition(conn, connector_id)
+        app = str(definition.get("app") or connector_id)
+        try:
+            write(conn)
+        except ops_state.NoChange:
+            raise ApiProblem(409, NO_CHANGE, no_change(app)) from None
+        conn.commit()
+        entry = ops_live.connector(conn, connector_id)
+    if entry is None:  # the definition was there a moment ago; definitions are never deleted
+        raise ApiProblem(404, "NOT_FOUND", f"No connector {connector_id}.")
+    return entry
+
+
+def _not_available_live(detail: str) -> ApiProblem:
+    return ApiProblem(409, NOT_AVAILABLE_LIVE, detail)
+
+
+def refuse_live_pack_writes() -> None:
+    """Marketplace listings are fixtures; the live workspace refuses to change them (no store change, no
+    audit). Its packs are published as definitions."""
+    if workspace.live():
+        raise _not_available_live(LIVE_PACKS)
+
+
 def change_status(
     connector_id: PathId, body: ReasonRequest, actor: OpsActor, verb: str, target: ConnectorStatus
 ) -> ConnectorEntry:
+    if workspace.live():
+        return live_connector_write(
+            connector_id,
+            lambda conn: ops_state.set_connector_status(
+                conn, connector_id, target, actor.email, body.reason, actor_role=actor.role
+            ),
+            lambda app: f"{app} is already {target}.",
+        )
     with locked_store() as store:
         entry = find_connector(store, connector_id)
         before = entry.status
         if before == target:
-            raise ApiProblem(409, "NO_CHANGE", f"{entry.app} is already {before}.")
+            raise ApiProblem(409, NO_CHANGE, f"{entry.app} is already {before}.")
         entry.status = target
         if target == "enabled":
             expose_to_demo_tenant(store, entry)
@@ -285,6 +378,11 @@ def change_status(
 
 @router.get("/connectors", operation_id="opsListConnectors", response_model=list[ConnectorEntry])
 def ops_list_connectors(_: CurrentOps) -> list[ConnectorEntry]:
+    """The live workspace lists its connector definitions with the settings Ops persisted and today's usage
+    (UTC); the demo workspace lists its fixture catalog."""
+    if workspace.live():
+        with db.connect() as conn:
+            return ops_live.list_connectors(conn)
     with locked_store() as store:
         return [c.model_copy(deep=True) for c in store.connector_catalog.values()]
 
@@ -296,8 +394,16 @@ def ops_list_available_toolkits(_: CurrentOps) -> list[Toolkit]:
         return [t.model_copy() for t in store.toolkits if t.slug not in store.connector_catalog]
 
 
-@router.post("/connectors", operation_id="opsAddConnector", response_model=ConnectorEntry, status_code=201)
+@router.post(
+    "/connectors",
+    operation_id="opsAddConnector",
+    responses=conflicts(NOT_AVAILABLE_LIVE, "ALREADY_ADDED"),
+    response_model=ConnectorEntry,
+    status_code=201,
+)
 def ops_add_connector(body: AddConnectorRequest, actor: OpsWriter) -> ConnectorEntry:
+    if workspace.live():
+        raise _not_available_live("In the live workspace, a connector is added by publishing its definition.")
     with locked_store() as store:
         if body.toolkit_slug in store.connector_catalog:
             raise ApiProblem(409, "ALREADY_ADDED", f"{body.toolkit_slug} is already in the catalog.")
@@ -326,14 +432,20 @@ def ops_add_connector(body: AddConnectorRequest, actor: OpsWriter) -> ConnectorE
 
 
 @router.post(
-    "/connectors/{connector_id}:enable", operation_id="opsEnableConnector", response_model=ConnectorEntry
+    "/connectors/{connector_id}:enable",
+    operation_id="opsEnableConnector",
+    responses=conflicts(NO_CHANGE),
+    response_model=ConnectorEntry,
 )
 def ops_enable_connector(connector_id: PathId, body: ReasonRequest, actor: OpsWriter) -> ConnectorEntry:
     return change_status(connector_id, body, actor, "enable", "enabled")
 
 
 @router.post(
-    "/connectors/{connector_id}:disable", operation_id="opsDisableConnector", response_model=ConnectorEntry
+    "/connectors/{connector_id}:disable",
+    operation_id="opsDisableConnector",
+    responses=conflicts(NO_CHANGE),
+    response_model=ConnectorEntry,
 )
 def ops_disable_connector(connector_id: PathId, body: ReasonRequest, actor: OpsWriter) -> ConnectorEntry:
     return change_status(connector_id, body, actor, "disable", "disabled")
@@ -342,16 +454,26 @@ def ops_disable_connector(connector_id: PathId, body: ReasonRequest, actor: OpsW
 @router.post(
     "/connectors/{connector_id}:setDefaults",
     operation_id="opsSetConnectorDefaults",
+    responses=conflicts(NO_CHANGE),
     response_model=ConnectorEntry,
 )
 def ops_set_connector_defaults(
     connector_id: PathId, body: SetDefaultsRequest, actor: OpsWriter
 ) -> ConnectorEntry:
+    if workspace.live():
+        defaults = body.defaults.model_dump()
+        return live_connector_write(
+            connector_id,
+            lambda conn: ops_state.set_connector_defaults(
+                conn, connector_id, defaults, actor.email, body.reason, actor_role=actor.role
+            ),
+            lambda app: f"{app} already has these defaults.",
+        )
     with locked_store() as store:
         entry = find_connector(store, connector_id)
         before = entry.defaults
         if body.defaults.model_dump() == before.model_dump():
-            raise ApiProblem(409, "NO_CHANGE", f"{entry.app} already has these defaults.")
+            raise ApiProblem(409, NO_CHANGE, f"{entry.app} already has these defaults.")
         entry.defaults = ConnectorDefaults(**body.defaults.model_dump())
         changes = [
             f"{key} {getattr(before, key)} → {value}"
@@ -365,10 +487,14 @@ def ops_set_connector_defaults(
 @router.post(
     "/connectors/{connector_id}:healthCheck",
     operation_id="opsHealthCheckConnector",
+    responses=conflicts(NOT_AVAILABLE_LIVE),
     response_model=ConnectorEntry,
 )
 def ops_health_check_connector(connector_id: PathId, actor: OpsWriter) -> ConnectorEntry:
-    """Simulated and deterministic: healthy unless the connector is disabled."""
+    """Simulated and deterministic: healthy unless the connector is disabled. Not available in the live
+    workspace, which has no health probe yet."""
+    if workspace.live():
+        raise _not_available_live("In the live workspace, connector health checks are not available yet.")
     with locked_store() as store:
         entry = find_connector(store, connector_id)
         if entry.status == "disabled":

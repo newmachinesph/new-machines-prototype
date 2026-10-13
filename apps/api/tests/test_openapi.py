@@ -63,3 +63,41 @@ def test_only_request_bodies_forbid_unknown_keys():
     assert requests and all(schemas[name].get("additionalProperties") is False for name in requests)
     responses = set(schemas) - requests
     assert responses and all("additionalProperties" not in schemas[name] for name in responses)
+
+
+# Every ops route that can answer 409 names its problem codes in its 409 response.
+OPS_CONFLICTS = {
+    "opsCreatePack": {"NOT_AVAILABLE_LIVE", "SLUG_TAKEN"},
+    "opsSubmitPack": {"NOT_AVAILABLE_LIVE", "INVALID_TRANSITION"},
+    "opsApprovePack": {"NOT_AVAILABLE_LIVE", "INVALID_TRANSITION"},
+    "opsRejectPack": {"NOT_AVAILABLE_LIVE", "INVALID_TRANSITION"},
+    "opsDeprecatePack": {"NOT_AVAILABLE_LIVE", "INVALID_TRANSITION"},
+    "opsRepublishPack": {"NOT_AVAILABLE_LIVE", "INVALID_TRANSITION"},
+    "opsCertifyPack": {"NOT_AVAILABLE_LIVE", "INVALID_TRANSITION"},
+    "opsAddConnector": {"NOT_AVAILABLE_LIVE", "ALREADY_ADDED"},
+    "opsEnableConnector": {"NO_CHANGE"},
+    "opsDisableConnector": {"NO_CHANGE"},
+    "opsSetConnectorDefaults": {"NO_CHANGE"},
+    "opsHealthCheckConnector": {"NOT_AVAILABLE_LIVE"},
+    "opsDeclareIncident": {"NOT_AVAILABLE_LIVE"},
+    "opsUpdateIncident": {"NOT_AVAILABLE_LIVE", "INCIDENT_RESOLVED", "INVALID_TRANSITION"},
+    "opsApproveReviewer": {"NOT_AVAILABLE_LIVE", "INVALID_TRANSITION"},
+    "opsSuspendReviewer": {"NOT_AVAILABLE_LIVE", "INVALID_TRANSITION"},
+    "opsReinstateReviewer": {"NOT_AVAILABLE_LIVE", "INVALID_TRANSITION"},
+    "opsSetReviewerLevel": {"NOT_AVAILABLE_LIVE", "INVALID_TRANSITION", "NO_CHANGE"},
+    "opsSetGuardrail": {"NOT_AVAILABLE_LIVE", "NO_CHANGE"},
+    "opsCreateTenant": {"NOT_AVAILABLE_LIVE"},
+    "opsSuspendTenant": {"ALREADY_SUSPENDED", "INVALID_TRANSITION"},
+    "opsReactivateTenant": {"NOT_SUSPENDED"},
+    "opsSetTenantPlan": {"NOT_AVAILABLE_LIVE", "INVALID_TRANSITION", "NO_CHANGE"},
+    "opsSetTenantSpendCap": {"INVALID_TRANSITION", "NO_CHANGE"},
+    "opsPublishDefinition": {"VERSION_CONFLICT", "NO_CHANGE"},
+}
+
+
+def test_ops_conflicts_name_their_problem_codes():
+    by_id = {op["operationId"]: op for op in operations(create_app().openapi())}
+    assert set(OPS_CONFLICTS) <= set(by_id)
+    for op_id, codes in OPS_CONFLICTS.items():
+        documented = by_id[op_id]["responses"]["409"]["description"]
+        assert set(re.findall(r"[A-Z][A-Z_]+[A-Z]", documented)) == codes, op_id

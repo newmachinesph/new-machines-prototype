@@ -4,7 +4,7 @@ import { focusPageHeading, useToast } from "@/components/base";
 import { ConfirmAction } from "@/components/confirm-action";
 import { Button } from "@/components/ui";
 import { type PackAction, usePackAction } from "@/lib/queries/marketplace";
-import { useCanWrite } from "@/lib/queries/ops";
+import { useCanWrite, useOpsWorkspace } from "@/lib/queries/ops";
 import { type PackStatus, validActions } from "./pack-state";
 import { ReadOnly } from "@/components/read-only";
 
@@ -81,7 +81,9 @@ export function PackActions({ pack }: { pack: PackRef }) {
   const canWrite = useCanWrite();
   const toast = useToast();
   const run = usePackAction();
-  const actions = validActions(pack.status, pack.certified);
+  // Listings are fixtures in the live workspace, and the API refuses to move them there.
+  const live = useOpsWorkspace() === "live";
+  const actions = live ? [] : validActions(pack.status, pack.certified);
 
   return (
     <>

@@ -5,7 +5,8 @@ import { UiProviders } from "@/components/base";
 import { PackActions } from "./pack-actions";
 
 const canWrite = vi.hoisted(() => ({ value: true }));
-vi.mock("@/lib/queries/ops", () => ({ useCanWrite: () => canWrite.value }));
+const workspace = vi.hoisted(() => ({ value: "demo" as "demo" | "live" }));
+vi.mock("@/lib/queries/ops", () => ({ useCanWrite: () => canWrite.value, useOpsWorkspace: () => workspace.value }));
 const runAction = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
 vi.mock("@/lib/queries/marketplace", () => ({ usePackAction: () => runAction }));
 
@@ -20,6 +21,7 @@ const renderActions = (status: "in_review" | "published", certified = false) =>
 describe("PackActions", () => {
   beforeEach(() => {
     canWrite.value = true;
+    workspace.value = "demo";
   });
 
   it("enables the valid moves for an operator", () => {
@@ -51,5 +53,11 @@ describe("PackActions", () => {
     await user.click(within(dialog).getByRole("button", { name: "Approve and publish" }));
     await waitFor(() => expect(runAction).toHaveBeenCalledWith("approve", "p", "Passport reviewed"));
     await waitFor(() => expect(screen.getByRole("heading", { level: 1 })).toHaveFocus());
+  });
+
+  it("offers no pack moves in the live workspace, since the API refuses them", () => {
+    workspace.value = "live";
+    renderActions("in_review");
+    expect(screen.queryAllByRole("button")).toHaveLength(0);
   });
 });

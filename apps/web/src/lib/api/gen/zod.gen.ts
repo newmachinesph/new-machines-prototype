@@ -338,6 +338,14 @@ export const zDefinitionSummary = z.object({
 });
 
 /**
+ * DeliverableItem
+ */
+export const zDeliverableItem = z.object({
+    label: z.string(),
+    detail: z.string()
+});
+
+/**
  * DeliverableRow
  */
 export const zDeliverableRow = z.object({
@@ -428,7 +436,8 @@ export const zDeliverable = z.object({
     rows: z.array(zDeliverableRow),
     limitations: z.array(z.string()),
     unresolved: z.array(z.string()),
-    evidence: z.array(zEvidenceItem)
+    evidence: z.array(zEvidenceItem),
+    items: z.array(zDeliverableItem).optional()
 });
 
 /**
@@ -521,7 +530,7 @@ export const zConnectorEntry = z.object({
     tenantsConnected: z.int(),
     callsToday: z.int(),
     errorRate: z.number().gte(0).lte(1),
-    lastHealthCheck: zHealthCheck,
+    lastHealthCheck: zHealthCheck.optional(),
     defaults: zConnectorDefaults,
     scopes: z.array(z.string())
 });
@@ -794,18 +803,8 @@ export const zOpsMe = z.object({
         'owner',
         'admin',
         'support'
-    ])
-});
-
-/**
- * OpsOverview
- */
-export const zOpsOverview = z.object({
-    kpis: zOpsKpis,
-    attention: z.array(zOpsAttentionItem),
-    recentAudit: z.array(zAuditEntry),
-    runsByHour: z.array(zHourPoint),
-    simulatedFields: z.array(z.string())
+    ]),
+    workspace: z.enum(['demo', 'live'])
 });
 
 /**
@@ -919,6 +918,28 @@ export const zCreatePackRequest = z.object({
     connectors: z.array(zPackConnectorInput).max(20),
     humanReview: z.string().min(1).max(1000),
     reason: z.string().min(1).max(500)
+});
+
+/**
+ * PackCount
+ */
+export const zPackCount = z.object({
+    slug: z.string(),
+    name: z.string(),
+    runs: z.int()
+});
+
+/**
+ * OpsOverview
+ */
+export const zOpsOverview = z.object({
+    kpis: zOpsKpis,
+    attention: z.array(zOpsAttentionItem),
+    recentAudit: z.array(zAuditEntry),
+    runsByHour: z.array(zHourPoint),
+    simulatedFields: z.array(z.string()),
+    topPacks: z.array(zPackCount).optional(),
+    spendMonth: zMoney.optional()
 });
 
 /**
@@ -1462,8 +1483,9 @@ export const zRunSummary = z.object({
 /**
  * StartRunRequest
  *
- * `input` is either the pack's input object (checked against its input JSON Schema) or, for the
- * reconciliation pack's older form, free text such as "2026-10-06..2026-10-12" or "last 7 days".
+ * `input` is either the pack's input object (checked against its input JSON Schema) or free text: a
+ * date range such as "2026-10-06..2026-10-12" or "last 7 days", or for a pack whose input is one date, a
+ * day such as "2026-10-13" or "today".
  */
 export const zStartRunRequest = z.object({
     packSlug: z.string(),
@@ -1649,7 +1671,8 @@ export const zToolCall = z.object({
         'REQUIRE_APPROVAL'
     ]),
     detail: z.string(),
-    mocked: z.boolean().optional()
+    mocked: z.boolean().optional(),
+    actionClass: z.string().optional()
 });
 
 /**
@@ -1739,6 +1762,7 @@ export const zRun = z.object({
     stages: zStages,
     stageNotes: zStageNotes.optional(),
     summary: z.string(),
+    outcome: z.string().optional(),
     nodes: z.array(zRunNode),
     edges: z.array(zRunEdge),
     timeline: z.array(zTimelineEvent),
@@ -1936,7 +1960,7 @@ export const zTenantDetail = z.object({
     connectorsList: z.array(zTenantConnection),
     recentRuns: z.array(zOpsRun),
     usageByDay: z.array(zUsagePoint),
-    simulated: z.literal(true)
+    simulated: z.boolean()
 });
 
 /**

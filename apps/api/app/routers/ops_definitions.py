@@ -13,12 +13,12 @@ from typing import Annotated
 import yaml
 from fastapi import Query
 
-from app import db
+from app import db, ops_state, workspace
 from app.auth import CurrentOps, OpsWriter
 from app.defs import refs, registry
 from app.defs.model import Bundle, Definition, path_for
 from app.defs.validate import validate_bundle
-from app.errors import ApiProblem, ProblemIssue
+from app.errors import NO_CHANGE, ApiProblem, ProblemIssue, conflicts
 from app.models.ops import (
     DefinitionDetail,
     DefinitionExport,
@@ -260,7 +260,7 @@ def ops_validate_definition(
     operation_id="opsPublishDefinition",
     response_model=DefinitionDetail,
     status_code=201,
-    responses=RUNTIME_RESPONSES,
+    responses={**RUNTIME_RESPONSES, **conflicts("VERSION_CONFLICT", NO_CHANGE)},
 )
 def ops_publish_definition(
     kind: DefinitionKind, key: PathId, body: PublishDefinitionRequest, actor: OpsWriter
@@ -293,15 +293,23 @@ def ops_publish_definition(
                 f"v{conflict.base}. Copy your changes, reload the latest version and apply them again.",
             ) from None
         except registry.NoChange:
-            raise ApiProblem(409, "NO_CHANGE", f"{kind}/{key} is unchanged.") from None
+            raise ApiProblem(409, NO_CHANGE, f"{kind}/{key} is unchanged.") from None
         detail = detail_of(conn, kind, key)
+        action = "definition.create" if before is None else "definition.publish"
+        summary = (
+            f"created v{published.version}" if before is None else f"v{before.version} → v{published.version}"
+        )
+        target = f"{kind}/{key}"
+        live = workspace.live()
+        if live:  # the publish and its audit entry commit together
+            data = {"summary": summary}
+            ops_state.audit(
+                conn, actor.email, action, "definition", target, body.reason, data, actor_role=actor.role
+            )
         conn.commit()
-    action = "definition.create" if before is None else "definition.publish"
-    summary = (
-        f"created v{published.version}" if before is None else f"v{before.version} → v{published.version}"
-    )
-    with locked_store() as store:
-        store.audit(actor, action, "definition", f"{kind}/{key}", body.reason, summary)
+    if not live:
+        with locked_store() as store:
+            store.audit(actor, action, "definition", target, body.reason, summary)
     return detail
 
 

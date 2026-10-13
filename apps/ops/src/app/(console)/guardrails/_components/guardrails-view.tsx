@@ -6,21 +6,29 @@ import { ConfirmAction } from "@/components/confirm-action";
 import { ReadOnly } from "@/components/read-only";
 import { QueryState } from "@/components/query-state";
 import { Skeleton } from "@/components/skeleton";
-import { Button, Id, Pill, Section, SimTag } from "@/components/ui";
+import { Button, Id, Pill, SampleTag, Section, SimTag } from "@/components/ui";
 import type { Guardrail } from "@/lib/api/gen/types.gen";
 import { cn } from "@/lib/cn";
 import { ago } from "@/lib/format";
 import { useGuardrails, useSetGuardrail } from "@/lib/queries/guardrails";
-import { useCanWrite } from "@/lib/queries/ops";
+import { useCanWrite, useOpsWorkspace } from "@/lib/queries/ops";
 import { fieldHint, fieldUnitLabel, formatLimit, fromFieldValue, isMoneyUnit, toFieldValue } from "./limits";
 
 /** The only guardrail the API enforces today; every other switch and limit is stored for the demo. */
 const ENFORCED_KEY = "pause_all_runs";
 const NOT_ENFORCED = "Stored only in the demo; not enforced yet.";
 const PAUSE_COPY = "New runs are refused for every tenant until you turn this off. Runs already in progress continue.";
+const LIVE_SAMPLE = "Sample settings. The live workspace does not store or enforce them, so they cannot be changed.";
 const isEnforced = (g: Guardrail) => g.key === ENFORCED_KEY;
 
-function Row({ g, children }: { g: Guardrail; children: ReactNode }) {
+/**
+ * In the live workspace only the pause switch is real. Every other guardrail is a fixture shown as a sample:
+ * tagged, with no fixture attribution and no edit control, since the API refuses to set it.
+ */
+const isSample = (g: Guardrail, live: boolean) => live && !isEnforced(g);
+
+function Row({ g, live, children }: { g: Guardrail; live: boolean; children: ReactNode }) {
+  const sample = isSample(g, live);
   return (
     <li className="flex flex-col gap-3 px-5 py-4 md:flex-row md:items-center md:justify-between md:gap-6">
       <div className="min-w-0">
@@ -30,10 +38,12 @@ function Row({ g, children }: { g: Guardrail; children: ReactNode }) {
         </p>
         <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5">
           <Id>{g.key}</Id>
-          {isEnforced(g) ? null : <SimTag>not enforced</SimTag>}
-          <span className="text-xs text-muted">
-            Last changed {ago(g.updatedAt)} by <span className="break-all">{g.updatedBy}</span>
-          </span>
+          {sample ? <SampleTag /> : isEnforced(g) ? null : <SimTag>not enforced</SimTag>}
+          {sample ? null : (
+            <span className="text-xs text-muted">
+              Last changed {ago(g.updatedAt)} by <span className="break-all">{g.updatedBy}</span>
+            </span>
+          )}
         </div>
       </div>
       <div className="flex shrink-0 items-center gap-3">{children}</div>
@@ -41,7 +51,9 @@ function Row({ g, children }: { g: Guardrail; children: ReactNode }) {
   );
 }
 
-function KillSwitchRow({ g, canWrite }: { g: Guardrail; canWrite: boolean }) {
+type RowProps = { g: Guardrail; canWrite: boolean; live: boolean };
+
+function KillSwitchRow({ g, canWrite, live }: RowProps) {
   const set = useSetGuardrail();
   const toast = useToast();
   const turningOn = !g.enabled;
@@ -52,9 +64,9 @@ function KillSwitchRow({ g, canWrite }: { g: Guardrail; canWrite: boolean }) {
     </Button>
   );
   return (
-    <Row g={g}>
+    <Row g={g} live={live}>
       {g.enabled ? <Pill tone="blocked">{isEnforced(g) ? "On, blocking" : "On"}</Pill> : <Pill tone="quiet">Off</Pill>}
-      {canWrite ? (
+      {isSample(g, live) ? null : canWrite ? (
         <ConfirmAction
           trigger={trigger}
           title={`${verb} "${g.label}"?`}
@@ -82,7 +94,7 @@ function KillSwitchRow({ g, canWrite }: { g: Guardrail; canWrite: boolean }) {
   );
 }
 
-function FlagRow({ g, canWrite }: { g: Guardrail; canWrite: boolean }) {
+function FlagRow({ g, canWrite, live }: RowProps) {
   const set = useSetGuardrail();
   const toast = useToast();
   const next = !g.enabled;
@@ -109,9 +121,9 @@ function FlagRow({ g, canWrite }: { g: Guardrail; canWrite: boolean }) {
     </button>
   );
   return (
-    <Row g={g}>
+    <Row g={g} live={live}>
       <span className="w-6 text-sm font-medium">{g.enabled ? "On" : "Off"}</span>
-      {canWrite ? (
+      {isSample(g, live) ? null : canWrite ? (
         <ConfirmAction
           trigger={trigger}
           title={`${verb} "${g.label}"?`}
@@ -184,11 +196,11 @@ function LimitEdit({ g }: { g: Guardrail }) {
   );
 }
 
-function LimitRow({ g, canWrite }: { g: Guardrail; canWrite: boolean }) {
+function LimitRow({ g, canWrite, live }: RowProps) {
   return (
-    <Row g={g}>
+    <Row g={g} live={live}>
       <span className="tnum text-sm font-semibold">{formatLimit(g)}</span>
-      {canWrite ? (
+      {isSample(g, live) ? null : canWrite ? (
         <LimitEdit g={g} />
       ) : (
         <ReadOnly>
@@ -204,6 +216,9 @@ function LimitRow({ g, canWrite }: { g: Guardrail; canWrite: boolean }) {
 export function GuardrailsView() {
   const q = useGuardrails();
   const canWrite = useCanWrite();
+  const live = useOpsWorkspace() === "live";
+  const settingsTag = live ? <SampleTag /> : <SimTag>not enforced</SimTag>;
+  const settingsNote = live ? LIVE_SAMPLE : NOT_ENFORCED;
   return (
     <QueryState query={q} skeleton={<Skeleton className="h-96" />}>
       {(all) => {
@@ -230,23 +245,23 @@ export function GuardrailsView() {
             >
               <ul className="divide-y divide-rule">
                 {kill.map((g) => (
-                  <KillSwitchRow key={g.key} g={g} canWrite={canWrite} />
+                  <KillSwitchRow key={g.key} g={g} canWrite={canWrite} live={live} />
                 ))}
               </ul>
             </Section>
-            <Section title="Feature flags" aside={<SimTag>not enforced</SimTag>}>
-              <p className="border-b border-rule px-5 py-2.5 text-xs text-muted">{NOT_ENFORCED}</p>
+            <Section title="Feature flags" aside={settingsTag}>
+              <p className="border-b border-rule px-5 py-2.5 text-xs text-muted">{settingsNote}</p>
               <ul className="divide-y divide-rule">
                 {flags.map((g) => (
-                  <FlagRow key={g.key} g={g} canWrite={canWrite} />
+                  <FlagRow key={g.key} g={g} canWrite={canWrite} live={live} />
                 ))}
               </ul>
             </Section>
-            <Section title="Limits" aside={<SimTag>not enforced</SimTag>}>
-              <p className="border-b border-rule px-5 py-2.5 text-xs text-muted">{NOT_ENFORCED}</p>
+            <Section title="Limits" aside={settingsTag}>
+              <p className="border-b border-rule px-5 py-2.5 text-xs text-muted">{settingsNote}</p>
               <ul className="divide-y divide-rule">
                 {limits.map((g) => (
-                  <LimitRow key={g.key} g={g} canWrite={canWrite} />
+                  <LimitRow key={g.key} g={g} canWrite={canWrite} live={live} />
                 ))}
               </ul>
             </Section>

@@ -1,0 +1,25 @@
+kind: agent
+key: collections-agent
+schema_version: nm.agent.manifest.v1.1
+agent_id: collections-agent
+version: "1.0.0"
+publisher_id: new-machines-labs
+publisher_name: New Machines Labs
+name: Collections Agent
+summary: >-
+  Finds the invoices that are past due, decides how firm each reminder should be from how late it is, and lists the facts each reminder should state, so a reviewer can check the plan before anything is drafted.
+capabilities: [finance.collections]
+runtime:
+  adapter: google_adk
+  model_profile: reasoning
+  instructions: instructions.md
+  skills: [skills/stage-overdue.md]
+  tools: []
+  max_turns: 6
+input_schema_ref: overdue-invoice-follow-up/input
+output_schema_ref: overdue-invoice-follow-up/plan
+requested_tool_capabilities: []
+data_processing:
+  supported_regions: ["asia-south1"]
+  data_classes: ["CONFIDENTIAL"]
+  retention_policy_ref: retention/30d

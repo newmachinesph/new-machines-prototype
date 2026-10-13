@@ -9,7 +9,7 @@ import pytest
 from fastapi.testclient import TestClient
 from psycopg.types.json import Jsonb
 
-from app import auth, settings, temporal_client
+from app import auth, ops_state, settings, temporal_client
 from app import db as app_db
 from app.defs import registry
 from app.defs.loader import load_bundle
@@ -22,6 +22,11 @@ PROJECT = "nm-demo-test"
 PACK = "order-payment-reconciliation"
 PACK_NAME = "Order & Payment Reconciliation"
 INPUT = {"since": "2026-10-06", "until": "2026-10-12"}
+SEED_PACKS = {
+    PACK: PACK_NAME,
+    "overdue-invoice-follow-up": "Overdue Invoice Follow-up",
+    "refund-triage": "Refund Triage",
+}
 USERS = {
     "ana": {"sub": "uid_ana", "email": "ana@example.com", "email_verified": True, "name": "Ana Reyes"},
     "ben": {"sub": "uid_ben", "email": "ben@example.com", "email_verified": True, "name": "Ben Ito"},
@@ -139,8 +144,8 @@ def _add_run(db, org_id: str, run_id: str, spent: int = 0) -> None:
 
 def test_the_marketplace_is_the_pack_definitions(ana):
     packs = ana.get("/v1/workflow-packs").json()
-    assert [p["slug"] for p in packs] == [PACK]
-    [pack] = packs
+    assert sorted(p["slug"] for p in packs) == sorted(SEED_PACKS)
+    pack = next(p for p in packs if p["slug"] == PACK)
     assert pack["name"] == PACK_NAME and pack["version"] == "1.0.0"
     assert pack["publisher"] == "New Machines Labs"
     assert pack["outcome"].startswith("Every order matched to a payment")
@@ -161,8 +166,43 @@ def test_pack_detail_carries_the_input_schema(ana):
     pack = ana.get(f"/v1/workflow-packs/{PACK}").json()
     assert pack["inputSchema"]["required"] == ["since", "until"]
     assert set(pack["inputSchema"]["properties"]) == {"since", "until"}
-    assert ana.get("/v1/workflow-packs/refund-triage").status_code == 404  # a demo fixture pack
+    assert ana.get("/v1/workflow-packs/weekly-inventory-report").status_code == 404  # a demo fixture pack
     assert ana.get("/v1/workflow-packs/nope").status_code == 404
+
+
+def test_the_marketplace_lists_the_three_seed_packs(ana):
+    packs = {p["slug"]: p for p in ana.get("/v1/workflow-packs").json()}
+    assert {slug: p["name"] for slug, p in packs.items()} == SEED_PACKS
+    overdue, refunds = packs["overdue-invoice-follow-up"], packs["refund-triage"]
+    assert overdue["agents"] == ["collections-agent", "writer-agent"]
+    assert refunds["agents"] == ["refunds-agent", "writer-agent"]
+    assert [c["app"] for c in overdue["connectors"]] == ["Stripe", "Gmail"]
+    assert [c["app"] for c in refunds["connectors"]] == ["Gmail", "Shopify", "Stripe"]
+    detail = ana.get("/v1/workflow-packs/overdue-invoice-follow-up").json()
+    assert detail["inputSchema"]["required"] == ["as_of"]
+    assert len(ana.get("/v1/agents").json()) == 6
+
+
+def test_a_seed_pack_is_hired_connected_in_sandbox_and_started(ana, starts):
+    slug = "overdue-invoice-follow-up"
+    hired = ana.post(
+        f"/v1/organizations/{ana.org_id}/agent-installations",
+        json={"packSlug": slug, "capMinor": 1500, "reviewerPool": True},
+    )
+    assert hired.status_code == 201
+    # Grants follow the pack's contract: this pack reads invoices, not charges, and writes mail drafts.
+    stripe = ana.connect("stripe").json()
+    assert stripe["grants"] == [
+        {"install": "Overdue Invoice Follow-up", "capability": "invoices.read", "access": "read"}
+    ]
+    gmail = ana.connect("gmail").json()
+    assert gmail["status"] == "sandbox"
+    assert gmail["grants"] == [
+        {"install": "Overdue Invoice Follow-up", "capability": "mail.write", "access": "write (approval)"}
+    ]
+    res = ana.start(packSlug=slug, input={"as_of": "2026-10-13"}, budgetMinor=1500)
+    assert res.status_code == 202, res.json()
+    assert starts.calls[-1][2] == {"as_of": "2026-10-13"}
 
 
 def test_suggest_matches_over_pack_definitions(ana):
@@ -216,10 +256,8 @@ def test_hiring_upserts_the_orgs_installation_only(ana, ben, db):
 
 def test_hiring_checks_the_pack_and_cap(ana):
     url = f"/v1/organizations/{ana.org_id}/agent-installations"
-    assert (
-        ana.post(url, json={"packSlug": "refund-triage", "capMinor": 500, "reviewerPool": True}).status_code
-        == 404
-    )
+    fixture_only = {"packSlug": "weekly-inventory-report", "capMinor": 500, "reviewerPool": True}
+    assert ana.post(url, json=fixture_only).status_code == 404
     assert ana.post(url, json={"packSlug": PACK, "capMinor": 0, "reviewerPool": True}).status_code == 422
     assert ana.post(url, json={"packSlug": PACK, "capMinor": 500, "reviewerPool": "maybe"}).status_code == 422
 
@@ -448,16 +486,17 @@ def test_no_run_starts_once_the_months_spend_reaches_the_cap(ana, starts, db):
     assert starts.calls == []
 
 
-def test_the_platform_pause_still_blocks_live_runs(ana, starts):
+def test_the_platform_pause_still_blocks_live_runs(ana, starts, db):
     _ready(ana)
-    get_store().guardrails["pause_all_runs"].enabled = True
+    ops_state.set_paused(db, True, "ops@newmachin.es", "Testing the pause")
+    db.commit()
     res = ana.start()
     assert res.status_code == 409 and res.json()["code"] == "PLATFORM_PAUSED"
     assert starts.calls == []
 
 
 def test_an_unknown_or_fixture_pack_cannot_start(ana):
-    assert ana.start(packSlug="refund-triage").status_code == 404
+    assert ana.start(packSlug="weekly-inventory-report").status_code == 404
     assert ana.start(packSlug="nope").status_code == 404
 
 

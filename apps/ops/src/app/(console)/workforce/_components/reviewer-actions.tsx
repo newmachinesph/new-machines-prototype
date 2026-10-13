@@ -6,7 +6,7 @@ import { ConfirmAction } from "@/components/confirm-action";
 import { ReadOnly } from "@/components/read-only";
 import { Button } from "@/components/ui";
 import type { Reviewer } from "@/lib/api/gen/types.gen";
-import { useCanWrite } from "@/lib/queries/ops";
+import { useCanWrite, useOpsWorkspace } from "@/lib/queries/ops";
 import {
   useApproveReviewer,
   useReinstateReviewer,
@@ -53,11 +53,14 @@ const named = (action: string, r: Reviewer) => `${action} ${r.name}`;
 
 export function ReviewerActions({ reviewer }: { reviewer: Reviewer }) {
   const canWrite = useCanWrite();
+  const live = useOpsWorkspace() === "live";
   const toast = useToast();
   const approve = useApproveReviewer();
   const suspend = useSuspendReviewer();
   const reinstate = useReinstateReviewer();
 
+  // Reviewers are fixtures in the live workspace, and the API refuses to change them there.
+  if (live) return null;
   if (!canWrite) {
     const labels = {
       applicant: ["Approve as trainee"],

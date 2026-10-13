@@ -102,6 +102,8 @@ class ToolCall(Model):
     policy: PolicyVerdict
     detail: str
     mocked: bool | Opt = None
+    # The tool's action class (read, write, money, ...) from its connector definition; real runs only.
+    action_class: str | Opt = None
 
 
 class RunNode(Model):
@@ -183,6 +185,11 @@ class DeliverableRow(Model):
     value: str
 
 
+class DeliverableItem(Model):
+    label: str
+    detail: str
+
+
 class Deliverable(Model):
     title: str
     kind: str
@@ -191,6 +198,8 @@ class Deliverable(Model):
     limitations: list[str]
     unresolved: list[str]
     evidence: list[EvidenceItem]
+    # One entry per thing the run produced (such as an email draft), from the pack's deliverable view.
+    items: list[DeliverableItem] | Opt = None
 
 
 class RunSummary(Model):
@@ -223,6 +232,8 @@ class Run(Model):
     stages: Stages
     stage_notes: StageNotes | Opt = None
     summary: str
+    # What the pinned pack promises (its `outcome`); real runs started after packs carried it.
+    outcome: str | Opt = None
     nodes: list[RunNode]
     edges: list[RunEdge]
     timeline: list[TimelineEvent]

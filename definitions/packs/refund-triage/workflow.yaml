@@ -1,0 +1,172 @@
+# The refund triage graph. Values starting with "=" are CEL over the run state
+# (input, nodes.<id>.output, memory; `item` inside a for_each). Routes name the next node for each outcome.
+kind: workflow
+key: refund-triage
+schema_version: nm.workflow.v1
+workflow_id: refund-triage
+version: "1"
+entry_node_id: start
+default_policy_ref: policy/default
+work_contract_ref: refund-triage
+limits:
+  max_duration_s: 172800
+  max_cost_minor: 2500
+  currency: USD
+  max_parallel_nodes: 1
+  max_total_node_attempts: 40
+
+nodes:
+  - id: start
+    type: trigger
+    version: "1"
+    config: {}
+    routes: {next: recall}
+
+  - id: recall
+    type: memory
+    version: "1"
+    config:
+      op: recall
+      space: customer-accounts
+      query: refund policy approved partial declined
+    routes: {next: requests}
+
+  - id: requests
+    type: connector
+    version: "1"
+    config:
+      tool: gmail.list_threads
+      args:
+        query: refund
+        max_results: 25
+    routes: {next: orders, denied: failed, error: failed}
+
+  # Refund requests name recent orders, so orders and payments cover the 60 days up to `until`.
+  - id: orders
+    type: connector
+    version: "1"
+    config:
+      tool: shopify.list_orders
+      args:
+        created_at_min: =timestamp(input.until + "T00:00:00Z") - duration("1440h")
+        created_at_max: =input.until + "T23:59:59Z"
+        status: any
+        limit: 250
+    routes: {next: charges, denied: failed, error: failed}
+
+  - id: charges
+    type: connector
+    version: "1"
+    config:
+      tool: stripe.list_charges
+      args:
+        created:
+          gte: =int(timestamp(input.until + "T00:00:00Z") - duration("1440h"))
+          lte: =int(timestamp(input.until + "T23:59:59Z"))
+        limit: 100
+    routes: {next: triage, denied: failed, error: failed}
+
+  - id: triage
+    type: agent
+    version: "1"
+    config:
+      agent: refunds-agent
+      task: >-
+        Link every refund request to its order and payment, propose approve, partial or decline from the
+        refund policy in rules, and plan one reply per request. Do not issue any refund. Submit the result in
+        the required shape.
+      inputs:
+        threads: =nodes.requests.output
+        orders: =nodes.orders.output
+        charges: =nodes.charges.output
+        rules: =memory
+      output_schema: refund-triage/triage
+    routes: {next: check}
+
+  - id: check
+    type: decision
+    version: "1"
+    config:
+      rules: refund-cases
+    routes: {nothing: nothing, human_review: review}
+
+  - id: review
+    type: human_workforce
+    version: "1"
+    config:
+      title: Confirm the proposed refund decisions
+      instructions: >-
+        For each request, check the order it names and the proposed decision against the refund policy.
+        Add a note where the decision or the reply should change. Resolve the task when every request has a
+        decision, or reject it if the requests cannot be trusted.
+      show: =nodes.triage.output.review_items
+      timeout_s: 86400
+    routes: {resolved: draft, rejected: failed, timeout: failed}
+
+  - id: draft
+    type: agent
+    version: "1"
+    config:
+      agent: writer-agent
+      task: >-
+        Write one short, polite email draft per item, using only its facts. Follow the reviewer notes when
+        there are any. Submit the result in the required shape.
+      inputs:
+        items: =nodes.triage.output.messages
+        review: =nodes.review.output
+        tone: warm and clear
+      output_schema: shared/drafts
+    routes: {next: approve}
+
+  - id: approve
+    type: approval
+    version: "1"
+    config:
+      title: Save the refund replies as drafts
+      summary: ='Create ' + string(size(nodes.draft.output.drafts)) + ' email drafts in Gmail'
+      timeout_s: 86400
+    routes: {granted: send, denied: failed, timeout: failed}
+
+  - id: send
+    type: connector
+    version: "1"
+    config:
+      tool: gmail.create_draft
+      for_each: =nodes.draft.output.drafts
+      args:
+        recipient_email: =item.to
+        subject: =item.subject
+        body: =item.body
+    routes: {ok: verify, denied: failed, error: failed}
+
+  - id: verify
+    type: verification
+    version: "1"
+    config:
+      schema: shared/drafts
+      value: =nodes.draft.output
+      checks:
+        - =size(nodes.draft.output.drafts) >= 1
+        - =size(nodes.send.output.results) == size(nodes.draft.output.drafts)
+        - =size(nodes.draft.output.drafts) == size(nodes.triage.output.messages)
+    routes: {pass: done, fail: failed}
+
+  - id: nothing
+    type: end
+    version: "1"
+    config:
+      status: COMPLETED
+      deliverable: =nodes.triage.output
+
+  - id: done
+    type: end
+    version: "1"
+    config:
+      status: COMPLETED
+      deliverable: =nodes.draft.output
+
+  - id: failed
+    type: end
+    version: "1"
+    config:
+      status: FAILED

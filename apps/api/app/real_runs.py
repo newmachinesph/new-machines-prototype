@@ -8,12 +8,13 @@ import logging
 import re
 from datetime import UTC, date, datetime, timedelta
 
+import psycopg
 from jsonschema import Draft202012Validator
 from jsonschema import ValidationError as InputError
 from psycopg.types.json import Jsonb
 from pydantic import ValidationError
 
-from app import db, settings, temporal_client
+from app import db, ops_state, settings, temporal_client
 from app.auth import Actor
 from app.defs import registry
 from app.defs.snapshot import build_snapshot
@@ -36,6 +37,9 @@ MAX_INPUT_BYTES = 10_000
 MAX_INPUT_ISSUES = 20
 _RANGE = re.compile(r"(\d{4}-\d{2}-\d{2})\s*\.\.\s*(\d{4}-\d{2}-\d{2})")
 _LAST_DAYS = re.compile(r"\blast\s+(\d+)\s+days?\b", re.IGNORECASE)
+_DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
+_TODAY = re.compile(r"\btoday\b", re.IGNORECASE)
+DATE_PATTERN = r"^\d{4}-\d{2}-\d{2}$"  # how an input schema spells a YYYY-MM-DD date
 
 
 # --- start ----------------------------------------------------------------------------------------------
@@ -60,11 +64,37 @@ def _day(text: str) -> date:
         raise _invalid(f"{text} is not a valid date.") from None
 
 
-def parse_run_input(text: str, today: date | None = None) -> dict:
-    """The start form's free text as the pack input {since, until} (ISO dates, both inclusive).
+def single_date_field(schema: dict | None) -> str | None:
+    """The field name when the input schema's only required property is one date (YYYY-MM-DD), else None."""
+    if not isinstance(schema, dict):
+        return None
+    required = schema.get("required") or []
+    if len(required) != 1:
+        return None
+    prop = (schema.get("properties") or {}).get(required[0])
+    if not isinstance(prop, dict) or prop.get("type") != "string":
+        return None
+    return required[0] if prop.get("format") == "date" or prop.get("pattern") == DATE_PATTERN else None
 
-    `YYYY-MM-DD..YYYY-MM-DD` is a range, "last N days" ends today (UTC), anything else is the last 7 days."""
+
+def _one_day(text: str, today: date) -> date:
+    """A single day from free text: the first YYYY-MM-DD in it; "today" or nothing at all is today."""
+    if found := _DATE.search(text):
+        return _day(found[0])
+    if not text.strip() or _TODAY.search(text):
+        return today
+    raise _invalid("Give the day as YYYY-MM-DD, or say today.")
+
+
+def parse_run_input(text: str, today: date | None = None, schema: dict | None = None) -> dict:
+    """The start form's free text as the pack input, read the way the pack's input `schema` asks.
+
+    A pack whose input is one required date gets that date (`_one_day`, today in UTC by default). Any other
+    gets {since, until} (ISO dates, both inclusive): `YYYY-MM-DD..YYYY-MM-DD` is a range, "last N days" ends
+    today (UTC), anything else is the last 7 days."""
     today = today or datetime.now(UTC).date()
+    if (field := single_date_field(schema)) is not None:
+        return {field: _one_day(text, today).isoformat()}
     if found := _RANGE.search(text):
         since, until = _day(found[1]), _day(found[2])
         if since > until:
@@ -91,6 +121,22 @@ def input_schema(conn, pack_slug: str) -> dict | None:
     ref = (contract.body if contract else {}).get("input_schema_ref")
     schema = registry.latest(conn, "schema", str(ref)) if ref else None
     return schema.body if schema else None
+
+
+def real_input_schema(pack_slug: str) -> dict | None:
+    """The input schema of a pack that runs for real (the runtime is on and the registry defines it), for the
+    demo workspace's pack detail; None for a pack that keeps the fixture path. A database error is logged and
+    gives None, so the detail is still served (its start form then takes free text)."""
+    if not settings.runtime_enabled():
+        return None
+    try:
+        with db.connect() as conn:
+            return input_schema(conn, pack_slug)
+    except psycopg.Error:
+        log.warning(
+            "Could not load the input schema of %s; serving its detail without one.", pack_slug, exc_info=True
+        )
+        return None
 
 
 def _join(prefix: str, field: object) -> str:
@@ -126,9 +172,9 @@ def _input_issues(pack_slug: str, errors: list[InputError]) -> list[ProblemIssue
 
 
 def check_input(pack_slug: str, value: str | dict, schema: dict | None) -> dict:
-    """The run input: an object as given, or free text parsed as a date range (`parse_run_input`). It must
-    match the pack's input schema; 422 INVALID_INPUT lists each field error otherwise."""
-    inp = parse_run_input(value) if isinstance(value, str) else value
+    """The run input: an object as given, or free text parsed the way the schema asks (`parse_run_input`). It
+    must match the pack's input schema; 422 INVALID_INPUT lists each field error otherwise."""
+    inp = parse_run_input(value, schema=schema) if isinstance(value, str) else value
     if len(json.dumps(inp)) > MAX_INPUT_BYTES:
         raise _invalid("The input is too large.")
     if not schema:
@@ -162,7 +208,16 @@ def _contract_budget(snapshot: dict) -> tuple[int, str]:
     return int(budget.get("maximum_minor") or 0), str(budget.get("currency") or "USD")
 
 
-def _insert_run(body: StartRunRequest, actor: Actor, catalog: list[ConnectorEntry], inp: dict) -> dict:
+def _connector_policy(conn, snapshot: dict, catalog: list[ConnectorEntry] | None) -> tuple[dict, list[str]]:
+    """The Ops policy to pin: from the fixture connector catalog (demo), or, with no catalog (the live
+    workspace), from the persisted ops settings of the snapshot's connectors."""
+    if catalog is not None:
+        return ops_connector_policy(snapshot, catalog)
+    keys = list(((snapshot.get("defs") or {}).get("connector") or {}).keys())
+    return ops_state.snapshot_policy(conn, keys)
+
+
+def _insert_run(body: StartRunRequest, actor: Actor, catalog: list[ConnectorEntry] | None, inp: dict) -> dict:
     """Pin the snapshot, insert the runs row and its `run.started` receipt entry; commit. Returns the row
     values the workflow needs: {run_id, snapshot, projection}."""
     with db.connect() as conn:
@@ -175,7 +230,7 @@ def _insert_run(body: StartRunRequest, actor: Actor, catalog: list[ConnectorEntr
         if maximum and body.budget_minor > maximum:
             limit = money_text(maximum, currency)
             raise ApiProblem(422, "BUDGET_TOO_HIGH", f"The budget can be at most {limit} for this pack.")
-        overrides, disabled = ops_connector_policy(snapshot, catalog)
+        overrides, disabled = _connector_policy(conn, snapshot, catalog)
         snapshot = {
             **snapshot,
             "overrides": overrides,
@@ -219,10 +274,11 @@ def _stop_unstarted(run_id: str) -> None:
 
 
 def start_real_run(
-    body: StartRunRequest, actor: Actor, catalog: list[ConnectorEntry], inp: dict | None = None
+    body: StartRunRequest, actor: Actor, catalog: list[ConnectorEntry] | None, inp: dict | None = None
 ) -> Run:
     """Insert the run, then start PackRunner (workflow id = run id). 503 when Temporal is unreachable.
-    `inp` is the input already checked (`check_input`); without it the body's input is checked here."""
+    `inp` is the input already checked (`check_input`); without it the body's input is checked here.
+    `catalog` is the fixture Ops connector catalog; None pins the persisted ops settings (live)."""
     if inp is None:
         with db.connect() as conn:
             schema = input_schema(conn, body.pack_slug)

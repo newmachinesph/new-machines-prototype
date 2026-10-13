@@ -1,0 +1,25 @@
+kind: agent
+key: refunds-agent
+schema_version: nm.agent.manifest.v1.1
+agent_id: refunds-agent
+version: "1.0.0"
+publisher_id: new-machines-labs
+publisher_name: New Machines Labs
+name: Refunds Agent
+summary: >-
+  Reads refund requests from your inbox, finds the order and payment each one is about, and proposes approve, partial or decline from your refund policy. It never issues a refund: a person confirms every case.
+capabilities: [customer.refunds]
+runtime:
+  adapter: google_adk
+  model_profile: reasoning
+  instructions: instructions.md
+  skills: [skills/find-order.md, skills/apply-refund-policy.md]
+  tools: []
+  max_turns: 6
+input_schema_ref: refund-triage/input
+output_schema_ref: refund-triage/triage
+requested_tool_capabilities: []
+data_processing:
+  supported_regions: ["asia-south1"]
+  data_classes: ["CONFIDENTIAL"]
+  retention_policy_ref: retention/30d

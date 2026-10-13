@@ -14,7 +14,11 @@ from temporalio.exceptions import ActivityError, ApplicationError
 from temporalio.exceptions import TimeoutError as ActivityTimeout
 
 with workflow.unsafe.imports_passed_through():
-    from app.runtime import agent, gateway
+    # GoogleAdkPlugin's Pydantic payload converter imports annotated_types lazily while decoding activity
+    # results; passing it through here keeps that import out of the sandbox (and its warning out of the log).
+    import annotated_types  # noqa: F401
+
+    from app.runtime import adk_agent, agent, gateway
     from app.runtime.projection import FAILURE_ROUTES
     from app.runtime.providers import MODEL_ACTIVITY_TIMEOUT_S, ModelTurn
     from app.worker.activities import (
@@ -22,6 +26,7 @@ with workflow.unsafe.imports_passed_through():
         SAFE_ERROR_TYPES,
         AgentResult,
         Failure,
+        ItemCall,
         ModelCall,
         NodeCall,
         PackActivities,
@@ -247,10 +252,33 @@ class PackRunner:
             return await self._agent(node["id"], attempt)
         if node["type"] in ("human_workforce", "approval"):
             return await self._task(node, attempt)
+        if node["type"] == "connector" and "for_each" in (node.get("config") or {}):
+            return await self._for_each(node["id"], attempt)
         side_effects = node["type"] in _SIDE_EFFECT_NODES
         done = await self._act(
             PackActivities.run_node, self._node_call(node["id"], attempt), side_effects=side_effects
         )
+        return done["output"], done["route"]
+
+    async def _for_each(self, node_id: str, attempt: int) -> tuple[Any, str]:
+        """A connector node with `for_each`: resolve every item's args first, then one side-effecting
+        activity per item (each commits its own tool.call), then complete the node. The first denied or
+        failed item ends the node with its route; later items are not called."""
+        planned = await self._act(PackActivities.plan_for_each, self._node_call(node_id, attempt))
+        if planned["route"] is not None:
+            return None, planned["route"]
+        approved = bool((self._state.get("approvals") or {}).get(node_id))
+        results = []
+        for index, args in enumerate(planned["items"]):
+            item = ItemCall(
+                self._run_id, self._snapshot, node_id, attempt, self._next_step(), index, args, approved
+            )
+            done = await self._act(PackActivities.for_each_call, item, side_effects=True)
+            if done["route"] is not None:
+                return None, done["route"]
+            results.append(done["data"])
+        finish = AgentResult(self._run_id, self._snapshot, node_id, attempt, self._next_step(), results)
+        done = await self._act(PackActivities.finish_for_each, finish)
         return done["output"], done["route"]
 
     async def _end(self, node_id: str, attempt: int) -> str:
@@ -290,6 +318,53 @@ class PackRunner:
 
     async def _agent(self, node_id: str, attempt: int) -> tuple[Any, str]:
         spec = await self._act(PackActivities.start_agent, self._node_call(node_id, attempt))
+        if spec.get("adapter") == "google_adk":
+            return await self._adk_agent(node_id, attempt, spec)
+        return await self._hosted_agent(node_id, attempt, spec)  # runs pinned before google_adk existed
+
+    async def _adk_agent(self, node_id: str, attempt: int, spec: dict) -> tuple[Any, str]:
+        offered = [t["name"] for t in spec["tools"]]
+
+        async def model(system: str, messages: list[dict], tools: list[dict]) -> list[dict]:
+            call = ModelCall(
+                run_id=self._run_id,
+                snapshot=self._snapshot,
+                node_id=node_id,
+                attempt=attempt,
+                step=self._next_step(),
+                profile=spec["profile"],
+                system=system,
+                messages=messages,
+                tools=tools,
+            )
+            turn = await self._act(
+                PackActivities.model_call, call, timeout=_MODEL_TIMEOUT, retry=_MODEL_RETRY
+            )
+            self._spent_ai += int(turn["cost_minor"])
+            if self._budget and self._spent_ai > self._budget:
+                reason = (
+                    f"BUDGET_EXCEEDED: AI spend {self._spent_ai} is over the budget of "
+                    f"{self._budget} minor units"
+                )
+                raise _NodeFailed(reason, fatal=True)
+            return turn["content"]
+
+        async def tool(block: dict) -> dict:
+            use = ToolUse(self._run_id, self._snapshot, node_id, attempt, self._next_step(), block, offered)
+            return await self._act(PackActivities.tool_call, use, side_effects=True)
+
+        async def submit(value: Any) -> tuple[Any, str]:
+            result = AgentResult(self._run_id, self._snapshot, node_id, attempt, self._next_step(), value)
+            done = await self._act(PackActivities.finish_node, result)
+            return done["output"], done["route"]
+
+        hooks = adk_agent.AgentHooks(model=model, tool=tool, submit=submit)
+        try:
+            return await adk_agent.run_agent(spec, hooks, session_user=self._run_id)
+        except adk_agent.TurnsExhausted as exc:
+            raise _NodeFailed(f"TURNS_EXHAUSTED: no result after {spec['max_turns']} model turns") from exc
+
+    async def _hosted_agent(self, node_id: str, attempt: int, spec: dict) -> tuple[Any, str]:
         messages: list[dict] = list(spec["messages"])
         offered = [t["name"] for t in spec["tools"]]
         for _ in range(spec["max_turns"]):

@@ -11,3 +11,13 @@ export function useCanWrite(): boolean {
   const role = useMe().data?.role;
   return role === "owner" || role === "admin";
 }
+
+export type OpsWorkspace = "demo" | "live";
+
+/**
+ * Which workspace the API serves. Demo while the ops `me` query is loading or failed, so the demo console
+ * never flickers into its live layout.
+ */
+export function useOpsWorkspace(): OpsWorkspace {
+  return useMe().data?.workspace === "live" ? "live" : "demo";
+}

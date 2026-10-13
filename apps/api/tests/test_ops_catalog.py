@@ -80,7 +80,9 @@ def test_listings_carry_function_and_industries_from_the_pack_definition(client)
     assert recon["function"] == {"id": "finance-ops", "name": "Finance operations"}
     assert [i["name"] for i in recon["industries"]] == ["Retail & Commerce", "Manufacturing"]
     # A listing without a pack definition is unclassified.
-    assert listings["refund-triage"].get("function") is None and listings["refund-triage"]["industries"] == []
+    inventory = listings["weekly-inventory-report"]
+    assert inventory.get("function") is None and inventory["industries"] == []
+    assert listings["refund-triage"]["function"] == {"id": "customer-ops", "name": "Customer operations"}
     detail = client.get("/v1/ops/packs/order-payment-reconciliation").json()
     assert detail["function"]["id"] == "finance-ops"
     assert detail["pack"]["function"] == "finance-ops"

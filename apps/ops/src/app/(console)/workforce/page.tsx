@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { LiveSampleNote } from "@/components/live-sample-note";
 import { PageHeader } from "@/components/ui";
-import { WorkforceView } from "./_components/workforce-view";
+import { WorkforceLede, WorkforceView } from "./_components/workforce-view";
 
 export const metadata: Metadata = { title: "Workforce" };
 
@@ -10,7 +11,8 @@ export default function WorkforcePage() {
     <>
       <PageHeader
         title="Workforce"
-        lede="Human reviewers who take on tasks when a run needs a person. Approve applicants, set levels, and pause anyone who should stop receiving work."
+        lede={<WorkforceLede />}
+        below={<LiveSampleNote>Reviewers here are sample data, not the live workforce.</LiveSampleNote>}
       />
       <Suspense>
         <WorkforceView />

@@ -135,6 +135,11 @@ export function SimTag({ children, className }: { children?: ReactNode; classNam
   );
 }
 
+/** Marks fixture-backed data in the live workspace: it is shown for shape, not read from the live platform. */
+export function SampleTag({ className }: { className?: string }) {
+  return <SimTag className={className}>Sample</SimTag>;
+}
+
 export function MockTag({ className, children }: { className?: string; children?: ReactNode }) {
   return (
     <span
@@ -158,11 +163,15 @@ export function PageHeader({
   title,
   lede,
   actions,
+  below,
   children,
 }: {
   title: ReactNode;
   lede?: ReactNode;
   actions?: ReactNode;
+  /** Under the title and lede, such as a note on where the page's data comes from. */
+  below?: ReactNode;
+  /** Above the title, such as a breadcrumb. */
   children?: ReactNode;
 }) {
   return (
@@ -173,6 +182,7 @@ export function PageHeader({
           {title}
         </h1>
         {lede ? <p className="mt-1.5 max-w-[68ch] text-[15px] leading-relaxed text-muted">{lede}</p> : null}
+        {below}
       </div>
       {actions ? <div className="flex shrink-0 flex-wrap gap-2">{actions}</div> : null}
     </header>

@@ -1,0 +1,37 @@
+kind: pack
+key: refund-triage
+slug: refund-triage
+name: Refund Triage
+version: 1.1.1
+publisher: New Machines Labs
+function: customer-ops
+industries: [retail-commerce]
+outcome: Every refund request matched to its order and payment, with a proposed decision and a reply drafted.
+description: >-
+  Reads refund requests from your inbox, finds the order and payment each one is about, and proposes
+  approve, partial or decline from your refund policy. A reviewer confirms every case, then it drafts a
+  reply to each customer once you approve. It never issues a refund: a person does.
+risk_class: medium
+price_note: About $0.60 to $2.40 of AI work per run, plus up to $5.00 of reviewer time to confirm the decisions.
+workflow: refund-triage
+contract: refund-triage
+agents: [refunds-agent, writer-agent]
+connectors: [gmail, shopify, stripe]
+human_review: A reviewer confirms every proposed refund decision. Policy requires a person for any refund.
+# How the run page shows the result. Strings starting with "=" are CEL over {deliverable, mocked} (the end
+# node's deliverable, and whether any tool call used sandbox data; item fields also see `item`).
+# With no refund requests, the run ends with the triage instead.
+deliverable_view:
+  kind: Email drafts
+  summary: >-
+    =!has(deliverable.drafts) ? deliverable.summary : (size(deliverable.drafts) == 1 ? '1 refund reply
+    was drafted' : string(size(deliverable.drafts)) + ' refund replies were drafted') + (mocked ? ' on
+    sandbox data. No email was created in Gmail and no refund has been issued.' : ', ready for you to check
+    and send. No refund has been issued.')
+  facts:
+    - label: Drafts created
+      value: "=has(deliverable.drafts) ? string(size(deliverable.drafts)) : '0'"
+  items:
+    from: "=has(deliverable.drafts) ? deliverable.drafts : []"
+    label: "=item.to + ' — ' + item.subject"
+    detail: =item.body

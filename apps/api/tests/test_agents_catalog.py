@@ -18,7 +18,15 @@ RECON = {"slug": PACK, "name": "Order & Payment Reconciliation"}
 INVOICES = {"slug": "overdue-invoice-follow-up", "name": "Overdue Invoice Follow-up"}
 INVENTORY = {"slug": "weekly-inventory-report", "name": "Weekly Inventory Report"}
 REFUNDS = {"slug": "refund-triage", "name": "Refund Triage"}
-DEFINITION_AGENTS = ["finance-agent", "ops-agent", "retail-agent"]
+DEFINITION_AGENTS = [
+    "collections-agent",
+    "finance-agent",
+    "ops-agent",
+    "refunds-agent",
+    "retail-agent",
+    "writer-agent",
+]
+N_DEFINED = len(DEFINITION_AGENTS)
 
 
 def by_id(agents: list[dict]) -> dict[str, dict]:
@@ -95,9 +103,9 @@ def test_agent_schema_keeps_the_copy_optional():
 def test_demo_lists_definition_agents_first_then_samples(client):
     agents = client.get("/v1/agents").json()
     ids = [a["id"] for a in agents]
-    assert ids[:3] == DEFINITION_AGENTS
-    assert {a["source"] for a in agents[:3]} == {"definition"}
-    assert agents[3:] and {a["source"] for a in agents[3:]} == {"sample"}
+    assert ids[:N_DEFINED] == DEFINITION_AGENTS
+    assert {a["source"] for a in agents[:N_DEFINED]} == {"definition"}
+    assert agents[N_DEFINED:] and {a["source"] for a in agents[N_DEFINED:]} == {"sample"}
     assert "agent_shipping" in ids
 
 
@@ -106,7 +114,7 @@ def test_definition_agent_shape(client):
     assert finance["name"] == "Finance Agent"
     assert finance["publisher"] == "New Machines Labs"
     assert finance["summary"]
-    assert finance["version"] == "1.0.0"
+    assert finance["version"] == "1.1.0"
     assert finance["certified"] is True
     assert finance["capabilities"] == ["finance.reconcile"]
     assert finance["regions"] == ["asia-south1"]
@@ -116,14 +124,22 @@ def test_definition_agent_shape(client):
     ]
     assert finance["tools"] == []
     assert finance["modelProfile"] == "reasoning"
-    # The invoice pack names the sample finance agent, which is folded into this one.
-    assert finance["usedBy"] == [RECON, INVOICES]
+    # The invoice pack has a definition now, so it uses its own agents rather than the sample finance agent.
+    assert finance["usedBy"] == [RECON]
 
 
 def test_definition_agent_tools(client):
     retail = by_id(client.get("/v1/agents").json())["retail-agent"]
     assert retail["tools"] == ["shopify.list_orders"]
-    assert retail["usedBy"] == [REFUNDS]
+    assert retail["usedBy"] == []
+
+
+def test_one_definition_agent_serves_several_packs(client):
+    agents = by_id(client.get("/v1/agents").json())
+    assert agents["writer-agent"]["usedBy"] == [INVOICES, REFUNDS]
+    assert agents["writer-agent"]["modelProfile"] == "fast"
+    assert agents["collections-agent"]["usedBy"] == [INVOICES]
+    assert agents["refunds-agent"]["usedBy"] == [REFUNDS]
 
 
 def test_samples_named_like_a_definition_agent_are_folded_into_it(client):
@@ -134,10 +150,10 @@ def test_samples_named_like_a_definition_agent_are_folded_into_it(client):
     # The fixture id still resolves, to the definition agent.
     folded = client.get("/v1/agents/agent_finance").json()
     assert (folded["id"], folded["source"]) == ("finance-agent", "definition")
-    # Fixture packs name the definition agent instead.
+    # Fixture packs with a definition use its agents; the others name the definition agent instead.
     listed = {p["slug"]: p for p in client.get("/v1/workflow-packs").json()}
-    assert listed["overdue-invoice-follow-up"]["agents"] == ["finance-agent"]
-    assert listed["refund-triage"]["agents"] == ["retail-agent"]
+    assert listed["overdue-invoice-follow-up"]["agents"] == ["collections-agent", "writer-agent"]
+    assert listed["refund-triage"]["agents"] == ["refunds-agent", "writer-agent"]
     assert client.get("/v1/workflow-packs/weekly-inventory-report").json()["agents"] == ["ops-agent"]
 
 
@@ -177,7 +193,8 @@ def test_fixture_pack_with_a_definition_uses_its_agents_and_connectors(client):
     listed = {p["slug"]: p for p in client.get("/v1/workflow-packs").json()}
     assert listed[PACK]["agents"] == ["finance-agent", "ops-agent"]
     # A pack without a definition keeps its own connectors.
-    assert [c["app"] for c in listed["refund-triage"]["connectors"]] == ["Shopify", "Gmail"]
+    assert [c["app"] for c in listed["shipping-exceptions"]["connectors"]] == ["Shopify", "Gmail"]
+    assert [c["app"] for c in listed["refund-triage"]["connectors"]] == ["Gmail", "Shopify", "Stripe"]
 
 
 def test_live_connector_mode_is_never_mocked(client, monkeypatch):

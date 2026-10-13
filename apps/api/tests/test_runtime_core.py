@@ -30,6 +30,8 @@ def snapshot() -> dict:
     defs: dict = {}
     versions = []
     for (kind, key), d in sorted(bundle.items.items()):
+        if kind in ("pack", "workflow", "contract") and key != PACK:
+            continue  # a run snapshot pins exactly one pack: the reconciliation pack
         defs.setdefault(kind, {})[key] = {"body": d.body, "files": d.files}
         versions.append({"kind": kind, "key": key, "version": 1, "digest": digest(d)})
     return {"org_id": "org_demo", "versions": versions, "defs": defs, "overrides": {}, "disabled": []}
@@ -593,7 +595,7 @@ def test_memory_recall_ranks_matches_and_falls_back_to_newest(db, snapshot):
     assert all(h["space"] == "retail-commerce" for h in hits)
 
     fallback = memory.recall(db, "retail-commerce", "zebra crossing", limit=2)
-    assert [h["text"] for h in fallback] == [seeds[3], seeds[2]]
+    assert [h["text"] for h in fallback] == [seeds[-1], seeds[-2]]
     json.dumps(fallback)  # JSON-safe for workflow state
 
 
@@ -602,12 +604,28 @@ def test_memory_recall_ors_the_query_terms(db, snapshot):
     for text in seeds:
         memory.remember(db, "retail-commerce", text, "seed", "ops-agent")
     db.commit()
-    # The reconciliation workflow's own query: no single item holds every word, two hold one each.
-    hits = memory.recall(db, "retail-commerce", "reconciliation fees tolerance refunds")
-    assert sorted(h["text"] for h in hits) == sorted([seeds[0], seeds[2]])
+    # The reconciliation workflow's own query: no single item holds every word; each hit holds one.
+    hits = {h["text"] for h in memory.recall(db, "retail-commerce", "reconciliation fees tolerance refunds")}
+    assert {seeds[0], seeds[2]} <= hits
+    assert all("fee" in t.lower() or "refund" in t.lower() for t in hits)
+    assert not any("refund policy" in t.lower() or "reminder" in t.lower() for t in seeds)  # no policy noise
     # Query syntax characters are words to search for, never tsquery operators.
     assert memory.recall(db, "retail-commerce", "fees & !refunds | (")
     assert len(memory.recall(db, "retail-commerce", "the and of", limit=3)) == 3  # stop words only
+
+
+def test_the_seed_packs_recall_their_own_policies_from_customer_accounts(db, snapshot):
+    seeds = snapshot["defs"]["memory_space"]["customer-accounts"]["body"]["seed_items"]
+    for text in seeds:
+        memory.remember(db, "customer-accounts", text, "seed", "ops-agent")
+    db.commit()
+    reminders = {t for t in seeds if "refund" not in t.lower()}
+    assert len(reminders) == 2 and len(seeds) == 6
+    # Each pack's own recall query (its workflow's recall node) finds its policy items and nothing else.
+    collections = memory.recall(db, "customer-accounts", "collections reminders tone overdue")
+    assert {h["text"] for h in collections} == reminders
+    refunds = memory.recall(db, "customer-accounts", "refund policy approved partial declined")
+    assert {h["text"] for h in refunds} == set(seeds) - reminders
 
 
 def test_memory_list_and_delete(db):
@@ -783,9 +801,10 @@ def test_apply_event_human_task_approval_and_completion(snapshot):
         p, _event("approval", "approve_write", {"approval_id": "apr_1", "status": "granted"}, 4)
     )
     assert Run.model_validate(p).status == "RUNNING"
-    p = projection.apply_event(p, _event("run.completed", "done", {"deliverable": report, "mocked": True}, 5))
+    p = projection.apply_event(p, _event("node.completed", "verify", {"route": "pass"}, 5))
+    p = projection.apply_event(p, _event("run.completed", "done", {"deliverable": report, "mocked": True}, 6))
     run = Run.model_validate(p)
-    assert run.status == "COMPLETED" and run.ended_at == "2026-10-13T10:00:05.000000Z"
+    assert run.status == "COMPLETED" and run.ended_at == "2026-10-13T10:00:06.000000Z"
     assert run.deliverable.summary == "Checked 12 orders." and run.summary == "Checked 12 orders."
     assert run.stages.executed == "done" and run.stages.verified == "done"
 

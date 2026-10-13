@@ -18,6 +18,12 @@ describe("QuickActions", () => {
     expect(screen.getByRole("link", { name: "Declare incident" })).toHaveAttribute("href", "/health?action=declare");
   });
 
+  it("hides the fixture-only actions in the live workspace", () => {
+    render(<QuickActions live />);
+    expect(screen.queryAllByRole("link")).toHaveLength(0);
+    expect(screen.queryAllByRole("button")).toHaveLength(0);
+  });
+
   it("disables all three for the read-only support role", () => {
     canWrite = false;
     render(<QuickActions />);

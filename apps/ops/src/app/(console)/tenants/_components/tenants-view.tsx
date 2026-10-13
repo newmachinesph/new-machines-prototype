@@ -11,7 +11,7 @@ import { Skeleton } from "@/components/skeleton";
 import { Button, PageHeader, Section } from "@/components/ui";
 import type { Tenant } from "@/lib/api/gen/types.gen";
 import { count, date, money, pct } from "@/lib/format";
-import { useCanWrite, useMe } from "@/lib/queries/ops";
+import { useCanWrite, useMe, useOpsWorkspace } from "@/lib/queries/ops";
 import { useTenants } from "@/lib/queries/tenants";
 import { CapUsage } from "./cap-usage";
 import { NewTenantDialog } from "./new-tenant-dialog";
@@ -71,12 +71,15 @@ export function TenantsView() {
   const [q, setQ] = useQueryState("q", { defaultValue: "", clearOnDefault: true });
   const [action, setAction] = useQueryState("action", { clearOnDefault: true });
   const roleKnown = useMe().isSuccess;
+  const live = useOpsWorkspace() === "live";
+  // The live workspace creates orgs at sign-up, so only the demo creates tenants here.
+  const canCreate = canWrite && !live;
   const dq = useDeferredValue(q);
 
-  // Support cannot create tenants, so a link carrying ?action=new must not linger for them.
+  // Support and the live workspace cannot create tenants, so a link carrying ?action=new must not linger.
   useEffect(() => {
-    if (roleKnown && !canWrite && action) void setAction(null);
-  }, [roleKnown, canWrite, action, setAction]);
+    if (roleKnown && !canCreate && action) void setAction(null);
+  }, [roleKnown, canCreate, action, setAction]);
   const query = useTenants({ status: status === "all" ? undefined : status, q: dq.trim() });
 
   const newButton = (
@@ -91,7 +94,7 @@ export function TenantsView() {
       <PageHeader
         title="Tenants"
         lede="Every customer workspace, its plan, spend and health."
-        actions={canWrite ? newButton : <ReadOnly>{newButton}</ReadOnly>}
+        actions={live ? undefined : canWrite ? newButton : <ReadOnly>{newButton}</ReadOnly>}
       />
       <Section>
         <div className="flex flex-col gap-3 border-b border-rule px-5 py-3.5 sm:flex-row sm:items-center sm:justify-between">
@@ -129,14 +132,18 @@ export function TenantsView() {
               empty={
                 dq.trim() || status !== "all"
                   ? "No tenants match these filters. Clear the search or choose All."
-                  : "No tenants yet. Create one with New tenant."
+                  : live
+                    ? "No tenants yet. Orgs appear here when people sign up."
+                    : "No tenants yet. Create one with New tenant."
               }
               maxHeight="max-h-[70vh]"
             />
           )}
         </QueryState>
       </Section>
-      <NewTenantDialog open={action === "new" && canWrite} onOpenChange={(o) => setAction(o ? "new" : null)} />
+      {live ? null : (
+        <NewTenantDialog open={action === "new" && canWrite} onOpenChange={(o) => setAction(o ? "new" : null)} />
+      )}
     </>
   );
 }

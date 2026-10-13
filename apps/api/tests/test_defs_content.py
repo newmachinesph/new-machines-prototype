@@ -100,7 +100,14 @@ def test_pack_lists_connectors_and_agents(bundle):
     assert pack["industries"] == ["retail-commerce", "manufacturing"]
     assert pack["connectors"] == ["shopify", "stripe", "googlesheets"]
     assert pack["agents"] == ["finance-agent", "ops-agent"]
-    assert {a.key for a in bundle.of("agent")} == {"retail-agent", "finance-agent", "ops-agent"}
+    assert {a.key for a in bundle.of("agent")} == {
+        "retail-agent",
+        "finance-agent",
+        "ops-agent",
+        "collections-agent",
+        "refunds-agent",
+        "writer-agent",
+    }
 
 
 def test_taxonomy_and_models(bundle):
@@ -255,21 +262,32 @@ def test_schemas_accept_sample_outputs(bundle):
     assert list(Draft202012Validator(schema).iter_errors(bad))
 
 
+NEW_AGENTS = {"collections-agent", "refunds-agent", "writer-agent"}  # added with the seed packs
+
+
 def test_agents_follow_conventions(bundle):
     for agent in bundle.of("agent"):
         body = agent.body
         assert body["publisher_id"] == "new-machines-labs"
-        assert body["version"] == "1.0.0"
-        assert body["runtime"]["adapter"] == "hosted"
-        assert body["runtime"]["model_profile"] == "reasoning"
-        assert body["runtime"]["max_turns"] == 6
+        assert body["version"] == ("1.0.0" if agent.key in NEW_AGENTS else "1.1.0")
+        assert body["runtime"]["adapter"] == "google_adk"
+        fast = agent.key == "writer-agent"
+        assert body["runtime"]["model_profile"] == ("fast" if fast else "reasoning")
+        assert body["runtime"]["max_turns"] == (4 if fast else 6)
         assert body["data_processing"]["supported_regions"] == ["asia-south1"]
         assert body["data_processing"]["data_classes"] == ["CONFIDENTIAL"]
         assert body["data_processing"]["retention_policy_ref"] == "retention/30d"
         first_line = agent.files[body["runtime"]["instructions"]].strip().splitlines()[0]
         assert first_line.lower().startswith(("you are", "your role")), first_line
     tools = {a.key: a.body["runtime"].get("tools", []) for a in bundle.of("agent")}
-    assert tools == {"retail-agent": ["shopify.list_orders"], "finance-agent": [], "ops-agent": []}
+    assert tools == {
+        "retail-agent": ["shopify.list_orders"],
+        "finance-agent": [],
+        "ops-agent": [],
+        "collections-agent": [],
+        "refunds-agent": [],
+        "writer-agent": [],
+    }
 
 
 def test_no_vendor_names_in_agent_prose(bundle):
@@ -279,13 +297,40 @@ def test_no_vendor_names_in_agent_prose(bundle):
             assert not pattern.search(text), f"{agent.key}/{path}"
 
 
+def test_agents_that_write_review_records_keep_personal_data_out_of_notes(bundle):
+    line = "Never include email addresses, phone numbers or customer message text in a `note` or `flag`."
+    for key in ("collections-agent", "refunds-agent", "writer-agent"):
+        agent = bundle.get("agent", key)
+        skills = [agent.files[s] for s in agent.body["runtime"]["skills"]]
+        assert any(line in text for text in skills), key
+
+
+def test_the_refund_memory_matches_the_find_order_rule(bundle):
+    seeds = " ".join(
+        item
+        for space in ("customer-accounts", "retail-commerce")
+        for item in bundle.get("memory_space", space).body["seed_items"]
+    )
+    assert "refunded set to true" in seeds and "amount_refunded" in seeds
+    assert "Refunds appear as negative charges" not in seeds
+    assert 'whole word "opened" or "used"' in seeds and '"unused" does not count' in seeds
+
+
 def test_connector_defaults_and_classes(bundle):
     expected = {
-        "shopify": ("list_orders", "read", "orders.read"),
-        "stripe": ("list_charges", "read", "payments.read"),
-        "googlesheets": ("append_rows", "write", "sheets.write"),
+        "shopify": [("list_orders", "read", "orders.read", "SHOPIFY_GET_ORDERS_WITH_FILTERS")],
+        "stripe": [
+            ("list_charges", "read", "payments.read", "STRIPE_LIST_CHARGES"),
+            ("list_invoices", "read", "invoices.read", "STRIPE_LIST_INVOICES"),
+        ],
+        "googlesheets": [("append_rows", "write", "sheets.write", "GOOGLESHEETS_SPREADSHEETS_VALUES_APPEND")],
+        "gmail": [
+            ("list_threads", "read", "mail.read", "GMAIL_FETCH_EMAILS"),
+            ("create_draft", "write", "mail.write", "GMAIL_CREATE_EMAIL_DRAFT"),
+        ],
     }
-    for key, (tool_id, action_class, capability) in expected.items():
+    assert {c.key for c in bundle.of("connector")} == set(expected)
+    for key, tools in expected.items():
         body = bundle.get("connector", key).body
         assert body["defaults"] == {
             "read": "permit",
@@ -293,9 +338,9 @@ def test_connector_defaults_and_classes(bundle):
             "delete": "deny",
             "money": "deny",
         }
-        (tool,) = body["tools"]
-        assert (tool["id"], tool["action_class"], tool["capability"]) == (tool_id, action_class, capability)
-        assert tool["slug"].isupper() and tool["slug"].startswith(body["toolkit"].upper())
+        got = [(t["id"], t["action_class"], t["capability"], t["slug"]) for t in body["tools"]]
+        assert got == tools
+        assert all(t["slug"].startswith(body["toolkit"].upper()) for t in body["tools"])
 
 
 def test_contract(bundle):

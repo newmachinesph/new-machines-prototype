@@ -14,6 +14,7 @@ KINDS = (
     "memory_space",
     "schema",
 )
+SHARED_SCHEMAS = "shared"  # schema keys shared/<stem> live in schemas/<stem>.json, outside any pack
 
 
 @dataclass(frozen=True)
@@ -51,7 +52,8 @@ def path_for(kind: str, key: str) -> str:
     """Canonical source path of a definition, relative to the definitions root.
 
     Pack-scoped kinds (pack, workflow, contract) are keyed by the pack slug; schema keys are
-    `<pack-slug>/<file stem>`. Agent `files` live under `agents/<key>/`.
+    `<pack-slug>/<file stem>`, or `shared/<file stem>` for schemas several packs use. Agent `files` live
+    under `agents/<key>/`.
     """
     if kind in ("taxonomy", "models"):
         return f"{kind}.yaml"
@@ -67,5 +69,7 @@ def path_for(kind: str, key: str) -> str:
         return f"memory/{key}.yaml"
     if kind == "schema":
         slug, _, stem = key.partition("/")
+        if slug == SHARED_SCHEMAS:
+            return f"schemas/{stem}.json"
         return f"packs/{slug}/schemas/{stem}.json"
     raise ValueError(f"unknown definition kind: {kind}")

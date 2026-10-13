@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/skeleton";
 import { Amount, Pill, Section } from "@/components/ui";
 import type { Reviewer } from "@/lib/api/gen/types.gen";
 import { count, date, pct } from "@/lib/format";
+import { useOpsWorkspace } from "@/lib/queries/ops";
 import { useReviewers } from "@/lib/queries/workforce";
 import { ReviewerActions } from "./reviewer-actions";
 import { TABS, TAB_STATUS, type Tab, capitalize, countByTab, resolveTab } from "./tabs";
@@ -89,8 +90,19 @@ const MEMBER_COLUMNS: Column<Reviewer>[] = [
   actions,
 ];
 
+/** The page lede. Reviewers cannot be changed in the live workspace, so there it invites no actions. */
+export function WorkforceLede() {
+  return useOpsWorkspace() === "live"
+    ? "Human reviewers who take on tasks when a run needs a person. The live workspace shows them read-only."
+    : "Human reviewers who take on tasks when a run needs a person. Approve applicants, set levels, and pause anyone who should stop receiving work.";
+}
+
+/** The live workspace offers no reviewer actions, so it leaves out their (empty) column. */
+const withoutActions = (columns: Column<Reviewer>[]) => columns.filter((c) => c !== actions);
+
 export function WorkforceView() {
   const query = useReviewers();
+  const live = useOpsWorkspace() === "live";
   const [requested, setTab] = useQueryState("tab", parseAsStringLiteral(TABS));
 
   return (
@@ -99,6 +111,7 @@ export function WorkforceView() {
         const counts = countByTab(reviewers);
         const tab = resolveTab(requested, counts);
         const rows = reviewers.filter((r) => r.status === TAB_STATUS[tab]);
+        const columns = tab === "applicants" ? APPLICANT_COLUMNS : MEMBER_COLUMNS;
         return (
           <div className="space-y-4">
             <div className="flex">
@@ -112,7 +125,7 @@ export function WorkforceView() {
             <Section>
               <DataTable
                 label={`${capitalize(tab)} reviewers`}
-                columns={tab === "applicants" ? APPLICANT_COLUMNS : MEMBER_COLUMNS}
+                columns={live ? withoutActions(columns) : columns}
                 rows={rows}
                 rowKey={(r) => r.id}
                 empty={EMPTY[tab]}

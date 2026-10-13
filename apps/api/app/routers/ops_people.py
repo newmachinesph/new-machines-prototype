@@ -5,9 +5,9 @@ from typing import Annotated
 
 from fastapi import Query
 
-from app import real_runs, settings
+from app import db, ops_state, real_runs, settings, workspace
 from app.auth import CurrentOps, OpsActor, OpsWriter
-from app.errors import ApiProblem
+from app.errors import NO_CHANGE, NOT_AVAILABLE_LIVE, ApiProblem, conflicts
 from app.models.ops import (
     BillingSummary,
     Guardrail,
@@ -24,12 +24,12 @@ from app.models.runs import RunStatus, RunSummary
 from app.routers.ops_params import PathId
 from app.routers.ops_tenants import dollars
 from app.routing import ApiRouter
-from app.store import Store, locked_store, utc_now
+from app.store import Store, iso, locked_store, utc_now
 
 router = ApiRouter(prefix="/v1/ops", tags=["ops"])
 
-NO_CHANGE = "NO_CHANGE"
 USD_MINOR = "usd_minor"
+LIVE_REVIEWERS = "In the live workspace, reviewers are managed by each company."
 
 
 # Reviewers ---------------------------------------------------------------------------------------------
@@ -42,6 +42,12 @@ def find_reviewer(store: Store, reviewer_id: str) -> Reviewer:
     return reviewer
 
 
+def refuse_live_reviewer_writes() -> None:
+    """Reviewers are fixtures; the live workspace refuses to change them (no store change, no audit)."""
+    if workspace.live():
+        raise ApiProblem(409, NOT_AVAILABLE_LIVE, LIVE_REVIEWERS)
+
+
 def move_reviewer(
     reviewer_id: str,
     reason: Reason,
@@ -51,6 +57,7 @@ def move_reviewer(
     target: ReviewerStatus,
 ) -> Reviewer:
     """One status step: check the current status, change it, audit it, all under the lock."""
+    refuse_live_reviewer_writes()
     with locked_store() as store:
         reviewer = find_reviewer(store, reviewer_id)
         before = reviewer.status
@@ -72,25 +79,44 @@ def ops_list_reviewers(_: CurrentOps, status: ReviewerStatus | None = None) -> l
         return [r.model_copy() for r in store.reviewers.values() if status is None or r.status == status]
 
 
-@router.post("/reviewers/{reviewer_id}:approve", operation_id="opsApproveReviewer", response_model=Reviewer)
+@router.post(
+    "/reviewers/{reviewer_id}:approve",
+    operation_id="opsApproveReviewer",
+    responses=conflicts(NOT_AVAILABLE_LIVE, "INVALID_TRANSITION"),
+    response_model=Reviewer,
+)
 def ops_approve_reviewer(reviewer_id: PathId, body: ReasonRequest, actor: OpsWriter) -> Reviewer:
     return move_reviewer(reviewer_id, body.reason, actor, "approve", "applicant", "active")
 
 
-@router.post("/reviewers/{reviewer_id}:suspend", operation_id="opsSuspendReviewer", response_model=Reviewer)
+@router.post(
+    "/reviewers/{reviewer_id}:suspend",
+    operation_id="opsSuspendReviewer",
+    responses=conflicts(NOT_AVAILABLE_LIVE, "INVALID_TRANSITION"),
+    response_model=Reviewer,
+)
 def ops_suspend_reviewer(reviewer_id: PathId, body: ReasonRequest, actor: OpsWriter) -> Reviewer:
     return move_reviewer(reviewer_id, body.reason, actor, "suspend", "active", "suspended")
 
 
 @router.post(
-    "/reviewers/{reviewer_id}:reinstate", operation_id="opsReinstateReviewer", response_model=Reviewer
+    "/reviewers/{reviewer_id}:reinstate",
+    operation_id="opsReinstateReviewer",
+    responses=conflicts(NOT_AVAILABLE_LIVE, "INVALID_TRANSITION"),
+    response_model=Reviewer,
 )
 def ops_reinstate_reviewer(reviewer_id: PathId, body: ReasonRequest, actor: OpsWriter) -> Reviewer:
     return move_reviewer(reviewer_id, body.reason, actor, "reinstate", "suspended", "active")
 
 
-@router.post("/reviewers/{reviewer_id}:setLevel", operation_id="opsSetReviewerLevel", response_model=Reviewer)
+@router.post(
+    "/reviewers/{reviewer_id}:setLevel",
+    operation_id="opsSetReviewerLevel",
+    responses=conflicts(NOT_AVAILABLE_LIVE, "INVALID_TRANSITION", NO_CHANGE),
+    response_model=Reviewer,
+)
 def ops_set_reviewer_level(reviewer_id: PathId, body: SetLevelRequest, actor: OpsWriter) -> Reviewer:
+    refuse_live_reviewer_writes()
     with locked_store() as store:
         reviewer = find_reviewer(store, reviewer_id)
         if reviewer.status != "active":
@@ -133,6 +159,16 @@ def all_runs(store: Store, real: Sequence[tuple[str, RunSummary]] = ()) -> list[
     return sorted(runs, key=lambda r: r.started_at, reverse=True)
 
 
+def live_runs(real: Sequence[tuple[str, RunSummary]]) -> list[OpsRun]:
+    """The live workspace's runs: real ones only, named after their org. Newest first, as `ops_runs` reads."""
+    with db.connect() as conn:
+        names = {r["id"]: r["name"] for r in conn.execute("SELECT id, name FROM orgs").fetchall()}
+    return [
+        OpsRun.of(r, org_id, names.get(org_id, org_id)).model_copy(update={"real": True})
+        for org_id, r in real
+    ]
+
+
 @router.get("/runs", operation_id="opsListRuns", response_model=list[OpsRun])
 def ops_list_runs(
     _: CurrentOps,
@@ -140,12 +176,16 @@ def ops_list_runs(
     tenant: Annotated[str | None, Query(max_length=100)] = None,
 ) -> list[OpsRun]:
     real = real_runs.ops_runs() if settings.runtime_enabled() else []  # before the lock: it reads Postgres
-    with locked_store() as store:
-        return [
-            r
-            for r in all_runs(store, real)
-            if (status is None or r.status == status) and (tenant is None or r.tenant_id == tenant)
-        ]
+    if workspace.live():
+        runs = live_runs(real)
+    else:
+        with locked_store() as store:
+            runs = all_runs(store, real)
+    return [
+        r
+        for r in runs
+        if (status is None or r.status == status) and (tenant is None or r.tenant_id == tenant)
+    ]
 
 
 # Guardrails --------------------------------------------------------------------------------------------
@@ -155,14 +195,64 @@ def shown(guardrail: Guardrail, value: int) -> str:
     return dollars(value) if guardrail.unit == USD_MINOR else str(value)
 
 
+def _live_pause(conn, fixture: Guardrail) -> Guardrail:
+    """The pause switch as Postgres has it; only the label and description come from the fixture."""
+    row = ops_state.pause_setting(conn)
+    return fixture.model_copy(
+        update={
+            "enabled": (row["value"] or {}).get("enabled") is True,
+            "updated_at": iso(row["updated_at"]),
+            "updated_by": row["updated_by"],
+        }
+    )
+
+
 @router.get("/guardrails", operation_id="opsListGuardrails", response_model=list[Guardrail])
 def ops_list_guardrails(_: CurrentOps) -> list[Guardrail]:
+    """In the live workspace the pause switch is persisted; the other guardrails stay fixtures."""
     with locked_store() as store:
-        return [g.model_copy() for g in store.guardrails.values()]
+        guardrails = [g.model_copy() for g in store.guardrails.values()]
+    if not workspace.live():
+        return guardrails
+    with db.connect() as conn:
+        live = [_live_pause(conn, g) if g.key == ops_state.PAUSE_ALL_RUNS else g for g in guardrails]
+        conn.commit()  # pause_setting writes the default row back should it be missing
+    return live
 
 
-@router.post("/guardrails/{key}:set", operation_id="opsSetGuardrail", response_model=Guardrail)
+def _set_live_pause(body: SetGuardrailRequest, actor: OpsActor) -> Guardrail:
+    with locked_store() as store:
+        fixture = store.guardrails[ops_state.PAUSE_ALL_RUNS].model_copy()
+    if body.value is not None:
+        raise ApiProblem(422, "SCHEMA_INVALID", f"{fixture.label} has no value; set enabled instead.")
+    if body.enabled is None:
+        raise ApiProblem(409, NO_CHANGE, f"{fixture.label} already has those settings.")
+    with db.connect() as conn:
+        try:
+            ops_state.set_paused(conn, body.enabled, actor.email, body.reason, actor_role=actor.role)
+        except ops_state.NoChange:
+            raise ApiProblem(409, NO_CHANGE, f"{fixture.label} already has those settings.") from None
+        conn.commit()
+        return _live_pause(conn, fixture)
+
+
+@router.post(
+    "/guardrails/{key}:set",
+    operation_id="opsSetGuardrail",
+    responses=conflicts(NOT_AVAILABLE_LIVE, NO_CHANGE),
+    response_model=Guardrail,
+)
 def ops_set_guardrail(key: PathId, body: SetGuardrailRequest, actor: OpsWriter) -> Guardrail:
+    if workspace.live():
+        with locked_store() as store:
+            known = key in store.guardrails
+        if not known:
+            raise ApiProblem(404, "NOT_FOUND", f"No guardrail {key}.")
+        if key != ops_state.PAUSE_ALL_RUNS:
+            raise ApiProblem(
+                409, NOT_AVAILABLE_LIVE, "In the live workspace, only the pause switch can be changed."
+            )
+        return _set_live_pause(body, actor)
     with locked_store() as store:
         guardrail = store.guardrails.get(key)
         if guardrail is None:

@@ -41,7 +41,9 @@ export const listWorkflowPacks = <ThrowOnError extends boolean = false>(options?
 /**
  * Get Workflow Pack
  *
- * One pack; in the live workspace with `inputSchema`, the JSON Schema of the input a run takes.
+ * One pack. `inputSchema` is the JSON Schema of the input a run takes: for every pack in the live
+ * workspace, and in the demo workspace for a pack that runs for real (the runtime is on and it has a
+ * definition).
  */
 export const getWorkflowPack = <ThrowOnError extends boolean = false>(options: Options<GetWorkflowPackData, ThrowOnError>): RequestResult<GetWorkflowPackResponses, GetWorkflowPackErrors, ThrowOnError> => (options.client ?? client).get<GetWorkflowPackResponses, GetWorkflowPackErrors, ThrowOnError>({
     requestValidator: async (data) => await z.object({
@@ -831,6 +833,9 @@ export const opsCertifyPack = <ThrowOnError extends boolean = false>(options: Op
 
 /**
  * Ops List Connectors
+ *
+ * The live workspace lists its connector definitions with the settings Ops persisted and today's usage
+ * (UTC); the demo workspace lists its fixture catalog.
  */
 export const opsListConnectors = <ThrowOnError extends boolean = false>(options?: Options<OpsListConnectorsData, ThrowOnError>): RequestResult<OpsListConnectorsResponses, OpsListConnectorsErrors, ThrowOnError> => (options?.client ?? client).get<OpsListConnectorsResponses, OpsListConnectorsErrors, ThrowOnError>({
     requestValidator: async (data) => await z.object({
@@ -940,7 +945,8 @@ export const opsSetConnectorDefaults = <ThrowOnError extends boolean = false>(op
 /**
  * Ops Health Check Connector
  *
- * Simulated and deterministic: healthy unless the connector is disabled.
+ * Simulated and deterministic: healthy unless the connector is disabled. Not available in the live
+ * workspace, which has no health probe yet.
  */
 export const opsHealthCheckConnector = <ThrowOnError extends boolean = false>(options: Options<OpsHealthCheckConnectorData, ThrowOnError>): RequestResult<OpsHealthCheckConnectorResponses, OpsHealthCheckConnectorErrors, ThrowOnError> => (options.client ?? client).post<OpsHealthCheckConnectorResponses, OpsHealthCheckConnectorErrors, ThrowOnError>({
     requestValidator: async (data) => await z.object({
@@ -1305,6 +1311,8 @@ export const opsListRuns = <ThrowOnError extends boolean = false>(options?: Opti
 
 /**
  * Ops List Guardrails
+ *
+ * In the live workspace the pause switch is persisted; the other guardrails stay fixtures.
  */
 export const opsListGuardrails = <ThrowOnError extends boolean = false>(options?: Options<OpsListGuardrailsData, ThrowOnError>): RequestResult<OpsListGuardrailsResponses, OpsListGuardrailsErrors, ThrowOnError> => (options?.client ?? client).get<OpsListGuardrailsResponses, OpsListGuardrailsErrors, ThrowOnError>({
     requestValidator: async (data) => await z.object({
@@ -1386,6 +1394,7 @@ export const opsListTeam = <ThrowOnError extends boolean = false>(options?: Opti
  * Ops List Audit
  *
  * Newest first. Entries with the same timestamp keep the order they were written in, newest first.
+ * The live workspace reads the persisted ops audit log.
  */
 export const opsListAudit = <ThrowOnError extends boolean = false>(options?: Options<OpsListAuditData, ThrowOnError>): RequestResult<OpsListAuditResponses, OpsListAuditErrors, ThrowOnError> => (options?.client ?? client).get<OpsListAuditResponses, OpsListAuditErrors, ThrowOnError>({
     requestValidator: async (data) => await z.object({

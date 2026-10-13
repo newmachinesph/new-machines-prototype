@@ -70,7 +70,12 @@ def assert_ops_forbidden(r):
 def test_dev_mode_is_an_owner_operator(client):
     r = client.get("/v1/ops/me")
     assert r.status_code == 200
-    assert r.json() == {"userId": "ops_demo", "email": "ops@newmachin.es", "role": "owner"}
+    assert r.json() == {
+        "userId": "ops_demo",
+        "email": "ops@newmachin.es",
+        "role": "owner",
+        "workspace": "demo",
+    }
 
 
 @pytest.mark.usefixtures("firebase_mode")
@@ -78,7 +83,12 @@ def test_a_listed_admin_matches_case_insensitively(client, monkeypatch):
     stub_claims(monkeypatch, CLAIMS)
     r = client.get("/v1/ops/me", headers=TOKEN)
     assert r.status_code == 200
-    assert r.json() == {"userId": "uid_ops", "email": "ana.admin@newmachin.es", "role": "admin"}
+    assert r.json() == {
+        "userId": "uid_ops",
+        "email": "ana.admin@newmachin.es",
+        "role": "admin",
+        "workspace": "demo",
+    }
 
 
 @pytest.mark.usefixtures("firebase_mode")

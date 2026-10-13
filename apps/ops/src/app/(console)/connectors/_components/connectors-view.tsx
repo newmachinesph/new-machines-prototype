@@ -11,11 +11,14 @@ import { cn } from "@/lib/cn";
 import type { ConnectorEntry } from "@/lib/api/gen/types.gen";
 import { ago, count, pct } from "@/lib/format";
 import { useConnectors } from "@/lib/queries/connectors";
-import { useCanWrite, useMe } from "@/lib/queries/ops";
+import { useCanWrite, useMe, useOpsWorkspace } from "@/lib/queries/ops";
 import { AddConnector } from "./add-connector";
 import { AUTH_LABEL, isHighErrorRate, STATUS_LABEL } from "./connector-state";
 import { ConnectorDrawer, STATUS_TONE } from "./connector-drawer";
 import { ReadOnly } from "@/components/read-only";
+
+const CHECK_KEY = "check";
+const LIVE_ADD_NOTE = "Connectors are added by publishing a definition.";
 
 const COLUMNS: Column<ConnectorEntry>[] = [
   {
@@ -59,40 +62,52 @@ const COLUMNS: Column<ConnectorEntry>[] = [
       ),
   },
   {
-    key: "check",
+    key: CHECK_KEY,
     header: (
       <span className="inline-flex items-center gap-1.5">
         Last check <SimTag>simulated</SimTag>
       </span>
     ),
     className: "hidden lg:table-cell",
-    cell: (c) => (
-      <span className={cn("inline-flex items-center gap-1.5", !c.lastHealthCheck.ok && "text-blocked")}>
-        {c.lastHealthCheck.ok ? "Passed" : "Failed"}
-        <span className="text-muted">{ago(c.lastHealthCheck.at)}</span>
-      </span>
-    ),
+    cell: (c) => {
+      const check = c.lastHealthCheck;
+      if (!check) return null;
+      return (
+        <span className={cn("inline-flex items-center gap-1.5", !check.ok && "text-blocked")}>
+          {check.ok ? "Passed" : "Failed"}
+          <span className="text-muted">{ago(check.at)}</span>
+        </span>
+      );
+    },
   },
 ];
+
+/** Health checks are simulated and the live workspace has none, so its table has no Last check column. */
+const LIVE_COLUMNS = COLUMNS.filter((c) => c.key !== CHECK_KEY);
 
 export function ConnectorsView() {
   const query = useConnectors();
   const canWrite = useCanWrite();
   const roleKnown = useMe().isSuccess;
+  const live = useOpsWorkspace() === "live";
+  // Only the demo adds connectors in the console; the live workspace publishes connector definitions.
+  const canAdd = canWrite && !live;
   const [selected, setSelected] = useQueryState("c", parseAsString);
   const [action, setAction] = useQueryState("action", parseAsStringLiteral(["add"] as const));
 
-  // Support cannot add connectors, so a link carrying ?action=add must not open the dialog for them.
+  // Support and the live workspace cannot add connectors, so a link carrying ?action=add must not linger.
   useEffect(() => {
-    if (roleKnown && !canWrite && action) void setAction(null);
-  }, [roleKnown, canWrite, action, setAction]);
+    if (roleKnown && !canAdd && action) void setAction(null);
+  }, [roleKnown, canAdd, action, setAction]);
 
   // An id that matches no connector (stale link) is dropped from the URL.
   useEffect(() => {
     if (selected && query.data && !query.data.some((c) => c.id === selected)) void setSelected(null);
   }, [selected, query.data, setSelected]);
 
-  const addButton = canWrite ? (
+  const addButton = live ? (
+    <p className="max-w-[32ch] text-sm text-muted">{LIVE_ADD_NOTE}</p>
+  ) : canWrite ? (
     <Button onClick={() => void setAction("add")}>
       <Plus className="size-4" aria-hidden />
       Add connector
@@ -110,7 +125,11 @@ export function ConnectorsView() {
     <>
       <PageHeader
         title="Connectors"
-        lede="The apps tenants can connect, how healthy each one is, and what packs may do with it by default."
+        lede={
+          live
+            ? "The apps tenants can connect, how much they are used, and what packs may do with each by default."
+            : "The apps tenants can connect, how healthy each one is, and what packs may do with it by default."
+        }
         actions={addButton}
       />
       <QueryState query={query} skeleton={<Skeleton className="h-96" />}>
@@ -119,11 +138,15 @@ export function ConnectorsView() {
             <Section>
               <DataTable
                 label="Connectors"
-                columns={COLUMNS}
+                columns={live ? LIVE_COLUMNS : COLUMNS}
                 rows={connectors}
                 rowKey={(c) => c.id}
                 rowHref={(c) => `/connectors?c=${encodeURIComponent(c.id)}`}
-                empty="No connectors yet. Use Add connector to pick one from the available toolkits."
+                empty={
+                  live
+                    ? `No connectors yet. ${LIVE_ADD_NOTE}`
+                    : "No connectors yet. Use Add connector to pick one from the available toolkits."
+                }
               />
             </Section>
             <ConnectorDrawer
@@ -133,7 +156,7 @@ export function ConnectorsView() {
           </>
         )}
       </QueryState>
-      {canWrite ? (
+      {canAdd ? (
         <AddConnector open={action === "add"} onOpenChange={(open) => void setAction(open ? "add" : null)} />
       ) : null}
     </>

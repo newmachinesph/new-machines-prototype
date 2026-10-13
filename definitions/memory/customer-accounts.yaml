@@ -1,0 +1,15 @@
+kind: memory_space
+key: customer-accounts
+name: Customer accounts policies
+description: How this business chases late invoices and answers refund requests, for the agents that write to customers.
+retention_days: 365
+readers: ["*"]
+writers: [collections-agent, refunds-agent]
+
+seed_items:
+  - Overdue invoice reminders stay polite at every stage. 1 to 14 days overdue gets a gentle reminder, 15 to 44 days a firm reminder, and 45 days or more a final notice.
+  - Collections reminders never offer discounts, payment plans or new due dates; a person agrees those directly with the customer.
+  - A refund request for an order that is found, paid and not already refunded is approved in full, up to the order total.
+  - When the customer's email contains the whole word "opened" or "used" (for example "I opened the box" or "I used it once"; "unused" does not count), the refund is partial - 50% of the amount asked for, at most the order total.
+  - A refund request is declined when its order cannot be found, its payment is already refunded, or it repeats an earlier request for the same order. A payment is already refunded when its charge has refunded set to true or an amount_refunded of at least the charge amount, or when the order's financial_status is refunded; a refund is recorded on the original charge, not as a separate negative charge.
+  - No refund is issued by a workflow. A person issues every refund after confirming the decision.

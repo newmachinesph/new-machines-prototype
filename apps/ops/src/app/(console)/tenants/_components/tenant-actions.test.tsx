@@ -13,7 +13,8 @@ const mutations = vi.hoisted(() => ({
   setCap: vi.fn(),
 }));
 
-vi.mock("@/lib/queries/ops", () => ({ useCanWrite: () => canWrite.value }));
+const workspace = vi.hoisted(() => ({ value: "demo" as "demo" | "live" }));
+vi.mock("@/lib/queries/ops", () => ({ useCanWrite: () => canWrite.value, useOpsWorkspace: () => workspace.value }));
 vi.mock("@/lib/queries/tenants", () => ({
   useSuspendTenant: () => ({ mutateAsync: mutations.suspend }),
   useReactivateTenant: () => ({ mutateAsync: mutations.reactivate }),
@@ -61,6 +62,7 @@ const renderActions = (t: TenantDetail) =>
 
 beforeEach(() => {
   canWrite.value = true;
+  workspace.value = "demo";
   Object.values(mutations).forEach((m) => m.mockReset());
 });
 
@@ -71,6 +73,28 @@ describe("TenantActions", () => {
     for (const name of ["Change plan", "Set spend cap", "Suspend tenant"]) {
       expect(screen.getByRole("button", { name })).toBeDisabled();
     }
+  });
+
+  it("hides Change plan in the live workspace and keeps the actions that work on real orgs", () => {
+    workspace.value = "live";
+    renderActions(tenant({ simulated: false }));
+    expect(screen.queryByRole("button", { name: "Change plan" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Set spend cap" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Suspend tenant" })).toBeEnabled();
+  });
+
+  it("says in the live suspend confirm that runs already in progress keep going", async () => {
+    const user = userEvent.setup();
+    const inProgress = "Runs already in progress keep going until they reach a step this company has to act on.";
+    workspace.value = "live";
+    const { unmount } = renderActions(tenant({ simulated: false }));
+    await user.click(screen.getByRole("button", { name: "Suspend tenant" }));
+    expect(within(await screen.findByRole("alertdialog")).getByText(new RegExp(inProgress))).toBeInTheDocument();
+    unmount();
+    workspace.value = "demo";
+    renderActions(tenant());
+    await user.click(screen.getByRole("button", { name: "Suspend tenant" }));
+    expect(within(await screen.findByRole("alertdialog")).queryByText(new RegExp(inProgress))).not.toBeInTheDocument();
   });
 
   it("hides Suspend for a churned tenant", () => {

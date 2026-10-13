@@ -1,7 +1,7 @@
 """Operator console: memory spaces (defined as `memory_space` definitions) and their items."""
 
-from app import db
-from app.auth import CurrentOps, OpsWriter
+from app import db, ops_state, workspace
+from app.auth import CurrentOps, OpsActor, OpsWriter
 from app.defs import registry
 from app.errors import ApiProblem
 from app.models.ops import AddMemoryItemRequest, MemorySpace, MemorySpaceItem, ReasonRequest
@@ -24,6 +24,16 @@ def require_space(conn, space: str) -> None:
 
 def _clip(text: str) -> str:
     return text if len(text) <= SUMMARY_TEXT_MAX else text[: SUMMARY_TEXT_MAX - 1] + "…"
+
+
+def _audit_live(conn, actor: OpsActor, action: str, item_id: str, reason: str, summary: str) -> bool:
+    """In the live workspace, audit in the write's own transaction (before its commit). False in the demo,
+    which audits in the store instead."""
+    if not workspace.live():
+        return False
+    data = {"summary": summary}
+    ops_state.audit(conn, actor.email, action, "memory", item_id, reason, data, actor_role=actor.role)
+    return True
 
 
 @router.get(
@@ -80,10 +90,12 @@ def ops_add_memory_item(space: PathId, body: AddMemoryItemRequest, actor: OpsWri
     with db.connect() as conn:
         require_space(conn, space)
         item = memory.remember(conn, space, body.text, CONSOLE_SOURCE, actor.email)
-        conn.commit()
-    with locked_store() as store:
         summary = f"Added to {space}: {_clip(body.text)}"
-        store.audit(actor, "memory.add", "memory", item["id"], body.reason, summary)
+        live = _audit_live(conn, actor, "memory.add", item["id"], body.reason, summary)
+        conn.commit()
+    if not live:
+        with locked_store() as store:
+            store.audit(actor, "memory.add", "memory", item["id"], body.reason, summary)
     return MemorySpaceItem(**item)
 
 
@@ -100,7 +112,9 @@ def ops_delete_memory_item(item_id: PathId, body: ReasonRequest, actor: OpsWrite
         row = conn.execute("SELECT space, text FROM memory_items WHERE id = %s", (item_id,)).fetchone()
         if row is None or not memory.delete_item(conn, item_id):
             raise ApiProblem(404, "NOT_FOUND", f"No memory item {item_id}.")
-        conn.commit()
-    with locked_store() as store:
         summary = f"Removed from {row['space']}: {_clip(row['text'])}"
-        store.audit(actor, "memory.delete", "memory", item_id, body.reason, summary)
+        live = _audit_live(conn, actor, "memory.delete", item_id, body.reason, summary)
+        conn.commit()
+    if not live:
+        with locked_store() as store:
+            store.audit(actor, "memory.delete", "memory", item_id, body.reason, summary)

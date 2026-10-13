@@ -1,14 +1,25 @@
-"""Operator console: the overview. The attention list and the counts are derived from the live store, so
-approving the last pack in review removes its item. The run and spend figures are simulated."""
+"""Operator console: the overview. In the demo workspace the attention list and the counts are derived from
+the store, so approving the last pack in review removes its item, and the run and spend figures are
+simulated. The live workspace reads them from Postgres (`ops_live.overview`)."""
 
+from datetime import UTC, datetime
+
+from app import db, ops_live, workspace
 from app.auth import CurrentOps
 from app.models.common import Money
 from app.models.ops import (
-    AttentionSeverity,
     HourPoint,
     OpsAttentionItem,
     OpsKpis,
     OpsOverview,
+)
+from app.ops_live import (
+    CAP_CRITICAL,
+    CAP_WATCH,
+    CONNECTOR_ERROR_RATE,
+    PLATFORM_DAILY_CAP,
+    RECENT_AUDIT,
+    sorted_attention,
 )
 from app.routers.ops_tenants import dollars, tenant_view
 from app.routing import ApiRouter
@@ -17,11 +28,6 @@ from app.store import Store, locked_store
 router = ApiRouter(prefix="/v1/ops", tags=["ops"])
 
 NOW = "2026-10-12T16:40:00Z"  # the demo's "now", for items that have no event time of their own
-CONNECTOR_ERROR_RATE = 0.05
-CAP_WATCH = 0.8
-CAP_CRITICAL = 0.9
-RECENT_AUDIT = 8
-SEVERITY_RANK: dict[AttentionSeverity, int] = {"critical": 0, "warn": 1, "info": 2}
 OPEN_TASK_STATES = {"OFFERED", "CLAIMED", "SUBMITTED", "VALIDATING"}
 SIMULATED_FIELDS = ["kpis.runsToday", "kpis.runSuccessRate7d", "kpis.aiSpendToday", "runsByHour"]
 # Simulated and deterministic: each hour's share of a day's runs (UTC), peaking mid-morning.
@@ -73,7 +79,8 @@ def attention_items(store: Store) -> list[OpsAttentionItem]:
                 )
             )
     for connector in store.connector_catalog.values():
-        failing = not connector.last_health_check.ok
+        check = connector.last_health_check
+        failing = check is not None and not check.ok
         if connector.error_rate >= CONNECTOR_ERROR_RATE or failing:
             cause = "last health check failed" if failing else "above the 5% limit"
             items.append(
@@ -83,7 +90,7 @@ def attention_items(store: Store) -> list[OpsAttentionItem]:
                     detail=f"Error rate {connector.error_rate:.1%}, {cause}.",
                     href=f"/connectors?c={connector.id}",
                     severity="warn",
-                    at=connector.last_health_check.at,
+                    at=check.at if check else NOW,
                 )
             )
     for tenant in store.tenants.values():
@@ -125,15 +132,16 @@ def attention_items(store: Store) -> list[OpsAttentionItem]:
                     at=incident.started_at,
                 )
             )
-    items.sort(key=lambda i: i.at, reverse=True)  # stable, so severity below keeps newest first within a rank
-    items.sort(key=lambda i: SEVERITY_RANK[i.severity])
-    return items
+    return sorted_attention(items)
 
 
 @router.get("/overview", operation_id="opsGetOverview", response_model=OpsOverview)
 def ops_get_overview(_: CurrentOps) -> OpsOverview:
+    if workspace.live():
+        with db.connect() as conn:
+            return ops_live.overview(conn, datetime.now(UTC))
     with locked_store() as store:
-        cap = store.guardrails["platform_daily_ai_cap"].value or 0
+        cap = store.guardrails[PLATFORM_DAILY_CAP].value or 0
         hours = runs_by_hour()
         kpis = OpsKpis(
             active_tenants=sum(t.status == "active" for t in store.tenants.values()),

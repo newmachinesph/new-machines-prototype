@@ -81,6 +81,17 @@ def latest_all(conn) -> list[Version]:
     return [_version(r) for r in rows]
 
 
+def latest_of_kind(conn, kind: str) -> list[Version]:
+    """The latest version of every definition of `kind`, by key: what `latest` (and so a run snapshot)
+    resolves each key to."""
+    rows = conn.execute(
+        f"SELECT DISTINCT ON (key) {_COLUMNS} FROM definition_versions WHERE kind = %s "
+        "ORDER BY key, version DESC",
+        (kind,),
+    ).fetchall()
+    return [_version(r) for r in rows]
+
+
 def versions(conn, kind: str, key: str) -> list[Version]:
     rows = conn.execute(
         f"SELECT {_COLUMNS} FROM definition_versions WHERE kind = %s AND key = %s ORDER BY version DESC",
@@ -165,13 +176,34 @@ def _insert(
 
 
 def _seed_memory(conn, bundle: Bundle, actor: str) -> None:
+    """Make each space's shared seed rows (source 'seed', no org) equal its file's `seed_items`: a seed the
+    file no longer lists (moved or reworded) is retired, and every listed seed that is missing is added.
+    Items an org or an operator added are never touched. A space whose latest version was published from the
+    console is skipped, as `apply_bundle` leaves that version itself: its file no longer defines the space."""
     for space in bundle.of("memory_space"):
-        items = space.body.get("seed_items") or []
-        if not items:
+        current = latest(conn, space.kind, space.key)
+        if current is not None and current.source != FILE:
+            log.info(
+                "%s/%s: v%d was published from the console, so its file's seed_items are not synced.",
+                space.kind,
+                space.key,
+                current.version,
+            )
             continue
-        if conn.execute("SELECT 1 FROM memory_items WHERE space = %s LIMIT 1", (space.key,)).fetchone():
-            continue
+        items = list(dict.fromkeys(space.body.get("seed_items") or []))
+        conn.execute(
+            "DELETE FROM memory_items WHERE space = %s AND source = 'seed' AND org_id IS NULL "
+            "AND NOT (text = ANY(%s))",
+            (space.key, items),
+        )
+        rows = conn.execute(
+            "SELECT text FROM memory_items WHERE space = %s AND source = 'seed' AND org_id IS NULL",
+            (space.key,),
+        ).fetchall()
+        present = {r["text"] for r in rows}
         for text in items:
+            if text in present:
+                continue
             conn.execute(
                 "INSERT INTO memory_items (id, space, text, source, created_by) VALUES (%s, %s, %s, %s, %s)",
                 (f"mem_{secrets.token_hex(6)}", space.key, text, "seed", actor),
@@ -181,7 +213,7 @@ def _seed_memory(conn, bundle: Bundle, actor: str) -> None:
 def apply_bundle(
     conn, bundle: Bundle, actor: str = "definitions-apply", *, force: bool = False
 ) -> list[Version]:
-    """Insert a new version per definition whose digest differs from its latest; seed empty memory spaces.
+    """Insert a new version per definition whose digest differs from its latest; sync seed memory items.
 
     A definition whose latest version was published from the console is left alone (with a warning when its
     file changed since the last apply), so restarting the API never reverts an operator's edit; `force`

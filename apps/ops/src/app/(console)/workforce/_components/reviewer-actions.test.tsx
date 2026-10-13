@@ -7,7 +7,8 @@ import type { Reviewer } from "@/lib/api/gen/types.gen";
 const canWrite = vi.hoisted(() => ({ value: true }));
 const mutateAsync = vi.hoisted(() => vi.fn().mockResolvedValue({}));
 
-vi.mock("@/lib/queries/ops", () => ({ useCanWrite: () => canWrite.value }));
+const workspace = vi.hoisted(() => ({ value: "demo" as "demo" | "live" }));
+vi.mock("@/lib/queries/ops", () => ({ useCanWrite: () => canWrite.value, useOpsWorkspace: () => workspace.value }));
 vi.mock("@/lib/queries/workforce", () => ({
   useApproveReviewer: () => ({ mutateAsync }),
   useSuspendReviewer: () => ({ mutateAsync }),
@@ -23,6 +24,7 @@ const reviewer = (over: Partial<Reviewer> = {}) =>
 const renderIt = (ui: React.ReactElement) => render(<UiProviders>{ui}</UiProviders>);
 
 beforeEach(() => {
+  workspace.value = "demo";
   canWrite.value = true;
   mutateAsync.mockClear();
 });
@@ -66,5 +68,21 @@ describe("LevelAction", () => {
       path: { reviewer_id: "rev_1" },
       body: { level: "senior", reason: "Consistent accuracy" },
     });
+  });
+});
+
+describe("ReviewerActions in the live workspace", () => {
+  it("offers no reviewer actions, since the API refuses them", () => {
+    workspace.value = "live";
+    for (const status of ["applicant", "active", "suspended"] as const) {
+      const { unmount } = renderIt(<ReviewerActions reviewer={reviewer({ status })} />);
+      expect(screen.queryAllByRole("button")).toHaveLength(0);
+      unmount();
+    }
+  });
+
+  it("offers them in the demo", () => {
+    renderIt(<ReviewerActions reviewer={reviewer({ status: "applicant" })} />);
+    expect(screen.getByRole("button", { name: "Approve as trainee Maria Santos" })).toBeEnabled();
   });
 });

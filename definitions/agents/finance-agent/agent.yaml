@@ -2,7 +2,7 @@ kind: agent
 key: finance-agent
 schema_version: nm.agent.manifest.v1.1
 agent_id: finance-agent
-version: "1.0.0"
+version: "1.1.0"
 publisher_id: new-machines-labs
 publisher_name: New Machines Labs
 name: Finance Agent
@@ -10,7 +10,7 @@ summary: >-
   Matches each order to the payment that settled it, and explains in one plain sentence any order or payment that does not line up, so a reviewer can act on it.
 capabilities: [finance.reconcile]
 runtime:
-  adapter: hosted
+  adapter: google_adk
   model_profile: reasoning
   instructions: instructions.md
   skills: [skills/match-orders.md, skills/explain-mismatch.md]
