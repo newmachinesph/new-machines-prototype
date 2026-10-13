@@ -95,6 +95,8 @@ class Store:
     # Internal, never on the wire: the status a suspended tenant returns to on reactivation.
     status_before_suspension: dict[str, TenantStatus] = field(default_factory=dict)
     idempotency: OrderedDict[str, tuple[str, Any]] = field(default_factory=OrderedDict)
+    # Internal: per-key locks of idempotent creates in progress, with how many requests hold or wait on each.
+    idempotency_locks: dict[str, tuple[threading.Lock, int]] = field(default_factory=dict)
     next_run: int = 1048
     next_token: int = 8
     # Sync routes run in Starlette's threadpool, so handlers run in parallel. Every check-and-set on this

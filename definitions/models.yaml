@@ -1,0 +1,21 @@
+# Model profiles. Agents name a profile; the environment (NM_MODEL_ENV) picks provider and model.
+# Prices are USD cents per million tokens (input / output).
+kind: models
+key: default
+
+profiles:
+  # For judgement-heavy steps. Priced at the production model, so dev runs are estimated high.
+  reasoning:
+    envs:
+      test: {provider: fake, model: fake-reasoning}
+      dev: {provider: anthropic, model: claude-haiku-5-5}
+      prod: {provider: anthropic, model: claude-opus-5-5}
+    price_per_mtok: {input_minor: 400, output_minor: 2000, currency: USD}
+
+  # For high-volume, simple steps.
+  fast:
+    envs:
+      test: {provider: fake, model: fake-fast}
+      dev: {provider: anthropic, model: claude-haiku-5-5}
+      prod: {provider: anthropic, model: claude-haiku-5-5}
+    price_per_mtok: {input_minor: 10, output_minor: 50, currency: USD}

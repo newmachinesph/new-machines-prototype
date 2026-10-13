@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Reconciliation deliverable",
+  "description": "What the buyer receives: the report, with at least one row written to the sheet.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["summary", "rows", "totals"],
+  "properties": {
+    "summary": {"type": "string", "minLength": 1},
+    "rows": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "array",
+        "minItems": 6,
+        "maxItems": 6,
+        "items": {"type": ["string", "number"]}
+      }
+    },
+    "totals": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["orders_count", "matched_count", "mismatch_count", "net_difference_minor", "currency"],
+      "properties": {
+        "orders_count": {"type": "integer", "minimum": 0},
+        "matched_count": {"type": "integer", "minimum": 0},
+        "mismatch_count": {"type": "integer", "minimum": 0},
+        "net_difference_minor": {"type": "integer"},
+        "currency": {"type": "string", "pattern": "^[A-Z]{3}$"}
+      }
+    }
+  }
+}

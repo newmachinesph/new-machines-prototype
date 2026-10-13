@@ -1,0 +1,21 @@
+kind: agent
+key: ops-agent
+schema_version: nm.agent.manifest.v1.1
+agent_id: ops-agent
+version: "1.0.0"
+publisher_id: new-machines-labs
+capabilities: [operations.report]
+runtime:
+  adapter: hosted
+  model_profile: reasoning
+  instructions: instructions.md
+  skills: [skills/write-report.md]
+  tools: []
+  max_turns: 6
+input_schema_ref: order-payment-reconciliation/match
+output_schema_ref: order-payment-reconciliation/report
+requested_tool_capabilities: []
+data_processing:
+  supported_regions: ["asia-south1"]
+  data_classes: ["CONFIDENTIAL"]
+  retention_policy_ref: retention/30d

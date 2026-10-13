@@ -23,6 +23,20 @@ export type AddConnectorRequest = {
 };
 
 /**
+ * AddMemoryItemRequest
+ */
+export type AddMemoryItemRequest = {
+    /**
+     * Text
+     */
+    text: string;
+    /**
+     * Reason
+     */
+    reason: string;
+};
+
+/**
  * Agent
  */
 export type Agent = {
@@ -104,7 +118,51 @@ export type Approval = {
      * Digest
      */
     digest: Array<DigestRow>;
-    preview: EmailPreview;
+    /**
+     * Preview
+     */
+    preview?: EmailPreview;
+    /**
+     * Action
+     */
+    action?: ApprovalAction;
+    /**
+     * Summary
+     */
+    summary?: string;
+};
+
+/**
+ * ApprovalAction
+ *
+ * The step a real run asks to take once approved: the app it acts on, the workflow step, and the tool
+ * call. `mocked` is true when that call would run against sandbox data instead of the connected app.
+ */
+export type ApprovalAction = {
+    /**
+     * App
+     */
+    app: string;
+    /**
+     * Step
+     */
+    step: string;
+    /**
+     * Tool
+     */
+    tool?: string;
+    /**
+     * Operation
+     */
+    operation?: string;
+    /**
+     * Summary
+     */
+    summary?: string;
+    /**
+     * Mocked
+     */
+    mocked: boolean;
 };
 
 /**
@@ -204,7 +262,7 @@ export type AuditEntry = {
     /**
      * Targettype
      */
-    targetType: 'tenant' | 'pack' | 'connector' | 'reviewer' | 'guardrail' | 'incident';
+    targetType: 'tenant' | 'pack' | 'connector' | 'reviewer' | 'guardrail' | 'incident' | 'definition' | 'memory';
     /**
      * Targetid
      */
@@ -573,6 +631,139 @@ export type DeclareIncidentRequest = {
 };
 
 /**
+ * DefinitionDetail
+ *
+ * One definition at one version. `yaml` is the main file as exported (JSON for a schema); `files` holds
+ * the Markdown files of an agent by path relative to its folder. `body` is the same main file parsed, so a
+ * client can read fields without a YAML parser. `refs` are the definitions this one refers to and
+ * `used_by` those that refer to it, both computed from the latest versions.
+ */
+export type DefinitionDetail = {
+    summary: DefinitionSummary;
+    /**
+     * Versions
+     */
+    versions: Array<VersionMeta>;
+    /**
+     * Yaml
+     */
+    yaml: string;
+    /**
+     * Body
+     */
+    body: {
+        [key: string]: unknown;
+    };
+    /**
+     * Files
+     */
+    files: {
+        [key: string]: string;
+    };
+    /**
+     * Refs
+     */
+    refs: Array<DefinitionRef>;
+    /**
+     * Usedby
+     */
+    usedBy: Array<DefinitionRef>;
+};
+
+/**
+ * DefinitionExport
+ */
+export type DefinitionExport = {
+    /**
+     * Files
+     */
+    files: {
+        [key: string]: string;
+    };
+};
+
+/**
+ * DefinitionIssue
+ *
+ * One validation error. `kind`/`key` name the definition it was found in, which can be another one.
+ */
+export type DefinitionIssue = {
+    /**
+     * Kind
+     */
+    kind: string;
+    /**
+     * Key
+     */
+    key: string;
+    /**
+     * Path
+     */
+    path: string;
+    /**
+     * Message
+     */
+    message: string;
+};
+
+/**
+ * DefinitionRef
+ *
+ * A pointer to another definition: its kind and key.
+ */
+export type DefinitionRef = {
+    /**
+     * Kind
+     */
+    kind: 'taxonomy' | 'models' | 'pack' | 'workflow' | 'contract' | 'agent' | 'connector' | 'decision_rules' | 'memory_space' | 'schema';
+    /**
+     * Key
+     */
+    key: string;
+};
+
+/**
+ * DefinitionSummary
+ *
+ * The latest (or a chosen) version of one definition. `name` is the body's name, else its app
+ * (connector) or question (decision rules), else the key.
+ */
+export type DefinitionSummary = {
+    /**
+     * Kind
+     */
+    kind: 'taxonomy' | 'models' | 'pack' | 'workflow' | 'contract' | 'agent' | 'connector' | 'decision_rules' | 'memory_space' | 'schema';
+    /**
+     * Key
+     */
+    key: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Version
+     */
+    version: number;
+    /**
+     * Digest
+     */
+    digest: string;
+    /**
+     * Source
+     */
+    source: 'file' | 'console';
+    /**
+     * Publishedby
+     */
+    publishedBy: string;
+    /**
+     * Publishedat
+     */
+    publishedAt: string;
+};
+
+/**
  * Deliverable
  */
 export type Deliverable = {
@@ -920,6 +1111,14 @@ export type HumanTask = {
      * Buyer
      */
     buyer: string;
+    /**
+     * Realrun
+     */
+    realRun?: boolean;
+    /**
+     * Runoutcome
+     */
+    runOutcome?: 'CONTINUES' | 'STOPS';
 };
 
 /**
@@ -1241,6 +1440,62 @@ export type MemoryReviewRequest = {
 };
 
 /**
+ * MemorySpace
+ */
+export type MemorySpace = {
+    /**
+     * Key
+     */
+    key: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Description
+     */
+    description: string;
+    /**
+     * Itemcount
+     */
+    itemCount: number;
+    /**
+     * Version
+     */
+    version: number;
+};
+
+/**
+ * MemorySpaceItem
+ */
+export type MemorySpaceItem = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Space
+     */
+    space: string;
+    /**
+     * Text
+     */
+    text: string;
+    /**
+     * Source
+     */
+    source: string;
+    /**
+     * Createdby
+     */
+    createdBy: string;
+    /**
+     * Createdat
+     */
+    createdAt: string;
+};
+
+/**
  * Money
  */
 export type Money = {
@@ -1416,6 +1671,20 @@ export type OpsRun = {
      * Durationseconds
      */
     durationSeconds?: number;
+    /**
+     * Real
+     */
+    real?: boolean;
+};
+
+/**
+ * OpsRunDetail
+ *
+ * A real run's projection together with its work receipt (hash chain verified now).
+ */
+export type OpsRunDetail = {
+    run: Run;
+    receipt: Receipt;
 };
 
 /**
@@ -1567,6 +1836,14 @@ export type Pack = {
      * Runs30D
      */
     runs30d?: number;
+    /**
+     * Function
+     */
+    function?: string;
+    /**
+     * Industries
+     */
+    industries?: Array<string>;
 };
 
 /**
@@ -1700,6 +1977,14 @@ export type PackListing = {
      * Reviewnotes
      */
     reviewNotes?: string;
+    /**
+     * Function
+     */
+    function?: TaxonomyEntry;
+    /**
+     * Industries
+     */
+    industries?: Array<TaxonomyEntry>;
 };
 
 /**
@@ -1770,6 +2055,14 @@ export type PackListingDetail = {
      * Reviewnotes
      */
     reviewNotes?: string;
+    /**
+     * Function
+     */
+    function?: TaxonomyEntry;
+    /**
+     * Industries
+     */
+    industries?: Array<TaxonomyEntry>;
     pack: Pack;
     /**
      * History
@@ -1845,6 +2138,28 @@ export type Payout = {
 };
 
 /**
+ * PinnedVersion
+ */
+export type PinnedVersion = {
+    /**
+     * Kind
+     */
+    kind: string;
+    /**
+     * Key
+     */
+    key: string;
+    /**
+     * Version
+     */
+    version: number;
+    /**
+     * Digest
+     */
+    digest: string;
+};
+
+/**
  * Policy
  */
 export type Policy = {
@@ -1914,6 +2229,61 @@ export type Problem = {
      * Detail
      */
     detail: string;
+    /**
+     * Errors
+     */
+    errors?: Array<ProblemIssue> | null;
+};
+
+/**
+ * ProblemIssue
+ *
+ * One located error inside a problem (for example a definition validation error).
+ */
+export type ProblemIssue = {
+    /**
+     * Kind
+     */
+    kind: string;
+    /**
+     * Key
+     */
+    key: string;
+    /**
+     * Path
+     */
+    path: string;
+    /**
+     * Message
+     */
+    message: string;
+};
+
+/**
+ * PublishDefinitionRequest
+ *
+ * `base_version` is the latest version the edit started from (0 for a new definition). When sent, the
+ * publish is refused with 409 VERSION_CONFLICT if someone has published since.
+ */
+export type PublishDefinitionRequest = {
+    /**
+     * Yaml
+     */
+    yaml: string;
+    /**
+     * Files
+     */
+    files?: {
+        [key: string]: string;
+    };
+    /**
+     * Reason
+     */
+    reason: string;
+    /**
+     * Baseversion
+     */
+    baseVersion?: number;
 };
 
 /**
@@ -1924,6 +2294,68 @@ export type ReasonRequest = {
      * Reason
      */
     reason: string;
+};
+
+/**
+ * Receipt
+ *
+ * A real run's hash-chained work receipt; `verified` is the chain recomputed now.
+ */
+export type Receipt = {
+    /**
+     * Runid
+     */
+    runId: string;
+    /**
+     * Verified
+     */
+    verified: boolean;
+    /**
+     * Entries
+     */
+    entries: number;
+    /**
+     * Headhash
+     */
+    headHash: string;
+    /**
+     * Pinned
+     */
+    pinned: Array<PinnedVersion>;
+    /**
+     * Items
+     */
+    items: Array<ReceiptItem>;
+};
+
+/**
+ * ReceiptItem
+ */
+export type ReceiptItem = {
+    /**
+     * Seq
+     */
+    seq: number;
+    /**
+     * At
+     */
+    at: string;
+    /**
+     * Type
+     */
+    type: string;
+    /**
+     * Nodeid
+     */
+    nodeId?: string;
+    /**
+     * Summary
+     */
+    summary: string;
+    /**
+     * Hash
+     */
+    hash: string;
 };
 
 /**
@@ -2446,6 +2878,34 @@ export type Suggestion = {
 };
 
 /**
+ * Taxonomy
+ */
+export type Taxonomy = {
+    /**
+     * Functions
+     */
+    functions: Array<TaxonomyEntry>;
+    /**
+     * Industries
+     */
+    industries: Array<TaxonomyEntry>;
+};
+
+/**
+ * TaxonomyEntry
+ */
+export type TaxonomyEntry = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Name
+     */
+    name: string;
+};
+
+/**
  * Tenant
  */
 export type Tenant = {
@@ -2836,6 +3296,69 @@ export type UsagePoint = {
     amountMinor: number;
 };
 
+/**
+ * ValidateDefinitionRequest
+ *
+ * The edited main file (YAML; JSON for a schema) plus the agent's Markdown files by relative path. The
+ * `kind` and `key` inside the YAML, when present, must equal the URL's.
+ */
+export type ValidateDefinitionRequest = {
+    /**
+     * Yaml
+     */
+    yaml: string;
+    /**
+     * Files
+     */
+    files?: {
+        [key: string]: string;
+    };
+};
+
+/**
+ * ValidateDefinitionResult
+ */
+export type ValidateDefinitionResult = {
+    /**
+     * Ok
+     */
+    ok: boolean;
+    /**
+     * Errors
+     */
+    errors: Array<DefinitionIssue>;
+};
+
+/**
+ * VersionMeta
+ */
+export type VersionMeta = {
+    /**
+     * Version
+     */
+    version: number;
+    /**
+     * Digest
+     */
+    digest: string;
+    /**
+     * Source
+     */
+    source: 'file' | 'console';
+    /**
+     * Publishedby
+     */
+    publishedBy: string;
+    /**
+     * Reason
+     */
+    reason: string;
+    /**
+     * Publishedat
+     */
+    publishedAt: string;
+};
+
 export type ListWorkflowPacksData = {
     body?: never;
     path?: never;
@@ -2924,6 +3447,47 @@ export type GetWorkflowPackResponses = {
 };
 
 export type GetWorkflowPackResponse = GetWorkflowPackResponses[keyof GetWorkflowPackResponses];
+
+export type GetCatalogTaxonomyData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/catalog/taxonomy';
+};
+
+export type GetCatalogTaxonomyErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type GetCatalogTaxonomyError = GetCatalogTaxonomyErrors[keyof GetCatalogTaxonomyErrors];
+
+export type GetCatalogTaxonomyResponses = {
+    /**
+     * Successful Response
+     */
+    200: Taxonomy;
+};
+
+export type GetCatalogTaxonomyResponse = GetCatalogTaxonomyResponses[keyof GetCatalogTaxonomyResponses];
 
 export type ListAgentsData = {
     body?: never;
@@ -3132,6 +3696,10 @@ export type StartWorkflowRunErrors = {
      * Invalid request
      */
     422: Problem;
+    /**
+     * The workflow engine is unavailable (RUNTIME_UNAVAILABLE).
+     */
+    503: Problem;
 };
 
 export type StartWorkflowRunError = StartWorkflowRunErrors[keyof StartWorkflowRunErrors];
@@ -3190,6 +3758,52 @@ export type GetWorkflowRunResponses = {
 };
 
 export type GetWorkflowRunResponse = GetWorkflowRunResponses[keyof GetWorkflowRunResponses];
+
+export type GetWorkflowRunReceiptData = {
+    body?: never;
+    path: {
+        /**
+         * Run Id
+         */
+        run_id: string;
+    };
+    query?: never;
+    url: '/v1/workflow-runs/{run_id}/receipt';
+};
+
+export type GetWorkflowRunReceiptErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type GetWorkflowRunReceiptError = GetWorkflowRunReceiptErrors[keyof GetWorkflowRunReceiptErrors];
+
+export type GetWorkflowRunReceiptResponses = {
+    /**
+     * Successful Response
+     */
+    200: Receipt;
+};
+
+export type GetWorkflowRunReceiptResponse = GetWorkflowRunReceiptResponses[keyof GetWorkflowRunReceiptResponses];
 
 export type ListApprovalsData = {
     body?: never;
@@ -4962,6 +5576,283 @@ export type OpsHealthCheckConnectorResponses = {
 
 export type OpsHealthCheckConnectorResponse = OpsHealthCheckConnectorResponses[keyof OpsHealthCheckConnectorResponses];
 
+export type OpsListDefinitionsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/ops/definitions';
+};
+
+export type OpsListDefinitionsErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+    /**
+     * The runtime is off or unavailable (RUNTIME_UNAVAILABLE).
+     */
+    503: Problem;
+};
+
+export type OpsListDefinitionsError = OpsListDefinitionsErrors[keyof OpsListDefinitionsErrors];
+
+export type OpsListDefinitionsResponses = {
+    /**
+     * Response Opslistdefinitions
+     *
+     * Successful Response
+     */
+    200: Array<DefinitionSummary>;
+};
+
+export type OpsListDefinitionsResponse = OpsListDefinitionsResponses[keyof OpsListDefinitionsResponses];
+
+export type OpsExportDefinitionData = {
+    body?: never;
+    path: {
+        /**
+         * Kind
+         */
+        kind: 'taxonomy' | 'models' | 'pack' | 'workflow' | 'contract' | 'agent' | 'connector' | 'decision_rules' | 'memory_space' | 'schema';
+        /**
+         * Key
+         */
+        key: string;
+    };
+    query?: {
+        /**
+         * Version
+         *
+         * An older version; the latest when omitted.
+         */
+        version?: number | null;
+    };
+    url: '/v1/ops/definitions/{kind}/{key}/export';
+};
+
+export type OpsExportDefinitionErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+    /**
+     * The runtime is off or unavailable (RUNTIME_UNAVAILABLE).
+     */
+    503: Problem;
+};
+
+export type OpsExportDefinitionError = OpsExportDefinitionErrors[keyof OpsExportDefinitionErrors];
+
+export type OpsExportDefinitionResponses = {
+    /**
+     * Successful Response
+     */
+    200: DefinitionExport;
+};
+
+export type OpsExportDefinitionResponse = OpsExportDefinitionResponses[keyof OpsExportDefinitionResponses];
+
+export type OpsValidateDefinitionData = {
+    body: ValidateDefinitionRequest;
+    path: {
+        /**
+         * Kind
+         */
+        kind: 'taxonomy' | 'models' | 'pack' | 'workflow' | 'contract' | 'agent' | 'connector' | 'decision_rules' | 'memory_space' | 'schema';
+        /**
+         * Key
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/v1/ops/definitions/{kind}/{key}:validate';
+};
+
+export type OpsValidateDefinitionErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+    /**
+     * The runtime is off or unavailable (RUNTIME_UNAVAILABLE).
+     */
+    503: Problem;
+};
+
+export type OpsValidateDefinitionError = OpsValidateDefinitionErrors[keyof OpsValidateDefinitionErrors];
+
+export type OpsValidateDefinitionResponses = {
+    /**
+     * Successful Response
+     */
+    200: ValidateDefinitionResult;
+};
+
+export type OpsValidateDefinitionResponse = OpsValidateDefinitionResponses[keyof OpsValidateDefinitionResponses];
+
+export type OpsPublishDefinitionData = {
+    body: PublishDefinitionRequest;
+    path: {
+        /**
+         * Kind
+         */
+        kind: 'taxonomy' | 'models' | 'pack' | 'workflow' | 'contract' | 'agent' | 'connector' | 'decision_rules' | 'memory_space' | 'schema';
+        /**
+         * Key
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/v1/ops/definitions/{kind}/{key}:publish';
+};
+
+export type OpsPublishDefinitionErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+    /**
+     * The runtime is off or unavailable (RUNTIME_UNAVAILABLE).
+     */
+    503: Problem;
+};
+
+export type OpsPublishDefinitionError = OpsPublishDefinitionErrors[keyof OpsPublishDefinitionErrors];
+
+export type OpsPublishDefinitionResponses = {
+    /**
+     * Successful Response
+     */
+    201: DefinitionDetail;
+};
+
+export type OpsPublishDefinitionResponse = OpsPublishDefinitionResponses[keyof OpsPublishDefinitionResponses];
+
+export type OpsGetDefinitionData = {
+    body?: never;
+    path: {
+        /**
+         * Kind
+         */
+        kind: 'taxonomy' | 'models' | 'pack' | 'workflow' | 'contract' | 'agent' | 'connector' | 'decision_rules' | 'memory_space' | 'schema';
+        /**
+         * Key
+         */
+        key: string;
+    };
+    query?: {
+        /**
+         * Version
+         *
+         * An older version; the latest when omitted.
+         */
+        version?: number | null;
+    };
+    url: '/v1/ops/definitions/{kind}/{key}';
+};
+
+export type OpsGetDefinitionErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+    /**
+     * The runtime is off or unavailable (RUNTIME_UNAVAILABLE).
+     */
+    503: Problem;
+};
+
+export type OpsGetDefinitionError = OpsGetDefinitionErrors[keyof OpsGetDefinitionErrors];
+
+export type OpsGetDefinitionResponses = {
+    /**
+     * Successful Response
+     */
+    200: DefinitionDetail;
+};
+
+export type OpsGetDefinitionResponse = OpsGetDefinitionResponses[keyof OpsGetDefinitionResponses];
+
 export type OpsGetHealthData = {
     body?: never;
     path?: never;
@@ -5089,6 +5980,205 @@ export type OpsUpdateIncidentResponses = {
 };
 
 export type OpsUpdateIncidentResponse = OpsUpdateIncidentResponses[keyof OpsUpdateIncidentResponses];
+
+export type OpsListMemorySpacesData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/ops/memory/spaces';
+};
+
+export type OpsListMemorySpacesErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+    /**
+     * The runtime is off or unavailable (RUNTIME_UNAVAILABLE).
+     */
+    503: Problem;
+};
+
+export type OpsListMemorySpacesError = OpsListMemorySpacesErrors[keyof OpsListMemorySpacesErrors];
+
+export type OpsListMemorySpacesResponses = {
+    /**
+     * Response Opslistmemoryspaces
+     *
+     * Successful Response
+     */
+    200: Array<MemorySpace>;
+};
+
+export type OpsListMemorySpacesResponse = OpsListMemorySpacesResponses[keyof OpsListMemorySpacesResponses];
+
+export type OpsListMemoryItemsData = {
+    body?: never;
+    path: {
+        /**
+         * Space
+         */
+        space: string;
+    };
+    query?: never;
+    url: '/v1/ops/memory/spaces/{space}/items';
+};
+
+export type OpsListMemoryItemsErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+    /**
+     * The runtime is off or unavailable (RUNTIME_UNAVAILABLE).
+     */
+    503: Problem;
+};
+
+export type OpsListMemoryItemsError = OpsListMemoryItemsErrors[keyof OpsListMemoryItemsErrors];
+
+export type OpsListMemoryItemsResponses = {
+    /**
+     * Response Opslistmemoryitems
+     *
+     * Successful Response
+     */
+    200: Array<MemorySpaceItem>;
+};
+
+export type OpsListMemoryItemsResponse = OpsListMemoryItemsResponses[keyof OpsListMemoryItemsResponses];
+
+export type OpsAddMemoryItemData = {
+    body: AddMemoryItemRequest;
+    path: {
+        /**
+         * Space
+         */
+        space: string;
+    };
+    query?: never;
+    url: '/v1/ops/memory/spaces/{space}/items';
+};
+
+export type OpsAddMemoryItemErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+    /**
+     * The runtime is off or unavailable (RUNTIME_UNAVAILABLE).
+     */
+    503: Problem;
+};
+
+export type OpsAddMemoryItemError = OpsAddMemoryItemErrors[keyof OpsAddMemoryItemErrors];
+
+export type OpsAddMemoryItemResponses = {
+    /**
+     * Successful Response
+     */
+    201: MemorySpaceItem;
+};
+
+export type OpsAddMemoryItemResponse = OpsAddMemoryItemResponses[keyof OpsAddMemoryItemResponses];
+
+export type OpsDeleteMemoryItemData = {
+    body: ReasonRequest;
+    path: {
+        /**
+         * Item Id
+         */
+        item_id: string;
+    };
+    query?: never;
+    url: '/v1/ops/memory/items/{item_id}:delete';
+};
+
+export type OpsDeleteMemoryItemErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+    /**
+     * The runtime is off or unavailable (RUNTIME_UNAVAILABLE).
+     */
+    503: Problem;
+};
+
+export type OpsDeleteMemoryItemError = OpsDeleteMemoryItemErrors[keyof OpsDeleteMemoryItemErrors];
+
+export type OpsDeleteMemoryItemResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type OpsDeleteMemoryItemResponse = OpsDeleteMemoryItemResponses[keyof OpsDeleteMemoryItemResponses];
 
 export type OpsGetOverviewData = {
     body?: never;
@@ -5636,7 +6726,7 @@ export type OpsListAuditData = {
         /**
          * Targettype
          */
-        targetType?: 'tenant' | 'pack' | 'connector' | 'reviewer' | 'guardrail' | 'incident' | null;
+        targetType?: 'tenant' | 'pack' | 'connector' | 'reviewer' | 'guardrail' | 'incident' | 'definition' | 'memory' | null;
         /**
          * Targetid
          */
@@ -5684,6 +6774,52 @@ export type OpsListAuditResponses = {
 };
 
 export type OpsListAuditResponse = OpsListAuditResponses[keyof OpsListAuditResponses];
+
+export type OpsGetRunData = {
+    body?: never;
+    path: {
+        /**
+         * Run Id
+         */
+        run_id: string;
+    };
+    query?: never;
+    url: '/v1/ops/runs/{run_id}';
+};
+
+export type OpsGetRunErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type OpsGetRunError = OpsGetRunErrors[keyof OpsGetRunErrors];
+
+export type OpsGetRunResponses = {
+    /**
+     * Successful Response
+     */
+    200: OpsRunDetail;
+};
+
+export type OpsGetRunResponse = OpsGetRunResponses[keyof OpsGetRunResponses];
 
 export type OpsListTenantsData = {
     body?: never;

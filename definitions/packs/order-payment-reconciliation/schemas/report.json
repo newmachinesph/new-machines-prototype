@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Reconciliation report",
+  "description": "What the reporting agent submits: a short summary and the rows for the sheet.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["summary", "rows", "totals"],
+  "properties": {
+    "summary": {"type": "string", "minLength": 1, "description": "Two or three plain sentences."},
+    "rows": {
+      "type": "array",
+      "description": "One row per order or payment: [date, order_id, kind, amount, status, note].",
+      "items": {
+        "type": "array",
+        "minItems": 6,
+        "maxItems": 6,
+        "items": {"type": ["string", "number"]}
+      }
+    },
+    "totals": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["orders_count", "matched_count", "mismatch_count", "net_difference_minor", "currency"],
+      "properties": {
+        "orders_count": {"type": "integer", "minimum": 0},
+        "matched_count": {"type": "integer", "minimum": 0},
+        "mismatch_count": {"type": "integer", "minimum": 0},
+        "net_difference_minor": {
+          "type": "integer",
+          "description": "Sum of payment minus order across all mismatches, in minor units."
+        },
+        "currency": {"type": "string", "pattern": "^[A-Z]{3}$"}
+      }
+    }
+  }
+}

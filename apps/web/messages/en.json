@@ -269,7 +269,29 @@
       "workflowRef": "Workflow",
       "contract": "Contract",
       "openDeliverable": "Open the deliverable and evidence",
-      "deliverablePending": "The deliverable appears here once the run is verified. <example>See a finished example</example>."
+      "deliverablePending": "The deliverable appears here once the run is verified. <example>See a finished example</example>.",
+      "receipt": {
+        "title": "Work receipt",
+        "verified": "Verified",
+        "notVerified": "Not verified",
+        "entries": "Entries",
+        "headHash": "Head hash",
+        "pinned": "Pinned versions",
+        "version": "v{version}",
+        "help": "Every step is recorded in a hash chain. The versions below are the exact definitions this run used.",
+        "kinds": {
+          "pack": "Pack",
+          "workflow": "Workflow",
+          "contract": "Work contract",
+          "agent": "Agent",
+          "connector": "Connector",
+          "decision_rules": "Decision rules",
+          "memory_space": "Memory space",
+          "schema": "Schema",
+          "models": "Model profiles",
+          "taxonomy": "Taxonomy"
+        }
+      }
     },
     "evidence": {
       "pageTitle": "Deliverable and evidence",
@@ -415,7 +437,23 @@
       "recorded": "Recorded as approval <mono>{id}</mono> for content <mono>{hash}</mono>.",
       "backToRun": "Back to the run",
       "declinedTitle": "Declined. Nothing was sent.",
-      "declinedBody": "The run will close this invoice as skipped."
+      "declinedBody": "The run will close this invoice as skipped.",
+      "actionHeading": "Action",
+      "app": "App",
+      "step": "Step",
+      "tool": "Tool call",
+      "does": "What it does",
+      "simulatedNote": "Runs against sandbox data. Nothing changes in {app}.",
+      "actionPendingNote": "Approving lets the run take this one step. Declining stops the run.",
+      "approveAction": "Approve",
+      "actionApprovedToast": "Approved",
+      "actionApprovedToastBody": "The run goes on with this step in {app}.",
+      "actionApprovedToastSimulated": "The run goes on with this step. Simulated: nothing changes in {app}.",
+      "actionDeclinedToastBody": "The run stops here. Nothing was changed in {app}.",
+      "actionApprovedTitle": "Approved. The run goes on with this step.",
+      "actionRecorded": "Recorded as approval <mono>{id}</mono>.",
+      "actionDeclinedTitle": "Declined. The run stops here.",
+      "actionDeclinedBody": "Nothing was changed in {app}. Start a new run to try again."
     }
   },
   "connections": {
@@ -528,6 +566,8 @@
       "hired": "Hired",
       "intro": "Workflow Packs bundle agents, the reviewers they need and the checks that prove the work. Try any pack on sample data before you hire it.",
       "filterLabel": "Filter packs",
+      "industryLabel": "Filter by industry",
+      "allIndustries": "All industries",
       "priceNote": "Prices are estimates per run. You only pay reviewers when a run needs one.",
       "search": "Search packs",
       "searchPlaceholder": "Search packs by outcome, publisher or category",
@@ -899,15 +939,18 @@
       },
       "REVISION_REQUIRED": {
         "label": "Send back with corrections",
-        "help": "The agent should apply your notes and try again."
+        "help": "The agent should apply your notes and try again.",
+        "helpRun": "Your corrections go to the next step of the run. The agent does not redo its work."
       },
       "REJECTED": {
         "label": "Reject",
-        "help": "The result is wrong and should not be retried."
+        "help": "The result is wrong and should not be retried.",
+        "helpRun": "The result is wrong. The run stops here and does not retry."
       },
       "ESCALATED": {
         "label": "Escalate",
-        "help": "This needs someone with more authority or context."
+        "help": "This needs someone with more authority or context.",
+        "helpRun": "Needs someone with more authority or context. The run stops here."
       }
     },
     "feedback": {
@@ -941,6 +984,14 @@
       },
       "notePlaceholder": "Correction for this record (optional)",
       "noteLabel": "Correction for {id}"
+    },
+    "runSubmitted": {
+      "continuesTitle": "Review recorded. The run goes on with it.",
+      "continuesBody": "The next step uses your verdict and corrections.",
+      "stopsTitle": "Review recorded. The run stops here.",
+      "stopsBody": "You rejected or escalated the result, so the run ends without retrying.",
+      "recordedTitle": "Review recorded",
+      "recordedBody": "The run has your verdict."
     }
   }
 }

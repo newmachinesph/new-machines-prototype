@@ -1,0 +1,13 @@
+kind: memory_space
+key: retail-commerce
+name: Retail & Commerce company knowledge
+description: Facts about how this business sells and gets paid that agents should know before reconciling.
+retention_days: 365
+readers: ["*"]
+writers: [ops-agent]
+
+seed_items:
+  - Card processing fees are 2.9% plus 30 cents per charge. A fee is expected and not a mismatch only when the merchant reports net amounts; this merchant reports gross amounts, so a charge that is short by the fee is a mismatch.
+  - Amounts that differ by 1 cent or less are rounding and count as a match.
+  - Refunds appear as negative charges, not as a change to the original charge.
+  - Orders over $500 need a person to confirm before they are reported as matched.

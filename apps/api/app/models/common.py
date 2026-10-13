@@ -27,6 +27,13 @@ class Money(Model):
     currency: Literal["USD"] = "USD"
 
 
+def money_text(amount_minor: int, currency: str = "USD") -> str:
+    """Minor units as display text: "$1,234.50" for USD, "1,234.50 EUR" for other currencies."""
+    sign = "-" if amount_minor < 0 else ""
+    value = f"{abs(amount_minor) / 100:,.2f}"
+    return f"{sign}${value}" if currency == "USD" else f"{sign}{value} {currency}"
+
+
 Actor = Literal["machine", "human", "policy", "system", "buyer"]
 OutcomeStage = Literal["executed", "verified", "accepted", "settlement"]
 StageState = Literal["done", "pending", "failed", "blocked", "not_required"]

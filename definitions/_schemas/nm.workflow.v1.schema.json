@@ -1,0 +1,175 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.newmachin.es/nm.workflow.v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "workflow_id",
+    "version",
+    "entry_node_id",
+    "default_policy_ref",
+    "work_contract_ref",
+    "limits",
+    "nodes"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "nm.workflow.v1"
+    },
+    "workflow_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "entry_node_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "default_policy_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "work_contract_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "max_duration_s",
+        "max_cost_minor",
+        "currency",
+        "max_parallel_nodes",
+        "max_total_node_attempts"
+      ],
+      "properties": {
+        "max_duration_s": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_cost_minor": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "max_parallel_nodes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_total_node_attempts": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "nodes": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "type",
+          "version",
+          "config"
+        ],
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "type": {
+                  "const": "end"
+                }
+              },
+              "required": [
+                "type"
+              ]
+            },
+            "then": {
+              "not": {
+                "required": [
+                  "routes"
+                ]
+              }
+            },
+            "else": {
+              "required": [
+                "routes"
+              ]
+            }
+          }
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "type": {
+            "enum": [
+              "trigger",
+              "agent",
+              "decision",
+              "human_workforce",
+              "condition",
+              "connector",
+              "memory",
+              "transform",
+              "verification",
+              "parallel",
+              "join",
+              "subworkflow",
+              "wait",
+              "retry_revision",
+              "approval",
+              "notification",
+              "settlement",
+              "end"
+            ]
+          },
+          "version": {
+            "type": "string",
+            "minLength": 1
+          },
+          "config": {
+            "type": "object"
+          },
+          "routes": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "revision_guards": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "edge",
+          "max_traversals"
+        ],
+        "properties": {
+          "edge": {
+            "type": "string"
+          },
+          "max_traversals": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      }
+    }
+  }
+}

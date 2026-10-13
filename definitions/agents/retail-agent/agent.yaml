@@ -1,0 +1,21 @@
+kind: agent
+key: retail-agent
+schema_version: nm.agent.manifest.v1.1
+agent_id: retail-agent
+version: "1.0.0"
+publisher_id: new-machines-labs
+capabilities: [retail.orders]
+runtime:
+  adapter: hosted
+  model_profile: reasoning
+  instructions: instructions.md
+  skills: [skills/read-orders.md, skills/spot-anomalies.md]
+  tools: [shopify.list_orders]
+  max_turns: 6
+input_schema_ref: order-payment-reconciliation/input
+output_schema_ref: order-payment-reconciliation/report
+requested_tool_capabilities: [orders.read]
+data_processing:
+  supported_regions: ["asia-south1"]
+  data_classes: ["CONFIDENTIAL"]
+  retention_policy_ref: retention/30d

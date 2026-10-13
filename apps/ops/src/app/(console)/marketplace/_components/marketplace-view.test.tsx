@@ -8,6 +8,7 @@ const state = vi.hoisted(() => ({
   roleKnown: true,
   action: "new" as string | null,
   setAction: vi.fn(),
+  packs: [] as unknown[],
 }));
 
 vi.mock("nuqs", () => ({
@@ -19,7 +20,7 @@ vi.mock("@/lib/queries/ops", () => ({
   useMe: () => ({ isSuccess: state.roleKnown }),
 }));
 vi.mock("@/lib/queries/marketplace", () => ({
-  usePacks: () => ({ isPending: false, isError: false, data: [] }),
+  usePacks: () => ({ isPending: false, isError: false, data: state.packs }),
 }));
 vi.mock("./new-pack-dialog", () => ({ NewPackDialog: () => <div data-testid="new-pack-dialog" /> }));
 
@@ -36,6 +37,7 @@ describe("MarketplaceView ?action=new", () => {
     state.roleKnown = true;
     state.action = "new";
     state.setAction.mockClear();
+    state.packs = [];
   });
 
   it("mounts the New pack dialog for an operator", () => {
@@ -57,5 +59,37 @@ describe("MarketplaceView ?action=new", () => {
     state.roleKnown = false;
     renderView();
     expect(state.setAction).not.toHaveBeenCalled();
+  });
+});
+
+describe("MarketplaceView listings", () => {
+  it("shows each pack's function and industries from its definition", () => {
+    state.action = null;
+    state.packs = [
+      {
+        slug: "order-payment-reconciliation",
+        name: "Order & Payment Reconciliation",
+        version: "1.0.0",
+        publisher: "New Machines Labs",
+        category: "Finance",
+        status: "published",
+        riskClass: "medium",
+        certified: false,
+        installs: 3,
+        runs30d: 0,
+        successRate: 0,
+        priceNote: "",
+        updatedAt: "2026-10-12T10:00:00Z",
+        connectors: [],
+        function: { id: "finance-ops", name: "Finance operations" },
+        industries: [
+          { id: "retail-commerce", name: "Retail & Commerce" },
+          { id: "manufacturing", name: "Manufacturing" },
+        ],
+      },
+    ];
+    renderView();
+    expect(screen.getByText("Finance operations")).toBeInTheDocument();
+    expect(screen.getByText("Retail & Commerce, Manufacturing")).toBeInTheDocument();
   });
 });

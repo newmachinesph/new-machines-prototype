@@ -112,6 +112,50 @@ describe("TaskWorkspace submit flow", () => {
     expect(screen.getByRole("link", { name: "run_1042" })).toHaveAttribute("href", "/app/runs/run_1042");
   });
 
+  it("says a reject or escalate stops a real run", async () => {
+    const user = userEvent.setup();
+    renderWithIntl(<TaskWorkspace task={{ ...task, realRun: true }} buyer={task.buyer} />);
+    await user.click(screen.getByRole("button", { name: "Claim this task" }));
+    expect(screen.getByText("The result is wrong. The run stops here and does not retry.")).toBeInTheDocument();
+    // Corrections on a real run go to the next step; the agent does not retry.
+    expect(screen.getByText(/Your corrections go to the next step of the run\./)).toBeInTheDocument();
+    expect(screen.queryByText(/apply your notes and try again/)).not.toBeInTheDocument();
+    expect(screen.getByText(/more authority or context\. The run stops here\./)).toBeInTheDocument();
+  });
+
+  it("goes straight to the run's outcome after a real-run review, with no simulated check", async () => {
+    const user = userEvent.setup();
+    renderWithIntl(<TaskWorkspace task={{ ...task, realRun: true }} buyer={task.buyer} />);
+    await user.click(screen.getByRole("button", { name: "Claim this task" }));
+    await user.click(screen.getByRole("radio", { name: "Same payment" }));
+    await user.click(screen.getByRole("radio", { name: /^Reject/ }));
+    await user.type(screen.getByRole("textbox", { name: "Feedback for the agent" }), "These do not match at all.");
+    await user.click(screen.getByRole("button", { name: "Submit review" }));
+    expect(screen.getByText("Review recorded. The run stops here.")).toBeInTheDocument();
+    expect(screen.queryByText("Simulated check")).not.toBeInTheDocument();
+    expect(screen.queryByText(/is owed to you/)).not.toBeInTheDocument();
+  });
+
+  it("explains each real-run verdict in Japanese", async () => {
+    const user = userEvent.setup();
+    renderWithIntl(<TaskWorkspace task={{ ...task, realRun: true }} buyer={task.buyer} />, { locale: "ja" });
+    await user.click(screen.getByRole("button", { name: "このタスクを引き受ける" }));
+    expect(screen.getByText(/あなたの修正は実行の次のステップに渡されます/)).toBeInTheDocument();
+    expect(screen.queryByText("エージェントがあなたのメモを反映して、やり直します。")).not.toBeInTheDocument();
+  });
+
+  it("does not wait on a check for a reloaded real-run task", () => {
+    const submitted = { ...task, realRun: true, state: "SUBMITTED" as const };
+    const { unmount } = renderWithIntl(
+      <TaskWorkspace task={{ ...submitted, runOutcome: "CONTINUES" }} buyer={task.buyer} />,
+    );
+    expect(screen.getByText("Review recorded. The run goes on with it.")).toBeInTheDocument();
+    expect(screen.queryByText(/Waiting for the check/)).not.toBeInTheDocument();
+    unmount();
+    renderWithIntl(<TaskWorkspace task={submitted} buyer={task.buyer} />, { locale: "ja" });
+    expect(screen.getByText("レビューを記録しました")).toBeInTheDocument();
+  });
+
   it("shows a neutral view for an unknown state", () => {
     renderWithIntl(<TaskWorkspace task={{ ...task, state: "CANCELLED" }} buyer={task.buyer} />);
     expect(screen.getByText("This task is no longer available")).toBeInTheDocument();

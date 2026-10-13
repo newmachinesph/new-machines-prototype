@@ -10,12 +10,13 @@ import { QueryState } from "@/components/query-state";
 import { Skeleton } from "@/components/skeleton";
 import { ActorGlyph, MockTag, Pill } from "@/components/ui";
 import { cn } from "@/lib/cn";
-import { useAgentById, useAgents, usePacks } from "@/lib/queries/catalog";
+import { useAgentById, useAgents, usePacks, useTaxonomy } from "@/lib/queries/catalog";
 import { useFormat } from "@/lib/use-format";
 
 // Sentinel values double as the `category` URL parameter, so they stay English; the labels shown are translated.
 const ALL = "All packs";
 const HIRED = "Hired";
+const ALL_INDUSTRIES = "";
 
 export function PackGrid() {
   const t = useTranslations("marketplace.grid");
@@ -24,6 +25,9 @@ export function PackGrid() {
   const agentsQuery = useAgents();
   const agentById = useAgentById();
   const [cat, setCat] = useQueryState("category", parseAsString.withDefault(ALL));
+  const taxonomy = useTaxonomy();
+  const industries = taxonomy.data?.industries ?? [];
+  const [industry, setIndustry] = useQueryState("industry", parseAsString.withDefault(ALL_INDUSTRIES));
   const [q, setQ] = useQueryState("q", parseAsString.withDefault(""));
 
   return (
@@ -40,6 +44,7 @@ export function PackGrid() {
             const needle = q.trim().toLowerCase();
             const shown = PACKS.filter(
               (p) =>
+                (industry === ALL_INDUSTRIES || (p.industries ?? []).includes(industry)) &&
                 (cat === ALL || (cat === HIRED ? p.installed : p.category === cat)) &&
                 (!needle ||
                   [p.name, p.outcome, p.publisher, p.category].some((field) => field.toLowerCase().includes(needle))),
@@ -85,6 +90,26 @@ export function PackGrid() {
                 </aside>
 
                 <div className="space-y-4">
+                  {industries.length > 0 ? (
+                    <div role="group" aria-label={t("industryLabel")} className="flex flex-wrap gap-1.5">
+                      {[{ id: ALL_INDUSTRIES, name: t("allIndustries") }, ...industries].map((i) => (
+                        <button
+                          key={i.id}
+                          type="button"
+                          aria-pressed={industry === i.id}
+                          onClick={() => setIndustry(i.id === ALL_INDUSTRIES ? null : i.id)}
+                          className={cn(
+                            "h-7 rounded-full border px-3 text-xs",
+                            industry === i.id
+                              ? "border-ink bg-ink text-paper"
+                              : "border-rule text-grey-700 hover:border-grey-500 hover:text-ink",
+                          )}
+                        >
+                          {i.name}
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
                   <label className="flex h-9 items-center gap-2 rounded-md border border-rule bg-paper px-3 focus-within:border-grey-500">
                     <Search className="size-4 text-grey-500" strokeWidth={1.75} aria-hidden />
                     <span className="sr-only">{t("search")}</span>
@@ -106,6 +131,7 @@ export function PackGrid() {
                         onClick={() => {
                           setQ(null);
                           setCat(null);
+                          setIndustry(null);
                         }}
                       >
                         {t("showAll")}

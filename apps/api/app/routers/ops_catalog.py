@@ -3,8 +3,9 @@ A listing's status decides what customers see (see `routers.catalog.is_listed`);
 disabled here adds or clears the demo tenant's connection."""
 
 from app.auth import CurrentOps, OpsActor, OpsWriter
+from app.defs.current import latest_bodies
 from app.errors import ApiProblem
-from app.models.catalog import Pack, PackConnector, PackEstimate
+from app.models.catalog import Pack, PackConnector, PackEstimate, TaxonomyEntry
 from app.models.common import Money
 from app.models.ops import (
     AddConnectorRequest,
@@ -92,20 +93,52 @@ def move_pack(
         return pack_detail(store, listing)
 
 
+def classified[L: PackListing](listings: list[L]) -> list[L]:
+    """Copies with the pack definition's function and industries, named from the taxonomy definition (a
+    detail's customer pack gets the ids, as the customer catalog serves them). Read outside the store lock;
+    mutation responses stay unclassified because the console refetches the reads after every change."""
+    packs = {body.get("slug", key): body for key, body in latest_bodies("pack").items()}
+    taxonomy = latest_bodies("taxonomy").get("default") or {}
+    names = {
+        field: {str(e["id"]): str(e["name"]) for e in taxonomy.get(field) or []}
+        for field in ("functions", "industries")
+    }
+
+    def entry(field: str, entry_id: object) -> TaxonomyEntry:
+        return TaxonomyEntry(id=str(entry_id), name=names[field].get(str(entry_id), str(entry_id)))
+
+    out = []
+    for listing in listings:
+        body = packs.get(listing.slug) or {}
+        function = body.get("function")
+        industries = [str(i) for i in body.get("industries") or []]
+        update: dict = {
+            "function": entry("functions", function) if function else None,
+            "industries": [entry("industries", i) for i in industries],
+        }
+        if isinstance(listing, PackListingDetail):
+            classified_pack = {"function": str(function) if function else None, "industries": industries}
+            update["pack"] = listing.pack.model_copy(update=classified_pack)
+        out.append(listing.model_copy(update=update))
+    return out
+
+
 @router.get("/packs", operation_id="opsListPacks", response_model=list[PackListing])
 def ops_list_packs(_: CurrentOps, status: PackStatus | None = None) -> list[PackListing]:
     with locked_store() as store:
-        return [
+        listings = [
             listing.model_copy()
             for listing in store.pack_listings.values()
             if status is None or listing.status == status
         ]
+    return classified(listings)
 
 
 @router.get("/packs/{slug}", operation_id="opsGetPack", response_model=PackListingDetail)
 def ops_get_pack(slug: PathId, _: CurrentOps) -> PackListingDetail:
     with locked_store() as store:
-        return pack_detail(store, find_listing(store, slug))
+        detail = pack_detail(store, find_listing(store, slug))
+    return classified([detail])[0]
 
 
 @router.post("/packs", operation_id="opsCreatePack", response_model=PackListingDetail, status_code=201)

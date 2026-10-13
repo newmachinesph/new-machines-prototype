@@ -1,0 +1,15 @@
+kind: connector
+key: shop
+app: Shop
+toolkit: shopify
+tools:
+  - id: list_orders
+    slug: SHOPIFY_GET_ORDERS
+    action_class: read
+    capability: shop.orders.read
+    description: List orders by id.
+    input_schema:
+      type: object
+      properties:
+        order_ids: {type: array, items: {type: string}}
+defaults: {read: permit, write: require_approval, delete: deny, money: require_approval}

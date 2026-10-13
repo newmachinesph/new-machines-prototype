@@ -18,6 +18,10 @@ type Call = "match" | "mismatch" | "pending";
 type Review = { verdict: ReviewVerdict; feedbackText: string; recordCalls: Record<string, Call> };
 
 const VERDICTS: ReviewVerdict[] = ["APPROVED", "REVISION_REQUIRED", "REJECTED", "ESCALATED"];
+/** On a real run, these verdicts stop the run instead of sending it on. */
+const STOPPING: ReviewVerdict[] = ["REJECTED", "ESCALATED"];
+
+type RunOutcome = NonNullable<HumanTask["runOutcome"]>;
 
 // Under this many seconds the hold timer turns to a warning.
 const LEASE_WARN_SECONDS = 5 * 60;
@@ -60,6 +64,9 @@ export function TaskWorkspace({ task, buyer }: { task: HumanTask; buyer: string 
   const claimTask = useClaimTask();
   const submitReview = useSubmitReview();
   const [phase, setPhase] = useState<Phase>(() => openingPhase(task));
+  // A real run's task has no acceptance check: the verdict goes straight to the run, which goes on or stops.
+  const realRun = Boolean(task.realRun);
+  const [runOutcome, setRunOutcome] = useState<RunOutcome | undefined>(task.runOutcome ?? undefined);
   // The API has no lease end, so only a claim made in this session gets a precise countdown.
   const [timed, setTimed] = useState(false);
   const [leaseEnd, setLeaseEnd] = useState(0);
@@ -124,7 +131,11 @@ export function TaskWorkspace({ task, buyer }: { task: HumanTask; buyer: string 
     submitReview.mutate(
       { path: { task_id: task.id }, body: review },
       {
-        onSuccess: () => setPhase("validating"),
+        onSuccess: (updated) => {
+          if (!realRun) return setPhase("validating");
+          setRunOutcome(updated?.runOutcome ?? (STOPPING.includes(review.verdict) ? "STOPS" : "CONTINUES"));
+          setPhase("submitted");
+        },
         onError: (e) => toast(t("feedback.submitFailed"), errorText(e), "blocked"),
       },
     );
@@ -197,14 +208,21 @@ export function TaskWorkspace({ task, buyer }: { task: HumanTask; buyer: string 
         </Callout>
       ) : null}
       {holding ? (
-        <Workspace task={task} expired={phase === "expired"} submitting={submitReview.isPending} onSubmit={submit} />
+        <Workspace
+          task={task}
+          realRun={realRun}
+          expired={phase === "expired"}
+          submitting={submitReview.isPending}
+          onSubmit={submit}
+        />
       ) : null}
       {phase === "validating" ? (
         <Callout tone="info" title={t("validating.title")}>
           {t("validating.body")} <SimTag>{t("validating.simulatedCheck")}</SimTag>
         </Callout>
       ) : null}
-      {phase === "submitted" && task.state !== "ACCEPTED" ? (
+      {phase === "submitted" && realRun ? <RunSubmitted outcome={runOutcome} /> : null}
+      {phase === "submitted" && !realRun && task.state !== "ACCEPTED" ? (
         <Callout tone="info" title={t("submitted.title")}>
           {t("submitted.body")}{" "}
           <Link className="link" href="/work">
@@ -238,6 +256,21 @@ export function TaskWorkspace({ task, buyer }: { task: HumanTask; buyer: string 
         </div>
       ) : null}
     </div>
+  );
+}
+
+/** A submitted review on a real run: what the run does with it. Unknown outcome (an older answer): just recorded. */
+function RunSubmitted({ outcome }: { outcome?: RunOutcome }) {
+  const t = useTranslations("task.runSubmitted");
+  const tWork = useTranslations("work");
+  const key = outcome === "STOPS" ? "stops" : outcome === "CONTINUES" ? "continues" : "recorded";
+  return (
+    <Callout tone={outcome === "STOPS" ? "warn" : "info"} title={t(`${key}Title`)}>
+      {t(`${key}Body`)}{" "}
+      <Link className="link" href="/work">
+        {tWork("backToTasks")}
+      </Link>
+    </Callout>
   );
 }
 
@@ -346,11 +379,13 @@ function LeaseTimer({ seconds }: { seconds: number }) {
 
 function Workspace({
   task,
+  realRun,
   expired,
   submitting,
   onSubmit,
 }: {
   task: HumanTask;
+  realRun: boolean;
   expired: boolean;
   submitting: boolean;
   onSubmit: (review: Review) => void;
@@ -402,7 +437,7 @@ function Workspace({
             options={VERDICTS.map((v) => ({
               value: v,
               label: t(`verdict.${v}.label`),
-              description: t(`verdict.${v}.help`),
+              description: realRun && v !== "APPROVED" ? t(`verdict.${v}.helpRun`) : t(`verdict.${v}.help`),
             }))}
           />
         </div>

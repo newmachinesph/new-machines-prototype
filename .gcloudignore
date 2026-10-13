@@ -1,0 +1,27 @@
+# Upload for `gcloud builds submit --config apps/api/cloudbuild.yaml .` (the API image, built from this root).
+# Same exclusions as .dockerignore: secrets, dependencies and the other apps never leave the machine.
+.gcloudignore
+.git
+.gitignore
+.gitattributes
+.env
+.env.*
+**/.env
+**/.env.*
+**/node_modules/
+**/.next/
+**/.next-*/
+**/.venv/
+**/__pycache__/
+**/*.py[cod]
+**/.pytest_cache/
+**/.ruff_cache/
+**/.mypy_cache/
+**/*.log
+docs/
+scripts/
+apps/web/
+apps/ops/
+apps/api/tests/
+apps/api/scripts/
+apps/api/openapi.json

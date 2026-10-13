@@ -1,0 +1,14 @@
+kind: decision_rules
+key: triage
+question: Can the order be approved automatically?
+rules:
+  - when: "facts.total_minor < 10000"
+    verdict: APPROVED
+    route: APPROVED
+    reason_code: SMALL_ORDER
+    explanation: Small orders are approved automatically.
+default:
+  verdict: HUMAN_REVIEW
+  route: HUMAN_REVIEW
+  reason_code: DEFAULT_REVIEW
+  explanation: Everything else goes to a person.

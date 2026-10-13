@@ -1,0 +1,24 @@
+# Where a reconciliation goes after matching. Rules run in order; the first whose `when` is true wins.
+# `when` is CEL over the run state: nodes.<id>.output holds each step's result.
+kind: decision_rules
+key: recon-exceptions
+
+question: Do the orders and payments match?
+
+rules:
+  - when: size(nodes.orders.output.orders) == 0 || size(nodes.payments.output.data) == 0
+    verdict: BLOCKED
+    route: blocked
+    reason_code: DATA_MISSING
+    explanation: No orders or no payments were returned for this period, so there is nothing to reconcile.
+  - when: size(nodes.match.output.mismatches) == 0
+    verdict: APPROVED
+    route: approved
+    reason_code: ALL_MATCHED
+    explanation: Every order has a matching payment.
+
+default:
+  verdict: HUMAN_REVIEW
+  route: human_review
+  reason_code: MISMATCHES_FOUND
+  explanation: Some orders and payments do not match, so a person needs to resolve them.

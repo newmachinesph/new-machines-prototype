@@ -1,0 +1,6 @@
+kind: taxonomy
+key: default
+functions:
+  - {id: finance-operations, name: Finance operations}
+industries:
+  - {id: retail-commerce, name: Retail & Commerce}

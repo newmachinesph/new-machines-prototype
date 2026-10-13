@@ -3,8 +3,8 @@
 import { queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { approveApproval, claimHumanTask, createToken, declineApproval, disconnectConnection, getHumanTask, getOrganization, getUsage, getWorkflowPack, getWorkflowRun, installWorkflowPack, inviteMember, listAgents, listApprovals, listAttention, listConnections, listEarnings, listEligibleHumanTasks, listMembers, listMemory, listPolicies, listTokens, listWorkflowPacks, listWorkflowRuns, opsAddConnector, opsApprovePack, opsApproveReviewer, opsCertifyPack, opsCreatePack, opsCreateTenant, opsDeclareIncident, opsDeprecatePack, opsDisableConnector, opsEnableConnector, opsGetBilling, opsGetHealth, opsGetMe, opsGetOverview, opsGetPack, opsGetTenant, opsHealthCheckConnector, opsListAudit, opsListAvailableToolkits, opsListConnectors, opsListGuardrails, opsListPacks, opsListReviewers, opsListRuns, opsListTeam, opsListTenants, opsReactivateTenant, opsReinstateReviewer, opsRejectPack, opsRepublishPack, opsSetConnectorDefaults, opsSetGuardrail, opsSetReviewerLevel, opsSetTenantPlan, opsSetTenantSpendCap, opsSubmitPack, opsSuspendReviewer, opsSuspendTenant, opsUpdateIncident, type Options, retractMemory, reviewMemoryCandidate, revokeGrant, revokeToken, startWorkflowRun, submitHumanTask, suggestWorkflowPack } from '../sdk.gen';
-import type { ApproveApprovalData, ApproveApprovalError, ApproveApprovalResponse, ClaimHumanTaskData, ClaimHumanTaskError, ClaimHumanTaskResponse, CreateTokenData, CreateTokenError, CreateTokenResponse, DeclineApprovalData, DeclineApprovalError, DeclineApprovalResponse, DisconnectConnectionData, DisconnectConnectionError, DisconnectConnectionResponse, GetHumanTaskData, GetHumanTaskError, GetHumanTaskResponse, GetOrganizationData, GetOrganizationError, GetOrganizationResponse, GetUsageData, GetUsageError, GetUsageResponse, GetWorkflowPackData, GetWorkflowPackError, GetWorkflowPackResponse, GetWorkflowRunData, GetWorkflowRunError, GetWorkflowRunResponse, InstallWorkflowPackData, InstallWorkflowPackError, InstallWorkflowPackResponse, InviteMemberData, InviteMemberError, InviteMemberResponse, ListAgentsData, ListAgentsError, ListAgentsResponse, ListApprovalsData, ListApprovalsError, ListApprovalsResponse, ListAttentionData, ListAttentionError, ListAttentionResponse, ListConnectionsData, ListConnectionsError, ListConnectionsResponse, ListEarningsData, ListEarningsError, ListEarningsResponse, ListEligibleHumanTasksData, ListEligibleHumanTasksError, ListEligibleHumanTasksResponse, ListMembersData, ListMembersError, ListMembersResponse, ListMemoryData, ListMemoryError, ListMemoryResponse, ListPoliciesData, ListPoliciesError, ListPoliciesResponse, ListTokensData, ListTokensError, ListTokensResponse, ListWorkflowPacksData, ListWorkflowPacksError, ListWorkflowPacksResponse, ListWorkflowRunsData, ListWorkflowRunsError, ListWorkflowRunsResponse, OpsAddConnectorData, OpsAddConnectorError, OpsAddConnectorResponse, OpsApprovePackData, OpsApprovePackError, OpsApprovePackResponse, OpsApproveReviewerData, OpsApproveReviewerError, OpsApproveReviewerResponse, OpsCertifyPackData, OpsCertifyPackError, OpsCertifyPackResponse, OpsCreatePackData, OpsCreatePackError, OpsCreatePackResponse, OpsCreateTenantData, OpsCreateTenantError, OpsCreateTenantResponse, OpsDeclareIncidentData, OpsDeclareIncidentError, OpsDeclareIncidentResponse, OpsDeprecatePackData, OpsDeprecatePackError, OpsDeprecatePackResponse, OpsDisableConnectorData, OpsDisableConnectorError, OpsDisableConnectorResponse, OpsEnableConnectorData, OpsEnableConnectorError, OpsEnableConnectorResponse, OpsGetBillingData, OpsGetBillingError, OpsGetBillingResponse, OpsGetHealthData, OpsGetHealthError, OpsGetHealthResponse, OpsGetMeData, OpsGetMeError, OpsGetMeResponse, OpsGetOverviewData, OpsGetOverviewError, OpsGetOverviewResponse, OpsGetPackData, OpsGetPackError, OpsGetPackResponse, OpsGetTenantData, OpsGetTenantError, OpsGetTenantResponse, OpsHealthCheckConnectorData, OpsHealthCheckConnectorError, OpsHealthCheckConnectorResponse, OpsListAuditData, OpsListAuditError, OpsListAuditResponse, OpsListAvailableToolkitsData, OpsListAvailableToolkitsError, OpsListAvailableToolkitsResponse, OpsListConnectorsData, OpsListConnectorsError, OpsListConnectorsResponse, OpsListGuardrailsData, OpsListGuardrailsError, OpsListGuardrailsResponse, OpsListPacksData, OpsListPacksError, OpsListPacksResponse, OpsListReviewersData, OpsListReviewersError, OpsListReviewersResponse, OpsListRunsData, OpsListRunsError, OpsListRunsResponse, OpsListTeamData, OpsListTeamError, OpsListTeamResponse, OpsListTenantsData, OpsListTenantsError, OpsListTenantsResponse, OpsReactivateTenantData, OpsReactivateTenantError, OpsReactivateTenantResponse, OpsReinstateReviewerData, OpsReinstateReviewerError, OpsReinstateReviewerResponse, OpsRejectPackData, OpsRejectPackError, OpsRejectPackResponse, OpsRepublishPackData, OpsRepublishPackError, OpsRepublishPackResponse, OpsSetConnectorDefaultsData, OpsSetConnectorDefaultsError, OpsSetConnectorDefaultsResponse, OpsSetGuardrailData, OpsSetGuardrailError, OpsSetGuardrailResponse, OpsSetReviewerLevelData, OpsSetReviewerLevelError, OpsSetReviewerLevelResponse, OpsSetTenantPlanData, OpsSetTenantPlanError, OpsSetTenantPlanResponse, OpsSetTenantSpendCapData, OpsSetTenantSpendCapError, OpsSetTenantSpendCapResponse, OpsSubmitPackData, OpsSubmitPackError, OpsSubmitPackResponse, OpsSuspendReviewerData, OpsSuspendReviewerError, OpsSuspendReviewerResponse, OpsSuspendTenantData, OpsSuspendTenantError, OpsSuspendTenantResponse, OpsUpdateIncidentData, OpsUpdateIncidentError, OpsUpdateIncidentResponse, RetractMemoryData, RetractMemoryError, RetractMemoryResponse, ReviewMemoryCandidateData, ReviewMemoryCandidateError, ReviewMemoryCandidateResponse, RevokeGrantData, RevokeGrantError, RevokeGrantResponse, RevokeTokenData, RevokeTokenError, RevokeTokenResponse, StartWorkflowRunData, StartWorkflowRunError, StartWorkflowRunResponse, SubmitHumanTaskData, SubmitHumanTaskError, SubmitHumanTaskResponse, SuggestWorkflowPackData, SuggestWorkflowPackError, SuggestWorkflowPackResponse } from '../types.gen';
+import { approveApproval, claimHumanTask, createToken, declineApproval, disconnectConnection, getCatalogTaxonomy, getHumanTask, getOrganization, getUsage, getWorkflowPack, getWorkflowRun, getWorkflowRunReceipt, installWorkflowPack, inviteMember, listAgents, listApprovals, listAttention, listConnections, listEarnings, listEligibleHumanTasks, listMembers, listMemory, listPolicies, listTokens, listWorkflowPacks, listWorkflowRuns, opsAddConnector, opsAddMemoryItem, opsApprovePack, opsApproveReviewer, opsCertifyPack, opsCreatePack, opsCreateTenant, opsDeclareIncident, opsDeleteMemoryItem, opsDeprecatePack, opsDisableConnector, opsEnableConnector, opsExportDefinition, opsGetBilling, opsGetDefinition, opsGetHealth, opsGetMe, opsGetOverview, opsGetPack, opsGetRun, opsGetTenant, opsHealthCheckConnector, opsListAudit, opsListAvailableToolkits, opsListConnectors, opsListDefinitions, opsListGuardrails, opsListMemoryItems, opsListMemorySpaces, opsListPacks, opsListReviewers, opsListRuns, opsListTeam, opsListTenants, opsPublishDefinition, opsReactivateTenant, opsReinstateReviewer, opsRejectPack, opsRepublishPack, opsSetConnectorDefaults, opsSetGuardrail, opsSetReviewerLevel, opsSetTenantPlan, opsSetTenantSpendCap, opsSubmitPack, opsSuspendReviewer, opsSuspendTenant, opsUpdateIncident, opsValidateDefinition, type Options, retractMemory, reviewMemoryCandidate, revokeGrant, revokeToken, startWorkflowRun, submitHumanTask, suggestWorkflowPack } from '../sdk.gen';
+import type { ApproveApprovalData, ApproveApprovalError, ApproveApprovalResponse, ClaimHumanTaskData, ClaimHumanTaskError, ClaimHumanTaskResponse, CreateTokenData, CreateTokenError, CreateTokenResponse, DeclineApprovalData, DeclineApprovalError, DeclineApprovalResponse, DisconnectConnectionData, DisconnectConnectionError, DisconnectConnectionResponse, GetCatalogTaxonomyData, GetCatalogTaxonomyError, GetCatalogTaxonomyResponse, GetHumanTaskData, GetHumanTaskError, GetHumanTaskResponse, GetOrganizationData, GetOrganizationError, GetOrganizationResponse, GetUsageData, GetUsageError, GetUsageResponse, GetWorkflowPackData, GetWorkflowPackError, GetWorkflowPackResponse, GetWorkflowRunData, GetWorkflowRunError, GetWorkflowRunReceiptData, GetWorkflowRunReceiptError, GetWorkflowRunReceiptResponse, GetWorkflowRunResponse, InstallWorkflowPackData, InstallWorkflowPackError, InstallWorkflowPackResponse, InviteMemberData, InviteMemberError, InviteMemberResponse, ListAgentsData, ListAgentsError, ListAgentsResponse, ListApprovalsData, ListApprovalsError, ListApprovalsResponse, ListAttentionData, ListAttentionError, ListAttentionResponse, ListConnectionsData, ListConnectionsError, ListConnectionsResponse, ListEarningsData, ListEarningsError, ListEarningsResponse, ListEligibleHumanTasksData, ListEligibleHumanTasksError, ListEligibleHumanTasksResponse, ListMembersData, ListMembersError, ListMembersResponse, ListMemoryData, ListMemoryError, ListMemoryResponse, ListPoliciesData, ListPoliciesError, ListPoliciesResponse, ListTokensData, ListTokensError, ListTokensResponse, ListWorkflowPacksData, ListWorkflowPacksError, ListWorkflowPacksResponse, ListWorkflowRunsData, ListWorkflowRunsError, ListWorkflowRunsResponse, OpsAddConnectorData, OpsAddConnectorError, OpsAddConnectorResponse, OpsAddMemoryItemData, OpsAddMemoryItemError, OpsAddMemoryItemResponse, OpsApprovePackData, OpsApprovePackError, OpsApprovePackResponse, OpsApproveReviewerData, OpsApproveReviewerError, OpsApproveReviewerResponse, OpsCertifyPackData, OpsCertifyPackError, OpsCertifyPackResponse, OpsCreatePackData, OpsCreatePackError, OpsCreatePackResponse, OpsCreateTenantData, OpsCreateTenantError, OpsCreateTenantResponse, OpsDeclareIncidentData, OpsDeclareIncidentError, OpsDeclareIncidentResponse, OpsDeleteMemoryItemData, OpsDeleteMemoryItemError, OpsDeleteMemoryItemResponse, OpsDeprecatePackData, OpsDeprecatePackError, OpsDeprecatePackResponse, OpsDisableConnectorData, OpsDisableConnectorError, OpsDisableConnectorResponse, OpsEnableConnectorData, OpsEnableConnectorError, OpsEnableConnectorResponse, OpsExportDefinitionData, OpsExportDefinitionError, OpsExportDefinitionResponse, OpsGetBillingData, OpsGetBillingError, OpsGetBillingResponse, OpsGetDefinitionData, OpsGetDefinitionError, OpsGetDefinitionResponse, OpsGetHealthData, OpsGetHealthError, OpsGetHealthResponse, OpsGetMeData, OpsGetMeError, OpsGetMeResponse, OpsGetOverviewData, OpsGetOverviewError, OpsGetOverviewResponse, OpsGetPackData, OpsGetPackError, OpsGetPackResponse, OpsGetRunData, OpsGetRunError, OpsGetRunResponse, OpsGetTenantData, OpsGetTenantError, OpsGetTenantResponse, OpsHealthCheckConnectorData, OpsHealthCheckConnectorError, OpsHealthCheckConnectorResponse, OpsListAuditData, OpsListAuditError, OpsListAuditResponse, OpsListAvailableToolkitsData, OpsListAvailableToolkitsError, OpsListAvailableToolkitsResponse, OpsListConnectorsData, OpsListConnectorsError, OpsListConnectorsResponse, OpsListDefinitionsData, OpsListDefinitionsError, OpsListDefinitionsResponse, OpsListGuardrailsData, OpsListGuardrailsError, OpsListGuardrailsResponse, OpsListMemoryItemsData, OpsListMemoryItemsError, OpsListMemoryItemsResponse, OpsListMemorySpacesData, OpsListMemorySpacesError, OpsListMemorySpacesResponse, OpsListPacksData, OpsListPacksError, OpsListPacksResponse, OpsListReviewersData, OpsListReviewersError, OpsListReviewersResponse, OpsListRunsData, OpsListRunsError, OpsListRunsResponse, OpsListTeamData, OpsListTeamError, OpsListTeamResponse, OpsListTenantsData, OpsListTenantsError, OpsListTenantsResponse, OpsPublishDefinitionData, OpsPublishDefinitionError, OpsPublishDefinitionResponse, OpsReactivateTenantData, OpsReactivateTenantError, OpsReactivateTenantResponse, OpsReinstateReviewerData, OpsReinstateReviewerError, OpsReinstateReviewerResponse, OpsRejectPackData, OpsRejectPackError, OpsRejectPackResponse, OpsRepublishPackData, OpsRepublishPackError, OpsRepublishPackResponse, OpsSetConnectorDefaultsData, OpsSetConnectorDefaultsError, OpsSetConnectorDefaultsResponse, OpsSetGuardrailData, OpsSetGuardrailError, OpsSetGuardrailResponse, OpsSetReviewerLevelData, OpsSetReviewerLevelError, OpsSetReviewerLevelResponse, OpsSetTenantPlanData, OpsSetTenantPlanError, OpsSetTenantPlanResponse, OpsSetTenantSpendCapData, OpsSetTenantSpendCapError, OpsSetTenantSpendCapResponse, OpsSubmitPackData, OpsSubmitPackError, OpsSubmitPackResponse, OpsSuspendReviewerData, OpsSuspendReviewerError, OpsSuspendReviewerResponse, OpsSuspendTenantData, OpsSuspendTenantError, OpsSuspendTenantResponse, OpsUpdateIncidentData, OpsUpdateIncidentError, OpsUpdateIncidentResponse, OpsValidateDefinitionData, OpsValidateDefinitionError, OpsValidateDefinitionResponse, RetractMemoryData, RetractMemoryError, RetractMemoryResponse, ReviewMemoryCandidateData, ReviewMemoryCandidateError, ReviewMemoryCandidateResponse, RevokeGrantData, RevokeGrantError, RevokeGrantResponse, RevokeTokenData, RevokeTokenError, RevokeTokenResponse, StartWorkflowRunData, StartWorkflowRunError, StartWorkflowRunResponse, SubmitHumanTaskData, SubmitHumanTaskError, SubmitHumanTaskResponse, SuggestWorkflowPackData, SuggestWorkflowPackError, SuggestWorkflowPackResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -75,6 +75,26 @@ export const getWorkflowPackOptions = (options: Options<GetWorkflowPackData>) =>
     queryKey: getWorkflowPackQueryKey(options)
 });
 
+export const getCatalogTaxonomyQueryKey = (options?: Options<GetCatalogTaxonomyData>) => createQueryKey('getCatalogTaxonomy', options);
+
+/**
+ * Get Catalog Taxonomy
+ *
+ * Functions and industries packs are classified by (the `taxonomy` definition).
+ */
+export const getCatalogTaxonomyOptions = (options?: Options<GetCatalogTaxonomyData>) => queryOptions<GetCatalogTaxonomyResponse, GetCatalogTaxonomyError, GetCatalogTaxonomyResponse, ReturnType<typeof getCatalogTaxonomyQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getCatalogTaxonomy({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getCatalogTaxonomyQueryKey(options)
+});
+
 export const listAgentsQueryKey = (options?: Options<ListAgentsData>) => createQueryKey('listAgents', options);
 
 /**
@@ -133,6 +153,8 @@ export const listWorkflowRunsQueryKey = (options?: Options<ListWorkflowRunsData>
 
 /**
  * List Workflow Runs
+ *
+ * Real runs (newest first, when the runtime is on), then the fixtures.
  */
 export const listWorkflowRunsOptions = (options?: Options<ListWorkflowRunsData>) => queryOptions<ListWorkflowRunsResponse, ListWorkflowRunsError, ListWorkflowRunsResponse, ReturnType<typeof listWorkflowRunsQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
@@ -150,7 +172,8 @@ export const listWorkflowRunsOptions = (options?: Options<ListWorkflowRunsData>)
 /**
  * Start Workflow Run
  *
- * Returns 202: the run is registered and started, not finished (API.md section 3).
+ * Returns 202: the run is registered and started, not finished (API.md section 3). With the runtime on,
+ * a pack that has a definition runs for real on Temporal; any other pack keeps the fixture behaviour.
  */
 export const startWorkflowRunMutation = (options?: Partial<Options<StartWorkflowRunData>>): UseMutationOptions<StartWorkflowRunResponse, StartWorkflowRunError, Options<StartWorkflowRunData>> => {
     const mutationOptions: UseMutationOptions<StartWorkflowRunResponse, StartWorkflowRunError, Options<StartWorkflowRunData>> = {
@@ -184,10 +207,32 @@ export const getWorkflowRunOptions = (options: Options<GetWorkflowRunData>) => q
     queryKey: getWorkflowRunQueryKey(options)
 });
 
+export const getWorkflowRunReceiptQueryKey = (options: Options<GetWorkflowRunReceiptData>) => createQueryKey('getWorkflowRunReceipt', options);
+
+/**
+ * Get Workflow Run Receipt
+ *
+ * The work receipt of a real run: pinned versions, entries and whether the hash chain verifies.
+ */
+export const getWorkflowRunReceiptOptions = (options: Options<GetWorkflowRunReceiptData>) => queryOptions<GetWorkflowRunReceiptResponse, GetWorkflowRunReceiptError, GetWorkflowRunReceiptResponse, ReturnType<typeof getWorkflowRunReceiptQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getWorkflowRunReceipt({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getWorkflowRunReceiptQueryKey(options)
+});
+
 export const listApprovalsQueryKey = (options?: Options<ListApprovalsData>) => createQueryKey('listApprovals', options);
 
 /**
  * List Approvals
+ *
+ * Approvals of real runs (newest first), then the fixtures.
  */
 export const listApprovalsOptions = (options?: Options<ListApprovalsData>) => queryOptions<ListApprovalsResponse, ListApprovalsError, ListApprovalsResponse, ReturnType<typeof listApprovalsQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
@@ -328,6 +373,8 @@ export const listMemoryQueryKey = (options?: Options<ListMemoryData>) => createQ
 
 /**
  * List Memory
+ *
+ * Fixture memory, after the items of real memory spaces when the runtime is on.
  */
 export const listMemoryOptions = (options?: Options<ListMemoryData>) => queryOptions<ListMemoryResponse, ListMemoryError, ListMemoryResponse, ReturnType<typeof listMemoryQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
@@ -867,6 +914,110 @@ export const opsHealthCheckConnectorMutation = (options?: Partial<Options<OpsHea
     return mutationOptions;
 };
 
+export const opsListDefinitionsQueryKey = (options?: Options<OpsListDefinitionsData>) => createQueryKey('opsListDefinitions', options);
+
+/**
+ * Ops List Definitions
+ *
+ * The latest version of every definition, by kind then key.
+ */
+export const opsListDefinitionsOptions = (options?: Options<OpsListDefinitionsData>) => queryOptions<OpsListDefinitionsResponse, OpsListDefinitionsError, OpsListDefinitionsResponse, ReturnType<typeof opsListDefinitionsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await opsListDefinitions({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: opsListDefinitionsQueryKey(options)
+});
+
+export const opsExportDefinitionQueryKey = (options: Options<OpsExportDefinitionData>) => createQueryKey('opsExportDefinition', options);
+
+/**
+ * Ops Export Definition
+ *
+ * The files of one version as {path relative to the definitions root: text}, ready to go into git.
+ */
+export const opsExportDefinitionOptions = (options: Options<OpsExportDefinitionData>) => queryOptions<OpsExportDefinitionResponse, OpsExportDefinitionError, OpsExportDefinitionResponse, ReturnType<typeof opsExportDefinitionQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await opsExportDefinition({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: opsExportDefinitionQueryKey(options)
+});
+
+/**
+ * Ops Validate Definition
+ *
+ * Check an edit (or a new definition) against the latest published versions of everything else. Never
+ * saves anything.
+ * `errors` lists every problem found, including ones in other definitions.
+ */
+export const opsValidateDefinitionMutation = (options?: Partial<Options<OpsValidateDefinitionData>>): UseMutationOptions<OpsValidateDefinitionResponse, OpsValidateDefinitionError, Options<OpsValidateDefinitionData>> => {
+    const mutationOptions: UseMutationOptions<OpsValidateDefinitionResponse, OpsValidateDefinitionError, Options<OpsValidateDefinitionData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await opsValidateDefinition({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Ops Publish Definition
+ *
+ * Validate, then publish the edit as the next version; an unknown kind/key is created as version 1.
+ * 422 INVALID_DEFINITION (with `errors`) when it does not validate; 409 VERSION_CONFLICT when
+ * `baseVersion` is sent and someone has published since; 409 NO_CHANGE when it equals the latest
+ * version.
+ */
+export const opsPublishDefinitionMutation = (options?: Partial<Options<OpsPublishDefinitionData>>): UseMutationOptions<OpsPublishDefinitionResponse, OpsPublishDefinitionError, Options<OpsPublishDefinitionData>> => {
+    const mutationOptions: UseMutationOptions<OpsPublishDefinitionResponse, OpsPublishDefinitionError, Options<OpsPublishDefinitionData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await opsPublishDefinition({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const opsGetDefinitionQueryKey = (options: Options<OpsGetDefinitionData>) => createQueryKey('opsGetDefinition', options);
+
+/**
+ * Ops Get Definition
+ *
+ * One definition with its version history, its main file as YAML, Markdown files, and what it refers
+ * to / is used by. `?version=N` shows an older version.
+ */
+export const opsGetDefinitionOptions = (options: Options<OpsGetDefinitionData>) => queryOptions<OpsGetDefinitionResponse, OpsGetDefinitionError, OpsGetDefinitionResponse, ReturnType<typeof opsGetDefinitionQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await opsGetDefinition({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: opsGetDefinitionQueryKey(options)
+});
+
 export const opsGetHealthQueryKey = (options?: Options<OpsGetHealthData>) => createQueryKey('opsGetHealth', options);
 
 /**
@@ -909,6 +1060,84 @@ export const opsUpdateIncidentMutation = (options?: Partial<Options<OpsUpdateInc
     const mutationOptions: UseMutationOptions<OpsUpdateIncidentResponse, OpsUpdateIncidentError, Options<OpsUpdateIncidentData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await opsUpdateIncident({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const opsListMemorySpacesQueryKey = (options?: Options<OpsListMemorySpacesData>) => createQueryKey('opsListMemorySpaces', options);
+
+/**
+ * Ops List Memory Spaces
+ *
+ * Every memory space definition with its item count.
+ */
+export const opsListMemorySpacesOptions = (options?: Options<OpsListMemorySpacesData>) => queryOptions<OpsListMemorySpacesResponse, OpsListMemorySpacesError, OpsListMemorySpacesResponse, ReturnType<typeof opsListMemorySpacesQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await opsListMemorySpaces({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: opsListMemorySpacesQueryKey(options)
+});
+
+export const opsListMemoryItemsQueryKey = (options: Options<OpsListMemoryItemsData>) => createQueryKey('opsListMemoryItems', options);
+
+/**
+ * Ops List Memory Items
+ *
+ * The space's items, newest first.
+ */
+export const opsListMemoryItemsOptions = (options: Options<OpsListMemoryItemsData>) => queryOptions<OpsListMemoryItemsResponse, OpsListMemoryItemsError, OpsListMemoryItemsResponse, ReturnType<typeof opsListMemoryItemsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await opsListMemoryItems({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: opsListMemoryItemsQueryKey(options)
+});
+
+/**
+ * Ops Add Memory Item
+ *
+ * Add an item (1 to 2000 characters) to a space. The space must exist as a definition.
+ */
+export const opsAddMemoryItemMutation = (options?: Partial<Options<OpsAddMemoryItemData>>): UseMutationOptions<OpsAddMemoryItemResponse, OpsAddMemoryItemError, Options<OpsAddMemoryItemData>> => {
+    const mutationOptions: UseMutationOptions<OpsAddMemoryItemResponse, OpsAddMemoryItemError, Options<OpsAddMemoryItemData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await opsAddMemoryItem({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Ops Delete Memory Item
+ *
+ * Remove one item from its space.
+ */
+export const opsDeleteMemoryItemMutation = (options?: Partial<Options<OpsDeleteMemoryItemData>>): UseMutationOptions<OpsDeleteMemoryItemResponse, OpsDeleteMemoryItemError, Options<OpsDeleteMemoryItemData>> => {
+    const mutationOptions: UseMutationOptions<OpsDeleteMemoryItemResponse, OpsDeleteMemoryItemError, Options<OpsDeleteMemoryItemData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await opsDeleteMemoryItem({
                 ...options,
                 ...fnOptions,
                 throwOnError: true
@@ -1148,6 +1377,26 @@ export const opsListAuditOptions = (options?: Options<OpsListAuditData>) => quer
         return data;
     },
     queryKey: opsListAuditQueryKey(options)
+});
+
+export const opsGetRunQueryKey = (options: Options<OpsGetRunData>) => createQueryKey('opsGetRun', options);
+
+/**
+ * Ops Get Run
+ *
+ * A real run (any tenant) with its receipt, the hash chain verified now. 404 for fixture runs.
+ */
+export const opsGetRunOptions = (options: Options<OpsGetRunData>) => queryOptions<OpsGetRunResponse, OpsGetRunError, OpsGetRunResponse, ReturnType<typeof opsGetRunQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await opsGetRun({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: opsGetRunQueryKey(options)
 });
 
 export const opsListTenantsQueryKey = (options?: Options<OpsListTenantsData>) => createQueryKey('opsListTenants', options);

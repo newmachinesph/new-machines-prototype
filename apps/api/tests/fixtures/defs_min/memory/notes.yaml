@@ -1,0 +1,9 @@
+kind: memory_space
+key: notes
+name: Notes
+description: Team notes the agents can read.
+retention_days: 90
+readers: ["*"]
+writers: [helper-agent]
+seed_items:
+  - Orders over 100 USD need a second look.

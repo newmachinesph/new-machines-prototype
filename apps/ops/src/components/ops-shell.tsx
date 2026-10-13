@@ -3,8 +3,12 @@
 import { Dialog } from "@base-ui/react/dialog";
 import {
   Activity,
+  Bot,
+  Brain,
   Building2,
   ChevronRight,
+  FileCheck2,
+  FileCode2,
   Gauge,
   LogOut,
   Menu as MenuIcon,
@@ -53,6 +57,15 @@ export const NAV: NavGroup[] = [
     items: [
       { href: "/marketplace", label: "Marketplace", icon: Store },
       { href: "/connectors", label: "Connectors", icon: Plug },
+    ],
+  },
+  {
+    label: "Build",
+    items: [
+      { href: "/definitions", label: "Definitions", icon: FileCode2 },
+      { href: "/agents", label: "Agents", icon: Bot },
+      { href: "/contracts", label: "Work Contracts", icon: FileCheck2 },
+      { href: "/memory", label: "Memory", icon: Brain },
     ],
   },
   {

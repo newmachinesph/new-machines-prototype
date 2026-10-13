@@ -12,6 +12,14 @@ export const zAddConnectorRequest = z.object({
 });
 
 /**
+ * AddMemoryItemRequest
+ */
+export const zAddMemoryItemRequest = z.object({
+    text: z.string().min(1).max(2000),
+    reason: z.string().min(1).max(500)
+});
+
+/**
  * Agent
  */
 export const zAgent = z.object({
@@ -23,6 +31,21 @@ export const zAgent = z.object({
     capabilities: z.array(z.string()),
     regions: z.array(z.string()),
     certified: z.boolean()
+});
+
+/**
+ * ApprovalAction
+ *
+ * The step a real run asks to take once approved: the app it acts on, the workflow step, and the tool
+ * call. `mocked` is true when that call would run against sandbox data instead of the connected app.
+ */
+export const zApprovalAction = z.object({
+    app: z.string(),
+    step: z.string(),
+    tool: z.string().optional(),
+    operation: z.string().optional(),
+    summary: z.string().optional(),
+    mocked: z.boolean()
 });
 
 /**
@@ -89,7 +112,9 @@ export const zAuditEntry = z.object({
         'connector',
         'reviewer',
         'guardrail',
-        'incident'
+        'incident',
+        'definition',
+        'memory'
     ]),
     targetId: z.string(),
     reason: z.string(),
@@ -125,6 +150,32 @@ export const zChainStep = z.object({
  * ConnectorDefaults
  */
 export const zConnectorDefaults = z.object({
+    read: z.enum([
+        'permit',
+        'require_approval',
+        'deny'
+    ]),
+    write: z.enum([
+        'permit',
+        'require_approval',
+        'deny'
+    ]),
+    delete: z.enum([
+        'permit',
+        'require_approval',
+        'deny'
+    ]),
+    money: z.enum([
+        'permit',
+        'require_approval',
+        'deny'
+    ])
+});
+
+/**
+ * ConnectorDefaultsInput
+ */
+export const zConnectorDefaultsInput = z.object({
     read: z.enum([
         'permit',
         'require_approval',
@@ -194,6 +245,74 @@ export const zDeclareIncidentRequest = z.object({
 });
 
 /**
+ * DefinitionExport
+ */
+export const zDefinitionExport = z.object({
+    files: z.record(z.string(), z.string())
+});
+
+/**
+ * DefinitionIssue
+ *
+ * One validation error. `kind`/`key` name the definition it was found in, which can be another one.
+ */
+export const zDefinitionIssue = z.object({
+    kind: z.string(),
+    key: z.string(),
+    path: z.string(),
+    message: z.string()
+});
+
+/**
+ * DefinitionRef
+ *
+ * A pointer to another definition: its kind and key.
+ */
+export const zDefinitionRef = z.object({
+    kind: z.enum([
+        'taxonomy',
+        'models',
+        'pack',
+        'workflow',
+        'contract',
+        'agent',
+        'connector',
+        'decision_rules',
+        'memory_space',
+        'schema'
+    ]),
+    key: z.string()
+});
+
+/**
+ * DefinitionSummary
+ *
+ * The latest (or a chosen) version of one definition. `name` is the body's name, else its app
+ * (connector) or question (decision rules), else the key.
+ */
+export const zDefinitionSummary = z.object({
+    kind: z.enum([
+        'taxonomy',
+        'models',
+        'pack',
+        'workflow',
+        'contract',
+        'agent',
+        'connector',
+        'decision_rules',
+        'memory_space',
+        'schema'
+    ]),
+    key: z.string(),
+    name: z.string(),
+    version: z.int(),
+    digest: z.string(),
+    source: z.enum(['file', 'console']),
+    publishedBy: z.string(),
+    publishedAt: z.string()
+});
+
+/**
  * DeliverableRow
  */
 export const zDeliverableRow = z.object({
@@ -238,7 +357,9 @@ export const zApproval = z.object({
     policyRef: z.string(),
     reasonCodes: z.array(z.string()),
     digest: z.array(zDigestRow),
-    preview: zEmailPreview
+    preview: zEmailPreview.optional(),
+    action: zApprovalAction.optional(),
+    summary: z.string().optional()
 });
 
 /**
@@ -526,6 +647,29 @@ export const zMemoryReviewRequest = z.object({
 });
 
 /**
+ * MemorySpace
+ */
+export const zMemorySpace = z.object({
+    key: z.string(),
+    name: z.string(),
+    description: z.string(),
+    itemCount: z.int(),
+    version: z.int()
+});
+
+/**
+ * MemorySpaceItem
+ */
+export const zMemorySpaceItem = z.object({
+    id: z.string(),
+    space: z.string(),
+    text: z.string(),
+    source: z.string(),
+    createdBy: z.string(),
+    createdAt: z.string()
+});
+
+/**
  * Money
  */
 export const zMoney = z.object({
@@ -685,7 +829,8 @@ export const zOpsRun = z.object({
         'approval',
         'policy'
     ]).optional(),
-    durationSeconds: z.int().optional()
+    durationSeconds: z.int().optional(),
+    real: z.boolean().optional().default(false)
 });
 
 /**
@@ -741,6 +886,18 @@ export const zPackConnector = z.object({
 });
 
 /**
+ * PackConnectorInput
+ */
+export const zPackConnectorInput = z.object({
+    app: z.string().min(1).max(40),
+    access: z.enum([
+        'read',
+        'write (approval)',
+        'write'
+    ])
+});
+
+/**
  * CreatePackRequest
  */
 export const zCreatePackRequest = z.object({
@@ -755,7 +912,7 @@ export const zCreatePackRequest = z.object({
         'medium',
         'high'
     ]),
-    connectors: z.array(zPackConnector).max(20),
+    connectors: z.array(zPackConnectorInput).max(20),
     humanReview: z.string().min(1).max(1000),
     reason: z.string().min(1).max(500)
 });
@@ -777,38 +934,6 @@ export const zPackHistoryEntry = z.object({
     by: z.string(),
     action: z.string(),
     note: z.string()
-});
-
-/**
- * PackListing
- */
-export const zPackListing = z.object({
-    slug: z.string(),
-    name: z.string(),
-    version: z.string(),
-    publisher: z.string(),
-    category: z.string(),
-    status: z.enum([
-        'draft',
-        'in_review',
-        'published',
-        'deprecated',
-        'rejected'
-    ]),
-    riskClass: z.enum([
-        'low',
-        'medium',
-        'high'
-    ]),
-    certified: z.boolean(),
-    installs: z.int(),
-    runs30d: z.int(),
-    successRate: z.number().gte(0).lte(1),
-    priceNote: z.string(),
-    submittedAt: z.string().optional(),
-    updatedAt: z.string(),
-    connectors: z.array(z.string()),
-    reviewNotes: z.string().optional()
 });
 
 /**
@@ -858,6 +983,16 @@ export const zBillingSummary = z.object({
     invoices: z.array(zInvoice),
     payouts: z.array(zPayout),
     simulated: z.literal(true).optional().default(true)
+});
+
+/**
+ * PinnedVersion
+ */
+export const zPinnedVersion = z.object({
+    kind: z.string(),
+    key: z.string(),
+    version: z.int(),
+    digest: z.string()
 });
 
 /**
@@ -911,6 +1046,18 @@ export const zDecisionRecord = z.object({
 });
 
 /**
+ * ProblemIssue
+ *
+ * One located error inside a problem (for example a definition validation error).
+ */
+export const zProblemIssue = z.object({
+    kind: z.string(),
+    key: z.string(),
+    path: z.string(),
+    message: z.string()
+});
+
+/**
  * Problem
  *
  * RFC 9457 problem details with a stable machine code (API.md section 2).
@@ -920,7 +1067,21 @@ export const zProblem = z.object({
     title: z.string(),
     status: z.int(),
     code: z.string(),
-    detail: z.string()
+    detail: z.string(),
+    errors: z.array(zProblemIssue).nullish()
+});
+
+/**
+ * PublishDefinitionRequest
+ *
+ * `base_version` is the latest version the edit started from (0 for a new definition). When sent, the
+ * publish is refused with 409 VERSION_CONFLICT if someone has published since.
+ */
+export const zPublishDefinitionRequest = z.object({
+    yaml: z.string().min(1).max(65536),
+    files: z.record(z.string(), z.string().max(65536)).optional(),
+    reason: z.string().min(1).max(500),
+    baseVersion: z.int().optional()
 });
 
 /**
@@ -928,6 +1089,32 @@ export const zProblem = z.object({
  */
 export const zReasonRequest = z.object({
     reason: z.string().min(1).max(500)
+});
+
+/**
+ * ReceiptItem
+ */
+export const zReceiptItem = z.object({
+    seq: z.int(),
+    at: z.string(),
+    type: z.string(),
+    nodeId: z.string().optional(),
+    summary: z.string(),
+    hash: z.string()
+});
+
+/**
+ * Receipt
+ *
+ * A real run's hash-chained work receipt; `verified` is the chain recomputed now.
+ */
+export const zReceipt = z.object({
+    runId: z.string(),
+    verified: z.boolean(),
+    entries: z.int(),
+    headHash: z.string(),
+    pinned: z.array(zPinnedVersion),
+    items: z.array(zReceiptItem)
 });
 
 /**
@@ -981,7 +1168,9 @@ export const zHumanTask = z.object({
     question: z.string(),
     records: z.array(zRedactedRecord),
     leaseMinutes: z.int(),
-    buyer: z.string()
+    buyer: z.string(),
+    realRun: z.boolean().optional(),
+    runOutcome: z.enum(['CONTINUES', 'STOPS']).optional()
 });
 
 /**
@@ -1052,7 +1241,7 @@ export const zOpsHealth = z.object({
  * SetDefaultsRequest
  */
 export const zSetDefaultsRequest = z.object({
-    defaults: zConnectorDefaults,
+    defaults: zConnectorDefaultsInput,
     reason: z.string().min(1).max(500)
 });
 
@@ -1205,6 +1394,56 @@ export const zSubmitReviewRequest = z.object({
  */
 export const zSuggestRequest = z.object({
     text: z.string().min(3).max(500)
+});
+
+/**
+ * TaxonomyEntry
+ */
+export const zTaxonomyEntry = z.object({
+    id: z.string(),
+    name: z.string()
+});
+
+/**
+ * PackListing
+ */
+export const zPackListing = z.object({
+    slug: z.string(),
+    name: z.string(),
+    version: z.string(),
+    publisher: z.string(),
+    category: z.string(),
+    status: z.enum([
+        'draft',
+        'in_review',
+        'published',
+        'deprecated',
+        'rejected'
+    ]),
+    riskClass: z.enum([
+        'low',
+        'medium',
+        'high'
+    ]),
+    certified: z.boolean(),
+    installs: z.int(),
+    runs30d: z.int(),
+    successRate: z.number().gte(0).lte(1),
+    priceNote: z.string(),
+    submittedAt: z.string().optional(),
+    updatedAt: z.string(),
+    connectors: z.array(z.string()),
+    reviewNotes: z.string().optional(),
+    function: zTaxonomyEntry.optional(),
+    industries: z.array(zTaxonomyEntry).optional()
+});
+
+/**
+ * Taxonomy
+ */
+export const zTaxonomy = z.object({
+    functions: z.array(zTaxonomyEntry),
+    industries: z.array(zTaxonomyEntry)
 });
 
 /**
@@ -1409,6 +1648,16 @@ export const zRun = z.object({
 });
 
 /**
+ * OpsRunDetail
+ *
+ * A real run's projection together with its work receipt (hash chain verified now).
+ */
+export const zOpsRunDetail = z.object({
+    run: zRun,
+    receipt: zReceipt
+});
+
+/**
  * Toolkit
  *
  * A Composio toolkit that can be added to the catalog (simulated discovery).
@@ -1461,7 +1710,9 @@ export const zPack = z.object({
         'high'
     ]),
     regions: z.array(z.string()),
-    runs30d: z.int().optional()
+    runs30d: z.int().optional(),
+    function: z.string().optional(),
+    industries: z.array(z.string()).optional()
 });
 
 /**
@@ -1494,6 +1745,8 @@ export const zPackListingDetail = z.object({
     updatedAt: z.string(),
     connectors: z.array(z.string()),
     reviewNotes: z.string().optional(),
+    function: zTaxonomyEntry.optional(),
+    industries: z.array(zTaxonomyEntry).optional(),
     pack: zPack,
     history: z.array(zPackHistoryEntry)
 });
@@ -1584,6 +1837,55 @@ export const zTenantDetail = z.object({
 });
 
 /**
+ * ValidateDefinitionRequest
+ *
+ * The edited main file (YAML; JSON for a schema) plus the agent's Markdown files by relative path. The
+ * `kind` and `key` inside the YAML, when present, must equal the URL's.
+ */
+export const zValidateDefinitionRequest = z.object({
+    yaml: z.string().min(1).max(65536),
+    files: z.record(z.string(), z.string().max(65536)).optional()
+});
+
+/**
+ * ValidateDefinitionResult
+ */
+export const zValidateDefinitionResult = z.object({
+    ok: z.boolean(),
+    errors: z.array(zDefinitionIssue)
+});
+
+/**
+ * VersionMeta
+ */
+export const zVersionMeta = z.object({
+    version: z.int(),
+    digest: z.string(),
+    source: z.enum(['file', 'console']),
+    publishedBy: z.string(),
+    reason: z.string(),
+    publishedAt: z.string()
+});
+
+/**
+ * DefinitionDetail
+ *
+ * One definition at one version. `yaml` is the main file as exported (JSON for a schema); `files` holds
+ * the Markdown files of an agent by path relative to its folder. `body` is the same main file parsed, so a
+ * client can read fields without a YAML parser. `refs` are the definitions this one refers to and
+ * `used_by` those that refer to it, both computed from the latest versions.
+ */
+export const zDefinitionDetail = z.object({
+    summary: zDefinitionSummary,
+    versions: z.array(zVersionMeta),
+    yaml: z.string(),
+    body: z.record(z.string(), z.unknown()),
+    files: z.record(z.string(), z.string()),
+    refs: z.array(zDefinitionRef),
+    usedBy: z.array(zDefinitionRef)
+});
+
+/**
  * Response Listworkflowpacks
  *
  * Successful Response
@@ -1598,6 +1900,11 @@ export const zGetWorkflowPackPath = z.object({
  * Successful Response
  */
 export const zGetWorkflowPackResponse = zPack;
+
+/**
+ * Successful Response
+ */
+export const zGetCatalogTaxonomyResponse = zTaxonomy;
 
 /**
  * Response Listagents
@@ -1650,6 +1957,15 @@ export const zGetWorkflowRunPath = z.object({
  * Successful Response
  */
 export const zGetWorkflowRunResponse = zRun;
+
+export const zGetWorkflowRunReceiptPath = z.object({
+    run_id: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zGetWorkflowRunReceiptResponse = zReceipt;
 
 /**
  * Response Listapprovals
@@ -1883,7 +2199,7 @@ export const zOpsCreatePackBody = zCreatePackRequest;
 export const zOpsCreatePackResponse = zPackListingDetail;
 
 export const zOpsGetPackPath = z.object({
-    slug: z.string()
+    slug: z.string().max(100)
 });
 
 /**
@@ -1894,7 +2210,7 @@ export const zOpsGetPackResponse = zPackListingDetail;
 export const zOpsSubmitPackBody = zReasonRequest;
 
 export const zOpsSubmitPackPath = z.object({
-    slug: z.string()
+    slug: z.string().max(100)
 });
 
 /**
@@ -1905,7 +2221,7 @@ export const zOpsSubmitPackResponse = zPackListingDetail;
 export const zOpsApprovePackBody = zReasonRequest;
 
 export const zOpsApprovePackPath = z.object({
-    slug: z.string()
+    slug: z.string().max(100)
 });
 
 /**
@@ -1916,7 +2232,7 @@ export const zOpsApprovePackResponse = zPackListingDetail;
 export const zOpsRejectPackBody = zReasonRequest;
 
 export const zOpsRejectPackPath = z.object({
-    slug: z.string()
+    slug: z.string().max(100)
 });
 
 /**
@@ -1927,7 +2243,7 @@ export const zOpsRejectPackResponse = zPackListingDetail;
 export const zOpsDeprecatePackBody = zReasonRequest;
 
 export const zOpsDeprecatePackPath = z.object({
-    slug: z.string()
+    slug: z.string().max(100)
 });
 
 /**
@@ -1938,7 +2254,7 @@ export const zOpsDeprecatePackResponse = zPackListingDetail;
 export const zOpsRepublishPackBody = zReasonRequest;
 
 export const zOpsRepublishPackPath = z.object({
-    slug: z.string()
+    slug: z.string().max(100)
 });
 
 /**
@@ -1949,7 +2265,7 @@ export const zOpsRepublishPackResponse = zPackListingDetail;
 export const zOpsCertifyPackBody = zReasonRequest;
 
 export const zOpsCertifyPackPath = z.object({
-    slug: z.string()
+    slug: z.string().max(100)
 });
 
 /**
@@ -1981,7 +2297,7 @@ export const zOpsListAvailableToolkitsResponse = z.array(zToolkit);
 export const zOpsEnableConnectorBody = zReasonRequest;
 
 export const zOpsEnableConnectorPath = z.object({
-    connector_id: z.string()
+    connector_id: z.string().max(100)
 });
 
 /**
@@ -1992,7 +2308,7 @@ export const zOpsEnableConnectorResponse = zConnectorEntry;
 export const zOpsDisableConnectorBody = zReasonRequest;
 
 export const zOpsDisableConnectorPath = z.object({
-    connector_id: z.string()
+    connector_id: z.string().max(100)
 });
 
 /**
@@ -2003,7 +2319,7 @@ export const zOpsDisableConnectorResponse = zConnectorEntry;
 export const zOpsSetConnectorDefaultsBody = zSetDefaultsRequest;
 
 export const zOpsSetConnectorDefaultsPath = z.object({
-    connector_id: z.string()
+    connector_id: z.string().max(100)
 });
 
 /**
@@ -2012,13 +2328,116 @@ export const zOpsSetConnectorDefaultsPath = z.object({
 export const zOpsSetConnectorDefaultsResponse = zConnectorEntry;
 
 export const zOpsHealthCheckConnectorPath = z.object({
-    connector_id: z.string()
+    connector_id: z.string().max(100)
 });
 
 /**
  * Successful Response
  */
 export const zOpsHealthCheckConnectorResponse = zConnectorEntry;
+
+/**
+ * Response Opslistdefinitions
+ *
+ * Successful Response
+ */
+export const zOpsListDefinitionsResponse = z.array(zDefinitionSummary);
+
+export const zOpsExportDefinitionPath = z.object({
+    kind: z.enum([
+        'taxonomy',
+        'models',
+        'pack',
+        'workflow',
+        'contract',
+        'agent',
+        'connector',
+        'decision_rules',
+        'memory_space',
+        'schema'
+    ]),
+    key: z.string().max(100)
+});
+
+export const zOpsExportDefinitionQuery = z.object({
+    version: z.int().gte(1).nullish()
+});
+
+/**
+ * Successful Response
+ */
+export const zOpsExportDefinitionResponse = zDefinitionExport;
+
+export const zOpsValidateDefinitionBody = zValidateDefinitionRequest;
+
+export const zOpsValidateDefinitionPath = z.object({
+    kind: z.enum([
+        'taxonomy',
+        'models',
+        'pack',
+        'workflow',
+        'contract',
+        'agent',
+        'connector',
+        'decision_rules',
+        'memory_space',
+        'schema'
+    ]),
+    key: z.string().max(100)
+});
+
+/**
+ * Successful Response
+ */
+export const zOpsValidateDefinitionResponse = zValidateDefinitionResult;
+
+export const zOpsPublishDefinitionBody = zPublishDefinitionRequest;
+
+export const zOpsPublishDefinitionPath = z.object({
+    kind: z.enum([
+        'taxonomy',
+        'models',
+        'pack',
+        'workflow',
+        'contract',
+        'agent',
+        'connector',
+        'decision_rules',
+        'memory_space',
+        'schema'
+    ]),
+    key: z.string().max(100)
+});
+
+/**
+ * Successful Response
+ */
+export const zOpsPublishDefinitionResponse = zDefinitionDetail;
+
+export const zOpsGetDefinitionPath = z.object({
+    kind: z.enum([
+        'taxonomy',
+        'models',
+        'pack',
+        'workflow',
+        'contract',
+        'agent',
+        'connector',
+        'decision_rules',
+        'memory_space',
+        'schema'
+    ]),
+    key: z.string().max(100)
+});
+
+export const zOpsGetDefinitionQuery = z.object({
+    version: z.int().gte(1).nullish()
+});
+
+/**
+ * Successful Response
+ */
+export const zOpsGetDefinitionResponse = zDefinitionDetail;
 
 /**
  * Successful Response
@@ -2035,13 +2454,53 @@ export const zOpsDeclareIncidentResponse = zIncident;
 export const zOpsUpdateIncidentBody = zUpdateIncidentRequest;
 
 export const zOpsUpdateIncidentPath = z.object({
-    incident_id: z.string()
+    incident_id: z.string().max(100)
 });
 
 /**
  * Successful Response
  */
 export const zOpsUpdateIncidentResponse = zIncident;
+
+/**
+ * Response Opslistmemoryspaces
+ *
+ * Successful Response
+ */
+export const zOpsListMemorySpacesResponse = z.array(zMemorySpace);
+
+export const zOpsListMemoryItemsPath = z.object({
+    space: z.string().max(100)
+});
+
+/**
+ * Response Opslistmemoryitems
+ *
+ * Successful Response
+ */
+export const zOpsListMemoryItemsResponse = z.array(zMemorySpaceItem);
+
+export const zOpsAddMemoryItemBody = zAddMemoryItemRequest;
+
+export const zOpsAddMemoryItemPath = z.object({
+    space: z.string().max(100)
+});
+
+/**
+ * Successful Response
+ */
+export const zOpsAddMemoryItemResponse = zMemorySpaceItem;
+
+export const zOpsDeleteMemoryItemBody = zReasonRequest;
+
+export const zOpsDeleteMemoryItemPath = z.object({
+    item_id: z.string().max(100)
+});
+
+/**
+ * Successful Response
+ */
+export const zOpsDeleteMemoryItemResponse = z.void();
 
 /**
  * Successful Response
@@ -2066,7 +2525,7 @@ export const zOpsListReviewersResponse = z.array(zReviewer);
 export const zOpsApproveReviewerBody = zReasonRequest;
 
 export const zOpsApproveReviewerPath = z.object({
-    reviewer_id: z.string()
+    reviewer_id: z.string().max(100)
 });
 
 /**
@@ -2077,7 +2536,7 @@ export const zOpsApproveReviewerResponse = zReviewer;
 export const zOpsSuspendReviewerBody = zReasonRequest;
 
 export const zOpsSuspendReviewerPath = z.object({
-    reviewer_id: z.string()
+    reviewer_id: z.string().max(100)
 });
 
 /**
@@ -2088,7 +2547,7 @@ export const zOpsSuspendReviewerResponse = zReviewer;
 export const zOpsReinstateReviewerBody = zReasonRequest;
 
 export const zOpsReinstateReviewerPath = z.object({
-    reviewer_id: z.string()
+    reviewer_id: z.string().max(100)
 });
 
 /**
@@ -2099,7 +2558,7 @@ export const zOpsReinstateReviewerResponse = zReviewer;
 export const zOpsSetReviewerLevelBody = zSetLevelRequest;
 
 export const zOpsSetReviewerLevelPath = z.object({
-    reviewer_id: z.string()
+    reviewer_id: z.string().max(100)
 });
 
 /**
@@ -2138,7 +2597,7 @@ export const zOpsListGuardrailsResponse = z.array(zGuardrail);
 export const zOpsSetGuardrailBody = zSetGuardrailRequest;
 
 export const zOpsSetGuardrailPath = z.object({
-    key: z.string()
+    key: z.string().max(100)
 });
 
 /**
@@ -2170,7 +2629,9 @@ export const zOpsListAuditQuery = z.object({
         'connector',
         'reviewer',
         'guardrail',
-        'incident'
+        'incident',
+        'definition',
+        'memory'
     ]).nullish(),
     targetId: z.string().max(100).nullish(),
     limit: z.int().gte(1).lte(500).optional().default(100)
@@ -2182,6 +2643,15 @@ export const zOpsListAuditQuery = z.object({
  * Successful Response
  */
 export const zOpsListAuditResponse = z.array(zAuditEntry);
+
+export const zOpsGetRunPath = z.object({
+    run_id: z.string().max(100)
+});
+
+/**
+ * Successful Response
+ */
+export const zOpsGetRunResponse = zOpsRunDetail;
 
 export const zOpsListTenantsQuery = z.object({
     status: z.enum([
@@ -2208,7 +2678,7 @@ export const zOpsCreateTenantBody = zCreateTenantRequest;
 export const zOpsCreateTenantResponse = zTenant;
 
 export const zOpsGetTenantPath = z.object({
-    tenant_id: z.string()
+    tenant_id: z.string().max(100)
 });
 
 /**
@@ -2219,7 +2689,7 @@ export const zOpsGetTenantResponse = zTenantDetail;
 export const zOpsSuspendTenantBody = zReasonRequest;
 
 export const zOpsSuspendTenantPath = z.object({
-    tenant_id: z.string()
+    tenant_id: z.string().max(100)
 });
 
 /**
@@ -2230,7 +2700,7 @@ export const zOpsSuspendTenantResponse = zTenant;
 export const zOpsReactivateTenantBody = zReasonRequest;
 
 export const zOpsReactivateTenantPath = z.object({
-    tenant_id: z.string()
+    tenant_id: z.string().max(100)
 });
 
 /**
@@ -2241,7 +2711,7 @@ export const zOpsReactivateTenantResponse = zTenant;
 export const zOpsSetTenantPlanBody = zSetPlanRequest;
 
 export const zOpsSetTenantPlanPath = z.object({
-    tenant_id: z.string()
+    tenant_id: z.string().max(100)
 });
 
 /**
@@ -2252,7 +2722,7 @@ export const zOpsSetTenantPlanResponse = zTenant;
 export const zOpsSetTenantSpendCapBody = zSetSpendCapRequest;
 
 export const zOpsSetTenantSpendCapPath = z.object({
-    tenant_id: z.string()
+    tenant_id: z.string().max(100)
 });
 
 /**

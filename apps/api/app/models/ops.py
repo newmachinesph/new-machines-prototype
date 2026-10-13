@@ -1,20 +1,22 @@
 """Operator console ("ops") wire models: responses and request bodies for everything under /v1/ops."""
 
 from datetime import datetime
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 
 from pydantic import Field, StringConstraints, model_validator
 
-from app.models.catalog import Pack
+from app.models.catalog import Pack, TaxonomyEntry
 from app.models.common import Model, Money, Opt, RequestModel
 from app.models.org import Connection, Member
-from app.models.runs import RunStatus, RunSummary
+from app.models.runs import Receipt, Run, RunStatus, RunSummary
 
 OpsRole = Literal["owner", "admin", "support"]
 TenantPlan = Literal["Starter", "Pro", "Enterprise"]
 TenantStatus = Literal["active", "trial", "suspended", "churned"]
 TenantHealth = Literal["healthy", "watch", "at_risk"]
-AuditTargetType = Literal["tenant", "pack", "connector", "reviewer", "guardrail", "incident"]
+AuditTargetType = Literal[
+    "tenant", "pack", "connector", "reviewer", "guardrail", "incident", "definition", "memory"
+]
 
 # Every ops mutation names why it was made; surrounding whitespace is dropped before the length check.
 Reason = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=500)]
@@ -65,6 +67,7 @@ class OpsRun(Model):
     cost: Money
     waiting_on: Literal["human", "approval", "policy"] | Opt = None
     duration_seconds: int | Opt = None
+    real: bool = False  # run by the runtime (has a projection and a receipt at /v1/ops/runs/{id})
 
     @classmethod
     def of(cls, run: RunSummary, tenant_id: str, tenant_name: str) -> OpsRun:
@@ -209,6 +212,9 @@ class PackListing(Model):
     updated_at: str
     connectors: list[str]  # app names
     review_notes: str | Opt = None
+    # From the pack definition, named from the taxonomy (none for listings without a pack definition).
+    function: TaxonomyEntry | Opt = None
+    industries: list[TaxonomyEntry] = Field(default_factory=list)
 
 
 class PackHistoryEntry(Model):
@@ -496,3 +502,134 @@ class OpsOverview(Model):
     recent_audit: list[AuditEntry]
     runs_by_hour: list[HourPoint]
     simulated_fields: list[str]  # the kpis and series that are simulated, not derived from the store
+
+
+# Definitions (config as code) --------------------------------------------------------------------------
+
+DefinitionKind = Literal[
+    "taxonomy", "models", "pack", "workflow", "contract", "agent", "connector", "decision_rules",
+    "memory_space", "schema",
+]  # fmt: skip
+DefinitionSource = Literal["file", "console"]
+MAX_DEFINITION_TEXT = 64 * 1024  # characters, for the main file and for each extra file
+DefinitionText = Annotated[str, StringConstraints(min_length=1, max_length=MAX_DEFINITION_TEXT)]
+DefinitionFileText = Annotated[str, StringConstraints(max_length=MAX_DEFINITION_TEXT)]
+
+
+class DefinitionRef(Model):
+    """A pointer to another definition: its kind and key."""
+
+    kind: DefinitionKind
+    key: str
+
+
+class DefinitionSummary(Model):
+    """The latest (or a chosen) version of one definition. `name` is the body's name, else its app
+    (connector) or question (decision rules), else the key."""
+
+    kind: DefinitionKind
+    key: str
+    name: str
+    version: int
+    digest: str
+    source: DefinitionSource
+    published_by: str
+    published_at: str
+
+
+class VersionMeta(Model):
+    version: int
+    digest: str
+    source: DefinitionSource
+    published_by: str
+    reason: str
+    published_at: str
+
+
+class DefinitionDetail(Model):
+    """One definition at one version. `yaml` is the main file as exported (JSON for a schema); `files` holds
+    the Markdown files of an agent by path relative to its folder. `body` is the same main file parsed, so a
+    client can read fields without a YAML parser. `refs` are the definitions this one refers to and
+    `used_by` those that refer to it, both computed from the latest versions."""
+
+    summary: DefinitionSummary
+    versions: list[VersionMeta]  # newest first
+    yaml: str
+    body: dict[str, Any]
+    files: dict[str, str]
+    refs: list[DefinitionRef]
+    used_by: list[DefinitionRef]
+
+
+class DefinitionIssue(Model):
+    """One validation error. `kind`/`key` name the definition it was found in, which can be another one."""
+
+    kind: str
+    key: str
+    path: str  # a location inside the definition, e.g. "nodes[2].routes.ok"
+    message: str
+
+
+class ValidateDefinitionRequest(RequestModel):
+    """The edited main file (YAML; JSON for a schema) plus the agent's Markdown files by relative path. The
+    `kind` and `key` inside the YAML, when present, must equal the URL's."""
+
+    yaml: DefinitionText
+    files: dict[str, DefinitionFileText] = Field(default_factory=dict, max_length=50)
+
+
+class PublishDefinitionRequest(ValidateDefinitionRequest):
+    """`base_version` is the latest version the edit started from (0 for a new definition). When sent, the
+    publish is refused with 409 VERSION_CONFLICT if someone has published since."""
+
+    reason: Reason
+    base_version: int | Opt = Field(default=None, ge=0)
+
+
+class ValidateDefinitionResult(Model):
+    ok: bool
+    errors: list[DefinitionIssue]
+
+
+class DefinitionExport(Model):
+    files: dict[str, str]  # path relative to the definitions root -> text
+
+
+# Memory ------------------------------------------------------------------------------------------------
+
+MAX_MEMORY_TEXT = 2000
+MemoryText = Annotated[
+    str, StringConstraints(strip_whitespace=True, min_length=1, max_length=MAX_MEMORY_TEXT)
+]
+
+
+class MemorySpace(Model):
+    key: str
+    name: str
+    description: str
+    item_count: int
+    version: int
+
+
+class MemorySpaceItem(Model):
+    id: str
+    space: str
+    text: str
+    source: str  # "seed", "console" or "agent"
+    created_by: str
+    created_at: str
+
+
+class AddMemoryItemRequest(RequestModel):
+    text: MemoryText
+    reason: Reason
+
+
+# A real run -------------------------------------------------------------------------------------------
+
+
+class OpsRunDetail(Model):
+    """A real run's projection together with its work receipt (hash chain verified now)."""
+
+    run: Run
+    receipt: Receipt

@@ -79,4 +79,11 @@ describe("locate", () => {
     expect(locate("/audit")?.group.label).toBe("Platform");
     expect(locate("/commander")).toBeNull();
   });
+
+  it("files the definition pages under Build, a schema key's slash included", () => {
+    expect(locate("/definitions/schema/order-payment-reconciliation/input")?.item.label).toBe("Definitions");
+    expect(locate("/agents")?.group.label).toBe("Build");
+    expect(locate("/contracts")?.item.label).toBe("Work Contracts");
+    expect(locate("/memory")?.item.label).toBe("Memory");
+  });
 });

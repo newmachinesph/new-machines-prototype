@@ -172,6 +172,83 @@
         }
       }
     },
+    "/v1/catalog/taxonomy": {
+      "get": {
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Get Catalog Taxonomy",
+        "description": "Functions and industries packs are classified by (the `taxonomy` definition).",
+        "operationId": "getCatalogTaxonomy",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Taxonomy"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/v1/agents": {
       "get": {
         "tags": [
@@ -442,6 +519,7 @@
           "runs"
         ],
         "summary": "List Workflow Runs",
+        "description": "Real runs (newest first, when the runtime is on), then the fixtures.",
         "operationId": "listWorkflowRuns",
         "security": [
           {
@@ -520,7 +598,7 @@
           "runs"
         ],
         "summary": "Start Workflow Run",
-        "description": "Returns 202: the run is registered and started, not finished (API.md section 3).",
+        "description": "Returns 202: the run is registered and started, not finished (API.md section 3). With the runtime on,\na pack that has a definition runs for real on Temporal; any other pack keeps the fixture behaviour.",
         "operationId": "startWorkflowRun",
         "security": [
           {
@@ -608,6 +686,16 @@
           },
           "422": {
             "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The workflow engine is unavailable (RUNTIME_UNAVAILABLE).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -706,12 +794,101 @@
         }
       }
     },
+    "/v1/workflow-runs/{run_id}/receipt": {
+      "get": {
+        "tags": [
+          "runs"
+        ],
+        "summary": "Get Workflow Run Receipt",
+        "description": "The work receipt of a real run: pinned versions, entries and whether the hash chain verifies.",
+        "operationId": "getWorkflowRunReceipt",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Receipt"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/approvals": {
       "get": {
         "tags": [
           "approvals"
         ],
         "summary": "List Approvals",
+        "description": "Approvals of real runs (newest first), then the fixtures.",
         "operationId": "listApprovals",
         "responses": {
           "200": {
@@ -1397,6 +1574,7 @@
           "memory"
         ],
         "summary": "List Memory",
+        "description": "Fixture memory, after the items of real memory spaces when the runtime is on.",
         "operationId": "listMemory",
         "responses": {
           "200": {
@@ -4201,6 +4379,635 @@
         }
       }
     },
+    "/v1/ops/definitions": {
+      "get": {
+        "tags": [
+          "ops"
+        ],
+        "summary": "Ops List Definitions",
+        "description": "The latest version of every definition, by kind then key.",
+        "operationId": "opsListDefinitions",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DefinitionSummary"
+                  },
+                  "type": "array",
+                  "title": "Response Opslistdefinitions"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The runtime is off or unavailable (RUNTIME_UNAVAILABLE).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v1/ops/definitions/{kind}/{key}/export": {
+      "get": {
+        "tags": [
+          "ops"
+        ],
+        "summary": "Ops Export Definition",
+        "description": "The files of one version as {path relative to the definitions root: text}, ready to go into git.",
+        "operationId": "opsExportDefinition",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "enum": [
+                "taxonomy",
+                "models",
+                "pack",
+                "workflow",
+                "contract",
+                "agent",
+                "connector",
+                "decision_rules",
+                "memory_space",
+                "schema"
+              ],
+              "type": "string",
+              "title": "Kind"
+            }
+          },
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 100,
+              "title": "Key"
+            }
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "An older version; the latest when omitted.",
+              "title": "Version"
+            },
+            "description": "An older version; the latest when omitted."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DefinitionExport"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The runtime is off or unavailable (RUNTIME_UNAVAILABLE).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/ops/definitions/{kind}/{key}:validate": {
+      "post": {
+        "tags": [
+          "ops"
+        ],
+        "summary": "Ops Validate Definition",
+        "description": "Check an edit (or a new definition) against the latest published versions of everything else. Never\nsaves anything.\n`errors` lists every problem found, including ones in other definitions.",
+        "operationId": "opsValidateDefinition",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "enum": [
+                "taxonomy",
+                "models",
+                "pack",
+                "workflow",
+                "contract",
+                "agent",
+                "connector",
+                "decision_rules",
+                "memory_space",
+                "schema"
+              ],
+              "type": "string",
+              "title": "Kind"
+            }
+          },
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 100,
+              "title": "Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ValidateDefinitionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidateDefinitionResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The runtime is off or unavailable (RUNTIME_UNAVAILABLE).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/ops/definitions/{kind}/{key}:publish": {
+      "post": {
+        "tags": [
+          "ops"
+        ],
+        "summary": "Ops Publish Definition",
+        "description": "Validate, then publish the edit as the next version; an unknown kind/key is created as version 1.\n422 INVALID_DEFINITION (with `errors`) when it does not validate; 409 VERSION_CONFLICT when\n`baseVersion` is sent and someone has published since; 409 NO_CHANGE when it equals the latest\nversion.",
+        "operationId": "opsPublishDefinition",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "enum": [
+                "taxonomy",
+                "models",
+                "pack",
+                "workflow",
+                "contract",
+                "agent",
+                "connector",
+                "decision_rules",
+                "memory_space",
+                "schema"
+              ],
+              "type": "string",
+              "title": "Kind"
+            }
+          },
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 100,
+              "title": "Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishDefinitionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DefinitionDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The runtime is off or unavailable (RUNTIME_UNAVAILABLE).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/ops/definitions/{kind}/{key}": {
+      "get": {
+        "tags": [
+          "ops"
+        ],
+        "summary": "Ops Get Definition",
+        "description": "One definition with its version history, its main file as YAML, Markdown files, and what it refers\nto / is used by. `?version=N` shows an older version.",
+        "operationId": "opsGetDefinition",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "enum": [
+                "taxonomy",
+                "models",
+                "pack",
+                "workflow",
+                "contract",
+                "agent",
+                "connector",
+                "decision_rules",
+                "memory_space",
+                "schema"
+              ],
+              "type": "string",
+              "title": "Kind"
+            }
+          },
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 100,
+              "title": "Key"
+            }
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "An older version; the latest when omitted.",
+              "title": "Version"
+            },
+            "description": "An older version; the latest when omitted."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DefinitionDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The runtime is off or unavailable (RUNTIME_UNAVAILABLE).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/ops/health": {
       "get": {
         "tags": [
@@ -4450,6 +5257,409 @@
           },
           "422": {
             "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/ops/memory/spaces": {
+      "get": {
+        "tags": [
+          "ops"
+        ],
+        "summary": "Ops List Memory Spaces",
+        "description": "Every memory space definition with its item count.",
+        "operationId": "opsListMemorySpaces",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MemorySpace"
+                  },
+                  "type": "array",
+                  "title": "Response Opslistmemoryspaces"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The runtime is off or unavailable (RUNTIME_UNAVAILABLE).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v1/ops/memory/spaces/{space}/items": {
+      "get": {
+        "tags": [
+          "ops"
+        ],
+        "summary": "Ops List Memory Items",
+        "description": "The space's items, newest first.",
+        "operationId": "opsListMemoryItems",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "space",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 100,
+              "title": "Space"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MemorySpaceItem"
+                  },
+                  "title": "Response Opslistmemoryitems"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The runtime is off or unavailable (RUNTIME_UNAVAILABLE).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ops"
+        ],
+        "summary": "Ops Add Memory Item",
+        "description": "Add an item (1 to 2000 characters) to a space. The space must exist as a definition.",
+        "operationId": "opsAddMemoryItem",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "space",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 100,
+              "title": "Space"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddMemoryItemRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemorySpaceItem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The runtime is off or unavailable (RUNTIME_UNAVAILABLE).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/ops/memory/items/{item_id}:delete": {
+      "post": {
+        "tags": [
+          "ops"
+        ],
+        "summary": "Ops Delete Memory Item",
+        "description": "Remove one item from its space.",
+        "operationId": "opsDeleteMemoryItem",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 100,
+              "title": "Item Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The runtime is off or unavailable (RUNTIME_UNAVAILABLE).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -5594,7 +6804,9 @@
                     "connector",
                     "reviewer",
                     "guardrail",
-                    "incident"
+                    "incident",
+                    "definition",
+                    "memory"
                   ],
                   "type": "string"
                 },
@@ -5646,6 +6858,95 @@
                     "$ref": "#/components/schemas/AuditEntry"
                   },
                   "title": "Response Opslistaudit"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/ops/runs/{run_id}": {
+      "get": {
+        "tags": [
+          "ops"
+        ],
+        "summary": "Ops Get Run",
+        "description": "A real run (any tenant) with its receipt, the hash chain verified now. 404 for fixture runs.",
+        "operationId": "opsGetRun",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 100,
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpsRunDetail"
                 }
               }
             }
@@ -6425,6 +7726,29 @@
         ],
         "title": "AddConnectorRequest"
       },
+      "AddMemoryItemRequest": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Text"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Reason"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "text",
+          "reason"
+        ],
+        "title": "AddMemoryItemRequest"
+      },
       "Agent": {
         "properties": {
           "id": {
@@ -6534,7 +7858,16 @@
             "title": "Digest"
           },
           "preview": {
-            "$ref": "#/components/schemas/EmailPreview"
+            "$ref": "#/components/schemas/EmailPreview",
+            "title": "Preview"
+          },
+          "action": {
+            "$ref": "#/components/schemas/ApprovalAction",
+            "title": "Action"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
           }
         },
         "type": "object",
@@ -6548,10 +7881,45 @@
           "status",
           "policyRef",
           "reasonCodes",
-          "digest",
-          "preview"
+          "digest"
         ],
         "title": "Approval"
+      },
+      "ApprovalAction": {
+        "properties": {
+          "app": {
+            "type": "string",
+            "title": "App"
+          },
+          "step": {
+            "type": "string",
+            "title": "Step"
+          },
+          "tool": {
+            "type": "string",
+            "title": "Tool"
+          },
+          "operation": {
+            "type": "string",
+            "title": "Operation"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "mocked": {
+            "type": "boolean",
+            "title": "Mocked"
+          }
+        },
+        "type": "object",
+        "required": [
+          "app",
+          "step",
+          "mocked"
+        ],
+        "title": "ApprovalAction",
+        "description": "The step a real run asks to take once approved: the app it acts on, the workflow step, and the tool\ncall. `mocked` is true when that call would run against sandbox data instead of the connected app."
       },
       "ApprovalRef": {
         "properties": {
@@ -6691,7 +8059,9 @@
               "connector",
               "reviewer",
               "guardrail",
-              "incident"
+              "incident",
+              "definition",
+              "memory"
             ],
             "title": "Targettype"
           },
@@ -7396,6 +8766,203 @@
         ],
         "title": "DeclareIncidentRequest"
       },
+      "DefinitionDetail": {
+        "properties": {
+          "summary": {
+            "$ref": "#/components/schemas/DefinitionSummary"
+          },
+          "versions": {
+            "items": {
+              "$ref": "#/components/schemas/VersionMeta"
+            },
+            "type": "array",
+            "title": "Versions"
+          },
+          "yaml": {
+            "type": "string",
+            "title": "Yaml"
+          },
+          "body": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Body"
+          },
+          "files": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Files"
+          },
+          "refs": {
+            "items": {
+              "$ref": "#/components/schemas/DefinitionRef"
+            },
+            "type": "array",
+            "title": "Refs"
+          },
+          "usedBy": {
+            "items": {
+              "$ref": "#/components/schemas/DefinitionRef"
+            },
+            "type": "array",
+            "title": "Usedby"
+          }
+        },
+        "type": "object",
+        "required": [
+          "summary",
+          "versions",
+          "yaml",
+          "body",
+          "files",
+          "refs",
+          "usedBy"
+        ],
+        "title": "DefinitionDetail",
+        "description": "One definition at one version. `yaml` is the main file as exported (JSON for a schema); `files` holds\nthe Markdown files of an agent by path relative to its folder. `body` is the same main file parsed, so a\nclient can read fields without a YAML parser. `refs` are the definitions this one refers to and\n`used_by` those that refer to it, both computed from the latest versions."
+      },
+      "DefinitionExport": {
+        "properties": {
+          "files": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Files"
+          }
+        },
+        "type": "object",
+        "required": [
+          "files"
+        ],
+        "title": "DefinitionExport"
+      },
+      "DefinitionIssue": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "path": {
+            "type": "string",
+            "title": "Path"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "key",
+          "path",
+          "message"
+        ],
+        "title": "DefinitionIssue",
+        "description": "One validation error. `kind`/`key` name the definition it was found in, which can be another one."
+      },
+      "DefinitionRef": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "taxonomy",
+              "models",
+              "pack",
+              "workflow",
+              "contract",
+              "agent",
+              "connector",
+              "decision_rules",
+              "memory_space",
+              "schema"
+            ],
+            "title": "Kind"
+          },
+          "key": {
+            "type": "string",
+            "title": "Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "key"
+        ],
+        "title": "DefinitionRef",
+        "description": "A pointer to another definition: its kind and key."
+      },
+      "DefinitionSummary": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "taxonomy",
+              "models",
+              "pack",
+              "workflow",
+              "contract",
+              "agent",
+              "connector",
+              "decision_rules",
+              "memory_space",
+              "schema"
+            ],
+            "title": "Kind"
+          },
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "digest": {
+            "type": "string",
+            "title": "Digest"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "file",
+              "console"
+            ],
+            "title": "Source"
+          },
+          "publishedBy": {
+            "type": "string",
+            "title": "Publishedby"
+          },
+          "publishedAt": {
+            "type": "string",
+            "title": "Publishedat"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "key",
+          "name",
+          "version",
+          "digest",
+          "source",
+          "publishedBy",
+          "publishedAt"
+        ],
+        "title": "DefinitionSummary",
+        "description": "The latest (or a chosen) version of one definition. `name` is the body's name, else its app\n(connector) or question (decision rules), else the key."
+      },
       "Deliverable": {
         "properties": {
           "title": {
@@ -7893,6 +9460,18 @@
           "buyer": {
             "type": "string",
             "title": "Buyer"
+          },
+          "realRun": {
+            "type": "boolean",
+            "title": "Realrun"
+          },
+          "runOutcome": {
+            "type": "string",
+            "enum": [
+              "CONTINUES",
+              "STOPS"
+            ],
+            "title": "Runoutcome"
           }
         },
         "type": "object",
@@ -8391,6 +9970,77 @@
         ],
         "title": "MemoryReviewRequest"
       },
+      "MemorySpace": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "itemCount": {
+            "type": "integer",
+            "title": "Itemcount"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "name",
+          "description",
+          "itemCount",
+          "version"
+        ],
+        "title": "MemorySpace"
+      },
+      "MemorySpaceItem": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "space": {
+            "type": "string",
+            "title": "Space"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "createdBy": {
+            "type": "string",
+            "title": "Createdby"
+          },
+          "createdAt": {
+            "type": "string",
+            "title": "Createdat"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "space",
+          "text",
+          "source",
+          "createdBy",
+          "createdAt"
+        ],
+        "title": "MemorySpaceItem"
+      },
       "Money": {
         "properties": {
           "amountMinor": {
@@ -8667,6 +10317,11 @@
           "durationSeconds": {
             "type": "integer",
             "title": "Durationseconds"
+          },
+          "real": {
+            "type": "boolean",
+            "title": "Real",
+            "default": false
           }
         },
         "type": "object",
@@ -8680,6 +10335,23 @@
           "cost"
         ],
         "title": "OpsRun"
+      },
+      "OpsRunDetail": {
+        "properties": {
+          "run": {
+            "$ref": "#/components/schemas/Run"
+          },
+          "receipt": {
+            "$ref": "#/components/schemas/Receipt"
+          }
+        },
+        "type": "object",
+        "required": [
+          "run",
+          "receipt"
+        ],
+        "title": "OpsRunDetail",
+        "description": "A real run's projection together with its work receipt (hash chain verified now)."
       },
       "OpsTeamMember": {
         "properties": {
@@ -8875,6 +10547,17 @@
           "runs30d": {
             "type": "integer",
             "title": "Runs30D"
+          },
+          "function": {
+            "type": "string",
+            "title": "Function"
+          },
+          "industries": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Industries"
           }
         },
         "type": "object",
@@ -9080,6 +10763,17 @@
           "reviewNotes": {
             "type": "string",
             "title": "Reviewnotes"
+          },
+          "function": {
+            "$ref": "#/components/schemas/TaxonomyEntry",
+            "title": "Function"
+          },
+          "industries": {
+            "items": {
+              "$ref": "#/components/schemas/TaxonomyEntry"
+            },
+            "type": "array",
+            "title": "Industries"
           }
         },
         "type": "object",
@@ -9183,6 +10877,17 @@
           "reviewNotes": {
             "type": "string",
             "title": "Reviewnotes"
+          },
+          "function": {
+            "$ref": "#/components/schemas/TaxonomyEntry",
+            "title": "Function"
+          },
+          "industries": {
+            "items": {
+              "$ref": "#/components/schemas/TaxonomyEntry"
+            },
+            "type": "array",
+            "title": "Industries"
           },
           "pack": {
             "$ref": "#/components/schemas/Pack"
@@ -9308,6 +11013,34 @@
         ],
         "title": "Payout"
       },
+      "PinnedVersion": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "digest": {
+            "type": "string",
+            "title": "Digest"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "key",
+          "version",
+          "digest"
+        ],
+        "title": "PinnedVersion"
+      },
       "Policy": {
         "properties": {
           "ref": {
@@ -9394,6 +11127,20 @@
           "detail": {
             "type": "string",
             "title": "Detail"
+          },
+          "errors": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ProblemIssue"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Errors"
           }
         },
         "type": "object",
@@ -9405,6 +11152,73 @@
         ],
         "title": "Problem",
         "description": "RFC 9457 problem details with a stable machine code (API.md section 2)."
+      },
+      "ProblemIssue": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "path": {
+            "type": "string",
+            "title": "Path"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "key",
+          "path",
+          "message"
+        ],
+        "title": "ProblemIssue",
+        "description": "One located error inside a problem (for example a definition validation error)."
+      },
+      "PublishDefinitionRequest": {
+        "properties": {
+          "yaml": {
+            "type": "string",
+            "maxLength": 65536,
+            "minLength": 1,
+            "title": "Yaml"
+          },
+          "files": {
+            "additionalProperties": {
+              "type": "string",
+              "maxLength": 65536
+            },
+            "type": "object",
+            "maxProperties": 50,
+            "title": "Files"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Reason"
+          },
+          "baseVersion": {
+            "type": "integer",
+            "title": "Baseversion",
+            "ge": 0
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "yaml",
+          "reason"
+        ],
+        "title": "PublishDefinitionRequest",
+        "description": "`base_version` is the latest version the edit started from (0 for a new definition). When sent, the\npublish is refused with 409 VERSION_CONFLICT if someone has published since."
       },
       "ReasonRequest": {
         "properties": {
@@ -9421,6 +11235,88 @@
           "reason"
         ],
         "title": "ReasonRequest"
+      },
+      "Receipt": {
+        "properties": {
+          "runId": {
+            "type": "string",
+            "title": "Runid"
+          },
+          "verified": {
+            "type": "boolean",
+            "title": "Verified"
+          },
+          "entries": {
+            "type": "integer",
+            "title": "Entries"
+          },
+          "headHash": {
+            "type": "string",
+            "title": "Headhash"
+          },
+          "pinned": {
+            "items": {
+              "$ref": "#/components/schemas/PinnedVersion"
+            },
+            "type": "array",
+            "title": "Pinned"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ReceiptItem"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "runId",
+          "verified",
+          "entries",
+          "headHash",
+          "pinned",
+          "items"
+        ],
+        "title": "Receipt",
+        "description": "A real run's hash-chained work receipt; `verified` is the chain recomputed now."
+      },
+      "ReceiptItem": {
+        "properties": {
+          "seq": {
+            "type": "integer",
+            "title": "Seq"
+          },
+          "at": {
+            "type": "string",
+            "title": "At"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "nodeId": {
+            "type": "string",
+            "title": "Nodeid"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "hash": {
+            "type": "string",
+            "title": "Hash"
+          }
+        },
+        "type": "object",
+        "required": [
+          "seq",
+          "at",
+          "type",
+          "summary",
+          "hash"
+        ],
+        "title": "ReceiptItem"
       },
       "RedactedRecord": {
         "properties": {
@@ -10271,6 +12167,48 @@
         ],
         "title": "Suggestion"
       },
+      "Taxonomy": {
+        "properties": {
+          "functions": {
+            "items": {
+              "$ref": "#/components/schemas/TaxonomyEntry"
+            },
+            "type": "array",
+            "title": "Functions"
+          },
+          "industries": {
+            "items": {
+              "$ref": "#/components/schemas/TaxonomyEntry"
+            },
+            "type": "array",
+            "title": "Industries"
+          }
+        },
+        "type": "object",
+        "required": [
+          "functions",
+          "industries"
+        ],
+        "title": "Taxonomy"
+      },
+      "TaxonomyEntry": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "TaxonomyEntry"
+      },
       "Tenant": {
         "properties": {
           "id": {
@@ -10880,6 +12818,95 @@
           "amountMinor"
         ],
         "title": "UsagePoint"
+      },
+      "ValidateDefinitionRequest": {
+        "properties": {
+          "yaml": {
+            "type": "string",
+            "maxLength": 65536,
+            "minLength": 1,
+            "title": "Yaml"
+          },
+          "files": {
+            "additionalProperties": {
+              "type": "string",
+              "maxLength": 65536
+            },
+            "type": "object",
+            "maxProperties": 50,
+            "title": "Files"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "yaml"
+        ],
+        "title": "ValidateDefinitionRequest",
+        "description": "The edited main file (YAML; JSON for a schema) plus the agent's Markdown files by relative path. The\n`kind` and `key` inside the YAML, when present, must equal the URL's."
+      },
+      "ValidateDefinitionResult": {
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "title": "Ok"
+          },
+          "errors": {
+            "items": {
+              "$ref": "#/components/schemas/DefinitionIssue"
+            },
+            "type": "array",
+            "title": "Errors"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ok",
+          "errors"
+        ],
+        "title": "ValidateDefinitionResult"
+      },
+      "VersionMeta": {
+        "properties": {
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "digest": {
+            "type": "string",
+            "title": "Digest"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "file",
+              "console"
+            ],
+            "title": "Source"
+          },
+          "publishedBy": {
+            "type": "string",
+            "title": "Publishedby"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          },
+          "publishedAt": {
+            "type": "string",
+            "title": "Publishedat"
+          }
+        },
+        "type": "object",
+        "required": [
+          "version",
+          "digest",
+          "source",
+          "publishedBy",
+          "reason",
+          "publishedAt"
+        ],
+        "title": "VersionMeta"
       }
     },
     "securitySchemes": {

@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Match result",
+  "description": "Orders matched to payments, and everything that did not match.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["matched", "mismatches", "totals"],
+  "properties": {
+    "matched": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["order_id", "charge_id", "date", "amount_minor", "currency"],
+        "properties": {
+          "order_id": {"type": "string", "description": "Order name, such as #1001."},
+          "charge_id": {"type": "string", "description": "Charge id, such as ch_..."},
+          "date": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$", "description": "Order date."},
+          "amount_minor": {"type": "integer", "description": "Order total in minor units (cents)."},
+          "currency": {"type": "string", "pattern": "^[A-Z]{3}$"}
+        }
+      }
+    },
+    "mismatches": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "order_id", "charge_id", "kind", "date", "amount_minor", "amount_diff_minor", "currency", "explanation"
+        ],
+        "properties": {
+          "order_id": {"type": ["string", "null"], "description": "Null when a payment has no order."},
+          "charge_id": {"type": ["string", "null"], "description": "Null when an order has no payment."},
+          "kind": {
+            "enum": ["missing_payment", "missing_order", "amount_mismatch", "currency_mismatch", "duplicate"]
+          },
+          "date": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+            "description": "Order date, or payment date when there is no order."
+          },
+          "amount_minor": {
+            "type": "integer",
+            "description": "Order total in minor units, or the payment amount when there is no order."
+          },
+          "amount_diff_minor": {
+            "type": "integer",
+            "description": "Payment amount minus order total, in minor units. Negative means underpaid."
+          },
+          "currency": {"type": "string", "pattern": "^[A-Z]{3}$"},
+          "explanation": {"type": "string", "minLength": 1, "description": "One sentence."}
+        }
+      }
+    },
+    "totals": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "orders_count", "charges_count", "matched_count", "mismatch_count",
+        "orders_total_minor", "charges_total_minor", "currency"
+      ],
+      "properties": {
+        "orders_count": {"type": "integer", "minimum": 0},
+        "charges_count": {"type": "integer", "minimum": 0},
+        "matched_count": {"type": "integer", "minimum": 0},
+        "mismatch_count": {"type": "integer", "minimum": 0},
+        "orders_total_minor": {"type": "integer"},
+        "charges_total_minor": {"type": "integer"},
+        "currency": {"type": "string", "pattern": "^[A-Z]{3}$"}
+      }
+    }
+  }
+}

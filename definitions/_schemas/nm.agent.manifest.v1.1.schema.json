@@ -1,0 +1,154 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.newmachin.es/nm.agent.manifest.v1.1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "agent_id",
+    "version",
+    "publisher_id",
+    "capabilities",
+    "runtime",
+    "input_schema_ref",
+    "output_schema_ref",
+    "requested_tool_capabilities",
+    "data_processing"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "nm.agent.manifest.v1.1"
+    },
+    "agent_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "publisher_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "capabilities": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string"
+      }
+    },
+    "runtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "adapter"
+      ],
+      "properties": {
+        "adapter": {
+          "enum": [
+            "google_adk_cloud_run",
+            "a2a_external",
+            "approved_http",
+            "hosted"
+          ]
+        },
+        "endpoint_ref": {
+          "type": "string"
+        },
+        "health_ref": {
+          "type": "string"
+        },
+        "model_profile": {
+          "type": "string",
+          "minLength": 1
+        },
+        "instructions": {
+          "type": "string",
+          "minLength": 1
+        },
+        "skills": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "tools": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_-]*\\.[a-z][a-z0-9_-]*$"
+          }
+        },
+        "max_turns": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20
+        }
+      },
+      "if": {
+        "properties": {
+          "adapter": {
+            "const": "hosted"
+          }
+        },
+        "required": [
+          "adapter"
+        ]
+      },
+      "then": {},
+      "else": {
+        "required": [
+          "endpoint_ref"
+        ]
+      }
+    },
+    "input_schema_ref": {
+      "type": "string"
+    },
+    "output_schema_ref": {
+      "type": "string"
+    },
+    "requested_tool_capabilities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "data_processing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "supported_regions",
+        "data_classes",
+        "retention_policy_ref"
+      ],
+      "properties": {
+        "supported_regions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "data_classes": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "PUBLIC",
+              "INTERNAL",
+              "CONFIDENTIAL",
+              "RESTRICTED"
+            ]
+          }
+        },
+        "retention_policy_ref": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

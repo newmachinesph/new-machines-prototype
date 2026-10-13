@@ -1,0 +1,180 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.newmachin.es/nm.work_contract.v1.schema.json",
+  "title": "NM Work Contract v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "contract_id",
+    "version",
+    "org_id",
+    "capability",
+    "input_schema_ref",
+    "output_schema_ref",
+    "acceptance",
+    "authorization",
+    "budget",
+    "limits",
+    "routes"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "nm.work_contract.v1"
+    },
+    "contract_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "org_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "capability": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_.-]+$"
+    },
+    "input_schema_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "output_schema_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "input_artifact_refs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "acceptance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "verification_ruleset_ref",
+        "buyer_acceptance_required"
+      ],
+      "properties": {
+        "verification_ruleset_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "buyer_acceptance_required": {
+          "type": "boolean"
+        },
+        "acceptance_deadline_s": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "on_acceptance_timeout": {
+          "enum": [
+            "ESCALATE",
+            "DISPUTE",
+            "EXPIRE"
+          ]
+        }
+      }
+    },
+    "authorization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tool_capabilities",
+        "region_policy_ref",
+        "policy_ref"
+      ],
+      "properties": {
+        "tool_capabilities": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "region_policy_ref": {
+          "type": "string"
+        },
+        "policy_ref": {
+          "type": "string"
+        },
+        "requires_external_human_review": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "currency",
+        "maximum_minor"
+      ],
+      "properties": {
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "maximum_minor": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "human_budget_minor": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "max_attempts",
+        "deadline_s"
+      ],
+      "properties": {
+        "max_attempts": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "deadline_s": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_parallel_nodes": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "routes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "success",
+        "failure",
+        "timeout"
+      ],
+      "properties": {
+        "success": {
+          "type": "string"
+        },
+        "failure": {
+          "type": "string"
+        },
+        "timeout": {
+          "type": "string"
+        },
+        "human_review": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

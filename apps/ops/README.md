@@ -83,6 +83,22 @@ pnpm api:gen
 
 Regenerate it whenever an `/v1/ops` route changes.
 
+## Runtime pages
+
+These pages read and edit the real runtime (Postgres + Temporal), not the simulated demo data. Start the
+API with `NM_RUNTIME=temporal NM_DEFS_AUTO_APPLY=1` (see the root README, "Run the real workflow locally").
+
+| Page           | What it does                                                                                                                                                                          |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/definitions` | Browse and edit the versioned definition files (packs, workflows, agents, connectors, decisions, memory). Validate a draft, then publish it as a new immutable version with a reason. |
+| `/agents`      | Each agent definition with its model profile, skills and the tools it may call.                                                                                                       |
+| `/contracts`   | Work contracts: inputs, outputs, budgets and approval rules.                                                                                                                          |
+| `/memory`      | Review, edit or retire what the runtime has learned and recalls into runs.                                                                                                            |
+| `/runs/[id]`   | One real run with its hash-chained work receipt; the chain is verified when the page loads.                                                                                           |
+
+Publishing a definition, editing memory and similar changes ask for a reason and write an audit entry. The
+support role is read-only.
+
 ## Hosting
 
 The console runs on its own Firebase App Hosting backend, `nm-ops` (asia-southeast1, project `nm-demo-iu7uo4`), at https://nm-ops--nm-demo-iu7uo4.asia-southeast1.hosted.app. Redeploy from this folder:
