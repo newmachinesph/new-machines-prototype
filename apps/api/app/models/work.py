@@ -108,3 +108,5 @@ class Earning(Model):
     amount: Money
     verdict: ReviewVerdict
     status: Literal["OWED", "ELIGIBLE", "PAID_SIMULATED", "IN_REVIEW"]
+    # Live workspace: no money moves yet, so every earning is simulated.
+    simulated: bool | Opt = None

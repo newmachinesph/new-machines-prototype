@@ -11,6 +11,7 @@ import {
   startWorkflowRunMutation,
 } from "@/lib/api/gen/@tanstack/react-query.gen";
 import type { RunStatus } from "@/lib/types";
+import { byOperation } from "./me";
 
 export const ACTIVE_STATUSES: RunStatus[] = ["RUNNING", "WAITING_FOR_HUMAN", "WAITING_FOR_EVENT", "VERIFYING"];
 
@@ -53,6 +54,9 @@ export function useStartRun() {
     onSuccess: (run) => {
       qc.setQueryData(getWorkflowRunQueryKey({ path: { run_id: run.id } }), run);
       void qc.invalidateQueries({ queryKey: listWorkflowRunsQueryKey() });
+      // A started run holds budget and moves the month's spend: refresh billing and the org's figures.
+      void qc.invalidateQueries({ predicate: byOperation("getUsage") });
+      void qc.invalidateQueries({ predicate: byOperation("getOrganization") });
     },
   });
 }

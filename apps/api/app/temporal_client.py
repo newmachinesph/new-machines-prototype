@@ -26,14 +26,16 @@ _lock = threading.Lock()
 
 
 async def connect() -> Client:
-    """Connect to TEMPORAL_TARGET / TEMPORAL_NAMESPACE; Temporal Cloud uses TEMPORAL_API_KEY over TLS."""
+    """Connect to TEMPORAL_TARGET / TEMPORAL_NAMESPACE. With TEMPORAL_API_KEY set the connection uses TLS and
+    the key, whatever the host (tmprl.cloud:7233 or a regional *.api.temporal.io:7233); without one it is
+    plaintext, which is the local dev server."""
     target, namespace = settings.temporal_target(), settings.temporal_namespace()
-    if not target.endswith(CLOUD_SUFFIX):
-        return await Client.connect(target, namespace=namespace)
     api_key = settings.temporal_api_key()
-    if not api_key:
+    if api_key:
+        return await Client.connect(target, namespace=namespace, api_key=api_key, tls=True)
+    if target.endswith(CLOUD_SUFFIX):
         raise RuntimeError("TEMPORAL_API_KEY is required for a Temporal Cloud namespace")
-    return await Client.connect(target, namespace=namespace, api_key=api_key, tls=True)
+    return await Client.connect(target, namespace=namespace)
 
 
 def _background_loop() -> asyncio.AbstractEventLoop:
@@ -46,21 +48,29 @@ def _background_loop() -> asyncio.AbstractEventLoop:
         return _loop
 
 
-def _result[T](future: Future[T]) -> T:
+def _result[T](future: Future[T], timeout: float | None = None) -> T:
     """Wait for `future`; on a timeout (or any other failure) cancel it, so the call never completes later,
     for example a workflow start after the API has already failed the run."""
     try:
-        return future.result(timeout=CALL_TIMEOUT_S)
+        return future.result(timeout=CALL_TIMEOUT_S if timeout is None else timeout)
     except BaseException:
         future.cancel()
         raise
 
 
-def _wait[T](coro: Coroutine[Any, Any, T]) -> T:
-    return _result(asyncio.run_coroutine_threadsafe(coro, _background_loop()))
+def _wait[T](coro: Coroutine[Any, Any, T], timeout: float | None = None) -> T:
+    return _result(asyncio.run_coroutine_threadsafe(coro, _background_loop()), timeout)
 
 
-def get_client() -> Client:
+def _drop_connect(future: Future) -> None:
+    """Forget a failed (or abandoned) connect so the next call starts a new one."""
+    global _connecting
+    with _lock:
+        if _connecting is future:
+            _connecting = None
+
+
+def get_client(timeout: float | None = None) -> Client:
     """The API's Temporal client: connected on first use, then cached. Concurrent first calls share one
     connection attempt; the module lock is never held while it runs."""
     global _client, _connecting
@@ -72,16 +82,34 @@ def get_client() -> Client:
             _connecting = asyncio.run_coroutine_threadsafe(connect(), loop)
         future = _connecting
     try:
-        client = _result(future)
+        # A caller that chose its own short bound only stops waiting; the shared connect keeps going for
+        # the other waiters, and the next call caches the client once it lands.
+        client = _result(future) if timeout is None else future.result(timeout=timeout)
+    except TimeoutError:
+        if timeout is None:
+            _drop_connect(future)
+        raise
     except BaseException:
-        with _lock:
-            if _connecting is future:
-                _connecting = None
+        _drop_connect(future)
         raise
     with _lock:
         if _client is None:
             _client, _connecting = client, None
         return _client
+
+
+def system_info(timeout: float = 3.0) -> None:
+    """Round-trip to the Temporal service (connecting first if needed), failing within about `timeout`
+    seconds for each of the two steps. Raises on any failure; used by the ops status route."""
+    from datetime import timedelta
+
+    from temporalio.api.workflowservice.v1 import GetSystemInfoRequest
+
+    client = get_client(timeout)
+    _wait(
+        client.workflow_service.get_system_info(GetSystemInfoRequest(), timeout=timedelta(seconds=timeout)),
+        timeout,
+    )
 
 
 def start_run(run_id: str, snapshot: dict, input: dict) -> None:

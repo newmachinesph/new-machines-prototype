@@ -502,9 +502,10 @@ def test_worker_connect_uses_api_key_and_tls_only_for_temporal_cloud(monkeypatch
 
 
 def test_worker_activity_concurrency_matches_threads_and_db_pool(monkeypatch):
-    from app import db
-    from app.worker import __main__ as worker_main
+    from app.worker import runtime as worker_main
 
+    monkeypatch.delenv("NM_WORKER_CONCURRENCY", raising=False)
+    monkeypatch.delenv("NM_DB_POOL_MAX", raising=False)
     captured = {}
 
     def fake_worker(client, **kwargs):
@@ -512,10 +513,10 @@ def test_worker_activity_concurrency_matches_threads_and_db_pool(monkeypatch):
         return "worker"
 
     monkeypatch.setattr(worker_main, "Worker", fake_worker)
-    with ThreadPoolExecutor(max_workers=worker_main.ACTIVITY_THREADS) as pool:
+    with ThreadPoolExecutor(max_workers=worker_main.activity_threads()) as pool:
         assert worker_main.build_worker("client", pool) == "worker"
-    assert captured["max_concurrent_activities"] == worker_main.ACTIVITY_THREADS <= db.POOL_MAX_SIZE
-    assert captured["activity_executor"]._max_workers == worker_main.ACTIVITY_THREADS
+    assert captured["max_concurrent_activities"] == worker_main.activity_threads() == 8
+    assert captured["activity_executor"]._max_workers == 8
 
 
 # --- failures end the run cleanly ---------------------------------------------------------------------

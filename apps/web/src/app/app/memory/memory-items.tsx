@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { Confirm, Modal, ModalClose, focusAfterClose, sameOrLast, useToast } from "@/components/base";
-import { ActorGlyph, Button, Callout, Id, Pill, Section } from "@/components/ui";
+import { ActorGlyph, Button, ButtonLink, Callout, EmptyState, Id, Pill, Section } from "@/components/ui";
 import { QueryState } from "@/components/query-state";
 import { Skeleton } from "@/components/skeleton";
 import { useErrorText } from "@/lib/api/use-error-text";
@@ -205,8 +205,26 @@ export function MemoryBoard() {
   const memory = useMemory();
   return (
     <QueryState query={memory} skeleton={<Skeleton className="h-96" />}>
-      {(rows) => <MemoryColumns rows={rows} />}
+      {(rows) => (rows.length ? <MemoryColumns rows={rows} /> : <NoMemory />)}
     </QueryState>
+  );
+}
+
+/** Nothing learned yet. */
+function NoMemory() {
+  const t = useTranslations("memory");
+  return (
+    <div className="panel">
+      <EmptyState
+        action={
+          <ButtonLink href="/app/runs" variant="secondary" className="h-8">
+            {t("seeRuns")}
+          </ButtonLink>
+        }
+      >
+        {t("empty")}
+      </EmptyState>
+    </div>
   );
 }
 
@@ -266,13 +284,15 @@ function MemoryColumns({ rows }: { rows: Row[] }) {
             <p className="px-5 py-6 text-sm text-muted">{t("none")}</p>
           )}
         </Section>
-        <Section title={t("past")}>
-          <ul className="divide-y divide-rule">
-            {past.map((m) => (
-              <MemoryRow key={m.id} item={m} />
-            ))}
-          </ul>
-        </Section>
+        {past.length ? (
+          <Section title={t("past")}>
+            <ul className="divide-y divide-rule">
+              {past.map((m) => (
+                <MemoryRow key={m.id} item={m} />
+              ))}
+            </ul>
+          </Section>
+        ) : null}
       </div>
     </div>
   );

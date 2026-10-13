@@ -4,18 +4,41 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useRef } from "react";
-import { Controller, useForm, useWatch } from "react-hook-form";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Controller, type FieldErrors, type Resolver, get, useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
-import { Choices, Select, useToast } from "@/components/base";
-import { Button } from "@/components/ui";
-import { toApiError } from "@/lib/api/errors";
+import { Checkbox, Choices, Select, useToast } from "@/components/base";
+import { QueryState } from "@/components/query-state";
+import { Skeleton } from "@/components/skeleton";
+import { Button, ButtonLink, Callout } from "@/components/ui";
+import { type ApiError, type ApiIssue, toApiError } from "@/lib/api/errors";
 import { useErrorText } from "@/lib/api/use-error-text";
+import { usePack } from "@/lib/queries/catalog";
 import { useStartRun } from "@/lib/queries/runs";
+import type { Money } from "@/lib/types";
 import { useFormat } from "@/lib/use-format";
 import { createIdempotencyKeys, isDefiniteRejection } from "./idempotency";
+import {
+  type InputField,
+  type InputValues,
+  buildInput,
+  fieldForIssue,
+  inputFields,
+  validateInput,
+} from "./input-schema";
 
 const BUDGETS = [2000, 5000, 10000] as const;
+const DEFAULT_BUDGET = 5000;
+
+/** The budget a run starts with: the usual default, lowered to the pack's per-run cap when it has one. */
+export const defaultBudget = (pack?: StartablePack) =>
+  pack?.perRunCap ? Math.min(DEFAULT_BUDGET, pack.perRunCap.amountMinor) : DEFAULT_BUDGET;
+
+/** The budget choices, with the pack's per-run cap among them so the default is always one of them. */
+const budgetsFor = (pack?: StartablePack) => {
+  const cap = pack?.perRunCap?.amountMinor;
+  return cap && !(BUDGETS as readonly number[]).includes(cap) ? [...BUDGETS, cap].sort((a, b) => a - b) : [...BUDGETS];
+};
 
 /** Translates a validation message. Pass `useTranslations("forms.startRun")` (or any function with these keys). */
 export type ValidationText = (key: "choosePack" | "needInput" | "noteTooLong") => string;
@@ -27,35 +50,296 @@ export const makeStartRunSchema = (t: ValidationText) =>
     budgetMinor: z.number().int().positive(),
     note: z.string().max(500, t("noteTooLong")),
   });
-export type StartRunValues = z.infer<ReturnType<typeof makeStartRunSchema>>;
-export type StartablePack = { slug: string; name: string; inputs: string[] };
+
+/** What the form holds: the free-text `input` for packs without an input schema, `fields` for the rest. */
+export type StartRunValues = z.infer<ReturnType<typeof makeStartRunSchema>> & { fields?: InputValues };
+/** What the form submits: `input` is an object built from the pack's input schema, or the free text. */
+export type StartRunBody = {
+  packSlug: string;
+  input: string | Record<string, unknown>;
+  budgetMinor: number;
+  note: string;
+};
+export type StartablePack = {
+  slug: string;
+  name: string;
+  inputs: string[];
+  /** The spending cap per run chosen when the pack was hired (live workspaces). */
+  perRunCap?: Money;
+};
+
+/** Why a run can't start, and the page that fixes it. `text` is shown as given. */
+export type Refusal = { text: string; href?: string; action?: string };
+
+/** Puts field errors (by dotted name) under `fields`, the shape react-hook-form reads them in. */
+function nestErrors(errors: Record<string, string>): FieldErrors {
+  const out: Record<string, unknown> = {};
+  for (const [name, message] of Object.entries(errors)) {
+    const path = name.split(".");
+    let node = out;
+    for (const k of path.slice(0, -1)) node = (node[k] ??= {}) as Record<string, unknown>;
+    node[path[path.length - 1]] = { type: "validate", message };
+  }
+  return out as FieldErrors;
+}
+
+function useResolver(fields: InputField[] | null): Resolver<StartRunValues> {
+  const validation = useTranslations("forms.startRun");
+  return useMemo(() => {
+    const base = makeStartRunSchema(validation);
+    const check = zodResolver(fields ? base.omit({ input: true }) : base, undefined, { raw: true });
+    const messages = {
+      required: (label: string) => validation("required", { label }),
+      number: validation("number"),
+      integer: validation("integer"),
+      date: validation("date"),
+      pattern: validation("pattern"),
+      json: validation("json"),
+    };
+    return async (values, context, options) => {
+      const result = await check(values, context, options as never);
+      const fieldErrors = fields ? validateInput(fields, values.fields, messages) : {};
+      if (Object.keys(fieldErrors).length === 0) return result as never;
+      return {
+        values: {},
+        errors: { ...result.errors, fields: nestErrors(fieldErrors) } as FieldErrors<StartRunValues>,
+      };
+    };
+  }, [fields, validation]);
+}
+
+const INPUT_CLASS =
+  "mt-1.5 h-10 w-full rounded-md border border-grey-300 px-3 text-sm outline-none focus:border-ink aria-[invalid=true]:border-blocked";
+
+/** One field of a pack's input schema. Unmounting it (another pack) drops its value. */
+function SchemaField({
+  field: f,
+  control,
+  error,
+}: {
+  field: InputField;
+  control: ReturnType<typeof useForm<StartRunValues>>["control"];
+  error?: string;
+}) {
+  const t = useTranslations("runs.new");
+  const id = `run-field-${f.name}`;
+  const errorId = `${id}-error`;
+  const helpId = `${id}-help`;
+  const describedBy = [error ? errorId : null, f.description ? helpId : null].filter(Boolean).join(" ") || undefined;
+  // A required field of an optional object is marked by its object's legend instead.
+  const optional = !f.required && !f.requiredInGroup;
+  const caption = (
+    <>
+      {f.label}
+      {optional ? <span className="font-normal text-muted"> {t("optional")}</span> : null}
+    </>
+  );
+  // An optional choice with no default can be cleared again.
+  const options = (f.options ?? []).map((o) => ({ value: o, label: o }));
+  const choices = !f.required && f.initial === "" ? [{ value: "", label: t("noChoice") }, ...options] : options;
+  return (
+    <Controller
+      control={control}
+      name={`fields.${f.name}` as "fields"}
+      defaultValue={f.initial as never}
+      shouldUnregister
+      render={({ field }) => (
+        <div>
+          {f.kind === "boolean" ? (
+            <Checkbox
+              checked={field.value === (true as never)}
+              onCheckedChange={field.onChange}
+              describedBy={describedBy}
+              invalid={!!error}
+            >
+              {caption}
+            </Checkbox>
+          ) : (
+            <>
+              <label htmlFor={id} className="block text-sm font-medium">
+                {caption}
+              </label>
+              {f.kind === "enum" ? (
+                <div className="mt-1.5">
+                  <Select
+                    id={id}
+                    label={f.label}
+                    describedBy={describedBy}
+                    invalid={!!error}
+                    value={String(field.value ?? "")}
+                    onValueChange={field.onChange}
+                    items={choices}
+                  />
+                </div>
+              ) : f.kind === "json" ? (
+                <textarea
+                  id={id}
+                  name={field.name}
+                  value={String(field.value ?? "")}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  ref={field.ref}
+                  rows={3}
+                  aria-invalid={error ? true : undefined}
+                  aria-describedby={describedBy}
+                  className="mt-1.5 w-full rounded-md border border-grey-300 px-3 py-2 font-mono text-[13px] outline-none focus:border-ink"
+                />
+              ) : (
+                <input
+                  id={id}
+                  name={field.name}
+                  // Numbers are typed as text so a bad entry reaches the check and gets an error, instead of
+                  // a number input quietly reporting it as empty.
+                  type={f.kind === "date" ? "date" : "text"}
+                  inputMode={f.kind === "integer" ? "numeric" : f.kind === "number" ? "decimal" : undefined}
+                  value={String(field.value ?? "")}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  ref={field.ref}
+                  aria-invalid={error ? true : undefined}
+                  aria-describedby={describedBy}
+                  className={INPUT_CLASS}
+                />
+              )}
+            </>
+          )}
+          {f.description ? (
+            <p id={helpId} className="mt-1 text-xs text-muted">
+              {f.description}
+            </p>
+          ) : null}
+          {error ? (
+            <p id={errorId} role="alert" className="mt-1 text-xs text-blocked">
+              {error}
+            </p>
+          ) : null}
+        </div>
+      )}
+    />
+  );
+}
+
+/** The schema's fields, grouped one level deep the way the schema nests them. */
+function SchemaFields({
+  fields,
+  control,
+  errors,
+}: {
+  fields: InputField[];
+  control: ReturnType<typeof useForm<StartRunValues>>["control"];
+  errors: FieldErrors<StartRunValues>;
+}) {
+  const t = useTranslations("runs.new");
+  if (fields.length === 0) return <p className="text-sm text-muted">{t("noInputNeeded")}</p>;
+  const groups: { group?: string; fields: InputField[] }[] = [];
+  for (const f of fields) {
+    const last = groups[groups.length - 1];
+    if (last && f.group && last.group === f.group) last.fields.push(f);
+    else groups.push({ group: f.group, fields: [f] });
+  }
+  const errorOf = (f: InputField) => get(errors, `fields.${f.name}`)?.message as string | undefined;
+  return (
+    <div className="space-y-4">
+      {groups.map((g, i) =>
+        g.group ? (
+          <fieldset key={`${g.group}-${i}`} className="space-y-4 rounded-md border border-rule px-4 pt-2 pb-4">
+            <legend className="px-1 text-sm font-medium">
+              {g.group}
+              {g.fields[0]?.groupRequired === false ? (
+                <span className="font-normal text-muted"> {t("optional")}</span>
+              ) : null}
+            </legend>
+            {g.fields.map((f) => (
+              <SchemaField key={f.name} field={f} control={control} error={errorOf(f)} />
+            ))}
+          </fieldset>
+        ) : (
+          g.fields.map((f) => <SchemaField key={f.name} field={f} control={control} error={errorOf(f)} />)
+        ),
+      )}
+    </div>
+  );
+}
 
 export function StartRunFields({
   packs,
   defaultPack,
   onSubmit,
   pending,
+  schema,
+  schemaPending = false,
+  onPackChange,
+  refusal,
+  refusalBlocks = false,
+  issues,
 }: {
   packs: StartablePack[];
   defaultPack?: string;
-  onSubmit: (v: StartRunValues) => void;
+  onSubmit: (v: StartRunBody) => void;
   pending: boolean;
+  /** The selected pack's input JSON Schema; without one the pack takes the free-text input. */
+  schema?: unknown;
+  schemaPending?: boolean;
+  onPackChange?: (slug: string) => void;
+  /** Why the selected pack can't start a run now, with the page that fixes it. */
+  refusal?: Refusal | null;
+  /** True when the refusal is known before submitting (nothing to retry until it is fixed). */
+  refusalBlocks?: boolean;
+  /** Field errors from the API (422), placed on their fields. */
+  issues?: ApiIssue[];
 }) {
   const t = useTranslations("runs.new");
-  const validation = useTranslations("forms.startRun");
   const { money } = useFormat();
   const first = packs.find((p) => p.slug === defaultPack) ?? packs[0];
+  const fields = useMemo(() => inputFields(schema), [schema]);
   const form = useForm<StartRunValues>({
-    resolver: zodResolver(makeStartRunSchema(validation)),
+    resolver: useResolver(fields),
     shouldFocusError: true,
-    defaultValues: { packSlug: first?.slug ?? "", input: first?.inputs[0] ?? "", budgetMinor: 5000, note: "" },
+    defaultValues: {
+      packSlug: first?.slug ?? "",
+      input: first?.inputs[0] ?? "",
+      budgetMinor: defaultBudget(first),
+      note: "",
+    },
   });
   const selectedSlug = useWatch({ control: form.control, name: "packSlug" });
   const pack = packs.find((p) => p.slug === selectedSlug);
   const { errors, isSubmitted } = form.formState;
 
+  // Without a schema, the API's input errors belong to the free-text input when it is on screen.
+  const onInput = !fields && !!pack?.inputs.length;
+  // The API's field errors land on the fields they name; the rest are listed above the button, once.
+  const unplaced = useMemo(() => {
+    if (!issues?.length || onInput) return [];
+    return issues.filter((i) => !(fields ? fieldForIssue(fields, i.path) : null));
+  }, [issues, fields, onInput]);
+  useEffect(() => {
+    if (!issues?.length) return;
+    if (onInput) {
+      const message = issues.map((i) => i.message).join(" ");
+      form.setError("input", { type: "server", message }, { shouldFocus: true });
+      return;
+    }
+    let focused = false;
+    for (const issue of issues) {
+      const f = fields ? fieldForIssue(fields, issue.path) : undefined;
+      if (!f) continue;
+      form.setError(
+        `fields.${f.name}` as "fields",
+        { type: "server", message: issue.message },
+        { shouldFocus: !focused },
+      );
+      focused = true;
+    }
+  }, [issues, fields, form, onInput]);
+
+  const submit = form.handleSubmit((v) => {
+    const input = fields ? buildInput(fields, v.fields) : v.input;
+    onSubmit({ packSlug: v.packSlug, input, budgetMinor: v.budgetMinor, note: v.note });
+  });
+
   return (
-    <form onSubmit={form.handleSubmit((v) => onSubmit(v))} className="space-y-6" noValidate>
+    <form onSubmit={submit} className="space-y-6" noValidate>
       <Controller
         control={form.control}
         name="packSlug"
@@ -72,9 +356,10 @@ export function StartRunFields({
               value={field.value}
               onValueChange={(v) => {
                 field.onChange(v);
-                form.setValue("input", packs.find((p) => p.slug === v)?.inputs[0] ?? "", {
-                  shouldValidate: isSubmitted,
-                });
+                onPackChange?.(v);
+                const next = packs.find((p) => p.slug === v);
+                form.setValue("input", next?.inputs[0] ?? "", { shouldValidate: isSubmitted });
+                form.setValue("budgetMinor", defaultBudget(next));
               }}
               items={packs.map((p) => ({ value: p.slug, label: p.name }))}
             />
@@ -86,40 +371,49 @@ export function StartRunFields({
           </div>
         )}
       />
-      <Controller
-        control={form.control}
-        name="input"
-        render={({ field }) => (
-          <div>
-            <label htmlFor="run-input" className="mb-1.5 block text-sm font-medium">
-              {t("input")}
-            </label>
-            {pack?.inputs.length ? (
-              <Select
-                id="run-input"
-                describedBy={errors.input ? "run-input-error" : undefined}
-                invalid={!!errors.input}
-                label={t("input")}
-                value={field.value}
-                onValueChange={field.onChange}
-                items={pack.inputs.map((i) => ({ value: i, label: i }))}
-              />
-            ) : (
-              <p id="run-input" className="text-sm text-grey-700">
-                {t("needInput")}{" "}
-                <Link href="/app/connections" className="link">
-                  {t("goConnections")}
-                </Link>
-              </p>
-            )}
-            {errors.input && pack?.inputs.length ? (
-              <p id="run-input-error" role="alert" className="mt-1 text-xs text-blocked">
-                {errors.input.message}
-              </p>
-            ) : null}
-          </div>
-        )}
-      />
+      {schemaPending ? (
+        <Skeleton className="h-20" />
+      ) : fields ? (
+        <fieldset>
+          <legend className="mb-1.5 text-sm font-medium">{t("input")}</legend>
+          <SchemaFields key={selectedSlug} fields={fields} control={form.control} errors={errors} />
+        </fieldset>
+      ) : (
+        <Controller
+          control={form.control}
+          name="input"
+          render={({ field }) => (
+            <div>
+              <label htmlFor="run-input" className="mb-1.5 block text-sm font-medium">
+                {t("input")}
+              </label>
+              {pack?.inputs.length ? (
+                <Select
+                  id="run-input"
+                  describedBy={errors.input ? "run-input-error" : undefined}
+                  invalid={!!errors.input}
+                  label={t("input")}
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  items={pack.inputs.map((i) => ({ value: i, label: i }))}
+                />
+              ) : (
+                <p id="run-input" className="text-sm text-grey-700">
+                  {t("needInput")}{" "}
+                  <Link href="/app/connections" className="link">
+                    {t("goConnections")}
+                  </Link>
+                </p>
+              )}
+              {errors.input && pack?.inputs.length ? (
+                <p id="run-input-error" role="alert" className="mt-1 text-xs text-blocked">
+                  {errors.input.message}
+                </p>
+              ) : null}
+            </div>
+          )}
+        />
+      )}
       <Controller
         control={form.control}
         name="budgetMinor"
@@ -131,8 +425,16 @@ export function StartRunFields({
               layout="row"
               value={String(field.value)}
               onValueChange={(v) => field.onChange(Number(v))}
-              options={BUDGETS.map((b) => ({ value: String(b), label: money(b) }))}
+              options={budgetsFor(pack).map((b) => ({ value: String(b), label: money(b) }))}
             />
+            {pack?.perRunCap ? (
+              <p className="mt-1.5 text-xs text-muted">
+                {t("perRunCap", { cap: money(pack.perRunCap) })}{" "}
+                <Link href={`/app/marketplace/${pack.slug}/install`} className="link">
+                  {t("changeCap")}
+                </Link>
+              </p>
+            ) : null}
           </fieldset>
         )}
       />
@@ -154,28 +456,105 @@ export function StartRunFields({
           </p>
         ) : null}
       </div>
-      <Button type="submit" className="h-10" disabled={pending}>
+      {unplaced.length ? (
+        <ul role="alert" className="space-y-1 text-xs text-blocked">
+          {unplaced.map((i) => (
+            <li key={`${i.path}-${i.message}`}>{i.path ? `${i.path}: ${i.message}` : i.message}</li>
+          ))}
+        </ul>
+      ) : null}
+      {refusal ? (
+        <Callout
+          tone="warn"
+          title={refusal.text}
+          action={
+            refusal.href && refusal.action ? (
+              <ButtonLink href={refusal.href} variant="secondary" className="h-8 shrink-0">
+                {refusal.action}
+              </ButtonLink>
+            ) : null
+          }
+        />
+      ) : null}
+      <Button type="submit" className="h-10" disabled={pending || schemaPending || (!!refusal && refusalBlocks)}>
         {pending ? t("starting") : t("start")}
       </Button>
     </form>
   );
 }
 
-export function StartRunForm({ packs, defaultPack }: { packs: StartablePack[]; defaultPack?: string }) {
+/** A start refused by the API, with the page that fixes it; null for errors a toast should report. */
+export function refusalFor(
+  e: ApiError,
+  slug: string,
+  t: (key: "hireThis" | "goConnections" | "seeUsage" | "changeCap") => string,
+): Refusal | null {
+  const text = e.detail;
+  switch (e.code) {
+    case "PACK_NOT_HIRED":
+      return { text, href: `/app/marketplace/${slug}`, action: t("hireThis") };
+    case "APPS_NOT_CONNECTED":
+      return { text, href: "/app/connections", action: t("goConnections") };
+    case "SPEND_CAP":
+      return { text, href: "/app/usage", action: t("seeUsage") };
+    case "RUN_BUDGET_OVER_CAP":
+      return { text, href: `/app/marketplace/${slug}/install`, action: t("changeCap") };
+  }
+  // Other refusals (a policy, a paused platform): the API's own words, nothing to link.
+  if (e.status === 403 || e.status === 409 || e.status === 423) return { text };
+  return null;
+}
+
+export function StartRunForm({
+  packs,
+  defaultPack,
+  blocked = {},
+}: {
+  packs: StartablePack[];
+  defaultPack?: string;
+  /** Packs that can't start a run now (apps not connected, spend cap), by slug. */
+  blocked?: Record<string, Refusal | undefined>;
+}) {
   const t = useTranslations("runs.new");
   const errorText = useErrorText();
   const router = useRouter();
   const toast = useToast();
   const start = useStartRun();
   const keys = useRef(createIdempotencyKeys());
+  const [slug, setSlug] = useState(() => (packs.find((p) => p.slug === defaultPack) ?? packs[0])?.slug ?? "");
+  const detail = usePack(slug);
+  const [refused, setRefused] = useState<{ slug: string; refusal: Refusal } | null>(null);
+  const [issues, setIssues] = useState<ApiIssue[]>([]);
+  const serverRefusal = refused?.slug === slug ? refused.refusal : null;
+  const refusal = serverRefusal ?? blocked[slug] ?? null;
+
+  // Without the pack's detail there is no input schema to build the form from: report the failure (with
+  // its retry) instead of a form whose Start can't send what the pack needs.
+  if (slug !== "" && detail.isError && detail.data === undefined)
+    return (
+      <QueryState query={detail} skeleton={<Skeleton className="h-72" />}>
+        {() => null}
+      </QueryState>
+    );
 
   return (
     <StartRunFields
       packs={packs}
       defaultPack={defaultPack}
       pending={start.isPending}
+      schema={detail.data?.inputSchema}
+      schemaPending={slug !== "" && detail.isPending}
+      onPackChange={(next) => {
+        setSlug(next);
+        setIssues([]);
+      }}
+      refusal={refusal}
+      refusalBlocks={!serverRefusal && !!blocked[slug]}
+      issues={issues}
       onSubmit={(v) => {
         const body = { ...v, note: v.note || undefined };
+        setIssues([]);
+        setRefused(null);
         start.mutate(
           { body, headers: { "Idempotency-Key": keys.current.keyFor(body) } },
           {
@@ -183,7 +562,13 @@ export function StartRunForm({ packs, defaultPack }: { packs: StartablePack[]; d
             onError: (e) => {
               const err = toApiError(e);
               if (isDefiniteRejection(err.status)) keys.current.reset();
-              toast(t("failed"), errorText(err), "blocked");
+              if (err.code === "INVALID_INPUT" && err.issues.length) {
+                setIssues(err.issues);
+                return;
+              }
+              const r = refusalFor(err, v.packSlug, t);
+              if (r) setRefused({ slug: v.packSlug, refusal: r });
+              else toast(t("failed"), errorText(err), "blocked");
             },
           },
         );

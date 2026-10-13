@@ -305,6 +305,24 @@ export function Id({ children, className }: { children: ReactNode; className?: s
 
 /* ── Layout helpers ── */
 
+/** A list with nothing in it yet: what that means, and the next thing to do. Put it inside a panel. */
+export function EmptyState({
+  children,
+  action,
+  className,
+}: {
+  children: ReactNode;
+  action?: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={cn("flex flex-col items-center gap-3 px-5 py-8 text-center text-sm text-muted", className)}>
+      <p className="max-w-[60ch] leading-relaxed">{children}</p>
+      {action}
+    </div>
+  );
+}
+
 export function PageHeader({
   title,
   lede,

@@ -327,13 +327,18 @@ def _trigger(call: NodeCall, node: dict) -> Step:
     return Step(call.state.get("input"), route, [("node.completed", {"route": route})])
 
 
+def _org_of(call: NodeCall) -> str | None:
+    """The org the run works for (pinned in its snapshot): its memory items belong to that org."""
+    return call.snapshot.get("org_id") or None
+
+
 def _memory(call: NodeCall, node: dict) -> Step:
     cfg = node.get("config") or {}
     space, route = cfg["space"], _success_route(node)
     if cfg.get("op", "recall") == "recall":
         query = str(cel.resolve(cfg.get("query", ""), call.state) or "")
         with db.connect() as conn:
-            items = memory.recall(conn, space, query, int(cfg.get("limit", 8)))
+            items = memory.recall(conn, space, query, int(cfg.get("limit", 8)), org_id=_org_of(call))
         output = [{"id": i["id"], "text": i["text"]} for i in items]
         summary = f"Recalled {len(output)} items from {space}."
         return Step(output, route, [("node.completed", {"route": route, "summary": summary})])
@@ -344,7 +349,7 @@ def _memory(call: NodeCall, node: dict) -> Step:
 
     def write(conn) -> None:
         if not conn.execute("SELECT 1 FROM memory_items WHERE source = %s", (source,)).fetchone():
-            memory.remember(conn, space, text, source, cfg.get("actor", "workflow"))
+            memory.remember(conn, space, text, source, cfg.get("actor", "workflow"), org_id=_org_of(call))
 
     summary = f"Remembered one item in {space}."
     return Step({"text": text}, route, [("node.completed", {"route": route, "summary": summary})], write)

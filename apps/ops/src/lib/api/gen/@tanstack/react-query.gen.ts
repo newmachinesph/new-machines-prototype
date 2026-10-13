@@ -3,8 +3,8 @@
 import { queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { approveApproval, claimHumanTask, createToken, declineApproval, disconnectConnection, getAgent, getCatalogTaxonomy, getHumanTask, getOrganization, getUsage, getWorkflowPack, getWorkflowRun, getWorkflowRunReceipt, installWorkflowPack, inviteMember, listAgents, listApprovals, listAttention, listConnections, listEarnings, listEligibleHumanTasks, listMembers, listMemory, listPolicies, listTokens, listWorkflowPacks, listWorkflowRuns, opsAddConnector, opsAddMemoryItem, opsApprovePack, opsApproveReviewer, opsCertifyPack, opsCreatePack, opsCreateTenant, opsDeclareIncident, opsDeleteMemoryItem, opsDeprecatePack, opsDisableConnector, opsEnableConnector, opsExportDefinition, opsGetBilling, opsGetDefinition, opsGetHealth, opsGetMe, opsGetOverview, opsGetPack, opsGetRun, opsGetTenant, opsHealthCheckConnector, opsListAudit, opsListAvailableToolkits, opsListConnectors, opsListDefinitions, opsListGuardrails, opsListMemoryItems, opsListMemorySpaces, opsListPacks, opsListReviewers, opsListRuns, opsListTeam, opsListTenants, opsPublishDefinition, opsReactivateTenant, opsReinstateReviewer, opsRejectPack, opsRepublishPack, opsSetConnectorDefaults, opsSetGuardrail, opsSetReviewerLevel, opsSetTenantPlan, opsSetTenantSpendCap, opsSubmitPack, opsSuspendReviewer, opsSuspendTenant, opsUpdateIncident, opsValidateDefinition, type Options, retractMemory, reviewMemoryCandidate, revokeGrant, revokeToken, startWorkflowRun, submitHumanTask, suggestWorkflowPack } from '../sdk.gen';
-import type { ApproveApprovalData, ApproveApprovalError, ApproveApprovalResponse, ClaimHumanTaskData, ClaimHumanTaskError, ClaimHumanTaskResponse, CreateTokenData, CreateTokenError, CreateTokenResponse, DeclineApprovalData, DeclineApprovalError, DeclineApprovalResponse, DisconnectConnectionData, DisconnectConnectionError, DisconnectConnectionResponse, GetAgentData, GetAgentError, GetAgentResponse, GetCatalogTaxonomyData, GetCatalogTaxonomyError, GetCatalogTaxonomyResponse, GetHumanTaskData, GetHumanTaskError, GetHumanTaskResponse, GetOrganizationData, GetOrganizationError, GetOrganizationResponse, GetUsageData, GetUsageError, GetUsageResponse, GetWorkflowPackData, GetWorkflowPackError, GetWorkflowPackResponse, GetWorkflowRunData, GetWorkflowRunError, GetWorkflowRunReceiptData, GetWorkflowRunReceiptError, GetWorkflowRunReceiptResponse, GetWorkflowRunResponse, InstallWorkflowPackData, InstallWorkflowPackError, InstallWorkflowPackResponse, InviteMemberData, InviteMemberError, InviteMemberResponse, ListAgentsData, ListAgentsError, ListAgentsResponse, ListApprovalsData, ListApprovalsError, ListApprovalsResponse, ListAttentionData, ListAttentionError, ListAttentionResponse, ListConnectionsData, ListConnectionsError, ListConnectionsResponse, ListEarningsData, ListEarningsError, ListEarningsResponse, ListEligibleHumanTasksData, ListEligibleHumanTasksError, ListEligibleHumanTasksResponse, ListMembersData, ListMembersError, ListMembersResponse, ListMemoryData, ListMemoryError, ListMemoryResponse, ListPoliciesData, ListPoliciesError, ListPoliciesResponse, ListTokensData, ListTokensError, ListTokensResponse, ListWorkflowPacksData, ListWorkflowPacksError, ListWorkflowPacksResponse, ListWorkflowRunsData, ListWorkflowRunsError, ListWorkflowRunsResponse, OpsAddConnectorData, OpsAddConnectorError, OpsAddConnectorResponse, OpsAddMemoryItemData, OpsAddMemoryItemError, OpsAddMemoryItemResponse, OpsApprovePackData, OpsApprovePackError, OpsApprovePackResponse, OpsApproveReviewerData, OpsApproveReviewerError, OpsApproveReviewerResponse, OpsCertifyPackData, OpsCertifyPackError, OpsCertifyPackResponse, OpsCreatePackData, OpsCreatePackError, OpsCreatePackResponse, OpsCreateTenantData, OpsCreateTenantError, OpsCreateTenantResponse, OpsDeclareIncidentData, OpsDeclareIncidentError, OpsDeclareIncidentResponse, OpsDeleteMemoryItemData, OpsDeleteMemoryItemError, OpsDeleteMemoryItemResponse, OpsDeprecatePackData, OpsDeprecatePackError, OpsDeprecatePackResponse, OpsDisableConnectorData, OpsDisableConnectorError, OpsDisableConnectorResponse, OpsEnableConnectorData, OpsEnableConnectorError, OpsEnableConnectorResponse, OpsExportDefinitionData, OpsExportDefinitionError, OpsExportDefinitionResponse, OpsGetBillingData, OpsGetBillingError, OpsGetBillingResponse, OpsGetDefinitionData, OpsGetDefinitionError, OpsGetDefinitionResponse, OpsGetHealthData, OpsGetHealthError, OpsGetHealthResponse, OpsGetMeData, OpsGetMeError, OpsGetMeResponse, OpsGetOverviewData, OpsGetOverviewError, OpsGetOverviewResponse, OpsGetPackData, OpsGetPackError, OpsGetPackResponse, OpsGetRunData, OpsGetRunError, OpsGetRunResponse, OpsGetTenantData, OpsGetTenantError, OpsGetTenantResponse, OpsHealthCheckConnectorData, OpsHealthCheckConnectorError, OpsHealthCheckConnectorResponse, OpsListAuditData, OpsListAuditError, OpsListAuditResponse, OpsListAvailableToolkitsData, OpsListAvailableToolkitsError, OpsListAvailableToolkitsResponse, OpsListConnectorsData, OpsListConnectorsError, OpsListConnectorsResponse, OpsListDefinitionsData, OpsListDefinitionsError, OpsListDefinitionsResponse, OpsListGuardrailsData, OpsListGuardrailsError, OpsListGuardrailsResponse, OpsListMemoryItemsData, OpsListMemoryItemsError, OpsListMemoryItemsResponse, OpsListMemorySpacesData, OpsListMemorySpacesError, OpsListMemorySpacesResponse, OpsListPacksData, OpsListPacksError, OpsListPacksResponse, OpsListReviewersData, OpsListReviewersError, OpsListReviewersResponse, OpsListRunsData, OpsListRunsError, OpsListRunsResponse, OpsListTeamData, OpsListTeamError, OpsListTeamResponse, OpsListTenantsData, OpsListTenantsError, OpsListTenantsResponse, OpsPublishDefinitionData, OpsPublishDefinitionError, OpsPublishDefinitionResponse, OpsReactivateTenantData, OpsReactivateTenantError, OpsReactivateTenantResponse, OpsReinstateReviewerData, OpsReinstateReviewerError, OpsReinstateReviewerResponse, OpsRejectPackData, OpsRejectPackError, OpsRejectPackResponse, OpsRepublishPackData, OpsRepublishPackError, OpsRepublishPackResponse, OpsSetConnectorDefaultsData, OpsSetConnectorDefaultsError, OpsSetConnectorDefaultsResponse, OpsSetGuardrailData, OpsSetGuardrailError, OpsSetGuardrailResponse, OpsSetReviewerLevelData, OpsSetReviewerLevelError, OpsSetReviewerLevelResponse, OpsSetTenantPlanData, OpsSetTenantPlanError, OpsSetTenantPlanResponse, OpsSetTenantSpendCapData, OpsSetTenantSpendCapError, OpsSetTenantSpendCapResponse, OpsSubmitPackData, OpsSubmitPackError, OpsSubmitPackResponse, OpsSuspendReviewerData, OpsSuspendReviewerError, OpsSuspendReviewerResponse, OpsSuspendTenantData, OpsSuspendTenantError, OpsSuspendTenantResponse, OpsUpdateIncidentData, OpsUpdateIncidentError, OpsUpdateIncidentResponse, OpsValidateDefinitionData, OpsValidateDefinitionError, OpsValidateDefinitionResponse, RetractMemoryData, RetractMemoryError, RetractMemoryResponse, ReviewMemoryCandidateData, ReviewMemoryCandidateError, ReviewMemoryCandidateResponse, RevokeGrantData, RevokeGrantError, RevokeGrantResponse, RevokeTokenData, RevokeTokenError, RevokeTokenResponse, StartWorkflowRunData, StartWorkflowRunError, StartWorkflowRunResponse, SubmitHumanTaskData, SubmitHumanTaskError, SubmitHumanTaskResponse, SuggestWorkflowPackData, SuggestWorkflowPackError, SuggestWorkflowPackResponse } from '../types.gen';
+import { acceptInvitation, approveApproval, claimHumanTask, connectConnection, createToken, declineApproval, declineInvitation, disconnectConnection, getAgent, getCatalogTaxonomy, getHumanTask, getMe, getOrganization, getUsage, getWorkflowPack, getWorkflowRun, getWorkflowRunReceipt, installWorkflowPack, inviteMember, listAgents, listApprovals, listAttention, listConnections, listEarnings, listEligibleHumanTasks, listMembers, listMemory, listPolicies, listTokens, listWorkflowPacks, listWorkflowRuns, opsAddConnector, opsAddMemoryItem, opsApprovePack, opsApproveReviewer, opsCertifyPack, opsCreatePack, opsCreateTenant, opsDeclareIncident, opsDeleteMemoryItem, opsDeprecatePack, opsDisableConnector, opsEnableConnector, opsExportDefinition, opsGetBilling, opsGetDefinition, opsGetHealth, opsGetMe, opsGetOverview, opsGetPack, opsGetRun, opsGetRuntimeStatus, opsGetTenant, opsHealthCheckConnector, opsListAudit, opsListAvailableToolkits, opsListConnectors, opsListDefinitions, opsListGuardrails, opsListMemoryItems, opsListMemorySpaces, opsListPacks, opsListReviewers, opsListRuns, opsListTeam, opsListTenants, opsPublishDefinition, opsReactivateTenant, opsReinstateReviewer, opsRejectPack, opsRepublishPack, opsSetConnectorDefaults, opsSetGuardrail, opsSetReviewerLevel, opsSetTenantPlan, opsSetTenantSpendCap, opsSubmitPack, opsSuspendReviewer, opsSuspendTenant, opsUpdateIncident, opsValidateDefinition, type Options, retractMemory, reviewMemoryCandidate, revokeGrant, revokeToken, startWorkflowRun, submitHumanTask, suggestWorkflowPack } from '../sdk.gen';
+import type { AcceptInvitationData, AcceptInvitationError, AcceptInvitationResponse, ApproveApprovalData, ApproveApprovalError, ApproveApprovalResponse, ClaimHumanTaskData, ClaimHumanTaskError, ClaimHumanTaskResponse, ConnectConnectionData, ConnectConnectionError, ConnectConnectionResponse, CreateTokenData, CreateTokenError, CreateTokenResponse, DeclineApprovalData, DeclineApprovalError, DeclineApprovalResponse, DeclineInvitationData, DeclineInvitationError, DeclineInvitationResponse, DisconnectConnectionData, DisconnectConnectionError, DisconnectConnectionResponse, GetAgentData, GetAgentError, GetAgentResponse, GetCatalogTaxonomyData, GetCatalogTaxonomyError, GetCatalogTaxonomyResponse, GetHumanTaskData, GetHumanTaskError, GetHumanTaskResponse, GetMeData, GetMeError, GetMeResponse, GetOrganizationData, GetOrganizationError, GetOrganizationResponse, GetUsageData, GetUsageError, GetUsageResponse, GetWorkflowPackData, GetWorkflowPackError, GetWorkflowPackResponse, GetWorkflowRunData, GetWorkflowRunError, GetWorkflowRunReceiptData, GetWorkflowRunReceiptError, GetWorkflowRunReceiptResponse, GetWorkflowRunResponse, InstallWorkflowPackData, InstallWorkflowPackError, InstallWorkflowPackResponse, InviteMemberData, InviteMemberError, InviteMemberResponse, ListAgentsData, ListAgentsError, ListAgentsResponse, ListApprovalsData, ListApprovalsError, ListApprovalsResponse, ListAttentionData, ListAttentionError, ListAttentionResponse, ListConnectionsData, ListConnectionsError, ListConnectionsResponse, ListEarningsData, ListEarningsError, ListEarningsResponse, ListEligibleHumanTasksData, ListEligibleHumanTasksError, ListEligibleHumanTasksResponse, ListMembersData, ListMembersError, ListMembersResponse, ListMemoryData, ListMemoryError, ListMemoryResponse, ListPoliciesData, ListPoliciesError, ListPoliciesResponse, ListTokensData, ListTokensError, ListTokensResponse, ListWorkflowPacksData, ListWorkflowPacksError, ListWorkflowPacksResponse, ListWorkflowRunsData, ListWorkflowRunsError, ListWorkflowRunsResponse, OpsAddConnectorData, OpsAddConnectorError, OpsAddConnectorResponse, OpsAddMemoryItemData, OpsAddMemoryItemError, OpsAddMemoryItemResponse, OpsApprovePackData, OpsApprovePackError, OpsApprovePackResponse, OpsApproveReviewerData, OpsApproveReviewerError, OpsApproveReviewerResponse, OpsCertifyPackData, OpsCertifyPackError, OpsCertifyPackResponse, OpsCreatePackData, OpsCreatePackError, OpsCreatePackResponse, OpsCreateTenantData, OpsCreateTenantError, OpsCreateTenantResponse, OpsDeclareIncidentData, OpsDeclareIncidentError, OpsDeclareIncidentResponse, OpsDeleteMemoryItemData, OpsDeleteMemoryItemError, OpsDeleteMemoryItemResponse, OpsDeprecatePackData, OpsDeprecatePackError, OpsDeprecatePackResponse, OpsDisableConnectorData, OpsDisableConnectorError, OpsDisableConnectorResponse, OpsEnableConnectorData, OpsEnableConnectorError, OpsEnableConnectorResponse, OpsExportDefinitionData, OpsExportDefinitionError, OpsExportDefinitionResponse, OpsGetBillingData, OpsGetBillingError, OpsGetBillingResponse, OpsGetDefinitionData, OpsGetDefinitionError, OpsGetDefinitionResponse, OpsGetHealthData, OpsGetHealthError, OpsGetHealthResponse, OpsGetMeData, OpsGetMeError, OpsGetMeResponse, OpsGetOverviewData, OpsGetOverviewError, OpsGetOverviewResponse, OpsGetPackData, OpsGetPackError, OpsGetPackResponse, OpsGetRunData, OpsGetRunError, OpsGetRunResponse, OpsGetRuntimeStatusData, OpsGetRuntimeStatusError, OpsGetRuntimeStatusResponse, OpsGetTenantData, OpsGetTenantError, OpsGetTenantResponse, OpsHealthCheckConnectorData, OpsHealthCheckConnectorError, OpsHealthCheckConnectorResponse, OpsListAuditData, OpsListAuditError, OpsListAuditResponse, OpsListAvailableToolkitsData, OpsListAvailableToolkitsError, OpsListAvailableToolkitsResponse, OpsListConnectorsData, OpsListConnectorsError, OpsListConnectorsResponse, OpsListDefinitionsData, OpsListDefinitionsError, OpsListDefinitionsResponse, OpsListGuardrailsData, OpsListGuardrailsError, OpsListGuardrailsResponse, OpsListMemoryItemsData, OpsListMemoryItemsError, OpsListMemoryItemsResponse, OpsListMemorySpacesData, OpsListMemorySpacesError, OpsListMemorySpacesResponse, OpsListPacksData, OpsListPacksError, OpsListPacksResponse, OpsListReviewersData, OpsListReviewersError, OpsListReviewersResponse, OpsListRunsData, OpsListRunsError, OpsListRunsResponse, OpsListTeamData, OpsListTeamError, OpsListTeamResponse, OpsListTenantsData, OpsListTenantsError, OpsListTenantsResponse, OpsPublishDefinitionData, OpsPublishDefinitionError, OpsPublishDefinitionResponse, OpsReactivateTenantData, OpsReactivateTenantError, OpsReactivateTenantResponse, OpsReinstateReviewerData, OpsReinstateReviewerError, OpsReinstateReviewerResponse, OpsRejectPackData, OpsRejectPackError, OpsRejectPackResponse, OpsRepublishPackData, OpsRepublishPackError, OpsRepublishPackResponse, OpsSetConnectorDefaultsData, OpsSetConnectorDefaultsError, OpsSetConnectorDefaultsResponse, OpsSetGuardrailData, OpsSetGuardrailError, OpsSetGuardrailResponse, OpsSetReviewerLevelData, OpsSetReviewerLevelError, OpsSetReviewerLevelResponse, OpsSetTenantPlanData, OpsSetTenantPlanError, OpsSetTenantPlanResponse, OpsSetTenantSpendCapData, OpsSetTenantSpendCapError, OpsSetTenantSpendCapResponse, OpsSubmitPackData, OpsSubmitPackError, OpsSubmitPackResponse, OpsSuspendReviewerData, OpsSuspendReviewerError, OpsSuspendReviewerResponse, OpsSuspendTenantData, OpsSuspendTenantError, OpsSuspendTenantResponse, OpsUpdateIncidentData, OpsUpdateIncidentError, OpsUpdateIncidentResponse, OpsValidateDefinitionData, OpsValidateDefinitionError, OpsValidateDefinitionResponse, RetractMemoryData, RetractMemoryError, RetractMemoryResponse, ReviewMemoryCandidateData, ReviewMemoryCandidateError, ReviewMemoryCandidateResponse, RevokeGrantData, RevokeGrantError, RevokeGrantResponse, RevokeTokenData, RevokeTokenError, RevokeTokenResponse, StartWorkflowRunData, StartWorkflowRunError, StartWorkflowRunResponse, SubmitHumanTaskData, SubmitHumanTaskError, SubmitHumanTaskResponse, SuggestWorkflowPackData, SuggestWorkflowPackError, SuggestWorkflowPackResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -43,6 +43,8 @@ export const listWorkflowPacksQueryKey = (options?: Options<ListWorkflowPacksDat
 
 /**
  * List Workflow Packs
+ *
+ * The marketplace. In the live workspace: every pack definition, `installed` for the caller's org.
  */
 export const listWorkflowPacksOptions = (options?: Options<ListWorkflowPacksData>) => queryOptions<ListWorkflowPacksResponse, ListWorkflowPacksError, ListWorkflowPacksResponse, ReturnType<typeof listWorkflowPacksQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
@@ -61,6 +63,8 @@ export const getWorkflowPackQueryKey = (options: Options<GetWorkflowPackData>) =
 
 /**
  * Get Workflow Pack
+ *
+ * One pack; in the live workspace with `inputSchema`, the JSON Schema of the input a run takes.
  */
 export const getWorkflowPackOptions = (options: Options<GetWorkflowPackData>) => queryOptions<GetWorkflowPackResponse, GetWorkflowPackError, GetWorkflowPackResponse, ReturnType<typeof getWorkflowPackQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
@@ -137,6 +141,7 @@ export const getAgentOptions = (options: Options<GetAgentData>) => queryOptions<
  * Suggest Workflow Pack
  *
  * Keyword match for the static API. The dynamic backend asks Gemini and keeps this response shape.
+ * The live workspace matches over the pack definitions.
  */
 export const suggestWorkflowPackMutation = (options?: Partial<Options<SuggestWorkflowPackData>>): UseMutationOptions<SuggestWorkflowPackResponse, SuggestWorkflowPackError, Options<SuggestWorkflowPackData>> => {
     const mutationOptions: UseMutationOptions<SuggestWorkflowPackResponse, SuggestWorkflowPackError, Options<SuggestWorkflowPackData>> = {
@@ -174,7 +179,8 @@ export const listWorkflowRunsQueryKey = (options?: Options<ListWorkflowRunsData>
 /**
  * List Workflow Runs
  *
- * Real runs (newest first, when the runtime is on), then the fixtures.
+ * Real runs (newest first, when the runtime is on), then the fixtures; the live workspace has real runs
+ * only.
  */
 export const listWorkflowRunsOptions = (options?: Options<ListWorkflowRunsData>) => queryOptions<ListWorkflowRunsResponse, ListWorkflowRunsError, ListWorkflowRunsResponse, ReturnType<typeof listWorkflowRunsQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
@@ -193,7 +199,9 @@ export const listWorkflowRunsOptions = (options?: Options<ListWorkflowRunsData>)
  * Start Workflow Run
  *
  * Returns 202: the run is registered and started, not finished (API.md section 3). With the runtime on,
- * a pack that has a definition runs for real on Temporal; any other pack keeps the fixture behaviour.
+ * a pack that has a definition runs for real on Temporal; any other pack keeps the fixture behaviour. In
+ * the live workspace every run is real: the org must have hired the pack and connected its apps, the
+ * input must match the pack's input schema and the month's spend must be below the monthly cap.
  */
 export const startWorkflowRunMutation = (options?: Partial<Options<StartWorkflowRunData>>): UseMutationOptions<StartWorkflowRunResponse, StartWorkflowRunError, Options<StartWorkflowRunData>> => {
     const mutationOptions: UseMutationOptions<StartWorkflowRunResponse, StartWorkflowRunError, Options<StartWorkflowRunData>> = {
@@ -252,7 +260,7 @@ export const listApprovalsQueryKey = (options?: Options<ListApprovalsData>) => c
 /**
  * List Approvals
  *
- * Approvals of real runs (newest first), then the fixtures.
+ * Approvals of real runs (newest first), then the fixtures (none in the live workspace).
  */
 export const listApprovalsOptions = (options?: Options<ListApprovalsData>) => queryOptions<ListApprovalsResponse, ListApprovalsError, ListApprovalsResponse, ReturnType<typeof listApprovalsQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
@@ -341,6 +349,8 @@ export const listEarningsQueryKey = (options?: Options<ListEarningsData>) => cre
 
 /**
  * List Earnings
+ *
+ * In the live workspace: the caller's decided tasks of the org's runs, simulated (no money moves).
  */
 export const listEarningsOptions = (options?: Options<ListEarningsData>) => queryOptions<ListEarningsResponse, ListEarningsError, ListEarningsResponse, ReturnType<typeof listEarningsQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
@@ -394,7 +404,8 @@ export const listMemoryQueryKey = (options?: Options<ListMemoryData>) => createQ
 /**
  * List Memory
  *
- * Fixture memory, after the items of real memory spaces when the runtime is on.
+ * Fixture memory, after the items of real memory spaces when the runtime is on. The live workspace has
+ * the org's own items and the shared seed and console items only.
  */
 export const listMemoryOptions = (options?: Options<ListMemoryData>) => queryOptions<ListMemoryResponse, ListMemoryError, ListMemoryResponse, ReturnType<typeof listMemoryQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
@@ -428,6 +439,8 @@ export const reviewMemoryCandidateMutation = (options?: Partial<Options<ReviewMe
 
 /**
  * Retract Memory
+ *
+ * In the live workspace: retract one of the org's own items, so runs no longer recall it.
  */
 export const retractMemoryMutation = (options?: Partial<Options<RetractMemoryData>>): UseMutationOptions<RetractMemoryResponse, RetractMemoryError, Options<RetractMemoryData>> => {
     const mutationOptions: UseMutationOptions<RetractMemoryResponse, RetractMemoryError, Options<RetractMemoryData>> = {
@@ -447,6 +460,8 @@ export const listConnectionsQueryKey = (options?: Options<ListConnectionsData>) 
 
 /**
  * List Connections
+ *
+ * In the live workspace: the apps the org's hired packs use, connected or not.
  */
 export const listConnectionsOptions = (options?: Options<ListConnectionsData>) => queryOptions<ListConnectionsResponse, ListConnectionsError, ListConnectionsResponse, ReturnType<typeof listConnectionsQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
@@ -460,6 +475,26 @@ export const listConnectionsOptions = (options?: Options<ListConnectionsData>) =
     },
     queryKey: listConnectionsQueryKey(options)
 });
+
+/**
+ * Connect Connection
+ *
+ * Connect an app (a connector key or app name) for the org. Sandbox connector mode connects it to
+ * sandbox data; live app connections are not available yet (409). The demo workspace has none to make.
+ */
+export const connectConnectionMutation = (options?: Partial<Options<ConnectConnectionData>>): UseMutationOptions<ConnectConnectionResponse, ConnectConnectionError, Options<ConnectConnectionData>> => {
+    const mutationOptions: UseMutationOptions<ConnectConnectionResponse, ConnectConnectionError, Options<ConnectConnectionData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await connectConnection({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
 
 /**
  * Disconnect Connection
@@ -485,6 +520,69 @@ export const revokeGrantMutation = (options?: Partial<Options<RevokeGrantData>>)
     const mutationOptions: UseMutationOptions<RevokeGrantResponse, RevokeGrantError, Options<RevokeGrantData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await revokeGrant({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const getMeQueryKey = (options?: Options<GetMeData>) => createQueryKey('getMe', options);
+
+/**
+ * Get Me
+ *
+ * The signed-in user and their workspace: their own org in the live workspace, the seeded org in the
+ * demo. `invitations` lists pending invitations to other workspaces for the user's verified email (live
+ * workspace only).
+ */
+export const getMeOptions = (options?: Options<GetMeData>) => queryOptions<GetMeResponse, GetMeError, GetMeResponse, ReturnType<typeof getMeQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getMe({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getMeQueryKey(options)
+});
+
+/**
+ * Accept Invitation
+ *
+ * Join the workspace that invited the user's verified email; the user leaves their current one (an
+ * empty workspace is deleted, any other keeps its data). 403 when the email is not verified, 404 when there
+ * is no such pending invitation, and always 404 in the demo workspace.
+ */
+export const acceptInvitationMutation = (options?: Partial<Options<AcceptInvitationData>>): UseMutationOptions<AcceptInvitationResponse, AcceptInvitationError, Options<AcceptInvitationData>> => {
+    const mutationOptions: UseMutationOptions<AcceptInvitationResponse, AcceptInvitationError, Options<AcceptInvitationData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await acceptInvitation({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Decline Invitation
+ *
+ * Decline a pending invitation for the user's verified email; it is deleted. 403 when the email is not
+ * verified, 404 when there is no such invitation, and always 404 in the demo workspace.
+ */
+export const declineInvitationMutation = (options?: Partial<Options<DeclineInvitationData>>): UseMutationOptions<DeclineInvitationResponse, DeclineInvitationError, Options<DeclineInvitationData>> => {
+    const mutationOptions: UseMutationOptions<DeclineInvitationResponse, DeclineInvitationError, Options<DeclineInvitationData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await declineInvitation({
                 ...options,
                 ...fnOptions,
                 throwOnError: true
@@ -1417,6 +1515,24 @@ export const opsGetRunOptions = (options: Options<OpsGetRunData>) => queryOption
         return data;
     },
     queryKey: opsGetRunQueryKey(options)
+});
+
+export const opsGetRuntimeStatusQueryKey = (options?: Options<OpsGetRuntimeStatusData>) => createQueryKey('opsGetRuntimeStatus', options);
+
+/**
+ * Ops Get Runtime Status
+ */
+export const opsGetRuntimeStatusOptions = (options?: Options<OpsGetRuntimeStatusData>) => queryOptions<OpsGetRuntimeStatusResponse, OpsGetRuntimeStatusError, OpsGetRuntimeStatusResponse, ReturnType<typeof opsGetRuntimeStatusQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await opsGetRuntimeStatus({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: opsGetRuntimeStatusQueryKey(options)
 });
 
 export const opsListTenantsQueryKey = (options?: Options<OpsListTenantsData>) => createQueryKey('opsListTenants', options);

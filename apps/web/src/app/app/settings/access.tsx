@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Checkbox,
   Choices,
@@ -15,9 +15,9 @@ import {
 import { QueryState } from "@/components/query-state";
 import { Skeleton } from "@/components/skeleton";
 import { Button, Id, Pill, Section } from "@/components/ui";
-import { ORG_ID } from "@/lib/api/client";
 import type { CreateTokenRequest } from "@/lib/api/gen/types.gen";
 import { useErrorText } from "@/lib/api/use-error-text";
+import { useIsDemo, useOrgId } from "@/lib/queries/me";
 import { useCreateToken, useInvite, useMembers, useRevokeToken, useTokens } from "@/lib/queries/workspace";
 import type { McpToken } from "@/lib/types";
 import { useFormat } from "@/lib/use-format";
@@ -37,16 +37,21 @@ export function MembersSection() {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"Member" | "Admin">("Member");
   const toast = useToast();
+  const orgId = useOrgId();
+  const demo = useIsDemo();
   const taken = members.some((m) => m.email.toLowerCase() === email.trim().toLowerCase());
-  const valid = EMAIL.test(email.trim()) && !taken;
+  const valid = EMAIL.test(email.trim()) && !taken && orgId !== undefined;
 
   const invite = () => {
     const address = email.trim();
+    if (!orgId) return;
     inviteMember.mutate(
-      { path: { org_id: ORG_ID }, body: { email: address, role } },
+      { path: { org_id: orgId }, body: { email: address, role } },
       {
         onSuccess: () => {
-          toast(t("sentToast"), t("sentToastBody", { address, role: t(`rolesLower.${role}`) }), "sim");
+          const values = { address, role: t(`rolesLower.${role}`) };
+          if (demo) toast(t("sentToast"), t("sentToastBody", values), "sim");
+          else toast(t("sentToast"), t("sentToastBodyLive", values));
           setOpen(false);
           setEmail("");
         },
@@ -135,6 +140,60 @@ export function MembersSection() {
 
 const SCOPES: Scope[] = ["agents:read", "runs:read", "runs:start", "approvals:list"];
 
+/** How a token is shown: its prefix, hidden middle and last four characters (older tokens have no last four). */
+export const maskedToken = (tok: Pick<McpToken, "prefix" | "last4">) =>
+  `${tok.prefix ?? "nm_pat_"}••••${tok.last4 ?? ""}`;
+
+/** Selects the element's text, so it can be copied by hand when the clipboard is not available. */
+function selectText(el: HTMLElement | null) {
+  const selection = window.getSelection();
+  if (!el || !selection) return;
+  const range = document.createRange();
+  range.selectNodeContents(el);
+  selection.removeAllRanges();
+  selection.addRange(range);
+}
+
+/** The new token's secret, shown once right after it is created. */
+function TokenSecret({ secret, onDone }: { secret: string; onDone: () => void }) {
+  const t = useTranslations("settings.tokens");
+  const demo = useIsDemo();
+  const toast = useToast();
+  const [copied, setCopied] = useState(false);
+  const copyButton = useRef<HTMLButtonElement>(null);
+  const box = useRef<HTMLDivElement>(null);
+  // The create form is gone; the next thing to do is copy the secret.
+  useEffect(() => copyButton.current?.focus(), []);
+  // Without clipboard access (an insecure page, a denied permission) the secret is selected for copying by hand.
+  const copyByHand = () => {
+    selectText(box.current);
+    toast(t("copyFailed"), t("copyByHand"), "blocked");
+  };
+  const copy = () => {
+    if (!navigator.clipboard?.writeText) return copyByHand();
+    navigator.clipboard.writeText(secret).then(() => setCopied(true), copyByHand);
+  };
+  return (
+    <div className="mt-4 space-y-4">
+      <p className="text-sm text-grey-700">{demo ? t("secretDemoNote") : t("secretNote")}</p>
+      <div className="flex items-center gap-2">
+        <div ref={box} className="min-w-0 flex-1 rounded-md border border-rule bg-grey-50 px-3 py-2 break-all">
+          <Id className="text-[12px]">{secret}</Id>
+        </div>
+        <Button ref={copyButton} variant="secondary" className="h-9 shrink-0" onClick={copy}>
+          {copied ? t("copied") : t("copy")}
+        </Button>
+      </div>
+      <p aria-live="polite" className="sr-only">
+        {copied ? t("copied") : ""}
+      </p>
+      <div className="flex justify-end">
+        <Button onClick={onDone}>{t("done")}</Button>
+      </div>
+    </div>
+  );
+}
+
 export function TokensSection() {
   const t = useTranslations("settings.tokens");
   const tc = useTranslations("common");
@@ -146,15 +205,20 @@ export function TokensSection() {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [scopes, setScopes] = useState<Scope[]>(["agents:read", "runs:read"]);
+  const [secret, setSecret] = useState<string | null>(null);
   const toast = useToast();
+  const openChange = (next: boolean) => {
+    setOpen(next);
+    if (!next) setSecret(null);
+  };
 
   const create = () => {
     createToken.mutate(
       { body: { name: name.trim(), scopes } },
       {
-        onSuccess: () => {
-          toast(t("createdToast"), t("createdToastBody"), "sim");
-          setOpen(false);
+        onSuccess: (created) => {
+          toast(t("createdToast"), t("createdToastBody"));
+          setSecret(created.secret);
           setName("");
           setScopes(["agents:read", "runs:read"]);
         },
@@ -185,51 +249,55 @@ export function TokensSection() {
       aside={
         <Modal
           open={open}
-          onOpenChange={setOpen}
+          onOpenChange={openChange}
           trigger={
             <Button variant="secondary" className="h-8">
               {t("create")}
             </Button>
           }
-          title={t("createTitle")}
-          description={t("createDescription")}
+          title={secret ? t("secretTitle") : t("createTitle")}
+          description={secret ? undefined : t("createDescription")}
         >
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (name.trim() && scopes.length) create();
-            }}
-            className="mt-4 space-y-4"
-          >
-            <label className="block text-sm">
-              <span className="font-medium">{t("name")}</span>
-              <input
-                name="token-name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder={t("namePlaceholder")}
-                className="mt-1.5 h-10 w-full rounded-md border border-grey-300 px-3 text-sm outline-none focus:border-ink"
-              />
-            </label>
-            <fieldset className="space-y-2.5">
-              <legend className="mb-1.5 text-sm font-medium">{t("scopes")}</legend>
-              {SCOPES.map((s) => (
-                <Checkbox
-                  key={s}
-                  checked={scopes.includes(s)}
-                  onCheckedChange={(on) => setScopes((cur) => (on ? [...cur, s] : cur.filter((x) => x !== s)))}
-                >
-                  {t(`scope.${s}`)} <Id className="ml-1 text-[11px]">{s}</Id>
-                </Checkbox>
-              ))}
-            </fieldset>
-            <div className="flex justify-end gap-2">
-              <ModalClose render={<Button variant="ghost" />}>{tc("cancel")}</ModalClose>
-              <Button type="submit" disabled={!name.trim() || scopes.length === 0 || createToken.isPending}>
-                {t("create")}
-              </Button>
-            </div>
-          </form>
+          {secret ? (
+            <TokenSecret secret={secret} onDone={() => openChange(false)} />
+          ) : (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (name.trim() && scopes.length) create();
+              }}
+              className="mt-4 space-y-4"
+            >
+              <label className="block text-sm">
+                <span className="font-medium">{t("name")}</span>
+                <input
+                  name="token-name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder={t("namePlaceholder")}
+                  className="mt-1.5 h-10 w-full rounded-md border border-grey-300 px-3 text-sm outline-none focus:border-ink"
+                />
+              </label>
+              <fieldset className="space-y-2.5">
+                <legend className="mb-1.5 text-sm font-medium">{t("scopes")}</legend>
+                {SCOPES.map((s) => (
+                  <Checkbox
+                    key={s}
+                    checked={scopes.includes(s)}
+                    onCheckedChange={(on) => setScopes((cur) => (on ? [...cur, s] : cur.filter((x) => x !== s)))}
+                  >
+                    {t(`scope.${s}`)} <Id className="ml-1 text-[11px]">{s}</Id>
+                  </Checkbox>
+                ))}
+              </fieldset>
+              <div className="flex justify-end gap-2">
+                <ModalClose render={<Button variant="ghost" />}>{tc("cancel")}</ModalClose>
+                <Button type="submit" disabled={!name.trim() || scopes.length === 0 || createToken.isPending}>
+                  {t("create")}
+                </Button>
+              </div>
+            </form>
+          )}
         </Modal>
       }
     >
@@ -256,7 +324,7 @@ export function TokensSection() {
                     />
                   </div>
                   <div className="mt-1 flex flex-wrap gap-x-3 text-xs text-muted">
-                    <Id className="text-[11px]">nm_pat_••••{tok.last4}</Id>
+                    <Id className="text-[11px]">{maskedToken(tok)}</Id>
                     <span>{t("expires", { date: date(tok.expiresAt) })}</span>
                     <span>{tok.lastUsed ? t("lastUsed", { when: ago(tok.lastUsed) }) : t("neverUsed")}</span>
                   </div>

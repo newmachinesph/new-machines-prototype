@@ -220,18 +220,26 @@ def test_auto_connector_mode_falls_back_to_sandbox_when_composio_fails(client, m
 
 
 @pytest.fixture
-def live(monkeypatch) -> TestClient:
+def live_without_runtime(monkeypatch) -> TestClient:
     monkeypatch.setenv("NM_WORKSPACE", "live")
+    monkeypatch.delenv("NM_RUNTIME", raising=False)
     reset_store()
     return TestClient(create_app())
 
 
-def test_live_lists_definition_agents_only(live):
-    agents = live.get("/v1/agents").json()
+def test_live_without_the_runtime_stays_in_the_demo_catalog(live_without_runtime):
+    """The live workspace needs the runtime (`workspace.live()`); without it the catalog is the demo one."""
+    agents = live_without_runtime.get("/v1/agents").json()
+    assert {a["source"] for a in agents} == {"definition", "sample"}
+    assert live_without_runtime.get("/v1/agents/agent_finance").json()["id"] == "finance-agent"
+
+
+def test_live_lists_definition_agents_only(live_runtime):
+    agents = live_runtime.get("/v1/agents").json()
     assert [a["id"] for a in agents] == DEFINITION_AGENTS
     assert {a["source"] for a in agents} == {"definition"}
-    assert live.get("/v1/agents/agent_finance").status_code == 404
-    assert live.get("/v1/agents/finance-agent").json()["usedBy"] == [RECON]
+    assert live_runtime.get("/v1/agents/agent_finance").status_code == 404
+    assert live_runtime.get("/v1/agents/finance-agent").json()["usedBy"] == [RECON]
 
 
 @pytest.fixture

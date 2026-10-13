@@ -3,10 +3,13 @@
 Every function here needs Postgres. The runs router only calls them when the runtime is on.
 """
 
+import json
 import logging
 import re
 from datetime import UTC, date, datetime, timedelta
 
+from jsonschema import Draft202012Validator
+from jsonschema import ValidationError as InputError
 from psycopg.types.json import Jsonb
 from pydantic import ValidationError
 
@@ -14,7 +17,7 @@ from app import db, settings, temporal_client
 from app.auth import Actor
 from app.defs import registry
 from app.defs.snapshot import build_snapshot
-from app.errors import ApiProblem
+from app.errors import ApiProblem, ProblemIssue
 from app.models.common import money_text
 from app.models.ops import ConnectorEntry
 from app.models.requests import StartRunRequest
@@ -29,6 +32,8 @@ STARTED_BY = "You"
 LIST_LIMIT = 50
 DEFAULT_DAYS = 7
 MAX_DAYS = 366
+MAX_INPUT_BYTES = 10_000
+MAX_INPUT_ISSUES = 20
 _RANGE = re.compile(r"(\d{4}-\d{2}-\d{2})\s*\.\.\s*(\d{4}-\d{2}-\d{2})")
 _LAST_DAYS = re.compile(r"\blast\s+(\d+)\s+days?\b", re.IGNORECASE)
 
@@ -72,6 +77,68 @@ def parse_run_input(text: str, today: date | None = None) -> dict:
     if (until - since).days >= MAX_DAYS:
         raise _invalid(f"A run covers at most {MAX_DAYS} days.")
     return {"since": since.isoformat(), "until": until.isoformat()}
+
+
+def input_schema(conn, pack_slug: str) -> dict | None:
+    """The JSON Schema of the pack's run input: its Work Contract's `input_schema_ref` (the contract is the
+    workflow's `work_contract_ref`, else the pack's `contract`, as in the pinned snapshot)."""
+    pack = registry.latest(conn, "pack", pack_slug)
+    if pack is None:
+        return None
+    workflow = registry.latest(conn, "workflow", str(pack.body.get("workflow") or ""))
+    key = (workflow.body if workflow else {}).get("work_contract_ref") or pack.body.get("contract")
+    contract = registry.latest(conn, "contract", str(key or ""))
+    ref = (contract.body if contract else {}).get("input_schema_ref")
+    schema = registry.latest(conn, "schema", str(ref)) if ref else None
+    return schema.body if schema else None
+
+
+def _join(prefix: str, field: object) -> str:
+    return f"{prefix}/{field}" if prefix else str(field)
+
+
+def _field_issues(pack_slug: str, error: InputError) -> list[ProblemIssue]:
+    """The input issues one schema error stands for, each at the field it is about: a missing field and an
+    unknown field are named by their own path (one issue per field), any other error by the value's path."""
+    path = "/".join(str(p) for p in error.absolute_path)
+    instance = error.instance if isinstance(error.instance, dict) else None
+    fields: list[tuple[str, str]] = []
+    if instance is not None and error.validator == "required":
+        fields = [(f, f"{f} is required.") for f in error.validator_value if f not in instance]
+    elif instance is not None and error.validator == "additionalProperties":
+        known = set(error.schema.get("properties") or {})
+        patterns = [re.compile(p) for p in error.schema.get("patternProperties") or {}]
+        unknown = [k for k in instance if k not in known and not any(p.search(k) for p in patterns)]
+        fields = [(k, f"{k} is not a field this pack takes.") for k in unknown]
+    if not fields:
+        return [ProblemIssue(kind="input", key=pack_slug, path=path, message=error.message)]
+    return [ProblemIssue(kind="input", key=pack_slug, path=_join(path, f), message=m) for f, m in fields]
+
+
+def _input_issues(pack_slug: str, errors: list[InputError]) -> list[ProblemIssue]:
+    """Every field issue once, sorted by path. jsonschema reports a `required` error once per missing field,
+    each listing every required field, so issues are de-duplicated."""
+    seen: dict[tuple[str, str], ProblemIssue] = {}
+    for error in errors:
+        for issue in _field_issues(pack_slug, error):
+            seen.setdefault((issue.path, issue.message), issue)
+    return sorted(seen.values(), key=lambda i: (i.path, i.message))[:MAX_INPUT_ISSUES]
+
+
+def check_input(pack_slug: str, value: str | dict, schema: dict | None) -> dict:
+    """The run input: an object as given, or free text parsed as a date range (`parse_run_input`). It must
+    match the pack's input schema; 422 INVALID_INPUT lists each field error otherwise."""
+    inp = parse_run_input(value) if isinstance(value, str) else value
+    if len(json.dumps(inp)) > MAX_INPUT_BYTES:
+        raise _invalid("The input is too large.")
+    if not schema:
+        return inp
+    issues = _input_issues(pack_slug, list(Draft202012Validator(schema).iter_errors(inp)))
+    if not issues:
+        return inp
+    first = issues[0]
+    where = f"{first.path}: " if first.path else ""
+    raise ApiProblem(422, "INVALID_INPUT", f"The input is not valid. {where}{first.message}", errors=issues)
 
 
 def ops_connector_policy(snapshot: dict, catalog: list[ConnectorEntry]) -> tuple[dict, list[str]]:
@@ -151,9 +218,15 @@ def _stop_unstarted(run_id: str) -> None:
         log.info("No workflow to terminate for %s (%s).", run_id, type(exc).__name__)
 
 
-def start_real_run(body: StartRunRequest, actor: Actor, catalog: list[ConnectorEntry]) -> Run:
-    """Insert the run, then start PackRunner (workflow id = run id). 503 when Temporal is unreachable."""
-    inp = parse_run_input(body.input)
+def start_real_run(
+    body: StartRunRequest, actor: Actor, catalog: list[ConnectorEntry], inp: dict | None = None
+) -> Run:
+    """Insert the run, then start PackRunner (workflow id = run id). 503 when Temporal is unreachable.
+    `inp` is the input already checked (`check_input`); without it the body's input is checked here."""
+    if inp is None:
+        with db.connect() as conn:
+            schema = input_schema(conn, body.pack_slug)
+        inp = check_input(body.pack_slug, body.input, schema)
     created = _insert_run(body, actor, catalog, inp)
     run_id = created["run_id"]
     try:

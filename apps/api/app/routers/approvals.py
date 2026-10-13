@@ -1,4 +1,4 @@
-from app import run_tasks, temporal_client
+from app import run_tasks, temporal_client, workspace
 from app.auth import Actor, CurrentActor
 from app.errors import ApiProblem
 from app.models.work import Approval, ApprovalAction, DigestRow
@@ -67,9 +67,9 @@ def real_approval(row: dict) -> Approval:
 
 @router.get("/approvals", operation_id="listApprovals", response_model=list[Approval])
 def list_approvals(actor: CurrentActor) -> list[Approval]:
-    """Approvals of real runs (newest first), then the fixtures."""
+    """Approvals of real runs (newest first), then the fixtures (none in the live workspace)."""
     real = [real_approval(row) for row in run_tasks.list_rows(actor.org_id, "approval")]
-    return real + get_store().approvals
+    return real if workspace.live() else real + get_store().approvals
 
 
 def _decide(approval_id: str, status: str) -> Approval:
@@ -84,6 +84,8 @@ def _decide(approval_id: str, status: str) -> Approval:
 def _decide_any(approval_id: str, status: str, actor: Actor) -> Approval:
     """A real run's approval is recorded, then signalled to its workflow; otherwise the fixture is decided."""
     row = run_tasks.get_row(actor.org_id, "approval", approval_id)
+    if row is None and workspace.live():
+        raise ApiProblem(404, "NOT_FOUND", f"No approval {approval_id}.")
     if row is None:
         return _decide(approval_id, status)
     decision = DECISIONS[status]

@@ -1,27 +1,54 @@
 "use client";
 
-import { ChevronRight } from "lucide-react";
+import { Check, ChevronRight } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { PackIcon } from "@/components/pack-icon";
 import { QueryState } from "@/components/query-state";
 import { Skeleton } from "@/components/skeleton";
-import { ActorGlyph, ActorLabel, Amount, OutcomeRail, RunStatusPill, SimTag } from "@/components/ui";
-import { sumMoney, usd } from "@/lib/format";
+import {
+  ActorGlyph,
+  ActorLabel,
+  Amount,
+  ButtonLink,
+  EmptyState,
+  OutcomeRail,
+  RunStatusPill,
+  SimTag,
+} from "@/components/ui";
+import { cn } from "@/lib/cn";
+import { useNow } from "@/lib/clock";
+import { sumMoney } from "@/lib/format";
 import { usePacks } from "@/lib/queries/catalog";
-import { useAttention, useOrg } from "@/lib/queries/org";
+import { missingApps, useAttention, useConnections } from "@/lib/queries/org";
 import { useRuns } from "@/lib/queries/runs";
+import { useUsage } from "@/lib/queries/workspace";
+import { daysLeftInMonth, monthOf, spendSplit } from "@/lib/spend";
+import type { Connection, Pack, RunSummary, Usage } from "@/lib/types";
 import { useFormat } from "@/lib/use-format";
 import { AskBox } from "./ask-box";
+import { InvitationNotices } from "./invitation-notice";
 
-// Buyer-side split for October, matching the simulated ledger. The $4.00 reviewer pay on the
-// failed run_1036 was absorbed by the platform, so it is not part of the buyer's spend.
-const SPLIT = { reviewers: usd(750), plan: usd(4900) };
+type Step = { key: "hire" | "connect" | "run"; done: boolean; href: string };
+
+/** The getting-started steps, each ticked from real data: hired packs, their apps' connections, and runs. */
+export function gettingStartedSteps(packs: Pack[], conns: Connection[], runs: RunSummary[]): Step[] {
+  const hired = packs.filter((p) => p.installed);
+  const missing = missingApps(
+    hired.flatMap((p) => p.connectors.map((c) => c.app)),
+    conns,
+  );
+  return [
+    { key: "hire", done: hired.length > 0, href: "/app/marketplace" },
+    { key: "connect", done: hired.length > 0 && missing.length === 0, href: "/app/connections" },
+    { key: "run", done: runs.length > 0, href: hired[0] ? `/app/runs/new?pack=${hired[0].slug}` : "/app/runs/new" },
+  ];
+}
 
 function Card({ title, aside, children }: { title: string; aside?: React.ReactNode; children: React.ReactNode }) {
   return (
     <section>
-      <div className="mb-2.5 flex items-center justify-between px-1">
+      <div className="mb-2.5 flex items-center justify-between gap-3 px-1">
         <h2 className="text-sm font-medium">{title}</h2>
         {aside}
       </div>
@@ -30,103 +57,171 @@ function Card({ title, aside, children }: { title: string; aside?: React.ReactNo
   );
 }
 
-export function Overview() {
+/** Shown until the workspace has a hired pack and a run: hire, connect, start. */
+function GettingStarted() {
+  const t = useTranslations("overview.start");
+  const packs = usePacks();
+  const conns = useConnections();
+  const runs = useRuns();
+  if (!packs.data || !conns.data || !runs.data) return null;
+  if (packs.data.some((p) => p.installed) && runs.data.length > 0) return null;
+  const steps = gettingStartedSteps(packs.data, conns.data, runs.data);
+  return (
+    <Card title={t("title")} aside={<span className="text-xs text-muted">{t("lede")}</span>}>
+      <ol className="divide-y divide-rule">
+        {steps.map((s, i) => (
+          <li key={s.key}>
+            <Link href={s.href} className="flex items-start gap-3 px-4 py-3 hover:bg-grey-50/70">
+              <span
+                className={cn(
+                  "mt-0.5 grid size-5 shrink-0 place-items-center rounded-full text-[11px] font-semibold",
+                  s.done ? "bg-ink text-paper" : "border border-grey-300 text-grey-700",
+                )}
+              >
+                {s.done ? <Check className="size-3" strokeWidth={2.5} aria-label={t("done")} /> : i + 1}
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className={cn("text-sm font-medium", s.done && "text-muted")}>{t(`${s.key}.title`)}</div>
+                <div className="mt-0.5 text-[13px] text-muted">{t(`${s.key}.detail`)}</div>
+              </div>
+              <ChevronRight className="mt-0.5 size-4 text-grey-300" aria-hidden />
+            </Link>
+          </li>
+        ))}
+      </ol>
+    </Card>
+  );
+}
+
+/** The month's spend against the cap, split into plan, agents and tools, and reviewer pay. */
+function Budget({ usage: { org, ledger } }: { usage: Usage }) {
   const t = useTranslations("overview");
   const tc = useTranslations("common");
+  const { monthName } = useFormat();
+  const now = new Date(useNow());
+  const split = spendSplit(org, ledger, monthOf(now));
+  const cap = org.monthlyCap.amountMinor;
+  const pct = (m: number) => `${cap > 0 ? Math.min(100, (m / cap) * 100) : 0}%`;
+  return (
+    <>
+      <div className="flex items-center justify-between px-4 pt-3.5">
+        <span className="text-sm font-medium">{t("daysLeft", { n: daysLeftInMonth(now), month: monthName(now) })}</span>
+        <Link
+          href="/app/usage"
+          className="rounded-md border border-rule px-2.5 py-1 text-xs font-medium hover:border-grey-300"
+        >
+          {t("billing")}
+        </Link>
+      </div>
+      <div className="m-3 rounded-md bg-stage px-3 py-2.5">
+        <div className="flex justify-between text-xs text-muted">
+          <span>{t("spent")}</span>
+          <span>{t("cap")}</span>
+        </div>
+        <div className="mt-0.5 flex justify-between text-sm font-medium">
+          <Amount value={org.monthSpent} />
+          <Amount value={org.monthlyCap} />
+        </div>
+        <div
+          className="mt-2 flex h-1.5 overflow-hidden rounded-full bg-grey-200"
+          role="img"
+          aria-label={t("shareLabel")}
+        >
+          <div className="h-full bg-ink" style={{ width: pct(split.plan.amountMinor) }} />
+          <div className="h-full bg-machine" style={{ width: pct(split.agents.amountMinor) }} />
+          <div className="h-full bg-human" style={{ width: pct(split.reviewers.amountMinor) }} />
+        </div>
+      </div>
+      <dl className="divide-y divide-rule px-4 pb-1 text-sm">
+        {[
+          { k: t("plan", { plan: org.plan }), v: split.plan, c: "bg-ink" },
+          { k: tc("agentsModelsTools"), v: split.agents, c: "bg-machine" },
+          { k: tc("reviewerPay"), v: split.reviewers, c: "bg-human" },
+        ].map((r) => (
+          <div key={r.k} className="flex items-center justify-between py-2.5">
+            <dt className="flex items-center gap-2 text-grey-700">
+              <span className={`size-2 rounded-full ${r.c}`} aria-hidden />
+              {r.k}
+            </dt>
+            <dd>
+              <Amount value={r.v} />
+            </dd>
+          </div>
+        ))}
+      </dl>
+      <div className="flex items-center justify-between border-t border-rule bg-stage/60 px-4 py-2.5 text-xs text-muted">
+        {t("capNote")}
+        <SimTag />
+      </div>
+    </>
+  );
+}
+
+/** No runs yet: start one of the hired packs, or hire one first. */
+function NoRuns({ packs }: { packs: Pack[] }) {
+  const t = useTranslations("overview");
+  const hired = packs.find((p) => p.installed);
+  return (
+    <EmptyState
+      action={
+        <ButtonLink
+          href={hired ? `/app/runs/new?pack=${hired.slug}` : "/app/marketplace"}
+          variant="secondary"
+          className="h-8"
+        >
+          {hired ? t("startFirstRun") : t("browseMarketplace")}
+        </ButtonLink>
+      }
+    >
+      {hired ? t("noRuns") : t("noRunsNoPacks")}
+    </EmptyState>
+  );
+}
+
+export function Overview() {
+  const t = useTranslations("overview");
   const { ago, money } = useFormat();
-  const org = useOrg();
+  const usage = useUsage();
   const runs = useRuns();
   const attention = useAttention();
   const packs = usePacks();
 
   return (
     <div className="space-y-6">
+      <InvitationNotices />
       <AskBox />
+      <GettingStarted />
 
       <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[minmax(340px,400px)_1fr]">
         <div className="space-y-6">
           <Card title={t("budget")}>
-            <QueryState query={org} skeleton={<Skeleton className="h-72 rounded-none" />}>
-              {(ORG) => {
-                const pct = (m: number) => `${(m / ORG.monthlyCap.amountMinor) * 100}%`;
-                const agentsAndTools = usd(
-                  ORG.monthSpent.amountMinor - SPLIT.plan.amountMinor - SPLIT.reviewers.amountMinor,
-                );
-                return (
-                  <>
-                    <div className="flex items-center justify-between px-4 pt-3.5">
-                      <span className="text-sm font-medium">{t("daysLeft", { n: 19 })}</span>
-                      <Link
-                        href="/app/usage"
-                        className="rounded-md border border-rule px-2.5 py-1 text-xs font-medium hover:border-grey-300"
-                      >
-                        {t("billing")}
-                      </Link>
-                    </div>
-                    <div className="m-3 rounded-md bg-stage px-3 py-2.5">
-                      <div className="flex justify-between text-xs text-muted">
-                        <span>{t("spent")}</span>
-                        <span>{t("cap")}</span>
-                      </div>
-                      <div className="mt-0.5 flex justify-between text-sm font-medium">
-                        <Amount value={ORG.monthSpent} />
-                        <Amount value={ORG.monthlyCap} />
-                      </div>
-                      <div
-                        className="mt-2 flex h-1.5 overflow-hidden rounded-full bg-grey-200"
-                        role="img"
-                        aria-label={t("shareLabel")}
-                      >
-                        <div className="h-full bg-ink" style={{ width: pct(SPLIT.plan.amountMinor) }} />
-                        <div className="h-full bg-machine" style={{ width: pct(agentsAndTools.amountMinor) }} />
-                        <div className="h-full bg-human" style={{ width: pct(SPLIT.reviewers.amountMinor) }} />
-                      </div>
-                    </div>
-                    <dl className="divide-y divide-rule px-4 pb-1 text-sm">
-                      {[
-                        { k: t("plan"), v: SPLIT.plan, c: "bg-ink" },
-                        { k: tc("agentsModelsTools"), v: agentsAndTools, c: "bg-machine" },
-                        { k: tc("reviewerPay"), v: SPLIT.reviewers, c: "bg-human" },
-                      ].map((r) => (
-                        <div key={r.k} className="flex items-center justify-between py-2.5">
-                          <dt className="flex items-center gap-2 text-grey-700">
-                            <span className={`size-2 rounded-full ${r.c}`} aria-hidden />
-                            {r.k}
-                          </dt>
-                          <dd>
-                            <Amount value={r.v} />
-                          </dd>
-                        </div>
-                      ))}
-                    </dl>
-                    <div className="flex items-center justify-between border-t border-rule bg-stage/60 px-4 py-2.5 text-xs text-muted">
-                      {t("capNote")}
-                      <SimTag />
-                    </div>
-                  </>
-                );
-              }}
+            <QueryState query={usage} skeleton={<Skeleton className="h-72 rounded-none" />}>
+              {(u) => <Budget usage={u} />}
             </QueryState>
           </Card>
 
           <Card title={t("needsYou")} aside={<span className="text-xs text-muted">{attention.data?.length}</span>}>
             <QueryState query={attention} skeleton={<Skeleton className="h-40 rounded-none" />}>
-              {(items) => (
-                <ul className="divide-y divide-rule">
-                  {items.map((item) => (
-                    <li key={item.title}>
-                      <Link href={item.href} className="group flex items-start gap-3 px-4 py-3 hover:bg-grey-50/70">
-                        <ActorGlyph actor={item.actor} className="mt-1 size-3" />
-                        <div className="min-w-0 flex-1">
-                          <div className="text-sm font-medium">{item.title}</div>
-                          <div className="mt-0.5 truncate text-[13px] text-muted">{item.detail}</div>
-                        </div>
-                        <span className="shrink-0 pt-0.5 text-xs text-muted">{ago(item.when)}</span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              )}
+              {(items) =>
+                items.length === 0 ? (
+                  <EmptyState>{t("nothingNeedsYou")}</EmptyState>
+                ) : (
+                  <ul className="divide-y divide-rule">
+                    {items.map((item) => (
+                      <li key={`${item.href}-${item.title}`}>
+                        <Link href={item.href} className="group flex items-start gap-3 px-4 py-3 hover:bg-grey-50/70">
+                          <ActorGlyph actor={item.actor} className="mt-1 size-3" />
+                          <div className="min-w-0 flex-1">
+                            <div className="text-sm font-medium">{item.title}</div>
+                            <div className="mt-0.5 truncate text-[13px] text-muted">{item.detail}</div>
+                          </div>
+                          <span className="shrink-0 pt-0.5 text-xs text-muted">{ago(item.when)}</span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )
+              }
             </QueryState>
           </Card>
 
@@ -139,28 +234,40 @@ export function Overview() {
             }
           >
             <QueryState query={packs} skeleton={<Skeleton className="h-40 rounded-none" />}>
-              {(list) => (
-                <ul className="divide-y divide-rule">
-                  {list
-                    .filter((p) => p.installed)
-                    .map((p) => (
-                      <li key={p.slug}>
-                        <Link
-                          href={`/app/marketplace/${p.slug}`}
-                          className="flex items-center gap-3 px-4 py-2.5 hover:bg-grey-50/70"
-                        >
-                          <PackIcon slug={p.slug} className="size-7" />
-                          <div className="min-w-0 flex-1">
-                            <div className="truncate text-sm">{p.name}</div>
-                            <div className="text-xs text-muted">
-                              {t("packMeta", { version: p.version, n: p.runs30d ?? 0 })}
+              {(list) =>
+                list.some((p) => p.installed) ? (
+                  <ul className="divide-y divide-rule">
+                    {list
+                      .filter((p) => p.installed)
+                      .map((p) => (
+                        <li key={p.slug}>
+                          <Link
+                            href={`/app/marketplace/${p.slug}`}
+                            className="flex items-center gap-3 px-4 py-2.5 hover:bg-grey-50/70"
+                          >
+                            <PackIcon slug={p.slug} className="size-7" />
+                            <div className="min-w-0 flex-1">
+                              <div className="truncate text-sm">{p.name}</div>
+                              <div className="text-xs text-muted">
+                                {t("packMeta", { version: p.version, n: p.runs30d ?? 0 })}
+                              </div>
                             </div>
-                          </div>
-                        </Link>
-                      </li>
-                    ))}
-                </ul>
-              )}
+                          </Link>
+                        </li>
+                      ))}
+                  </ul>
+                ) : (
+                  <EmptyState
+                    action={
+                      <ButtonLink href="/app/marketplace" variant="secondary" className="h-8">
+                        {t("browseMarketplace")}
+                      </ButtonLink>
+                    }
+                  >
+                    {t("noPacks")}
+                  </EmptyState>
+                )
+              }
             </QueryState>
           </Card>
         </div>
@@ -176,52 +283,56 @@ export function Overview() {
           <QueryState query={runs} skeleton={<Skeleton className="h-96 rounded-none" />}>
             {(rows) => (
               <QueryState query={packs} skeleton={<Skeleton className="h-96 rounded-none" />}>
-                {(allPacks) => (
-                  <ul className="divide-y divide-rule">
-                    {rows.map((r) => {
-                      const body = (
-                        <>
-                          <PackIcon slug={r.packSlug} />
-                          <div className="min-w-0">
-                            <div className="truncate text-sm font-medium">{r.title}</div>
-                            <div className="truncate text-[13px] text-muted">
-                              {allPacks.find((p) => p.slug === r.packSlug)?.name}
+                {(allPacks) =>
+                  rows.length === 0 ? (
+                    <NoRuns packs={allPacks} />
+                  ) : (
+                    <ul className="divide-y divide-rule">
+                      {rows.map((r) => {
+                        const body = (
+                          <>
+                            <PackIcon slug={r.packSlug} />
+                            <div className="min-w-0">
+                              <div className="truncate text-sm font-medium">{r.title}</div>
+                              <div className="truncate text-[13px] text-muted">
+                                {allPacks.find((p) => p.slug === r.packSlug)?.name}
+                              </div>
                             </div>
-                          </div>
-                          <div className="hidden min-w-0 md:block">
-                            <div className="flex items-center gap-2 truncate text-[13px]">
-                              <span className="truncate">{r.summary}</span>
+                            <div className="hidden min-w-0 md:block">
+                              <div className="flex items-center gap-2 truncate text-[13px]">
+                                <span className="truncate">{r.summary}</span>
+                              </div>
+                              <div className="text-[13px] text-muted">{ago(r.startedAt)}</div>
                             </div>
-                            <div className="text-[13px] text-muted">{ago(r.startedAt)}</div>
-                          </div>
-                          <div className="hidden justify-self-start lg:block">
-                            <RunStatusPill status={r.status} />
-                          </div>
-                          <div className="hidden 2xl:block">
-                            <OutcomeRail compact stages={r.stages} />
-                          </div>
-                          <span className="tnum hidden w-16 text-right text-sm sm:block">
-                            {money(sumMoney(r.spent.ai, r.spent.human, r.spent.tools))}
-                          </span>
-                          <ChevronRight className="size-4 text-grey-300" aria-hidden />
-                        </>
-                      );
-                      const cls =
-                        "grid grid-cols-[36px_1fr_16px] items-center gap-x-4 px-4 py-3.5 sm:grid-cols-[36px_1fr_64px_16px] md:grid-cols-[36px_minmax(0,1fr)_minmax(0,1.1fr)_64px_16px] lg:grid-cols-[36px_minmax(0,1fr)_minmax(0,1.1fr)_190px_64px_16px] 2xl:grid-cols-[36px_minmax(0,1fr)_minmax(0,1.2fr)_190px_96px_64px_16px]";
-                      return (
-                        <li key={r.id}>
-                          {r.hasDetail ? (
-                            <Link href={`/app/runs/${r.id}`} className={`${cls} hover:bg-grey-50/70`}>
-                              {body}
-                            </Link>
-                          ) : (
-                            <div className={cls}>{body}</div>
-                          )}
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
+                            <div className="hidden justify-self-start lg:block">
+                              <RunStatusPill status={r.status} />
+                            </div>
+                            <div className="hidden 2xl:block">
+                              <OutcomeRail compact stages={r.stages} />
+                            </div>
+                            <span className="tnum hidden w-16 text-right text-sm sm:block">
+                              {money(sumMoney(r.spent.ai, r.spent.human, r.spent.tools))}
+                            </span>
+                            <ChevronRight className="size-4 text-grey-300" aria-hidden />
+                          </>
+                        );
+                        const cls =
+                          "grid grid-cols-[36px_1fr_16px] items-center gap-x-4 px-4 py-3.5 sm:grid-cols-[36px_1fr_64px_16px] md:grid-cols-[36px_minmax(0,1fr)_minmax(0,1.1fr)_64px_16px] lg:grid-cols-[36px_minmax(0,1fr)_minmax(0,1.1fr)_190px_64px_16px] 2xl:grid-cols-[36px_minmax(0,1fr)_minmax(0,1.2fr)_190px_96px_64px_16px]";
+                        return (
+                          <li key={r.id}>
+                            {r.hasDetail ? (
+                              <Link href={`/app/runs/${r.id}`} className={`${cls} hover:bg-grey-50/70`}>
+                                {body}
+                              </Link>
+                            ) : (
+                              <div className={cls}>{body}</div>
+                            )}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )
+                }
               </QueryState>
             )}
           </QueryState>

@@ -66,7 +66,6 @@
     "signOutFailed": "Sign out did not finish",
     "tryAgain": "Try again.",
     "demoOperator": "Demo operator",
-    "owner": "Owner",
     "reviewerRole": "Philippines, invoice review",
     "home": "New Machines home",
     "demoTooltip": "Orders and customers are synthetic, billing and payouts are simulated, and Shopify and Stripe are sandbox mocks.",
@@ -94,7 +93,19 @@
         "packs": "Workflow Packs",
         "tasks": "Reviewer tasks"
       }
-    }
+    },
+    "signedInAsUser": "Signed in as {who}",
+    "roles": {
+      "owner": "Owner",
+      "admin": "Admin",
+      "member": "Member"
+    },
+    "sandboxBadge": "Sandbox apps, simulated billing",
+    "sandboxTooltip": "Your apps use sandbox data until live connections arrive, so nothing reaches your real accounts. Billing is simulated: no money moves.",
+    "you": "You",
+    "signedIn": "Signed in",
+    "workspaceLoading": "Loading workspace",
+    "workspaceUnavailable": "Workspace unavailable"
   },
   "status": {
     "RUNNING": "Running",
@@ -373,12 +384,12 @@
   },
   "overview": {
     "budget": "Budget",
-    "daysLeft": "{n, plural, one {# day left in October} other {# days left in October}}",
+    "daysLeft": "{n, plural, one {# day} other {# days}} left in {month}",
     "billing": "Billing",
     "spent": "Spent this month",
     "cap": "Monthly cap",
     "shareLabel": "Plan, agents and reviewer pay as a share of the monthly cap",
-    "plan": "Pro plan",
+    "plan": "{plan} plan",
     "capNote": "Runs stop before passing the cap.",
     "needsYou": "Needs you",
     "hiredPacks": "Hired packs",
@@ -404,6 +415,35 @@
         "reorder": "Tell me what to reorder every Monday",
         "translate": "Translate our catalog for a Japanese store"
       }
+    },
+    "nothingNeedsYou": "Nothing needs you right now. Approvals and review tasks show up here.",
+    "noPacks": "No packs hired yet. Hire a pack to put agents to work.",
+    "browseMarketplace": "Browse the marketplace",
+    "noRuns": "No runs yet. Start one to see the work and its receipt here.",
+    "noRunsNoPacks": "No runs yet. Hire a pack first, then start a run.",
+    "startFirstRun": "Start a run",
+    "start": {
+      "title": "Get started",
+      "lede": "Three steps to your first verified result",
+      "done": "Done",
+      "hire": {
+        "title": "Hire a pack",
+        "detail": "Pick the work you want done from the marketplace."
+      },
+      "connect": {
+        "title": "Connect its apps",
+        "detail": "Connect the apps the pack needs. Sandbox data is used until live connections arrive."
+      },
+      "run": {
+        "title": "Start a run",
+        "detail": "Choose the data to work on, approve what needs you, and read the receipt."
+      }
+    },
+    "invitation": {
+      "title": "{org} invited you to join as {role}",
+      "detail": "If you accept, you will work in their workspace instead of this one.",
+      "accept": "Accept",
+      "decline": "Decline"
     }
   },
   "approvals": {
@@ -455,7 +495,9 @@
       "actionRecorded": "Recorded as approval <mono>{id}</mono>.",
       "actionDeclinedTitle": "Declined. The run stops here.",
       "actionDeclinedBody": "Nothing was changed in {app}. Start a new run to try again."
-    }
+    },
+    "empty": "Nothing is waiting for your approval. When a run needs your sign-off on an action, it shows up here.",
+    "seeRuns": "See runs"
   },
   "connections": {
     "title": "Connections",
@@ -465,7 +507,8 @@
       "titleApp": "Connect {app}",
       "description": "New Machines sends you to the app's own sign-in page through Composio. You approve the permissions there, and we never see your password.",
       "liveOnly": "Available in the live product",
-      "demoNote": "This demo workspace cannot connect real accounts. Google Sheets, Gmail and Drive are already connected to a test account."
+      "demoNote": "This demo workspace cannot connect real accounts. Google Sheets, Gmail and Drive are already connected to a test account.",
+      "liveNote": "Live app connections are not available yet. The apps your hired packs need are listed on this page, and you can connect them to sandbox data."
     },
     "status": {
       "connected": "Connected",
@@ -496,7 +539,15 @@
     "revokeTitle": "Revoke this access?",
     "revokeDescription": "{install} will no longer be able to use {capability} on {app}. You can grant it again from the pack's settings.",
     "revokeConfirm": "Revoke access",
-    "noPack": "No pack uses this connection."
+    "noPack": "No pack uses this connection.",
+    "disconnectedToastBodyLive": "Runs that need it can't start until you connect it again.",
+    "empty": "No apps yet. Hire a pack and the apps it needs appear here, ready to connect.",
+    "browseMarketplace": "Browse the marketplace",
+    "connectSandbox": "Connect {app} (sandbox)",
+    "connectedToast": "{app} connected",
+    "connectedSandboxBody": "It serves sandbox data until live connections arrive. Nothing reaches your real account.",
+    "connectFailed": "Could not connect {app}",
+    "sandboxNote": "Apps use sandbox data until live connections arrive. Nothing is read from or written to your real accounts."
   },
   "memory": {
     "title": "Memory",
@@ -559,7 +610,9 @@
       "retractTitle": "Retract this memory?",
       "retractDescription": "Agents stop using it from their next run. Runs already finished keep the record of what they used.",
       "retractConfirm": "Retract memory"
-    }
+    },
+    "empty": "No memories yet. Agents propose what they learn from runs, and nothing is kept until a person approves it.",
+    "seeRuns": "See runs"
   },
   "marketplace": {
     "grid": {
@@ -737,19 +790,36 @@
       "notHired": "{name} isn't hired yet, so it can't start a run.",
       "unknownPack": "There is no pack called {slug}.",
       "hireThis": "Hire this pack",
-      "seeAllPacks": "See all packs"
-    }
+      "seeAllPacks": "See all packs",
+      "optional": "(optional)",
+      "noInputNeeded": "This pack needs no input.",
+      "appsMissing": "Connect {apps} before starting a run of {name}.",
+      "capReached": "This month's spend has reached the {cap} monthly cap. New runs start again next month.",
+      "seeUsage": "See usage",
+      "changeCap": "Change the per-run cap",
+      "noHiredPacks": "Hire a pack before starting a run.",
+      "noChoice": "None",
+      "perRunCap": "This pack's spending cap per run is {cap}."
+    },
+    "empty": "No runs yet. Start a run of a hired pack and follow its work here.",
+    "startRun": "Start a run"
   },
   "forms": {
     "startRun": {
       "choosePack": "Choose a pack.",
       "needInput": "Connect an app with this data first.",
-      "noteTooLong": "Keep the note under 500 characters."
+      "noteTooLong": "Keep the note under 500 characters.",
+      "required": "Enter {label}.",
+      "number": "Enter a number.",
+      "integer": "Enter a whole number.",
+      "date": "Enter a date.",
+      "pattern": "This doesn't match the expected format.",
+      "json": "Enter valid JSON."
     }
   },
   "settings": {
     "title": "Settings",
-    "lede": "Who can use this workspace, the rules every run follows, and access for AI tools like Gemini and Antigravity CLI.",
+    "lede": "Who can use this workspace, the rules every run follows, and access for the AI tools you connect.",
     "policies": {
       "title": "Policies",
       "aside": "Checked on every action",
@@ -792,7 +862,8 @@
       "rolesLower": {
         "Member": "member",
         "Admin": "admin"
-      }
+      },
+      "sentToastBodyLive": "{address} joins as {role} the next time they sign in with that email."
     },
     "tokens": {
       "title": "Access for AI tools (MCP)",
@@ -800,7 +871,7 @@
       "createTitle": "Create a token for an AI tool",
       "createDescription": "The token works for 30 days. It can never approve or decline anything, whatever you choose here.",
       "name": "Name",
-      "namePlaceholder": "For example, Antigravity CLI",
+      "namePlaceholder": "For example, Team assistant",
       "scopes": "What it can do",
       "scope": {
         "agents:read": "See hired packs and agents",
@@ -808,9 +879,9 @@
         "runs:start": "Start runs of hired packs",
         "approvals:list": "See what is waiting for approval"
       },
-      "lede": "Let Gemini, Antigravity CLI or another AI tool list your packs, start runs and see what is waiting. Tokens can never approve or decline anything.",
+      "lede": "Let an AI tool list your packs, start runs and see what is waiting. Tokens can never approve or decline anything.",
       "createdToast": "Token created",
-      "createdToastBody": "In the live product you copy the full token once, right here. Demo tokens do not work.",
+      "createdToastBody": "Copy it now. It is shown only once.",
       "createFailed": "Could not create the token",
       "revokedToast": "Token revoked",
       "revokedToastBody": "{name} can no longer reach this workspace.",
@@ -822,20 +893,28 @@
       "expires": "Expires {date}",
       "lastUsed": "Last used {when}",
       "neverUsed": "Not used yet",
-      "none": "No tokens. Create one to connect Gemini or another AI tool."
+      "none": "No tokens. Create one to connect an AI tool.",
+      "secretTitle": "Copy your new token",
+      "secretNote": "This is the only time the full token is shown. Store it somewhere safe. You can revoke it here at any time.",
+      "secretDemoNote": "Demo tokens do not work. In a live workspace this is the only time the full token is shown.",
+      "copy": "Copy",
+      "copied": "Copied",
+      "copyFailed": "Could not copy the token",
+      "done": "Done",
+      "copyByHand": "The token is selected. Copy it with Ctrl+C or ⌘C."
     }
   },
   "usage": {
     "title": "Usage and billing",
     "lede": "Every charge comes from a recorded run step and is posted twice: once against your account and once against where the money goes. In this demo no money moves.",
     "simulated": "Simulated billing",
-    "spent": "Spent in October",
+    "spent": "Spent in {month}",
     "ofCap": "{pct}% of the {cap} monthly cap",
     "held": "Held for runs in progress",
-    "heldNote": "Released when <run>run_1047</run> finishes. Only what it uses is charged.",
+    "heldNote": "Released when <run>{id}</run> finishes. Only what it uses is charged.",
     "agentsToolsNote": "Metered per run step. The {plan} plan and reviewer pay are counted separately.",
     "reviewerPay": "Reviewer pay this month",
-    "reviewerPayNote": "{n} tasks. {absorbed} of it was absorbed by New Machines after a failed verification.",
+    "reviewerPayNote": "{n, plural, =0 {No reviewer payments yet.} one {# payment.} other {# payments.}}",
     "ledger": "Ledger",
     "ledgerNote": "Each entry balances: debits equal credits",
     "account": "Account",
@@ -852,7 +931,16 @@
     "includes": "Includes",
     "includesValue": "Unlimited hired packs, 5 members, 30-day run history",
     "payment": "Payment method",
-    "paymentValue": "None. This demo workspace never charges a card."
+    "paymentValue": "None. This demo workspace never charges a card.",
+    "ledeLive": "Every charge comes from a recorded run step and is posted twice: once against your account and once against where the money goes. Billing is simulated: no money moves.",
+    "heldNoteMany": "Held for {n} runs in progress. Each is released when its run finishes.",
+    "heldNone": "Nothing is held right now.",
+    "agentsToolsNoteNoPlan": "Metered per run step. Reviewer pay is counted separately.",
+    "reviewerPayAbsorbed": "{absorbed} of it was absorbed by New Machines.",
+    "planValueFree": "{plan}, no plan fee (simulated)",
+    "paymentValueLive": "None. Billing is simulated, so no card is charged.",
+    "emptyLedger": "No charges yet. Each run you start adds its costs here.",
+    "startRun": "Start a run"
   },
   "work": {
     "lede": "Paid review work that matches your skills. You see the pay, the time it should take and the data rules before you claim anything.",
@@ -908,8 +996,12 @@
         "REVISION_REQUIRED": "Sent back with corrections",
         "REJECTED": "Rejected",
         "ESCALATED": "Escalated"
-      }
-    }
+      },
+      "empty": "No accepted submissions yet. Claim an open task to start earning.",
+      "seeTasks": "See available tasks"
+    },
+    "empty": "No review tasks are open right now. New ones appear here when a run needs a person.",
+    "simulatedPayLive": "Pay is simulated"
   },
   "task": {
     "byline": "{buyer}, {pack}",
@@ -1030,6 +1122,7 @@
       "stopsBody": "You rejected or escalated the result, so the run ends without retrying.",
       "recordedTitle": "Review recorded",
       "recordedBody": "The run has your verdict."
-    }
+    },
+    "simulatedPayLive": "Simulated pay"
   }
 }

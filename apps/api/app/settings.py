@@ -39,7 +39,7 @@ def temporal_namespace() -> str:
 
 
 def temporal_api_key() -> str | None:
-    """Only for Temporal Cloud namespaces (target ending in tmprl.cloud:7233)."""
+    """When set, the connection uses TLS plus this API key (Temporal Cloud, either endpoint style)."""
     return os.environ.get("TEMPORAL_API_KEY") or None
 
 
@@ -54,7 +54,7 @@ def model_env() -> str:
 def workspace_mode() -> str:
     """demo (default): customer endpoints serve the fixture workspace alongside real data. live: definitions
     and real rows only, never fixture data."""
-    return os.environ.get("NM_WORKSPACE", "demo")
+    return os.environ.get("NM_WORKSPACE") or "demo"
 
 
 def connector_mode() -> str:
@@ -83,3 +83,26 @@ def demo_user_uid() -> str | None:
 
 def defs_auto_apply() -> bool:
     return os.environ.get("NM_DEFS_AUTO_APPLY", "").lower() in {"1", "true", "yes", "on"}
+
+
+def _positive_int(name: str, default: int) -> int:
+    try:
+        value = int(os.environ.get(name, ""))
+    except ValueError:
+        return default
+    return value if value >= 1 else default
+
+
+def embedded_worker() -> bool:
+    """With the runtime on, run the PackRunner worker inside the API process (one Cloud Run service)."""
+    return os.environ.get("NM_EMBEDDED_WORKER", "").lower() in {"1", "true", "yes", "on"}
+
+
+def worker_concurrency() -> int:
+    """Concurrent activities (and activity threads) per worker; each holds at most one pooled connection."""
+    return _positive_int("NM_WORKER_CONCURRENCY", 8)
+
+
+def db_pool_max() -> int:
+    """Largest Postgres pool this process opens."""
+    return _positive_int("NM_DB_POOL_MAX", 8)

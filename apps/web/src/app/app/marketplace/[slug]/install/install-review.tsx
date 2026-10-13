@@ -7,7 +7,8 @@ import { Checkbox, Choices, Modal, ModalClose, focusAfterClose, useToast } from 
 import { Button, ButtonLink, Callout, Id, KeyValues, MockTag, Section } from "@/components/ui";
 import { useErrorText } from "@/lib/api/use-error-text";
 import { usd } from "@/lib/format";
-import { ORG_ID, useAgentById, useInstallPack } from "@/lib/queries/catalog";
+import { useAgentById, useInstallPack } from "@/lib/queries/catalog";
+import { useOrgId } from "@/lib/queries/me";
 import { useFormat } from "@/lib/use-format";
 import type { Pack } from "@/lib/types";
 
@@ -26,11 +27,13 @@ export function InstallReview({ pack: p }: { pack: Pack }) {
   const install = useInstallPack();
   const confirmation = useRef<HTMLDivElement>(null);
   const toast = useToast();
+  const orgId = useOrgId();
 
   const needsReviewers = p.estimate.humanMax.amountMinor > 0;
   const hire = () =>
+    orgId &&
     install.mutate(
-      { path: { org_id: ORG_ID }, body: { packSlug: p.slug, capMinor: cap, reviewerPool: pool } },
+      { path: { org_id: orgId }, body: { packSlug: p.slug, capMinor: cap, reviewerPool: pool } },
       {
         onSuccess: (res) => {
           setHired(res.summary);
@@ -173,7 +176,7 @@ export function InstallReview({ pack: p }: { pack: Pack }) {
                 <ModalClose render={<Button variant="secondary" />}>{tc("close")}</ModalClose>
               </div>
             </Modal>
-            <Button className="mt-4 w-full" disabled={!agree || install.isPending} onClick={hire}>
+            <Button className="mt-4 w-full" disabled={!agree || !orgId || install.isPending} onClick={hire}>
               {t("hire", { name: p.name })}
             </Button>
           </div>

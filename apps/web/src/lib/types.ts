@@ -24,6 +24,7 @@ export type {
   TimelineEvent,
   ToolCall,
   TrustPassport,
+  Usage,
 } from "./api/gen/types.gen";
 import type { HumanTask, Pack, Run, RunNode, SubmitReviewRequest } from "./api/gen/types.gen";
 

@@ -1,5 +1,6 @@
 from fastapi import Response
 
+from app import workspace
 from app.auth import Actor, CurrentActor
 from app.errors import ApiProblem
 from app.models.common import Model
@@ -16,10 +17,17 @@ class Usage(Model):
     ledger: list[LedgerTxn]
 
 
-def require_org(org_id: str, actor: Actor) -> Organization:
+# Each route serves the live workspace from Postgres (`app.workspace`) when it is on, else the demo fixtures.
+
+
+def _scope(org_id: str, actor: Actor) -> None:
     if org_id != actor.org_id:
         raise ApiProblem(403, "TENANT_SCOPE_DENIED", "You are not a member of that workspace.")
-    return get_store().org
+
+
+def require_org(org_id: str, actor: Actor) -> Organization:
+    _scope(org_id, actor)
+    return workspace.organization(org_id) if workspace.live() else get_store().org
 
 
 @router.get("/organizations/{org_id}", operation_id="getOrganization", response_model=Organization)
@@ -29,18 +37,28 @@ def get_organization(org_id: str, actor: CurrentActor) -> Organization:
 
 @router.get("/organizations/{org_id}/policies", operation_id="listPolicies", response_model=list[Policy])
 def list_policies(org_id: str, actor: CurrentActor) -> list[Policy]:
+    if workspace.live():
+        _scope(org_id, actor)
+        return workspace.policies(org_id)
     require_org(org_id, actor)
     return get_store().policies
 
 
 @router.get("/organizations/{org_id}/members", operation_id="listMembers", response_model=list[Member])
 def list_members(org_id: str, actor: CurrentActor) -> list[Member]:
+    if workspace.live():
+        _scope(org_id, actor)
+        return workspace.members(org_id)
     require_org(org_id, actor)
     return get_store().members
 
 
 @router.get("/organizations/{org_id}/usage", operation_id="getUsage", response_model=Usage)
 def get_usage(org_id: str, actor: CurrentActor) -> Usage:
+    if workspace.live():
+        _scope(org_id, actor)
+        org, ledger = workspace.usage(org_id)
+        return Usage(org=org, ledger=ledger)
     org = require_org(org_id, actor)
     return Usage(org=org, ledger=get_store().ledger)
 
@@ -49,6 +67,9 @@ def get_usage(org_id: str, actor: CurrentActor) -> Usage:
     "/organizations/{org_id}/attention", operation_id="listAttention", response_model=list[AttentionItem]
 )
 def list_attention(org_id: str, actor: CurrentActor) -> list[AttentionItem]:
+    if workspace.live():
+        _scope(org_id, actor)
+        return workspace.attention(org_id)
     require_org(org_id, actor)
     with locked_store() as store:
         return live_attention(store)
@@ -89,7 +110,9 @@ def live_attention(store: Store) -> list[AttentionItem]:
 
 
 @router.get("/tokens", operation_id="listTokens", response_model=list[McpToken])
-def list_tokens(_: CurrentActor) -> list[McpToken]:
+def list_tokens(actor: CurrentActor) -> list[McpToken]:
+    if workspace.live():
+        return workspace.tokens(actor.org_id, actor.user_id)
     return get_store().tokens
 
 
@@ -97,6 +120,9 @@ def list_tokens(_: CurrentActor) -> list[McpToken]:
     "/organizations/{org_id}/invitations", operation_id="inviteMember", response_model=Member, status_code=201
 )
 def invite_member(org_id: str, body: InviteRequest, actor: CurrentActor) -> Member:
+    if workspace.live():
+        _scope(org_id, actor)
+        return workspace.invite(org_id, actor.role, body.email, body.role)
     require_org(org_id, actor)
     with locked_store() as store:
         if any(m.email.lower() == body.email.lower() for m in store.members):
@@ -107,7 +133,9 @@ def invite_member(org_id: str, body: InviteRequest, actor: CurrentActor) -> Memb
 
 
 @router.post("/tokens", operation_id="createToken", response_model=CreatedToken, status_code=201)
-def create_token(body: CreateTokenRequest, _: CurrentActor) -> CreatedToken:
+def create_token(body: CreateTokenRequest, actor: CurrentActor) -> CreatedToken:
+    if workspace.live():
+        return workspace.create_token(actor.org_id, actor.user_id, body.name, list(body.scopes))
     with locked_store() as store:
         token = McpToken(
             id=f"pat_demo_{store.next_token}",
@@ -124,7 +152,10 @@ def create_token(body: CreateTokenRequest, _: CurrentActor) -> CreatedToken:
 
 
 @router.delete("/tokens/{token_id}", operation_id="revokeToken", status_code=204, response_class=Response)
-def revoke_token(token_id: str, _: CurrentActor) -> Response:
+def revoke_token(token_id: str, actor: CurrentActor) -> Response:
+    if workspace.live():
+        workspace.revoke_token(actor.org_id, actor.user_id, token_id)
+        return Response(status_code=204)
     with locked_store() as store:
         if not any(t.id == token_id for t in store.tokens):
             raise ApiProblem(404, "NOT_FOUND", f"No token {token_id}.")

@@ -4,8 +4,8 @@ import * as z from 'zod';
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { ApproveApprovalData, ApproveApprovalErrors, ApproveApprovalResponses, ClaimHumanTaskData, ClaimHumanTaskErrors, ClaimHumanTaskResponses, CreateTokenData, CreateTokenErrors, CreateTokenResponses, DeclineApprovalData, DeclineApprovalErrors, DeclineApprovalResponses, DisconnectConnectionData, DisconnectConnectionErrors, DisconnectConnectionResponses, GetAgentData, GetAgentErrors, GetAgentResponses, GetCatalogTaxonomyData, GetCatalogTaxonomyErrors, GetCatalogTaxonomyResponses, GetHumanTaskData, GetHumanTaskErrors, GetHumanTaskResponses, GetOrganizationData, GetOrganizationErrors, GetOrganizationResponses, GetUsageData, GetUsageErrors, GetUsageResponses, GetWorkflowPackData, GetWorkflowPackErrors, GetWorkflowPackResponses, GetWorkflowRunData, GetWorkflowRunErrors, GetWorkflowRunReceiptData, GetWorkflowRunReceiptErrors, GetWorkflowRunReceiptResponses, GetWorkflowRunResponses, InstallWorkflowPackData, InstallWorkflowPackErrors, InstallWorkflowPackResponses, InviteMemberData, InviteMemberErrors, InviteMemberResponses, ListAgentsData, ListAgentsErrors, ListAgentsResponses, ListApprovalsData, ListApprovalsErrors, ListApprovalsResponses, ListAttentionData, ListAttentionErrors, ListAttentionResponses, ListConnectionsData, ListConnectionsErrors, ListConnectionsResponses, ListEarningsData, ListEarningsErrors, ListEarningsResponses, ListEligibleHumanTasksData, ListEligibleHumanTasksErrors, ListEligibleHumanTasksResponses, ListMembersData, ListMembersErrors, ListMembersResponses, ListMemoryData, ListMemoryErrors, ListMemoryResponses, ListPoliciesData, ListPoliciesErrors, ListPoliciesResponses, ListTokensData, ListTokensErrors, ListTokensResponses, ListWorkflowPacksData, ListWorkflowPacksErrors, ListWorkflowPacksResponses, ListWorkflowRunsData, ListWorkflowRunsErrors, ListWorkflowRunsResponses, OpsAddConnectorData, OpsAddConnectorErrors, OpsAddConnectorResponses, OpsAddMemoryItemData, OpsAddMemoryItemErrors, OpsAddMemoryItemResponses, OpsApprovePackData, OpsApprovePackErrors, OpsApprovePackResponses, OpsApproveReviewerData, OpsApproveReviewerErrors, OpsApproveReviewerResponses, OpsCertifyPackData, OpsCertifyPackErrors, OpsCertifyPackResponses, OpsCreatePackData, OpsCreatePackErrors, OpsCreatePackResponses, OpsCreateTenantData, OpsCreateTenantErrors, OpsCreateTenantResponses, OpsDeclareIncidentData, OpsDeclareIncidentErrors, OpsDeclareIncidentResponses, OpsDeleteMemoryItemData, OpsDeleteMemoryItemErrors, OpsDeleteMemoryItemResponses, OpsDeprecatePackData, OpsDeprecatePackErrors, OpsDeprecatePackResponses, OpsDisableConnectorData, OpsDisableConnectorErrors, OpsDisableConnectorResponses, OpsEnableConnectorData, OpsEnableConnectorErrors, OpsEnableConnectorResponses, OpsExportDefinitionData, OpsExportDefinitionErrors, OpsExportDefinitionResponses, OpsGetBillingData, OpsGetBillingErrors, OpsGetBillingResponses, OpsGetDefinitionData, OpsGetDefinitionErrors, OpsGetDefinitionResponses, OpsGetHealthData, OpsGetHealthErrors, OpsGetHealthResponses, OpsGetMeData, OpsGetMeErrors, OpsGetMeResponses, OpsGetOverviewData, OpsGetOverviewErrors, OpsGetOverviewResponses, OpsGetPackData, OpsGetPackErrors, OpsGetPackResponses, OpsGetRunData, OpsGetRunErrors, OpsGetRunResponses, OpsGetTenantData, OpsGetTenantErrors, OpsGetTenantResponses, OpsHealthCheckConnectorData, OpsHealthCheckConnectorErrors, OpsHealthCheckConnectorResponses, OpsListAuditData, OpsListAuditErrors, OpsListAuditResponses, OpsListAvailableToolkitsData, OpsListAvailableToolkitsErrors, OpsListAvailableToolkitsResponses, OpsListConnectorsData, OpsListConnectorsErrors, OpsListConnectorsResponses, OpsListDefinitionsData, OpsListDefinitionsErrors, OpsListDefinitionsResponses, OpsListGuardrailsData, OpsListGuardrailsErrors, OpsListGuardrailsResponses, OpsListMemoryItemsData, OpsListMemoryItemsErrors, OpsListMemoryItemsResponses, OpsListMemorySpacesData, OpsListMemorySpacesErrors, OpsListMemorySpacesResponses, OpsListPacksData, OpsListPacksErrors, OpsListPacksResponses, OpsListReviewersData, OpsListReviewersErrors, OpsListReviewersResponses, OpsListRunsData, OpsListRunsErrors, OpsListRunsResponses, OpsListTeamData, OpsListTeamErrors, OpsListTeamResponses, OpsListTenantsData, OpsListTenantsErrors, OpsListTenantsResponses, OpsPublishDefinitionData, OpsPublishDefinitionErrors, OpsPublishDefinitionResponses, OpsReactivateTenantData, OpsReactivateTenantErrors, OpsReactivateTenantResponses, OpsReinstateReviewerData, OpsReinstateReviewerErrors, OpsReinstateReviewerResponses, OpsRejectPackData, OpsRejectPackErrors, OpsRejectPackResponses, OpsRepublishPackData, OpsRepublishPackErrors, OpsRepublishPackResponses, OpsSetConnectorDefaultsData, OpsSetConnectorDefaultsErrors, OpsSetConnectorDefaultsResponses, OpsSetGuardrailData, OpsSetGuardrailErrors, OpsSetGuardrailResponses, OpsSetReviewerLevelData, OpsSetReviewerLevelErrors, OpsSetReviewerLevelResponses, OpsSetTenantPlanData, OpsSetTenantPlanErrors, OpsSetTenantPlanResponses, OpsSetTenantSpendCapData, OpsSetTenantSpendCapErrors, OpsSetTenantSpendCapResponses, OpsSubmitPackData, OpsSubmitPackErrors, OpsSubmitPackResponses, OpsSuspendReviewerData, OpsSuspendReviewerErrors, OpsSuspendReviewerResponses, OpsSuspendTenantData, OpsSuspendTenantErrors, OpsSuspendTenantResponses, OpsUpdateIncidentData, OpsUpdateIncidentErrors, OpsUpdateIncidentResponses, OpsValidateDefinitionData, OpsValidateDefinitionErrors, OpsValidateDefinitionResponses, RetractMemoryData, RetractMemoryErrors, RetractMemoryResponses, ReviewMemoryCandidateData, ReviewMemoryCandidateErrors, ReviewMemoryCandidateResponses, RevokeGrantData, RevokeGrantErrors, RevokeGrantResponses, RevokeTokenData, RevokeTokenErrors, RevokeTokenResponses, StartWorkflowRunData, StartWorkflowRunErrors, StartWorkflowRunResponses, SubmitHumanTaskData, SubmitHumanTaskErrors, SubmitHumanTaskResponses, SuggestWorkflowPackData, SuggestWorkflowPackErrors, SuggestWorkflowPackResponses } from './types.gen';
-import { zApproveApprovalPath, zApproveApprovalResponse, zClaimHumanTaskPath, zClaimHumanTaskResponse, zCreateTokenBody, zCreateTokenResponse, zDeclineApprovalPath, zDeclineApprovalResponse, zDisconnectConnectionPath, zDisconnectConnectionResponse, zGetAgentPath, zGetAgentResponse, zGetCatalogTaxonomyResponse, zGetHumanTaskPath, zGetHumanTaskResponse, zGetOrganizationPath, zGetOrganizationResponse, zGetUsagePath, zGetUsageResponse, zGetWorkflowPackPath, zGetWorkflowPackResponse, zGetWorkflowRunPath, zGetWorkflowRunReceiptPath, zGetWorkflowRunReceiptResponse, zGetWorkflowRunResponse, zInstallWorkflowPackBody, zInstallWorkflowPackPath, zInstallWorkflowPackResponse, zInviteMemberBody, zInviteMemberPath, zInviteMemberResponse, zListAgentsResponse, zListApprovalsResponse, zListAttentionPath, zListAttentionResponse, zListConnectionsResponse, zListEarningsResponse, zListEligibleHumanTasksResponse, zListMembersPath, zListMembersResponse, zListMemoryResponse, zListPoliciesPath, zListPoliciesResponse, zListTokensResponse, zListWorkflowPacksResponse, zListWorkflowRunsResponse, zOpsAddConnectorBody, zOpsAddConnectorResponse, zOpsAddMemoryItemBody, zOpsAddMemoryItemPath, zOpsAddMemoryItemResponse, zOpsApprovePackBody, zOpsApprovePackPath, zOpsApprovePackResponse, zOpsApproveReviewerBody, zOpsApproveReviewerPath, zOpsApproveReviewerResponse, zOpsCertifyPackBody, zOpsCertifyPackPath, zOpsCertifyPackResponse, zOpsCreatePackBody, zOpsCreatePackResponse, zOpsCreateTenantBody, zOpsCreateTenantResponse, zOpsDeclareIncidentBody, zOpsDeclareIncidentResponse, zOpsDeleteMemoryItemBody, zOpsDeleteMemoryItemPath, zOpsDeleteMemoryItemResponse, zOpsDeprecatePackBody, zOpsDeprecatePackPath, zOpsDeprecatePackResponse, zOpsDisableConnectorBody, zOpsDisableConnectorPath, zOpsDisableConnectorResponse, zOpsEnableConnectorBody, zOpsEnableConnectorPath, zOpsEnableConnectorResponse, zOpsExportDefinitionPath, zOpsExportDefinitionQuery, zOpsExportDefinitionResponse, zOpsGetBillingResponse, zOpsGetDefinitionPath, zOpsGetDefinitionQuery, zOpsGetDefinitionResponse, zOpsGetHealthResponse, zOpsGetMeResponse, zOpsGetOverviewResponse, zOpsGetPackPath, zOpsGetPackResponse, zOpsGetRunPath, zOpsGetRunResponse, zOpsGetTenantPath, zOpsGetTenantResponse, zOpsHealthCheckConnectorPath, zOpsHealthCheckConnectorResponse, zOpsListAuditQuery, zOpsListAuditResponse, zOpsListAvailableToolkitsResponse, zOpsListConnectorsResponse, zOpsListDefinitionsResponse, zOpsListGuardrailsResponse, zOpsListMemoryItemsPath, zOpsListMemoryItemsResponse, zOpsListMemorySpacesResponse, zOpsListPacksQuery, zOpsListPacksResponse, zOpsListReviewersQuery, zOpsListReviewersResponse, zOpsListRunsQuery, zOpsListRunsResponse, zOpsListTeamResponse, zOpsListTenantsQuery, zOpsListTenantsResponse, zOpsPublishDefinitionBody, zOpsPublishDefinitionPath, zOpsPublishDefinitionResponse, zOpsReactivateTenantBody, zOpsReactivateTenantPath, zOpsReactivateTenantResponse, zOpsReinstateReviewerBody, zOpsReinstateReviewerPath, zOpsReinstateReviewerResponse, zOpsRejectPackBody, zOpsRejectPackPath, zOpsRejectPackResponse, zOpsRepublishPackBody, zOpsRepublishPackPath, zOpsRepublishPackResponse, zOpsSetConnectorDefaultsBody, zOpsSetConnectorDefaultsPath, zOpsSetConnectorDefaultsResponse, zOpsSetGuardrailBody, zOpsSetGuardrailPath, zOpsSetGuardrailResponse, zOpsSetReviewerLevelBody, zOpsSetReviewerLevelPath, zOpsSetReviewerLevelResponse, zOpsSetTenantPlanBody, zOpsSetTenantPlanPath, zOpsSetTenantPlanResponse, zOpsSetTenantSpendCapBody, zOpsSetTenantSpendCapPath, zOpsSetTenantSpendCapResponse, zOpsSubmitPackBody, zOpsSubmitPackPath, zOpsSubmitPackResponse, zOpsSuspendReviewerBody, zOpsSuspendReviewerPath, zOpsSuspendReviewerResponse, zOpsSuspendTenantBody, zOpsSuspendTenantPath, zOpsSuspendTenantResponse, zOpsUpdateIncidentBody, zOpsUpdateIncidentPath, zOpsUpdateIncidentResponse, zOpsValidateDefinitionBody, zOpsValidateDefinitionPath, zOpsValidateDefinitionResponse, zRetractMemoryPath, zRetractMemoryResponse, zReviewMemoryCandidateBody, zReviewMemoryCandidatePath, zReviewMemoryCandidateResponse, zRevokeGrantQuery, zRevokeGrantResponse, zRevokeTokenPath, zRevokeTokenResponse, zStartWorkflowRunBody, zStartWorkflowRunHeaders, zStartWorkflowRunResponse, zSubmitHumanTaskBody, zSubmitHumanTaskPath, zSubmitHumanTaskResponse, zSuggestWorkflowPackBody, zSuggestWorkflowPackResponse } from './zod.gen';
+import type { AcceptInvitationData, AcceptInvitationErrors, AcceptInvitationResponses, ApproveApprovalData, ApproveApprovalErrors, ApproveApprovalResponses, ClaimHumanTaskData, ClaimHumanTaskErrors, ClaimHumanTaskResponses, ConnectConnectionData, ConnectConnectionErrors, ConnectConnectionResponses, CreateTokenData, CreateTokenErrors, CreateTokenResponses, DeclineApprovalData, DeclineApprovalErrors, DeclineApprovalResponses, DeclineInvitationData, DeclineInvitationErrors, DeclineInvitationResponses, DisconnectConnectionData, DisconnectConnectionErrors, DisconnectConnectionResponses, GetAgentData, GetAgentErrors, GetAgentResponses, GetCatalogTaxonomyData, GetCatalogTaxonomyErrors, GetCatalogTaxonomyResponses, GetHumanTaskData, GetHumanTaskErrors, GetHumanTaskResponses, GetMeData, GetMeErrors, GetMeResponses, GetOrganizationData, GetOrganizationErrors, GetOrganizationResponses, GetUsageData, GetUsageErrors, GetUsageResponses, GetWorkflowPackData, GetWorkflowPackErrors, GetWorkflowPackResponses, GetWorkflowRunData, GetWorkflowRunErrors, GetWorkflowRunReceiptData, GetWorkflowRunReceiptErrors, GetWorkflowRunReceiptResponses, GetWorkflowRunResponses, InstallWorkflowPackData, InstallWorkflowPackErrors, InstallWorkflowPackResponses, InviteMemberData, InviteMemberErrors, InviteMemberResponses, ListAgentsData, ListAgentsErrors, ListAgentsResponses, ListApprovalsData, ListApprovalsErrors, ListApprovalsResponses, ListAttentionData, ListAttentionErrors, ListAttentionResponses, ListConnectionsData, ListConnectionsErrors, ListConnectionsResponses, ListEarningsData, ListEarningsErrors, ListEarningsResponses, ListEligibleHumanTasksData, ListEligibleHumanTasksErrors, ListEligibleHumanTasksResponses, ListMembersData, ListMembersErrors, ListMembersResponses, ListMemoryData, ListMemoryErrors, ListMemoryResponses, ListPoliciesData, ListPoliciesErrors, ListPoliciesResponses, ListTokensData, ListTokensErrors, ListTokensResponses, ListWorkflowPacksData, ListWorkflowPacksErrors, ListWorkflowPacksResponses, ListWorkflowRunsData, ListWorkflowRunsErrors, ListWorkflowRunsResponses, OpsAddConnectorData, OpsAddConnectorErrors, OpsAddConnectorResponses, OpsAddMemoryItemData, OpsAddMemoryItemErrors, OpsAddMemoryItemResponses, OpsApprovePackData, OpsApprovePackErrors, OpsApprovePackResponses, OpsApproveReviewerData, OpsApproveReviewerErrors, OpsApproveReviewerResponses, OpsCertifyPackData, OpsCertifyPackErrors, OpsCertifyPackResponses, OpsCreatePackData, OpsCreatePackErrors, OpsCreatePackResponses, OpsCreateTenantData, OpsCreateTenantErrors, OpsCreateTenantResponses, OpsDeclareIncidentData, OpsDeclareIncidentErrors, OpsDeclareIncidentResponses, OpsDeleteMemoryItemData, OpsDeleteMemoryItemErrors, OpsDeleteMemoryItemResponses, OpsDeprecatePackData, OpsDeprecatePackErrors, OpsDeprecatePackResponses, OpsDisableConnectorData, OpsDisableConnectorErrors, OpsDisableConnectorResponses, OpsEnableConnectorData, OpsEnableConnectorErrors, OpsEnableConnectorResponses, OpsExportDefinitionData, OpsExportDefinitionErrors, OpsExportDefinitionResponses, OpsGetBillingData, OpsGetBillingErrors, OpsGetBillingResponses, OpsGetDefinitionData, OpsGetDefinitionErrors, OpsGetDefinitionResponses, OpsGetHealthData, OpsGetHealthErrors, OpsGetHealthResponses, OpsGetMeData, OpsGetMeErrors, OpsGetMeResponses, OpsGetOverviewData, OpsGetOverviewErrors, OpsGetOverviewResponses, OpsGetPackData, OpsGetPackErrors, OpsGetPackResponses, OpsGetRunData, OpsGetRunErrors, OpsGetRunResponses, OpsGetRuntimeStatusData, OpsGetRuntimeStatusErrors, OpsGetRuntimeStatusResponses, OpsGetTenantData, OpsGetTenantErrors, OpsGetTenantResponses, OpsHealthCheckConnectorData, OpsHealthCheckConnectorErrors, OpsHealthCheckConnectorResponses, OpsListAuditData, OpsListAuditErrors, OpsListAuditResponses, OpsListAvailableToolkitsData, OpsListAvailableToolkitsErrors, OpsListAvailableToolkitsResponses, OpsListConnectorsData, OpsListConnectorsErrors, OpsListConnectorsResponses, OpsListDefinitionsData, OpsListDefinitionsErrors, OpsListDefinitionsResponses, OpsListGuardrailsData, OpsListGuardrailsErrors, OpsListGuardrailsResponses, OpsListMemoryItemsData, OpsListMemoryItemsErrors, OpsListMemoryItemsResponses, OpsListMemorySpacesData, OpsListMemorySpacesErrors, OpsListMemorySpacesResponses, OpsListPacksData, OpsListPacksErrors, OpsListPacksResponses, OpsListReviewersData, OpsListReviewersErrors, OpsListReviewersResponses, OpsListRunsData, OpsListRunsErrors, OpsListRunsResponses, OpsListTeamData, OpsListTeamErrors, OpsListTeamResponses, OpsListTenantsData, OpsListTenantsErrors, OpsListTenantsResponses, OpsPublishDefinitionData, OpsPublishDefinitionErrors, OpsPublishDefinitionResponses, OpsReactivateTenantData, OpsReactivateTenantErrors, OpsReactivateTenantResponses, OpsReinstateReviewerData, OpsReinstateReviewerErrors, OpsReinstateReviewerResponses, OpsRejectPackData, OpsRejectPackErrors, OpsRejectPackResponses, OpsRepublishPackData, OpsRepublishPackErrors, OpsRepublishPackResponses, OpsSetConnectorDefaultsData, OpsSetConnectorDefaultsErrors, OpsSetConnectorDefaultsResponses, OpsSetGuardrailData, OpsSetGuardrailErrors, OpsSetGuardrailResponses, OpsSetReviewerLevelData, OpsSetReviewerLevelErrors, OpsSetReviewerLevelResponses, OpsSetTenantPlanData, OpsSetTenantPlanErrors, OpsSetTenantPlanResponses, OpsSetTenantSpendCapData, OpsSetTenantSpendCapErrors, OpsSetTenantSpendCapResponses, OpsSubmitPackData, OpsSubmitPackErrors, OpsSubmitPackResponses, OpsSuspendReviewerData, OpsSuspendReviewerErrors, OpsSuspendReviewerResponses, OpsSuspendTenantData, OpsSuspendTenantErrors, OpsSuspendTenantResponses, OpsUpdateIncidentData, OpsUpdateIncidentErrors, OpsUpdateIncidentResponses, OpsValidateDefinitionData, OpsValidateDefinitionErrors, OpsValidateDefinitionResponses, RetractMemoryData, RetractMemoryErrors, RetractMemoryResponses, ReviewMemoryCandidateData, ReviewMemoryCandidateErrors, ReviewMemoryCandidateResponses, RevokeGrantData, RevokeGrantErrors, RevokeGrantResponses, RevokeTokenData, RevokeTokenErrors, RevokeTokenResponses, StartWorkflowRunData, StartWorkflowRunErrors, StartWorkflowRunResponses, SubmitHumanTaskData, SubmitHumanTaskErrors, SubmitHumanTaskResponses, SuggestWorkflowPackData, SuggestWorkflowPackErrors, SuggestWorkflowPackResponses } from './types.gen';
+import { zAcceptInvitationPath, zAcceptInvitationResponse, zApproveApprovalPath, zApproveApprovalResponse, zClaimHumanTaskPath, zClaimHumanTaskResponse, zConnectConnectionPath, zConnectConnectionResponse, zCreateTokenBody, zCreateTokenResponse, zDeclineApprovalPath, zDeclineApprovalResponse, zDeclineInvitationPath, zDeclineInvitationResponse, zDisconnectConnectionPath, zDisconnectConnectionResponse, zGetAgentPath, zGetAgentResponse, zGetCatalogTaxonomyResponse, zGetHumanTaskPath, zGetHumanTaskResponse, zGetMeResponse, zGetOrganizationPath, zGetOrganizationResponse, zGetUsagePath, zGetUsageResponse, zGetWorkflowPackPath, zGetWorkflowPackResponse, zGetWorkflowRunPath, zGetWorkflowRunReceiptPath, zGetWorkflowRunReceiptResponse, zGetWorkflowRunResponse, zInstallWorkflowPackBody, zInstallWorkflowPackPath, zInstallWorkflowPackResponse, zInviteMemberBody, zInviteMemberPath, zInviteMemberResponse, zListAgentsResponse, zListApprovalsResponse, zListAttentionPath, zListAttentionResponse, zListConnectionsResponse, zListEarningsResponse, zListEligibleHumanTasksResponse, zListMembersPath, zListMembersResponse, zListMemoryResponse, zListPoliciesPath, zListPoliciesResponse, zListTokensResponse, zListWorkflowPacksResponse, zListWorkflowRunsResponse, zOpsAddConnectorBody, zOpsAddConnectorResponse, zOpsAddMemoryItemBody, zOpsAddMemoryItemPath, zOpsAddMemoryItemResponse, zOpsApprovePackBody, zOpsApprovePackPath, zOpsApprovePackResponse, zOpsApproveReviewerBody, zOpsApproveReviewerPath, zOpsApproveReviewerResponse, zOpsCertifyPackBody, zOpsCertifyPackPath, zOpsCertifyPackResponse, zOpsCreatePackBody, zOpsCreatePackResponse, zOpsCreateTenantBody, zOpsCreateTenantResponse, zOpsDeclareIncidentBody, zOpsDeclareIncidentResponse, zOpsDeleteMemoryItemBody, zOpsDeleteMemoryItemPath, zOpsDeleteMemoryItemResponse, zOpsDeprecatePackBody, zOpsDeprecatePackPath, zOpsDeprecatePackResponse, zOpsDisableConnectorBody, zOpsDisableConnectorPath, zOpsDisableConnectorResponse, zOpsEnableConnectorBody, zOpsEnableConnectorPath, zOpsEnableConnectorResponse, zOpsExportDefinitionPath, zOpsExportDefinitionQuery, zOpsExportDefinitionResponse, zOpsGetBillingResponse, zOpsGetDefinitionPath, zOpsGetDefinitionQuery, zOpsGetDefinitionResponse, zOpsGetHealthResponse, zOpsGetMeResponse, zOpsGetOverviewResponse, zOpsGetPackPath, zOpsGetPackResponse, zOpsGetRunPath, zOpsGetRunResponse, zOpsGetRuntimeStatusResponse, zOpsGetTenantPath, zOpsGetTenantResponse, zOpsHealthCheckConnectorPath, zOpsHealthCheckConnectorResponse, zOpsListAuditQuery, zOpsListAuditResponse, zOpsListAvailableToolkitsResponse, zOpsListConnectorsResponse, zOpsListDefinitionsResponse, zOpsListGuardrailsResponse, zOpsListMemoryItemsPath, zOpsListMemoryItemsResponse, zOpsListMemorySpacesResponse, zOpsListPacksQuery, zOpsListPacksResponse, zOpsListReviewersQuery, zOpsListReviewersResponse, zOpsListRunsQuery, zOpsListRunsResponse, zOpsListTeamResponse, zOpsListTenantsQuery, zOpsListTenantsResponse, zOpsPublishDefinitionBody, zOpsPublishDefinitionPath, zOpsPublishDefinitionResponse, zOpsReactivateTenantBody, zOpsReactivateTenantPath, zOpsReactivateTenantResponse, zOpsReinstateReviewerBody, zOpsReinstateReviewerPath, zOpsReinstateReviewerResponse, zOpsRejectPackBody, zOpsRejectPackPath, zOpsRejectPackResponse, zOpsRepublishPackBody, zOpsRepublishPackPath, zOpsRepublishPackResponse, zOpsSetConnectorDefaultsBody, zOpsSetConnectorDefaultsPath, zOpsSetConnectorDefaultsResponse, zOpsSetGuardrailBody, zOpsSetGuardrailPath, zOpsSetGuardrailResponse, zOpsSetReviewerLevelBody, zOpsSetReviewerLevelPath, zOpsSetReviewerLevelResponse, zOpsSetTenantPlanBody, zOpsSetTenantPlanPath, zOpsSetTenantPlanResponse, zOpsSetTenantSpendCapBody, zOpsSetTenantSpendCapPath, zOpsSetTenantSpendCapResponse, zOpsSubmitPackBody, zOpsSubmitPackPath, zOpsSubmitPackResponse, zOpsSuspendReviewerBody, zOpsSuspendReviewerPath, zOpsSuspendReviewerResponse, zOpsSuspendTenantBody, zOpsSuspendTenantPath, zOpsSuspendTenantResponse, zOpsUpdateIncidentBody, zOpsUpdateIncidentPath, zOpsUpdateIncidentResponse, zOpsValidateDefinitionBody, zOpsValidateDefinitionPath, zOpsValidateDefinitionResponse, zRetractMemoryPath, zRetractMemoryResponse, zReviewMemoryCandidateBody, zReviewMemoryCandidatePath, zReviewMemoryCandidateResponse, zRevokeGrantQuery, zRevokeGrantResponse, zRevokeTokenPath, zRevokeTokenResponse, zStartWorkflowRunBody, zStartWorkflowRunHeaders, zStartWorkflowRunResponse, zSubmitHumanTaskBody, zSubmitHumanTaskPath, zSubmitHumanTaskResponse, zSuggestWorkflowPackBody, zSuggestWorkflowPackResponse } from './zod.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -23,6 +23,8 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
 
 /**
  * List Workflow Packs
+ *
+ * The marketplace. In the live workspace: every pack definition, `installed` for the caller's org.
  */
 export const listWorkflowPacks = <ThrowOnError extends boolean = false>(options?: Options<ListWorkflowPacksData, ThrowOnError>): RequestResult<ListWorkflowPacksResponses, ListWorkflowPacksErrors, ThrowOnError> => (options?.client ?? client).get<ListWorkflowPacksResponses, ListWorkflowPacksErrors, ThrowOnError>({
     requestValidator: async (data) => await z.object({
@@ -38,6 +40,8 @@ export const listWorkflowPacks = <ThrowOnError extends boolean = false>(options?
 
 /**
  * Get Workflow Pack
+ *
+ * One pack; in the live workspace with `inputSchema`, the JSON Schema of the input a run takes.
  */
 export const getWorkflowPack = <ThrowOnError extends boolean = false>(options: Options<GetWorkflowPackData, ThrowOnError>): RequestResult<GetWorkflowPackResponses, GetWorkflowPackErrors, ThrowOnError> => (options.client ?? client).get<GetWorkflowPackResponses, GetWorkflowPackErrors, ThrowOnError>({
     requestValidator: async (data) => await z.object({
@@ -104,6 +108,7 @@ export const getAgent = <ThrowOnError extends boolean = false>(options: Options<
  * Suggest Workflow Pack
  *
  * Keyword match for the static API. The dynamic backend asks Gemini and keeps this response shape.
+ * The live workspace matches over the pack definitions.
  */
 export const suggestWorkflowPack = <ThrowOnError extends boolean = false>(options: Options<SuggestWorkflowPackData, ThrowOnError>): RequestResult<SuggestWorkflowPackResponses, SuggestWorkflowPackErrors, ThrowOnError> => (options.client ?? client).post<SuggestWorkflowPackResponses, SuggestWorkflowPackErrors, ThrowOnError>({
     requestValidator: async (data) => await z.object({
@@ -143,7 +148,8 @@ export const installWorkflowPack = <ThrowOnError extends boolean = false>(option
 /**
  * List Workflow Runs
  *
- * Real runs (newest first, when the runtime is on), then the fixtures.
+ * Real runs (newest first, when the runtime is on), then the fixtures; the live workspace has real runs
+ * only.
  */
 export const listWorkflowRuns = <ThrowOnError extends boolean = false>(options?: Options<ListWorkflowRunsData, ThrowOnError>): RequestResult<ListWorkflowRunsResponses, ListWorkflowRunsErrors, ThrowOnError> => (options?.client ?? client).get<ListWorkflowRunsResponses, ListWorkflowRunsErrors, ThrowOnError>({
     requestValidator: async (data) => await z.object({
@@ -161,7 +167,9 @@ export const listWorkflowRuns = <ThrowOnError extends boolean = false>(options?:
  * Start Workflow Run
  *
  * Returns 202: the run is registered and started, not finished (API.md section 3). With the runtime on,
- * a pack that has a definition runs for real on Temporal; any other pack keeps the fixture behaviour.
+ * a pack that has a definition runs for real on Temporal; any other pack keeps the fixture behaviour. In
+ * the live workspace every run is real: the org must have hired the pack and connected its apps, the
+ * input must match the pack's input schema and the month's spend must be below the monthly cap.
  */
 export const startWorkflowRun = <ThrowOnError extends boolean = false>(options: Options<StartWorkflowRunData, ThrowOnError>): RequestResult<StartWorkflowRunResponses, StartWorkflowRunErrors, ThrowOnError> => (options.client ?? client).post<StartWorkflowRunResponses, StartWorkflowRunErrors, ThrowOnError>({
     requestValidator: async (data) => await z.object({
@@ -215,7 +223,7 @@ export const getWorkflowRunReceipt = <ThrowOnError extends boolean = false>(opti
 /**
  * List Approvals
  *
- * Approvals of real runs (newest first), then the fixtures.
+ * Approvals of real runs (newest first), then the fixtures (none in the live workspace).
  */
 export const listApprovals = <ThrowOnError extends boolean = false>(options?: Options<ListApprovalsData, ThrowOnError>): RequestResult<ListApprovalsResponses, ListApprovalsErrors, ThrowOnError> => (options?.client ?? client).get<ListApprovalsResponses, ListApprovalsErrors, ThrowOnError>({
     requestValidator: async (data) => await z.object({
@@ -291,6 +299,8 @@ export const getHumanTask = <ThrowOnError extends boolean = false>(options: Opti
 
 /**
  * List Earnings
+ *
+ * In the live workspace: the caller's decided tasks of the org's runs, simulated (no money moves).
  */
 export const listEarnings = <ThrowOnError extends boolean = false>(options?: Options<ListEarningsData, ThrowOnError>): RequestResult<ListEarningsResponses, ListEarningsErrors, ThrowOnError> => (options?.client ?? client).get<ListEarningsResponses, ListEarningsErrors, ThrowOnError>({
     requestValidator: async (data) => await z.object({
@@ -341,7 +351,8 @@ export const submitHumanTask = <ThrowOnError extends boolean = false>(options: O
 /**
  * List Memory
  *
- * Fixture memory, after the items of real memory spaces when the runtime is on.
+ * Fixture memory, after the items of real memory spaces when the runtime is on. The live workspace has
+ * the org's own items and the shared seed and console items only.
  */
 export const listMemory = <ThrowOnError extends boolean = false>(options?: Options<ListMemoryData, ThrowOnError>): RequestResult<ListMemoryResponses, ListMemoryErrors, ThrowOnError> => (options?.client ?? client).get<ListMemoryResponses, ListMemoryErrors, ThrowOnError>({
     requestValidator: async (data) => await z.object({
@@ -376,6 +387,8 @@ export const reviewMemoryCandidate = <ThrowOnError extends boolean = false>(opti
 
 /**
  * Retract Memory
+ *
+ * In the live workspace: retract one of the org's own items, so runs no longer recall it.
  */
 export const retractMemory = <ThrowOnError extends boolean = false>(options: Options<RetractMemoryData, ThrowOnError>): RequestResult<RetractMemoryResponses, RetractMemoryErrors, ThrowOnError> => (options.client ?? client).post<RetractMemoryResponses, RetractMemoryErrors, ThrowOnError>({
     requestValidator: async (data) => await z.object({
@@ -391,6 +404,8 @@ export const retractMemory = <ThrowOnError extends boolean = false>(options: Opt
 
 /**
  * List Connections
+ *
+ * In the live workspace: the apps the org's hired packs use, connected or not.
  */
 export const listConnections = <ThrowOnError extends boolean = false>(options?: Options<ListConnectionsData, ThrowOnError>): RequestResult<ListConnectionsResponses, ListConnectionsErrors, ThrowOnError> => (options?.client ?? client).get<ListConnectionsResponses, ListConnectionsErrors, ThrowOnError>({
     requestValidator: async (data) => await z.object({
@@ -401,6 +416,24 @@ export const listConnections = <ThrowOnError extends boolean = false>(options?: 
     responseValidator: async (data) => await zListConnectionsResponse.parseAsync(data),
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/v1/connections',
+    ...options
+});
+
+/**
+ * Connect Connection
+ *
+ * Connect an app (a connector key or app name) for the org. Sandbox connector mode connects it to
+ * sandbox data; live app connections are not available yet (409). The demo workspace has none to make.
+ */
+export const connectConnection = <ThrowOnError extends boolean = false>(options: Options<ConnectConnectionData, ThrowOnError>): RequestResult<ConnectConnectionResponses, ConnectConnectionErrors, ThrowOnError> => (options.client ?? client).post<ConnectConnectionResponses, ConnectConnectionErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zConnectConnectionPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zConnectConnectionResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/connections/{app_name}:connect',
     ...options
 });
 
@@ -431,6 +464,62 @@ export const revokeGrant = <ThrowOnError extends boolean = false>(options: Optio
     responseValidator: async (data) => await zRevokeGrantResponse.parseAsync(data),
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/v1/grants',
+    ...options
+});
+
+/**
+ * Get Me
+ *
+ * The signed-in user and their workspace: their own org in the live workspace, the seeded org in the
+ * demo. `invitations` lists pending invitations to other workspaces for the user's verified email (live
+ * workspace only).
+ */
+export const getMe = <ThrowOnError extends boolean = false>(options?: Options<GetMeData, ThrowOnError>): RequestResult<GetMeResponses, GetMeErrors, ThrowOnError> => (options?.client ?? client).get<GetMeResponses, GetMeErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: z.never().optional(),
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zGetMeResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/me',
+    ...options
+});
+
+/**
+ * Accept Invitation
+ *
+ * Join the workspace that invited the user's verified email; the user leaves their current one (an
+ * empty workspace is deleted, any other keeps its data). 403 when the email is not verified, 404 when there
+ * is no such pending invitation, and always 404 in the demo workspace.
+ */
+export const acceptInvitation = <ThrowOnError extends boolean = false>(options: Options<AcceptInvitationData, ThrowOnError>): RequestResult<AcceptInvitationResponses, AcceptInvitationErrors, ThrowOnError> => (options.client ?? client).post<AcceptInvitationResponses, AcceptInvitationErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zAcceptInvitationPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zAcceptInvitationResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/invitations/{org_id}:accept',
+    ...options
+});
+
+/**
+ * Decline Invitation
+ *
+ * Decline a pending invitation for the user's verified email; it is deleted. 403 when the email is not
+ * verified, 404 when there is no such invitation, and always 404 in the demo workspace.
+ */
+export const declineInvitation = <ThrowOnError extends boolean = false>(options: Options<DeclineInvitationData, ThrowOnError>): RequestResult<DeclineInvitationResponses, DeclineInvitationErrors, ThrowOnError> => (options.client ?? client).post<DeclineInvitationResponses, DeclineInvitationErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zDeclineInvitationPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zDeclineInvitationResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/invitations/{org_id}:decline',
     ...options
 });
 
@@ -1324,6 +1413,21 @@ export const opsGetRun = <ThrowOnError extends boolean = false>(options: Options
     responseValidator: async (data) => await zOpsGetRunResponse.parseAsync(data),
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/v1/ops/runs/{run_id}',
+    ...options
+});
+
+/**
+ * Ops Get Runtime Status
+ */
+export const opsGetRuntimeStatus = <ThrowOnError extends boolean = false>(options?: Options<OpsGetRuntimeStatusData, ThrowOnError>): RequestResult<OpsGetRuntimeStatusResponses, OpsGetRuntimeStatusErrors, ThrowOnError> => (options?.client ?? client).get<OpsGetRuntimeStatusResponses, OpsGetRuntimeStatusErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: z.never().optional(),
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zOpsGetRuntimeStatusResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/ops/runtime/status',
     ...options
 });
 

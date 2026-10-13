@@ -10,8 +10,14 @@ EXPECTED_TABLES = {
     "receipt_entries",
     "run_tasks",
     "memory_items",
+    "orgs",
+    "org_members",
+    "installations",
+    "connections",
+    "api_tokens",
     "schema_migrations",
 }
+APP_TABLES = sorted(EXPECTED_TABLES - {"schema_migrations"})
 
 
 def test_migrate_applies_init_once(db):
@@ -23,8 +29,8 @@ def test_migrate_applies_init_once(db):
 
 def test_migrate_reports_applied_names_on_fresh_schema(db):
     db.execute("DELETE FROM schema_migrations")
-    for table in ("memory_items", "run_tasks", "receipt_entries", "runs", "definition_versions"):
-        db.execute(f"DROP TABLE {table} CASCADE")
+    for table in APP_TABLES:
+        db.execute(f"DROP TABLE IF EXISTS {table} CASCADE")
     db.execute("DROP SEQUENCE run_number")
     db.commit()
     assert app_db.migrate(db) == [p.name for p in sorted(Path(app_db.MIGRATIONS_DIR).glob("*.sql"))]
@@ -33,8 +39,8 @@ def test_migrate_reports_applied_names_on_fresh_schema(db):
 
 def _drop_schema(db) -> None:
     db.execute("DROP TABLE IF EXISTS schema_migrations")
-    for table in ("memory_items", "run_tasks", "receipt_entries", "runs", "definition_versions"):
-        db.execute(f"DROP TABLE {table} CASCADE")
+    for table in APP_TABLES:
+        db.execute(f"DROP TABLE IF EXISTS {table} CASCADE")
     db.execute("DROP SEQUENCE run_number")
     db.commit()
 

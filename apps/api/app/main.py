@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 from collections.abc import AsyncIterator
@@ -7,7 +8,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app import db, settings
+from app import db, settings, workspace
 from app.auth import check_auth_config
 from app.defs.loader import LoadError, load_bundle
 from app.defs.model import Bundle
@@ -59,18 +60,33 @@ def apply_definitions() -> None:
 
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
-    """With NM_DEFS_AUTO_APPLY on, the server applies migrations and definition files before serving. The
+    """With NM_DEFS_AUTO_APPLY on, the server applies migrations and definition files before serving; with
+    NM_EMBEDDED_WORKER on (and the runtime on) it then starts the PackRunner worker in-process. The
     Postgres pool (opened on first use) is closed on shutdown."""
     if settings.defs_auto_apply():
         apply_definitions()
+    embedded = settings.runtime_enabled() and settings.embedded_worker()
+    if embedded:
+        from app.worker.embedded import start_embedded
+
+        start_embedded()  # its own thread and loop; a failure is logged and retried, never raised here
+    worker_stopped = True
     try:
         yield
     finally:
-        db.reset_pool()
+        if embedded:
+            from app.worker.embedded import stop_embedded
+
+            worker_stopped = await asyncio.to_thread(stop_embedded)
+        if worker_stopped:
+            db.reset_pool()
+        else:
+            log.warning("Shutdown: the embedded worker is still running, so the database pool stays open.")
 
 
 def create_app() -> FastAPI:
     check_auth_config()
+    workspace.check_config()
     app = FastAPI(
         title="New Machines API",
         version="0.1.0",
@@ -96,6 +112,7 @@ def create_app() -> FastAPI:
         approvals,
         catalog,
         connections,
+        me,
         memory,
         ops_catalog,
         ops_definitions,
@@ -105,6 +122,7 @@ def create_app() -> FastAPI:
         ops_people,
         ops_platform,
         ops_runs,
+        ops_runtime_status,
         ops_tenants,
         org,
         runs,
@@ -118,6 +136,7 @@ def create_app() -> FastAPI:
         tasks,
         memory,
         connections,
+        me,
         org,
         ops_catalog,
         ops_definitions,
@@ -127,6 +146,7 @@ def create_app() -> FastAPI:
         ops_people,
         ops_platform,
         ops_runs,
+        ops_runtime_status,
         ops_tenants,
     ):
         app.include_router(module.router)

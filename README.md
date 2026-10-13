@@ -109,6 +109,53 @@ gcloud run deploy nm-api --project nm-demo-iu7uo4 --region asia-south1 \
   --image asia-south1-docker.pkg.dev/nm-demo-iu7uo4/nm/nm-api:<tag>
 ```
 
+## Run everything in one Cloud Run service
+
+The API image can host the runtime: with `NM_EMBEDDED_WORKER=1` (and `NM_RUNTIME=temporal`) the PackRunner
+worker starts inside the API process after migrations and definitions are applied, on its own thread and
+event loop, and stops on shutdown. A worker or Temporal failure is logged and retried with backoff; the API
+keeps serving. One service then runs against Cloud SQL and Temporal Cloud, with no separate worker.
+
+Environment variables (names only; put secrets in Secret Manager):
+
+- `NM_RUNTIME=temporal`, `NM_EMBEDDED_WORKER=1`, `NM_DEFS_AUTO_APPLY=1`, `NM_WORKSPACE=demo|live`
+- `NM_DATABASE_URL`: Cloud SQL over the unix socket, passed to the driver untouched:
+  `postgresql://USER:PASS@/DB?host=/cloudsql/PROJECT:REGION:INSTANCE`
+- `TEMPORAL_TARGET`, `TEMPORAL_NAMESPACE`, `TEMPORAL_API_KEY` (the key alone switches on TLS, so regional
+  `*.api.temporal.io:7233` endpoints work as well as `*.tmprl.cloud:7233`), `NM_TASK_QUEUE`
+- `NM_WORKER_CONCURRENCY` (concurrent activities, default 8), `NM_DB_POOL_MAX` (Postgres pool, default 8;
+  activity threads never exceed it)
+- `NM_MODEL_ENV`, `NM_CONNECTOR_MODE`, `MODEL_API_KEY`, `COMPOSIO_API_KEY`, `DEMO_USER_UID`, `AUTH_MODE`,
+  `FIREBASE_PROJECT_ID`, `ALLOWED_ORIGINS`, `OPS_ADMIN_EMAILS`, `OPS_SUPPORT_EMAILS`
+
+Deploy flags that matter:
+
+```bash
+gcloud run deploy nm-api ... \
+  --add-cloudsql-instances PROJECT:REGION:INSTANCE \
+  --no-cpu-throttling \
+  --max-instances 1
+```
+
+`--no-cpu-throttling` keeps CPU allocated between requests, which the worker's long polls need.
+`--min-instances 1` keeps an instance alive: Temporal polling is outbound and does not count as traffic, so
+without it Cloud Run scales to zero when nobody uses the app and workflows stall.
+`--max-instances 1` keeps one worker pool and one API instance within the database connection budget.
+
+Sizing for a Cloud SQL f1-micro (about 25 connections): `NM_DB_POOL_MAX=10`, `NM_WORKER_CONCURRENCY=4`
+leaves headroom for migrations, the console and a second revision during a rollout. The pool is shared by
+request handlers and activities, so in embedded mode the pool must be strictly larger than the concurrency
+(the API logs a warning at startup otherwise). Shutdown fits Cloud Run's 10 s: the worker stops within 8 s at most
+(activities get a 5 s grace period) and the pool then closes within 1 s, and a Temporal outage never delays it.
+
+Local runs: unset `TEMPORAL_API_KEY` (and point `TEMPORAL_TARGET` at `127.0.0.1:7243`). The key in `.env` is the
+cloud one, and any key now switches on TLS, which the local dev server does not speak.
+
+`GET /v1/ops/runtime/status` (any operator role) reports `{runtime, workspace, database, temporal, worker,
+definitionsApplied}` for a quick check; it never returns connection strings or keys. `worker` is `running`,
+`stopped` or `not_embedded`. With the runtime off, `database` and `temporal` read `off`. Each check is
+bounded (about 3 s) and both run at once, so the route answers within about 4 s during an outage.
+
 ## Known limits
 
 - Memory items are not scoped to a tenant: every org reads and writes the same memory spaces.

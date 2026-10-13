@@ -6,7 +6,8 @@ import Link from "next/link";
 import { parseAsString, useQueryState } from "nuqs";
 import { useMemo } from "react";
 import { cn } from "@/lib/cn";
-import { NOW, duration, sumMoney } from "@/lib/format";
+import { useNow } from "@/lib/clock";
+import { duration, sumMoney } from "@/lib/format";
 import { usePacks } from "@/lib/queries/catalog";
 import { useFormat } from "@/lib/use-format";
 import type { RunStatus, RunSummary } from "@/lib/types";
@@ -27,8 +28,8 @@ const FILTERS: { key: FilterKey; statuses?: RunStatus[] }[] = [
   { key: "failed", statuses: ["FAILED", "CANCELLED"] },
 ];
 
-function elapsed(r: RowRun, soFar: (d: string) => string) {
-  const end = r.endedAt ?? NOW;
+function elapsed(r: RowRun, now: string, soFar: (d: string) => string) {
+  const end = r.endedAt ?? now;
   const s = Math.round((Date.parse(end) - Date.parse(r.startedAt)) / 1000);
   return r.endedAt ? duration(s) : soFar(duration(s));
 }
@@ -36,6 +37,7 @@ function elapsed(r: RowRun, soFar: (d: string) => string) {
 export function RunsBrowser({ runs, linkable }: { runs: RowRun[]; linkable: string[] }) {
   const t = useTranslations("run.list");
   const { money, ago } = useFormat();
+  const now = useNow();
   const [q, setQ] = useQueryState("q", parseAsString.withDefault(""));
   const [filter, setFilter] = useQueryState("status", parseAsString.withDefault("all"));
   const [pack, setPack] = useQueryState("pack", parseAsString.withDefault("all"));
@@ -164,7 +166,7 @@ export function RunsBrowser({ runs, linkable }: { runs: RowRun[]; linkable: stri
                     <div>
                       {ago(r.startedAt)} <span className="text-muted">{t("by", { name: r.startedBy })}</span>
                     </div>
-                    <div className="tnum text-xs text-muted">{elapsed(r, (d) => t("soFar", { duration: d }))}</div>
+                    <div className="tnum text-xs text-muted">{elapsed(r, now, (d) => t("soFar", { duration: d }))}</div>
                   </td>
                   <td className="px-3 py-3">
                     {open ? <ChevronRight className="size-4 text-grey-300 group-hover:text-ink" aria-hidden /> : null}
