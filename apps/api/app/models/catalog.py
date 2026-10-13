@@ -5,7 +5,9 @@ from pydantic import Field
 from app.models.common import Model, Money, Opt
 
 
-class Agent(Model):
+class SampleAgent(Model):
+    """A demo-workspace agent from fixtures/agents.json."""
+
     id: str
     version: str
     name: str
@@ -14,6 +16,28 @@ class Agent(Model):
     capabilities: list[str]
     regions: list[str]
     certified: bool
+
+
+class AgentSkill(Model):
+    key: str  # the skill file's stem, e.g. "match-orders"
+    title: str  # the skill's first Markdown heading, else the stem humanised
+
+
+class AgentPackRef(Model):
+    slug: str
+    name: str
+
+
+class Agent(SampleAgent):
+    """A catalog agent. `source` is "definition" for an agent definition, "sample" for a demo fixture
+    agent (sample agents have no skills, tools or model profile). `used_by` lists the packs whose `agents`
+    name it."""
+
+    skills: list[AgentSkill]
+    tools: list[str]  # connector tools it may call, `<connector>.<tool>`
+    model_profile: Literal["reasoning", "fast"] | Opt = None
+    used_by: list[AgentPackRef]
+    source: Literal["definition", "sample"]
 
 
 class PassportResult(Model):

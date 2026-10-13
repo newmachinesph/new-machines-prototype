@@ -112,6 +112,29 @@ describe("DefinitionsView", () => {
     await waitFor(() => expect(state.push).toHaveBeenCalledWith("/definitions/agent/billing-agent?from=finance-agent"));
   });
 
+  it("preselects the kind the list is filtered to, as the agents page's New agent link asks", async () => {
+    const user = userEvent.setup();
+    state.query = { isPending: false, isError: false, data: [row("pack", "month-end-close"), ...ROWS] };
+    state.kind = "agent";
+    state.action = "new";
+    renderView();
+    const dialog = await screen.findByRole("dialog");
+    await user.type(within(dialog).getByLabelText("Key"), "billing-agent");
+    await user.click(within(dialog).getByRole("button", { name: "Open editor" }));
+    await waitFor(() => expect(state.push).toHaveBeenCalledWith("/definitions/agent/billing-agent?from=finance-agent"));
+  });
+
+  it("starts from the first creatable kind without a filter", async () => {
+    const user = userEvent.setup();
+    state.query = { isPending: false, isError: false, data: [row("pack", "month-end-close"), ...ROWS] };
+    state.action = "new";
+    renderView();
+    const dialog = await screen.findByRole("dialog");
+    await user.type(within(dialog).getByLabelText("Key"), "new-pack");
+    await user.click(within(dialog).getByRole("button", { name: "Open editor" }));
+    await waitFor(() => expect(state.push).toHaveBeenCalledWith("/definitions/pack/new-pack?from=month-end-close"));
+  });
+
   it("refuses a key that already exists or breaks the key rule", async () => {
     const user = userEvent.setup();
     state.action = "new";

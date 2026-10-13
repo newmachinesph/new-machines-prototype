@@ -106,6 +106,7 @@ export function DefinitionsView() {
                   open={action === "new"}
                   onOpenChange={(open) => void setAction(open ? "new" : null)}
                   definitions={rows}
+                  initialKind={kind}
                 />
               ) : null}
             </>

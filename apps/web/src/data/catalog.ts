@@ -1,7 +1,10 @@
 import type { Agent, Pack } from "@/lib/types";
 import { usd } from "@/lib/format";
 
-export const AGENTS: Agent[] = [
+/** The fixture shape (apps/api `SampleAgent`); the API adds skills, tools, usage and source when it lists them. */
+type SampleAgent = Omit<Agent, "skills" | "tools" | "modelProfile" | "usedBy" | "source">;
+
+export const AGENTS: SampleAgent[] = [
   {
     id: "agent_retail",
     version: "1.2.0",

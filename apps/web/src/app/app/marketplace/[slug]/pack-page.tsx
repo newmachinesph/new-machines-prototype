@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { QueryState } from "@/components/query-state";
 import { Skeleton } from "@/components/skeleton";
@@ -59,7 +60,9 @@ export function PackPage({ slug }: { slug: string }) {
                             <li key={id} className="px-5 py-4">
                               <div className="flex items-center gap-2 font-medium">
                                 <ActorGlyph actor="machine" />
-                                {a.name}{" "}
+                                <Link href={`/app/agents/${encodeURIComponent(a.id)}`} className="hover:underline">
+                                  {a.name}
+                                </Link>{" "}
                                 <span className="text-xs font-normal text-muted">
                                   {a.version}, {a.publisher}
                                 </span>

@@ -40,6 +40,7 @@
     "runs": "Runs",
     "approvals": "Approvals",
     "marketplace": "Marketplace",
+    "agents": "Agents",
     "memory": "Memory",
     "connections": "Connections",
     "usage": "Usage and billing",
@@ -680,7 +681,44 @@
         "reviewers": "Reviewers are paid for accepted submissions even when a later step fails. New Machines covers that pay when the failure is ours.",
         "data": "Your data stays in {regions}. Reviewers see only redacted records, only during their task.",
         "updates": "Updates to the pack never apply until you approve them. You can stop using it at any time."
-      }
+      },
+      "agents": "Agents"
+    }
+  },
+  "agents": {
+    "list": {
+      "lede": "The agents that do the work inside Workflow Packs. One agent can serve several packs.",
+      "search": "Search agents",
+      "searchPlaceholder": "Search agents by name, publisher, summary or capability",
+      "noMatch": "No agent matches.",
+      "showAll": "Show all agents",
+      "empty": "No agents are available yet.",
+      "publisherVersion": "{publisher}, version {version}",
+      "usedIn": "{n, plural, =0 {Not in a pack yet} one {Used in # pack} other {Used in # packs}}",
+      "sample": "Sample"
+    },
+    "detail": {
+      "allAgents": "All agents",
+      "publisherVersion": "{publisher}, version {version}",
+      "certified": "Certified",
+      "sample": "Sample",
+      "sampleNote": "A sample agent from the demo workspace. Its skills and tools are not published.",
+      "capabilities": "Capabilities",
+      "capabilitiesNote": "What the agent asks to do. Every action is still checked against your policies.",
+      "skills": "Skills",
+      "noSkills": "No skills listed.",
+      "tools": "Tools it may call",
+      "noTools": "None. It works only from the data the pack gives it.",
+      "details": "Details",
+      "model": "Model",
+      "regions": "Processed in",
+      "noProfile": "Not stated",
+      "profile": {
+        "reasoning": "Reasoning model",
+        "fast": "Fast model"
+      },
+      "usedIn": "Used in",
+      "notUsed": "No Workflow Pack uses this agent yet."
     }
   },
   "runs": {

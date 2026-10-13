@@ -51,6 +51,12 @@ def model_env() -> str:
     return os.environ.get("NM_MODEL_ENV", "test")
 
 
+def workspace_mode() -> str:
+    """demo (default): customer endpoints serve the fixture workspace alongside real data. live: definitions
+    and real rows only, never fixture data."""
+    return os.environ.get("NM_WORKSPACE", "demo")
+
+
 def connector_mode() -> str:
     return os.environ.get("NM_CONNECTOR_MODE", "sandbox")
 

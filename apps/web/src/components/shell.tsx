@@ -3,6 +3,7 @@
 import { Dialog } from "@base-ui/react/dialog";
 import {
   ArrowLeftRight,
+  Bot,
   Brain,
   Check,
   ChevronRight,
@@ -31,7 +32,7 @@ import { useEffect, type ReactNode } from "react";
 import { Mark } from "@/design-system/logo/Mark";
 import { useSession } from "@/lib/auth/session";
 import { cn } from "@/lib/cn";
-import { usePackName, usePacks } from "@/lib/queries/catalog";
+import { useAgentName, usePackName, usePacks } from "@/lib/queries/catalog";
 import { useEligibleTasks } from "@/lib/queries/tasks";
 import { useApprovals, useMemory } from "@/lib/queries/workspace";
 import { useUi } from "@/stores/ui";
@@ -55,6 +56,7 @@ type PageKey =
   | "runs"
   | "approvals"
   | "marketplace"
+  | "agents"
   | "memory"
   | "connections"
   | "usage"
@@ -72,6 +74,7 @@ const BUSINESS_NAV: Item[][] = [
     { href: "/app/runs", label: "runs", icon: Workflow },
     { href: "/app/approvals", label: "approvals", icon: ListChecks },
     { href: "/app/marketplace", label: "marketplace", icon: Store },
+    { href: "/app/agents", label: "agents", icon: Bot },
   ],
   [
     { href: "/app/memory", label: "memory", icon: Brain },
@@ -98,7 +101,7 @@ const SUBPAGE: Record<string, CrumbKey> = { evidence: "crumbDeliverable", instal
 function crumbsFor(
   path: string,
   work: boolean,
-  packName: string | undefined,
+  recordName: string | undefined,
   t: (key: PageKey | CrumbKey) => string,
 ): Crumb[] {
   const parts = path.split("/").filter(Boolean);
@@ -116,7 +119,7 @@ function crumbsFor(
     } else if (SUBPAGE[seg]) {
       out.push({ label: t(SUBPAGE[seg]), href });
     } else {
-      out.push(packName ? { label: packName, href } : { label: seg, href, mono: true });
+      out.push(recordName ? { label: recordName, href } : { label: seg, href, mono: true });
     }
   });
   if (!out.length) out.push({ label: t(work ? "availableTasks" : "overview") });
@@ -125,9 +128,11 @@ function crumbsFor(
 
 function Breadcrumbs({ path, work }: { path: string; work: boolean }) {
   const slug = /^\/app\/marketplace\/([^/]+)/.exec(path)?.[1];
+  const agentId = /^\/app\/agents\/([^/]+)/.exec(path)?.[1];
   const packName = usePackName(slug);
+  const agentName = useAgentName(agentId);
   const t = useTranslations("nav");
-  const crumbs = crumbsFor(path, work, packName, t);
+  const crumbs = crumbsFor(path, work, packName ?? agentName, t);
   return (
     <nav aria-label={t("breadcrumb")} className="min-w-0">
       <ol className="flex min-w-0 items-center gap-1.5 text-sm">

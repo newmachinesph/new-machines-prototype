@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { ORG_ID } from "@/lib/api/client";
 import {
+  getAgentOptions,
   getCatalogTaxonomyOptions,
   getWorkflowPackOptions,
   installWorkflowPackMutation,
@@ -17,6 +18,14 @@ export const usePacks = (enabled = true) => useQuery({ ...listWorkflowPacksOptio
 export const usePack = (slug: string) => useQuery(getWorkflowPackOptions({ path: { slug } }));
 export const useTaxonomy = () => useQuery({ ...getCatalogTaxonomyOptions(), staleTime: Infinity });
 export const useAgents = () => useQuery({ ...listAgentsOptions(), staleTime: Infinity });
+
+export const useAgent = (id: string) => useQuery(getAgentOptions({ path: { agent_id: id } }));
+
+/** An agent's name for breadcrumbs; shares the agent page's query, so it costs no extra request there. */
+export function useAgentName(id: string | undefined) {
+  const { data } = useQuery({ ...getAgentOptions({ path: { agent_id: id ?? "" } }), enabled: id !== undefined });
+  return id ? data?.name : undefined;
+}
 
 export function useAgentById() {
   const { data } = useAgents();

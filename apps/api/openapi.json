@@ -255,6 +255,7 @@
           "catalog"
         ],
         "summary": "List Agents",
+        "description": "Agents in the catalog: definition agents first, then (demo workspace only) sample agents.",
         "operationId": "listAgents",
         "responses": {
           "200": {
@@ -327,6 +328,93 @@
             "HTTPBearer": []
           }
         ]
+      }
+    },
+    "/v1/agents/{agent_id}": {
+      "get": {
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Get Agent",
+        "operationId": "getAgent",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "agent_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Agent Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Agent"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/v1/workflow-packs:suggest": {
@@ -7788,6 +7876,43 @@
           "certified": {
             "type": "boolean",
             "title": "Certified"
+          },
+          "skills": {
+            "items": {
+              "$ref": "#/components/schemas/AgentSkill"
+            },
+            "type": "array",
+            "title": "Skills"
+          },
+          "tools": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tools"
+          },
+          "modelProfile": {
+            "type": "string",
+            "enum": [
+              "reasoning",
+              "fast"
+            ],
+            "title": "Modelprofile"
+          },
+          "usedBy": {
+            "items": {
+              "$ref": "#/components/schemas/AgentPackRef"
+            },
+            "type": "array",
+            "title": "Usedby"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "definition",
+              "sample"
+            ],
+            "title": "Source"
           }
         },
         "type": "object",
@@ -7799,9 +7924,50 @@
           "summary",
           "capabilities",
           "regions",
-          "certified"
+          "certified",
+          "skills",
+          "tools",
+          "usedBy",
+          "source"
         ],
-        "title": "Agent"
+        "title": "Agent",
+        "description": "A catalog agent. `source` is \"definition\" for an agent definition, \"sample\" for a demo fixture\nagent (sample agents have no skills, tools or model profile). `used_by` lists the packs whose `agents`\nname it."
+      },
+      "AgentPackRef": {
+        "properties": {
+          "slug": {
+            "type": "string",
+            "title": "Slug"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "slug",
+          "name"
+        ],
+        "title": "AgentPackRef"
+      },
+      "AgentSkill": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "title"
+        ],
+        "title": "AgentSkill"
       },
       "Approval": {
         "properties": {

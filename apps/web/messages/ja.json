@@ -40,6 +40,7 @@
     "runs": "実行",
     "approvals": "承認",
     "marketplace": "マーケットプレイス",
+    "agents": "エージェント",
     "memory": "メモリ",
     "connections": "接続",
     "usage": "利用状況と請求",
@@ -680,7 +681,44 @@
         "reviewers": "レビュアーには、受け入れられた提出物に対して、後続の手順が失敗した場合でも報酬が支払われます。失敗の原因が当社にある場合は、New Machinesがその報酬を負担します。",
         "data": "データは{regions}内にとどまります。レビュアーには伏せ字にしたレコードだけが、タスクの間だけ表示されます。",
         "updates": "パックの更新は、あなたが承認するまで適用されません。利用はいつでもやめられます。"
-      }
+      },
+      "agents": "エージェント"
+    }
+  },
+  "agents": {
+    "list": {
+      "lede": "Workflow Packsの中で作業を担当するエージェントです。1つのエージェントが複数のパックで働くこともあります。",
+      "search": "エージェントを検索",
+      "searchPlaceholder": "名前、提供元、概要、機能でエージェントを検索",
+      "noMatch": "一致するエージェントがありません。",
+      "showAll": "すべてのエージェントを表示",
+      "empty": "利用できるエージェントはまだありません。",
+      "publisherVersion": "{publisher}、バージョン{version}",
+      "usedIn": "{n, plural, =0 {まだパックで使われていません} other {#件のパックで使用}}",
+      "sample": "サンプル"
+    },
+    "detail": {
+      "allAgents": "すべてのエージェント",
+      "publisherVersion": "{publisher}、バージョン{version}",
+      "certified": "認証済み",
+      "sample": "サンプル",
+      "sampleNote": "デモ用ワークスペースのサンプルエージェントです。スキルとツールは公開されていません。",
+      "capabilities": "機能",
+      "capabilitiesNote": "エージェントが要求する操作です。操作はその都度、ポリシーに照らして確認されます。",
+      "skills": "スキル",
+      "noSkills": "スキルは登録されていません。",
+      "tools": "呼び出せるツール",
+      "noTools": "なし。パックから渡されたデータだけで作業します。",
+      "details": "詳細",
+      "model": "モデル",
+      "regions": "処理する地域",
+      "noProfile": "記載なし",
+      "profile": {
+        "reasoning": "推論モデル",
+        "fast": "高速モデル"
+      },
+      "usedIn": "使用しているパック",
+      "notUsed": "このエージェントを使うWorkflow Packはまだありません。"
     }
   },
   "runs": {
