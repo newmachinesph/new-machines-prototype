@@ -4,6 +4,10 @@ schema_version: nm.agent.manifest.v1.1
 agent_id: retail-agent
 version: "1.0.0"
 publisher_id: new-machines-labs
+publisher_name: New Machines Labs
+name: Retail Agent
+summary: >-
+  Reads your store's orders for a date range and points out the ones that look unusual, naming each order and why it stands out. It only reads orders and never changes them.
 capabilities: [retail.orders]
 runtime:
   adapter: hosted

@@ -1,4 +1,7 @@
+from app import settings
 from app.auth import CurrentActor
+from app.catalog import agents as agent_catalog
+from app.catalog.packs import SandboxForecast, with_definition
 from app.defs.current import latest_bodies
 from app.errors import ApiProblem
 from app.models.catalog import Agent, Pack, Suggestion, Taxonomy, TaxonomyEntry
@@ -38,14 +41,31 @@ def find_pack(slug: str) -> Pack:
 
 
 def _classified(packs: list[Pack]) -> list[Pack]:
-    """Copies of `packs` with `function` and `industries` from their pack definitions (none without one)."""
+    """Copies of `packs` seen through their pack definitions: `function`, `industries`, `agents` and
+    `connectors` from the definition when the slug has one; no function or industries without one."""
     defs = {body.get("slug", key): body for key, body in latest_bodies("pack").items()}
+    connectors = latest_bodies("connector") if any(p.slug in defs for p in packs) else {}
+    sandboxed = SandboxForecast()
+    aliases = _sample_aliases()
     out = []
     for pack in packs:
-        body = defs.get(pack.slug) or {}
-        industries = [str(i) for i in body.get("industries") or []]
-        out.append(pack.model_copy(update={"function": body.get("function"), "industries": industries}))
+        body = defs.get(pack.slug)
+        if body is None:
+            pack = pack.model_copy(update={"function": None, "industries": []})
+        else:
+            pack = with_definition(pack, body, connectors, sandboxed)
+        if aliases:
+            agents = list(dict.fromkeys(aliases.get(a, a) for a in pack.agents))
+            pack = pack.model_copy(update={"agents": agents})
+        out.append(pack)
     return out
+
+
+def _sample_aliases() -> dict[str, str]:
+    """Demo sample agents folded into the definition agent of the same name (none in the live workspace)."""
+    if settings.workspace_mode() == "live":
+        return {}
+    return agent_catalog.sample_aliases(get_store().agents)
 
 
 @router.get("/workflow-packs", operation_id="listWorkflowPacks", response_model=list[Pack])
@@ -73,9 +93,32 @@ def get_catalog_taxonomy(_: CurrentActor) -> Taxonomy:
     return Taxonomy(functions=entries("functions"), industries=entries("industries"))
 
 
+def _agents() -> list[Agent]:
+    """The live workspace lists agent definitions only, used by pack definitions. The demo workspace adds the
+    sample agents, and usage comes from the marketplace packs it lists."""
+    if settings.workspace_mode() == "live":
+        return agent_catalog.catalog(agent_catalog.definition_pack_uses(), samples=[])
+    with locked_store() as store:
+        listed = [p for p in store.packs if is_listed(store, p)]
+        samples = list(store.agents)
+    uses = [agent_catalog.PackUse(p.slug, p.name, p.agents) for p in _classified(listed)]
+    return agent_catalog.catalog(uses, samples, _sample_aliases())
+
+
 @router.get("/agents", operation_id="listAgents", response_model=list[Agent])
 def list_agents(_: CurrentActor) -> list[Agent]:
-    return get_store().agents
+    """Agents in the catalog: definition agents first, then (demo workspace only) sample agents."""
+    return _agents()
+
+
+@router.get("/agents/{agent_id}", operation_id="getAgent", response_model=Agent)
+def get_agent(agent_id: str, _: CurrentActor) -> Agent:
+    # In the demo workspace a folded sample id (agent_finance) returns its definition agent.
+    agent_id = _sample_aliases().get(agent_id, agent_id)
+    agent = next((a for a in _agents() if a.id == agent_id), None)
+    if agent is None:
+        raise ApiProblem(404, "NOT_FOUND", f"No agent called {agent_id}.")
+    return agent
 
 
 @router.post("/workflow-packs:suggest", operation_id="suggestWorkflowPack", response_model=Suggestion)

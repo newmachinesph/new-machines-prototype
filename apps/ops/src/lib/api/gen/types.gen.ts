@@ -38,6 +38,10 @@ export type AddMemoryItemRequest = {
 
 /**
  * Agent
+ *
+ * A catalog agent. `source` is "definition" for an agent definition, "sample" for a demo fixture
+ * agent (sample agents have no skills, tools or model profile). `used_by` lists the packs whose `agents`
+ * name it.
  */
 export type Agent = {
     /**
@@ -72,6 +76,54 @@ export type Agent = {
      * Certified
      */
     certified: boolean;
+    /**
+     * Skills
+     */
+    skills: Array<AgentSkill>;
+    /**
+     * Tools
+     */
+    tools: Array<string>;
+    /**
+     * Modelprofile
+     */
+    modelProfile?: 'reasoning' | 'fast';
+    /**
+     * Usedby
+     */
+    usedBy: Array<AgentPackRef>;
+    /**
+     * Source
+     */
+    source: 'definition' | 'sample';
+};
+
+/**
+ * AgentPackRef
+ */
+export type AgentPackRef = {
+    /**
+     * Slug
+     */
+    slug: string;
+    /**
+     * Name
+     */
+    name: string;
+};
+
+/**
+ * AgentSkill
+ */
+export type AgentSkill = {
+    /**
+     * Key
+     */
+    key: string;
+    /**
+     * Title
+     */
+    title: string;
 };
 
 /**
@@ -3531,6 +3583,52 @@ export type ListAgentsResponses = {
 };
 
 export type ListAgentsResponse = ListAgentsResponses[keyof ListAgentsResponses];
+
+export type GetAgentData = {
+    body?: never;
+    path: {
+        /**
+         * Agent Id
+         */
+        agent_id: string;
+    };
+    query?: never;
+    url: '/v1/agents/{agent_id}';
+};
+
+export type GetAgentErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type GetAgentError = GetAgentErrors[keyof GetAgentErrors];
+
+export type GetAgentResponses = {
+    /**
+     * Successful Response
+     */
+    200: Agent;
+};
+
+export type GetAgentResponse = GetAgentResponses[keyof GetAgentResponses];
 
 export type SuggestWorkflowPackData = {
     body: SuggestRequest;

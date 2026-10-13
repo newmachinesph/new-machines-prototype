@@ -20,7 +20,27 @@ export const zAddMemoryItemRequest = z.object({
 });
 
 /**
+ * AgentPackRef
+ */
+export const zAgentPackRef = z.object({
+    slug: z.string(),
+    name: z.string()
+});
+
+/**
+ * AgentSkill
+ */
+export const zAgentSkill = z.object({
+    key: z.string(),
+    title: z.string()
+});
+
+/**
  * Agent
+ *
+ * A catalog agent. `source` is "definition" for an agent definition, "sample" for a demo fixture
+ * agent (sample agents have no skills, tools or model profile). `used_by` lists the packs whose `agents`
+ * name it.
  */
 export const zAgent = z.object({
     id: z.string(),
@@ -30,7 +50,12 @@ export const zAgent = z.object({
     summary: z.string(),
     capabilities: z.array(z.string()),
     regions: z.array(z.string()),
-    certified: z.boolean()
+    certified: z.boolean(),
+    skills: z.array(zAgentSkill),
+    tools: z.array(z.string()),
+    modelProfile: z.enum(['reasoning', 'fast']).optional(),
+    usedBy: z.array(zAgentPackRef),
+    source: z.enum(['definition', 'sample'])
 });
 
 /**
@@ -1912,6 +1937,15 @@ export const zGetCatalogTaxonomyResponse = zTaxonomy;
  * Successful Response
  */
 export const zListAgentsResponse = z.array(zAgent);
+
+export const zGetAgentPath = z.object({
+    agent_id: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zGetAgentResponse = zAgent;
 
 export const zSuggestWorkflowPackBody = zSuggestRequest;
 

@@ -1,9 +1,13 @@
 "use client";
 
+import { Plus } from "lucide-react";
+import Link from "next/link";
 import { z } from "zod";
 import { type Column, DataTable } from "@/components/data-table";
-import { Id, PageHeader, Pill, Section } from "@/components/ui";
+import { ReadOnly } from "@/components/read-only";
+import { Button, ButtonLink, Id, PageHeader, Pill, Section } from "@/components/ui";
 import type { DefinitionDetail } from "@/lib/api/gen/types.gen";
+import { useCanWrite } from "@/lib/queries/ops";
 import { definitionHref } from "../../definitions/_components/definition-logic";
 import { KindState } from "../../definitions/_components/kind-state";
 
@@ -29,6 +33,8 @@ type AgentRow = {
   skills: string[];
   maxTurns: number | null;
   capabilities: string[];
+  /** Keys of the packs whose `agents` list names this agent. */
+  packs: string[];
 };
 
 /** `skills/match-orders.md` → `match-orders`. */
@@ -46,6 +52,7 @@ export function agentRow(d: DefinitionDetail): AgentRow {
     skills: body.runtime.skills.map(skillName),
     maxTurns: body.runtime.max_turns ?? null,
     capabilities: body.capabilities,
+    packs: d.usedBy.filter((r) => r.kind === "pack").map((r) => r.key),
   };
 }
 
@@ -71,6 +78,22 @@ const COLUMNS: Column<AgentRow>[] = [
   { key: "tools", header: "Tools", className: "hidden md:table-cell", cell: (a) => list(a.tools) },
   { key: "skills", header: "Skills", className: "hidden md:table-cell", cell: (a) => list(a.skills) },
   {
+    key: "usedBy",
+    header: "Used by",
+    cell: (a) =>
+      a.packs.length ? (
+        <span className="flex flex-wrap gap-x-3 gap-y-1">
+          {a.packs.map((key) => (
+            <Link key={key} href={definitionHref("pack", key)} className="font-mono text-[12px] hover:underline">
+              {key}
+            </Link>
+          ))}
+        </span>
+      ) : (
+        <span className="text-muted">No pack</span>
+      ),
+  },
+  {
     key: "turns",
     header: "Max turns",
     numeric: true,
@@ -80,12 +103,33 @@ const COLUMNS: Column<AgentRow>[] = [
   { key: "version", header: "Version", numeric: true, cell: (a) => `v${a.version}` },
 ];
 
+/** The definitions page's new-definition dialog, opened with the agent kind chosen. */
+const NEW_AGENT_HREF = "/definitions?kind=agent&action=new";
+
+function NewAgent() {
+  const canWrite = useCanWrite();
+  const label = (
+    <>
+      <Plus className="size-4" aria-hidden />
+      New agent
+    </>
+  );
+  return canWrite ? (
+    <ButtonLink href={NEW_AGENT_HREF}>{label}</ButtonLink>
+  ) : (
+    <ReadOnly>
+      <Button disabled>{label}</Button>
+    </ReadOnly>
+  );
+}
+
 export function AgentsView() {
   return (
     <>
       <PageHeader
         title="Agents"
-        lede="The base agents packs are built from: the model profile each one runs on, the tools it may call and the skills it reads. Open one to edit it."
+        lede="The base agents packs are built from: the model profile each one runs on, the tools it may call, the skills it reads and the packs that use it. Open one to edit it."
+        actions={<NewAgent />}
       />
       <KindState kind="agent" what="Agents">
         {(details) => (

@@ -17,6 +17,8 @@ export const ROUTES: RouteSpec[] = [
   { path: "/app/marketplace", ready: PACK },
   { path: "/app/marketplace/order-payment-reconciliation", ready: PACK },
   { path: "/app/marketplace/order-payment-reconciliation/install", ready: PACK },
+  { path: "/app/agents", ready: text("Finance Agent") },
+  { path: "/app/agents/finance-agent", ready: PACK },
   { path: "/app/approvals", ready: text("Send a payment reminder to Cedarline Home") },
   { path: "/app/memory", ready: text("Payout batches post the next business day after the order.") },
   { path: "/app/connections", ready: text("ops@harborandpine.example") },

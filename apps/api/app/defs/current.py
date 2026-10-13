@@ -16,18 +16,24 @@ log = logging.getLogger(__name__)
 
 
 @cache
-def _file_bodies(root: Path) -> dict[tuple[str, str], dict]:
+def _file_items(root: Path) -> dict[tuple[str, str], tuple[dict, dict[str, str]]]:
     try:
         bundle = load_bundle(root)
     except LoadError, OSError:
         log.warning("Definition files in %s could not be read; serving none.", root, exc_info=True)
         return {}
-    return {key: d.body for key, d in bundle.items.items()}
+    return {key: (d.body, d.files) for key, d in bundle.items.items()}
+
+
+def latest_with_files(kind: str) -> dict[str, tuple[dict, dict[str, str]]]:
+    """{key: (body, files)} of the latest version of every definition of `kind`; `files` holds an agent's
+    Markdown by path relative to its folder (empty for other kinds)."""
+    if settings.runtime_enabled():
+        with db.connect() as conn:
+            return {v.key: (v.body, v.files) for v in registry.latest_all(conn) if v.kind == kind}
+    return {key: item for (k, key), item in _file_items(settings.defs_dir()).items() if k == kind}
 
 
 def latest_bodies(kind: str) -> dict[str, dict]:
     """{key: body} of the latest version of every definition of `kind`."""
-    if settings.runtime_enabled():
-        with db.connect() as conn:
-            return {v.key: v.body for v in registry.latest_all(conn) if v.kind == kind}
-    return {key: body for (k, key), body in _file_bodies(settings.defs_dir()).items() if k == kind}
+    return {key: body for key, (body, _) in latest_with_files(kind).items()}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import Link from "next/link";
 import { useRef, useState } from "react";
 import { Checkbox, Choices, Modal, ModalClose, focusAfterClose, useToast } from "@/components/base";
 import { Button, ButtonLink, Callout, Id, KeyValues, MockTag, Section } from "@/components/ui";
@@ -79,6 +80,16 @@ export function InstallReview({ pack: p }: { pack: Pack }) {
                 </div>
               </li>
             ))}
+            <li className="px-5 py-3.5 text-sm text-muted">
+              {t("agents")}
+              <span className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1.5">
+                {p.agents.map((id) => (
+                  <Link key={id} href={`/app/agents/${encodeURIComponent(id)}`} className="link text-ink">
+                    {agentById(id)?.name ?? id}
+                  </Link>
+                ))}
+              </span>
+            </li>
             <li className="px-5 py-3.5 text-sm text-muted">
               {t("capabilities")}
               <span className="mt-1.5 flex flex-wrap gap-1.5">

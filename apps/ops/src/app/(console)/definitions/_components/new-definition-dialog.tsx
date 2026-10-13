@@ -14,26 +14,40 @@ const INPUT =
 
 /**
  * Starts a new definition: pick a kind, a key and an existing definition of that kind to copy. The editor opens
- * with the copy (its key swapped); nothing is saved until it is published there with a reason.
+ * with the copy (its key swapped); nothing is saved until it is published there with a reason. `initialKind`
+ * preselects a kind each time the dialog opens (when that kind can be created).
  */
 export function NewDefinitionDialog({
   open,
   onOpenChange,
   definitions,
+  initialKind,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   definitions: DefinitionSummary[];
+  initialKind?: DefinitionKind | null;
 }) {
   const id = useId();
   const router = useRouter();
   const keysOf = (kind: DefinitionKind) => definitions.filter((d) => d.kind === kind).map((d) => d.key);
   // A new definition starts from a copy, so only kinds with at least one definition are offered.
   const kinds = CREATABLE_KINDS.filter((k) => keysOf(k).length > 0);
-  const [kind, setKind] = useState<DefinitionKind | undefined>(kinds[0]);
+  const preferred = kinds.find((k) => k === initialKind);
+  const [kind, setKind] = useState<DefinitionKind | undefined>(preferred ?? kinds[0]);
   const [from, setFrom] = useState<string | undefined>(kind ? keysOf(kind)[0] : undefined);
   const [key, setKey] = useState("");
   const [problem, setProblem] = useState<string | null>(null);
+  const [wasOpen, setWasOpen] = useState(open);
+
+  // Opening again (from a link that names a kind) starts from that kind, whatever was picked last time.
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (open && preferred) {
+      setKind(preferred);
+      setFrom(keysOf(preferred)[0]);
+    }
+  }
 
   const close = (next: boolean) => {
     onOpenChange(next);

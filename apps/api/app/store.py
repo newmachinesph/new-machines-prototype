@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Any
 
 from pydantic import TypeAdapter
 
-from app.models.catalog import Agent, Pack
+from app.models.catalog import Pack, SampleAgent
 from app.models.ops import (
     AuditEntry,
     AuditTargetType,
@@ -60,7 +60,7 @@ def _load(name: str, kind: Any) -> Any:
 
 @dataclass
 class Store:
-    agents: list[Agent]
+    agents: list[SampleAgent]
     packs: list[Pack]
     runs: dict[str, Run]
     run_summaries: list[RunSummary]
@@ -157,7 +157,7 @@ def _build() -> Store:
     incidents = _load("ops_incidents", list[Incident])
     audit_log = sorted(_load("ops_audit", list[AuditEntry]), key=lambda e: e.at)
     return Store(
-        agents=_load("agents", list[Agent]),
+        agents=_load("agents", list[SampleAgent]),
         packs=packs,
         runs=runs,
         run_summaries=summaries,
