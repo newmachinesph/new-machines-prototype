@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Reviewer } from "@/lib/api/gen/types.gen";
-import { canSetLevel, countByTab, resolveTab } from "./tabs";
+import { TABS, canSetLevel, countByTab, resolveTab, tabsFor } from "./tabs";
 
 const r = (status: Reviewer["status"]) => ({ status }) as Reviewer;
 
@@ -20,6 +20,13 @@ describe("workforce tabs", () => {
   });
   it("keeps the tab from the URL", () => {
     expect(resolveTab("suspended", { applicants: 3, active: 5, suspended: 0 })).toBe("suspended");
+  });
+  it("has no applicants tab in the live workspace", () => {
+    expect(tabsFor(true)).toEqual(["active", "suspended"]);
+    expect(tabsFor(false)).toEqual(TABS);
+    expect(resolveTab("applicants", { applicants: 0, active: 1, suspended: 0 }, true)).toBe("active");
+    expect(resolveTab("suspended", { applicants: 0, active: 1, suspended: 0 }, true)).toBe("suspended");
+    expect(resolveTab(null, { applicants: 2, active: 1, suspended: 0 }, true)).toBe("active");
   });
   it("only allows a level change when the level differs", () => {
     expect(canSetLevel("trainee", "trainee")).toBe(false);

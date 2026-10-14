@@ -17,7 +17,7 @@ vi.mock("@/lib/queries/catalog", () => ({
 }));
 
 describe("StartRunMenu", () => {
-  it("lists every hired pack from the API, and only hired packs", async () => {
+  it("lists every added pack from the API, and only added packs", async () => {
     renderWithIntl(<StartRunMenu />);
     await userEvent.click(screen.getByRole("button", { name: "Start a run" }));
     expect(await screen.findByRole("menuitem", { name: "Chargeback Evidence" })).toHaveAttribute(
@@ -26,13 +26,13 @@ describe("StartRunMenu", () => {
     );
     expect(screen.getByRole("menuitem", { name: "Order & Payment Reconciliation" })).toBeInTheDocument();
     expect(screen.queryByRole("menuitem", { name: "Catalog Localization" })).not.toBeInTheDocument();
-    expect(screen.getByRole("menuitem", { name: "Hire another pack" })).toHaveAttribute("href", "/app/marketplace");
+    expect(screen.getByRole("menuitem", { name: "Add another pack" })).toHaveAttribute("href", "/app/marketplace");
   });
 
   it("keeps the menu's Japanese labels", async () => {
     renderWithIntl(<StartRunMenu />, { locale: "ja" });
     await userEvent.click(screen.getByRole("button", { name: "実行を開始" }));
-    expect(await screen.findByText("採用済みのパックを選択")).toBeInTheDocument();
-    expect(screen.getByRole("menuitem", { name: "別のパックを採用" })).toBeInTheDocument();
+    expect(await screen.findByText("追加済みのパックを選択")).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: "別のパックを追加" })).toBeInTheDocument();
   });
 });

@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { renderWithIntl } from "@/test/intl";
 import { EarningsView } from "./earnings/earnings-view";
 import WorkError from "./error";
@@ -33,14 +33,25 @@ const EARNINGS = [
   },
 ];
 
+vi.mock("@/components/base", async (orig) => ({ ...(await orig<object>()), useToast: () => vi.fn() }));
 const workspace = vi.hoisted(() => ({ demo: true }));
-vi.mock("@/lib/queries/me", () => ({ useIsDemo: () => workspace.demo }));
+vi.mock("@/lib/queries/me", () => ({ useIsDemo: () => workspace.demo, useIsLive: () => !workspace.demo }));
 
 const lists = vi.hoisted(() => ({ tasks: null as unknown[] | null, earnings: null as unknown[] | null }));
+const profile = vi.hoisted(() => ({ data: undefined as unknown }));
 vi.mock("@/lib/queries/tasks", () => ({
   useEligibleTasks: () => ready(lists.tasks ?? OPEN_TASKS),
   useEarnings: () => ready(lists.earnings ?? EARNINGS),
+  useReviewerProfile: () => ({ data: profile.data }),
+  useUpdateReviewerProfile: () => ({ mutate: vi.fn() }),
 }));
+
+afterEach(() => {
+  workspace.demo = true;
+  lists.tasks = null;
+  lists.earnings = null;
+  profile.data = undefined;
+});
 
 describe("reviewer portal views in Japanese", () => {
   it("translates the task list and keeps API text in English", () => {
@@ -101,5 +112,84 @@ describe("reviewer portal in a live workspace", () => {
     expect(screen.getByText("Pay is simulated")).toBeInTheDocument();
     expect(screen.queryByText(/demo/i)).not.toBeInTheDocument();
     workspace.demo = true;
+  });
+});
+
+describe("reviewer portal with team and network tasks", () => {
+  it("marks a team task unpaid and a network task as network work", () => {
+    workspace.demo = false;
+    lists.tasks = [
+      { ...OPEN_TASKS[0], id: "ht_team", via: "team", pay: { amountMinor: 0, currency: "USD" } },
+      { ...OPEN_TASKS[0], id: "ht_net", via: "network", pay: { amountMinor: 150, currency: "USD" } },
+    ];
+    renderWithIntl(<WorkView />);
+    expect(screen.getByText("Team review, unpaid")).toBeInTheDocument(); // once on the card, not twice
+    expect(screen.getByText("Network")).toBeInTheDocument();
+    expect(screen.getAllByText("$1.50").length).toBeGreaterThan(0);
+    expect(screen.getByText("Simulated pay once your submission is accepted: no money moves")).toBeInTheDocument();
+    expect(screen.queryByText("Paid once your submission is accepted")).toBeNull();
+  });
+
+  it("shows team reviews as unpaid on the earnings page and network reviews with simulated pay", () => {
+    workspace.demo = false;
+    lists.earnings = [
+      {
+        ...EARNINGS[0],
+        taskId: "ht_team",
+        title: "Team check",
+        via: "team",
+        status: "PAID_SIMULATED",
+        amount: { amountMinor: 0, currency: "USD" },
+      },
+      {
+        ...EARNINGS[0],
+        taskId: "nt_abc",
+        title: "Network check",
+        via: "network",
+        status: "PAID_SIMULATED",
+        amount: { amountMinor: 150, currency: "USD" },
+      },
+    ];
+    renderWithIntl(<EarningsView />);
+    expect(screen.getByText(/Reviews for your own workspace's team are unpaid/)).toBeInTheDocument();
+    expect(screen.getByText("Pay is simulated")).toBeInTheDocument();
+    expect(screen.queryByText(/demo/i)).toBeNull();
+    const team = screen.getByText("Team check").closest("li")!;
+    expect(team).toHaveTextContent("Team review, unpaid");
+    expect(team).not.toHaveTextContent("Paid (simulated)");
+    expect(team).not.toHaveTextContent("$0.00");
+    const network = screen.getByText("Network check").closest("li")!;
+    expect(network).toHaveTextContent("Paid (simulated)");
+    expect(network).toHaveTextContent("$1.50");
+    lists.earnings = null;
+  });
+
+  it("says in Japanese that team reviews are unpaid on the live earnings page", () => {
+    workspace.demo = false;
+    lists.earnings = [
+      { ...EARNINGS[0], via: "team", status: "PAID_SIMULATED", amount: { amountMinor: 0, currency: "USD" } },
+    ];
+    renderWithIntl(<EarningsView />, { locale: "ja" });
+    expect(screen.getByText(/チームとして行ったレビューは無報酬です/)).toBeInTheDocument();
+    expect(screen.getByText("報酬は模擬です")).toBeInTheDocument();
+    expect(screen.getByText("チームのレビュー、無報酬")).toBeInTheDocument();
+    lists.earnings = null;
+  });
+
+  it("keeps the demo earnings copy in the demo", () => {
+    renderWithIntl(<EarningsView />);
+    expect(screen.getByText(/You are paid for every accepted submission/)).toBeInTheDocument();
+    expect(screen.getByText("No real payouts in this demo")).toBeInTheDocument();
+  });
+
+  it("offers review for the network in a live workspace only", () => {
+    profile.data = { enabled: false, suspended: false, name: "Nina Park", languages: [], skills: [] };
+    workspace.demo = false;
+    const { unmount } = renderWithIntl(<WorkView />);
+    expect(screen.getByRole("checkbox", { name: "Review for the network" })).toBeInTheDocument();
+    unmount();
+    workspace.demo = true;
+    renderWithIntl(<WorkView />);
+    expect(screen.queryByRole("checkbox", { name: "Review for the network" })).toBeNull();
   });
 });

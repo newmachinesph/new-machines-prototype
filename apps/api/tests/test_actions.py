@@ -86,7 +86,7 @@ def test_disconnect_and_revoke_grant(client):
 def test_install_returns_summary(client):
     r = client.post(
         f"{ORG}/agent-installations",
-        json={"packSlug": "chargeback-evidence", "capMinor": 2000, "reviewerPool": False},
+        json={"packSlug": "chargeback-evidence", "capMinor": 2000, "reviewerPool": "team"},
     )
     assert r.status_code == 201
     assert r.json()["summary"] == "Spending cap $20.00 per run. Reviewers: your team only."

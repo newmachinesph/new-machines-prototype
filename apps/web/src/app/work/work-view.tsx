@@ -6,9 +6,10 @@ import { QueryState } from "@/components/query-state";
 import { Skeleton } from "@/components/skeleton";
 import { Amount, ButtonLink, EmptyState, PageHeader, Pill, SimTag } from "@/components/ui";
 import { sumMoney, utc, WORKER_TZ } from "@/lib/format";
-import { useIsDemo } from "@/lib/queries/me";
+import { useIsDemo, useIsLive } from "@/lib/queries/me";
 import { useEarnings, useEligibleTasks } from "@/lib/queries/tasks";
 import { useFormat } from "@/lib/use-format";
+import { NetworkProfilePanel } from "./network-profile";
 
 function TasksSkeleton() {
   return (
@@ -27,6 +28,7 @@ export function WorkView() {
   const nav = useTranslations("nav");
   const { money, dateTime, until } = useFormat();
   const demo = useIsDemo();
+  const live = useIsLive();
   const tasks = useEligibleTasks();
   const earnings = useEarnings();
   return (
@@ -68,12 +70,17 @@ export function WorkView() {
                                 {t("byline", { buyer: task.buyer, pack: task.packName, skill: task.skill })}
                               </div>
                             </div>
-                            <Amount value={task.pay} className="shrink-0 text-2xl font-semibold tracking-tight" />
+                            {task.via === "team" ? (
+                              <span className="shrink-0 text-sm text-muted">{t("teamUnpaid")}</span>
+                            ) : (
+                              <Amount value={task.pay} className="shrink-0 text-2xl font-semibold tracking-tight" />
+                            )}
                           </div>
                           <dl className="mt-4 mb-4 grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1.5 text-sm">
                             <dt className="text-muted">{t("fields.type")}</dt>
-                            <dd>
+                            <dd className="flex flex-wrap gap-1.5">
                               <Pill tone="human">{t(`mode.${task.mode}`)}</Pill>
+                              {task.via === "network" ? <Pill tone="quiet">{t("network")}</Pill> : null}
                             </dd>
                             <dt className="text-muted">{t("fields.time")}</dt>
                             <dd className="text-grey-700">{t("aboutMin", { n: task.estMinutes })}</dd>
@@ -91,8 +98,11 @@ export function WorkView() {
                             </dd>
                           </dl>
                           <div className="mt-auto flex items-center justify-between gap-3 border-t border-rule pt-3 text-xs text-muted">
-                            {t("paidOnAccept")}
-                            <span className="shrink-0 font-medium text-ink underline decoration-grey-300 underline-offset-[3px] group-hover:decoration-current">
+                            {/* A team task already says "unpaid" where the pay would be. */}
+                            {task.via === "team" ? null : (
+                              <span>{task.via === "network" ? t("simulatedOnAccept") : t("paidOnAccept")}</span>
+                            )}
+                            <span className="ml-auto shrink-0 font-medium text-ink underline decoration-grey-300 underline-offset-[3px] group-hover:decoration-current">
                               {t("readTask")}
                             </span>
                           </div>
@@ -102,6 +112,7 @@ export function WorkView() {
                   </ul>
                 )}
                 <aside className="space-y-4 xl:sticky xl:top-20">
+                  {live ? <NetworkProfilePanel /> : null}
                   <section className="panel overflow-hidden">
                     <div className="border-b border-rule px-4 py-3 text-sm font-medium">{t("yourWork")}</div>
                     <dl className="divide-y divide-rule px-4 text-sm">

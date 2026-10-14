@@ -19,6 +19,7 @@ import {
   Search,
   Settings,
   Store,
+  UserCheck,
   Wallet,
   Workflow,
   X,
@@ -64,12 +65,13 @@ type PageKey =
   | "connections"
   | "usage"
   | "settings"
+  | "reviewers"
   | "availableTasks"
   | "earnings";
 type CrumbKey = "crumbDeliverable" | "crumbHire" | "crumbStartRun";
 
 /** `label` is a key under `nav`. */
-type Item = { href: string; label: PageKey; icon: LucideIcon; exact?: boolean };
+type Item = { href: string; label: PageKey; icon: LucideIcon; exact?: boolean; liveOnly?: boolean };
 
 const BUSINESS_NAV: Item[][] = [
   [
@@ -82,6 +84,7 @@ const BUSINESS_NAV: Item[][] = [
   [
     { href: "/app/memory", label: "memory", icon: Brain },
     { href: "/app/connections", label: "connections", icon: Plug },
+    { href: "/app/reviewers", label: "reviewers", icon: UserCheck, liveOnly: true },
   ],
   [
     { href: "/app/usage", label: "usage", icon: CircleDollarSign },
@@ -95,6 +98,11 @@ const WORK_NAV: Item[][] = [
     { href: "/work/earnings", label: "earnings", icon: Wallet },
   ],
 ];
+
+/** The pages a workspace offers, in the sidebar and the command palette alike. Reviewer management exists only
+ * in a live workspace, so the demo's navigation is unchanged. */
+const navFor = (work: boolean, live: boolean): Item[][] =>
+  (work ? WORK_NAV : BUSINESS_NAV).map((g) => g.filter((item) => live || !item.liveOnly));
 
 type Crumb = { label: string; href?: string; mono?: boolean };
 
@@ -311,7 +319,7 @@ function useNavCounts(work: boolean): Record<string, number | undefined> {
 
 function NavGroups({ work, path, onNavigate }: { work: boolean; path: string; onNavigate?: () => void }) {
   const counts = useNavCounts(work);
-  const groups = work ? WORK_NAV : BUSINESS_NAV;
+  const groups = navFor(work, useIsLive());
   return groups.map((g, i) => (
     <ul key={i} className={cn("space-y-0.5", i > 0 && "mt-2 border-t border-rule pt-2")}>
       {g.map((item) => (
@@ -525,7 +533,7 @@ export function AppShell({ children, mode = "business" }: { children: ReactNode;
   const path = usePathname();
   const work = mode === "work";
   const t = useTranslations("nav");
-  const pages = (work ? WORK_NAV : BUSINESS_NAV)
+  const pages = navFor(work, live)
     .flat()
     .map(({ href, label, icon }) => ({ href, label: t(label), icon }));
   return (

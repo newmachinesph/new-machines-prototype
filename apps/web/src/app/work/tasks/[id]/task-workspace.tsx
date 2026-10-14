@@ -82,6 +82,12 @@ export function TaskWorkspace({ task, buyer }: { task: HumanTask; buyer: string 
   const tWork = useTranslations("work");
   const interactive = task.records.length > 0;
   const holding = phase === "claimed" || phase === "expired";
+  // A live task comes through the reviewer's own team (unpaid) or the network (simulated pay, another org's
+  // run: its id is not the reviewer's to know, so the API sends it empty). A demo task has no `via`.
+  const team = task.via === "team";
+  const network = task.via === "network";
+  const payNote = team ? t("payNote.team") : network ? t("payNote.network", { pay: money(task.pay) }) : null;
+  const showRun = !network && Boolean(task.runId);
 
   useEffect(() => {
     // The check after a submit made in this session is simulated: the API only records SUBMITTED.
@@ -154,11 +160,17 @@ export function TaskWorkspace({ task, buyer }: { task: HumanTask; buyer: string 
         <div className="flex items-center gap-4">
           {holding && timed ? <LeaseTimer seconds={left} /> : null}
           <div className="text-right">
-            <Amount value={task.pay} className="block text-2xl font-semibold tracking-tight" />
-            <span className="text-xs text-muted">
-              {/* The API's pay terms describe the demo's fixtures; a live task's pay is only simulated. */}
-              {demo ? t("simulatedPay", { terms: task.payTerms }) : t("simulatedPayLive")}
-            </span>
+            {team ? (
+              <span className="text-sm text-muted">{t("teamUnpaid")}</span>
+            ) : (
+              <>
+                <Amount value={task.pay} className="block text-2xl font-semibold tracking-tight" />
+                <span className="text-xs text-muted">
+                  {/* The API's pay terms describe the demo's fixtures; a live task's pay is only simulated. */}
+                  {demo ? t("simulatedPay", { terms: task.payTerms }) : t("simulatedPayLive")}
+                </span>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -226,7 +238,7 @@ export function TaskWorkspace({ task, buyer }: { task: HumanTask; buyer: string 
           {t("validating.body")} <SimTag>{t("validating.simulatedCheck")}</SimTag>
         </Callout>
       ) : null}
-      {phase === "submitted" && realRun ? <RunSubmitted outcome={runOutcome} /> : null}
+      {phase === "submitted" && realRun ? <RunSubmitted outcome={runOutcome} payNote={payNote} /> : null}
       {phase === "submitted" && !realRun && task.state !== "ACCEPTED" ? (
         <Callout tone="info" title={t("submitted.title")}>
           {t("submitted.body")}{" "}
@@ -239,33 +251,50 @@ export function TaskWorkspace({ task, buyer }: { task: HumanTask; buyer: string 
         <div className="space-y-4">
           <Callout
             tone="info"
-            title={t("accepted.title", { pay: money(task.pay) })}
+            title={
+              team
+                ? t("accepted.titleTeam")
+                : network
+                  ? t("accepted.titleNetwork", { pay: money(task.pay) })
+                  : t("accepted.title", { pay: money(task.pay) })
+            }
             action={
-              <ButtonLink href="/work/earnings" variant="secondary">
-                {tWork("seeEarnings")}
-              </ButtonLink>
+              team ? (
+                <ButtonLink href="/work" variant="secondary">
+                  {tWork("backToTasks")}
+                </ButtonLink>
+              ) : (
+                <ButtonLink href="/work/earnings" variant="secondary">
+                  {tWork("seeEarnings")}
+                </ButtonLink>
+              )
             }
           >
-            {t("accepted.body")}
+            {team || network ? t("accepted.bodyRun") : t("accepted.body")}
           </Callout>
-          <p className="text-sm text-muted">
-            {t.rich("accepted.runNote", {
-              id: task.runId,
-              run: (chunks) => (
-                <Link className="link" href={`/app/runs/${task.runId}`}>
-                  {chunks}
-                </Link>
-              ),
-            })}
-          </p>
+          {showRun ? (
+            <p className="text-sm text-muted">
+              {t.rich("accepted.runNote", {
+                id: task.runId,
+                run: (chunks) => (
+                  <Link className="link" href={`/app/runs/${task.runId}`}>
+                    {chunks}
+                  </Link>
+                ),
+              })}
+            </p>
+          ) : null}
         </div>
       ) : null}
     </div>
   );
 }
 
-/** A submitted review on a real run: what the run does with it. Unknown outcome (an older answer): just recorded. */
-function RunSubmitted({ outcome }: { outcome?: RunOutcome }) {
+/**
+ * A submitted review on a real run: what the run does with it, and what the review pays (team: unpaid, network:
+ * simulated). Unknown outcome (an older answer): just recorded.
+ */
+function RunSubmitted({ outcome, payNote }: { outcome?: RunOutcome; payNote: string | null }) {
   const t = useTranslations("task.runSubmitted");
   const tWork = useTranslations("work");
   const key = outcome === "STOPS" ? "stops" : outcome === "CONTINUES" ? "continues" : "recorded";
@@ -275,6 +304,7 @@ function RunSubmitted({ outcome }: { outcome?: RunOutcome }) {
       <Link className="link" href="/work">
         {tWork("backToTasks")}
       </Link>
+      {payNote ? <span className="mt-1 block">{payNote}</span> : null}
     </Callout>
   );
 }
@@ -293,6 +323,7 @@ function Offer({
   buttonRef: React.Ref<HTMLButtonElement>;
 }) {
   const t = useTranslations("task.offer");
+  const tTask = useTranslations("task");
   const tWork = useTranslations("work");
   const { dateTime, until, list } = useFormat();
   const regions = useRegionNames();
@@ -331,11 +362,20 @@ function Offer({
           </ul>
         </Section>
         <div className="panel p-5">
-          <div className="flex items-baseline justify-between">
-            <span className="text-sm text-muted">{t("willBePaid")}</span>
-            <Amount value={task.pay} className="text-lg font-semibold" />
-          </div>
-          <p className="mt-1 text-xs text-muted">{t("owedNote")}</p>
+          {task.via === "team" ? (
+            <>
+              <div className="text-sm font-medium">{tTask("teamUnpaid")}</div>
+              <p className="mt-1 text-xs text-muted">{t("teamNote")}</p>
+            </>
+          ) : (
+            <>
+              <div className="flex items-baseline justify-between">
+                <span className="text-sm text-muted">{t("willBePaid")}</span>
+                <Amount value={task.pay} className="text-lg font-semibold" />
+              </div>
+              <p className="mt-1 text-xs text-muted">{task.via === "network" ? t("networkNote") : t("owedNote")}</p>
+            </>
+          )}
           <Button ref={buttonRef} className="mt-4 w-full" onClick={onClaim} disabled={!interactive || claiming}>
             {t("claim")}
           </Button>

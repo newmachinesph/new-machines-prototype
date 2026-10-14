@@ -125,6 +125,7 @@ def create_app() -> FastAPI:
         ops_runtime_status,
         ops_tenants,
         org,
+        reviewers,
         runs,
         tasks,
     )
@@ -138,6 +139,7 @@ def create_app() -> FastAPI:
         connections,
         me,
         org,
+        reviewers,
         ops_catalog,
         ops_definitions,
         ops_health,

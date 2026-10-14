@@ -295,7 +295,7 @@ def test_a_hidden_pack_cannot_be_installed(client):
     pack_post(client, "shipping-exceptions", "deprecate")
     r = client.post(
         "/v1/organizations/org_hp01/agent-installations",
-        json={"packSlug": "shipping-exceptions", "capMinor": 500, "reviewerPool": False},
+        json={"packSlug": "shipping-exceptions", "capMinor": 500, "reviewerPool": "team"},
     )
     assert r.status_code == 404
     assert get_store().pack_listings["shipping-exceptions"].status == "deprecated"

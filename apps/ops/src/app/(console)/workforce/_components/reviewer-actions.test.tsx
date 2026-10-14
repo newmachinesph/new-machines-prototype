@@ -72,16 +72,45 @@ describe("LevelAction", () => {
 });
 
 describe("ReviewerActions in the live workspace", () => {
-  it("offers no reviewer actions, since the API refuses them", () => {
+  beforeEach(() => {
     workspace.value = "live";
-    for (const status of ["applicant", "active", "suspended"] as const) {
-      const { unmount } = renderIt(<ReviewerActions reviewer={reviewer({ status })} />);
-      expect(screen.queryAllByRole("button")).toHaveLength(0);
-      unmount();
-    }
   });
 
-  it("offers them in the demo", () => {
+  it("suspends an active network reviewer, without levels", () => {
+    renderIt(<ReviewerActions reviewer={reviewer({ status: "active" })} />);
+    expect(screen.getByRole("button", { name: "Suspend Maria Santos" })).toBeEnabled();
+    expect(screen.queryByRole("button", { name: "Set level for Maria Santos" })).toBeNull();
+  });
+
+  it("reinstates a suspended one", () => {
+    renderIt(<ReviewerActions reviewer={reviewer({ status: "suspended" })} />);
+    expect(screen.getByRole("button", { name: "Reinstate Maria Santos" })).toBeEnabled();
+  });
+
+  it("says a reinstated network reviewer gets network tasks again, not a level", async () => {
+    const user = userEvent.setup();
+    renderIt(<ReviewerActions reviewer={reviewer({ status: "suspended" })} />);
+    await user.click(screen.getByRole("button", { name: "Reinstate Maria Santos" }));
+    const dialog = await screen.findByRole("alertdialog");
+    expect(dialog).toHaveTextContent("Maria Santos can receive network tasks again.");
+    expect(dialog).not.toHaveTextContent(/level/);
+  });
+
+  it("offers nothing for an applicant, since the network has none", () => {
+    renderIt(<ReviewerActions reviewer={reviewer({ status: "applicant" })} />);
+    expect(screen.queryAllByRole("button")).toHaveLength(0);
+  });
+
+  it("shows a support operator a disabled suspend only", () => {
+    canWrite.value = false;
+    renderIt(<ReviewerActions reviewer={reviewer({ status: "active" })} />);
+    expect(screen.getAllByRole("button").map((b) => b.textContent)).toEqual(["Suspend"]);
+    expect(screen.getByRole("button", { name: "Suspend Maria Santos" })).toBeDisabled();
+  });
+});
+
+describe("ReviewerActions in the demo", () => {
+  it("offers approval to an applicant", () => {
     renderIt(<ReviewerActions reviewer={reviewer({ status: "applicant" })} />);
     expect(screen.getByRole("button", { name: "Approve as trainee Maria Santos" })).toBeEnabled();
   });

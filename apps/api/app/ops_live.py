@@ -34,7 +34,7 @@ from app.models.ops import (
     UsagePoint,
 )
 from app.models.runs import Run
-from app.run_tasks import OPEN_STATUSES
+from app.run_tasks import OPEN_STATUSES, release_claims
 from app.runtime import gateway
 from app.runtime.projection import TERMINAL_RUN_STATUSES
 from app.store import iso, locked_store
@@ -262,10 +262,13 @@ def _set_status(
 
 
 def suspend(conn, org_id: str, actor_email: str, reason: str, *, actor_role: OpsRole | None = None) -> Tenant:
-    """Lock the org out of every customer route at once (`auth._live_actor`). 409 ALREADY_SUSPENDED."""
+    """Lock the org out of every customer route at once (`auth._live_actor`). Its tasks leave the reviewer
+    network, so the open ones network reviewers claimed go back to the queue for the org's team. The org row
+    is locked before its tasks, the lock order of `app.review_routing`. 409 ALREADY_SUSPENDED."""
     org = _locked(conn, org_id)
     if org["status"] == SUSPENDED:
         raise ApiProblem(409, "ALREADY_SUSPENDED", f"{org['name']} is already suspended.")
+    release_claims(conn, org_id=org_id, via="network")
     return _set_status(conn, org, SUSPENDED, "suspend", actor_email, reason, actor_role)
 
 

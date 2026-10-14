@@ -51,7 +51,7 @@ def _startable_pack(store: Store, slug: str) -> Pack:
     _check_not_paused(store)
     pack = find_pack(slug)
     if not pack.installed:
-        raise ApiProblem(403, "POLICY_DENIED", f"Hire {pack.name} before starting a run.")
+        raise ApiProblem(403, "POLICY_DENIED", f"Add {pack.name} before starting a run.")
     return pack
 
 
@@ -168,7 +168,7 @@ def start_workflow_run(
 ) -> Run:
     """Returns 202: the run is registered and started, not finished (API.md section 3). With the runtime on,
     a pack that has a definition runs for real on Temporal; any other pack keeps the fixture behaviour. In
-    the live workspace every run is real: the org must have hired the pack and connected its apps, the
+    the live workspace every run is real: the org must have added the pack and connected its apps, the
     input must match the pack's input schema and the month's spend must be below the monthly cap."""
     if workspace.live():
         return once("start-run", actor, idempotency_key, body, lambda: _new_live_run(body, actor))

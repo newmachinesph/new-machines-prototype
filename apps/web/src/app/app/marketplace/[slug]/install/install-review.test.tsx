@@ -1,16 +1,21 @@
-import { screen } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Pack } from "@/lib/types";
 import { renderWithIntl } from "@/test/intl";
 import { InstallReview } from "./install-review";
 
+const toast = vi.hoisted(() => vi.fn());
 vi.mock("@/components/base", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/components/base")>()),
-  useToast: () => vi.fn(),
+  useToast: () => toast,
 }));
 const install = vi.hoisted(() => vi.fn());
-vi.mock("@/lib/queries/me", () => ({ useOrgId: () => "org_new" }));
+const state = vi.hoisted(() => ({ live: false, allowNetwork: true }));
+vi.mock("@/lib/queries/me", () => ({ useOrgId: () => "org_new", useIsLive: () => state.live }));
+vi.mock("@/lib/queries/reviewers", () => ({
+  useOrgReviewers: () => ({ data: { allowNetwork: state.allowNetwork, reviewers: [] } }),
+}));
 vi.mock("@/lib/queries/catalog", () => ({
   useAgentById: () => (id: string) =>
     id === "finance-agent" ? { id, name: "Finance Agent", capabilities: ["finance.reconcile"] } : undefined,
@@ -35,9 +40,22 @@ const pack = {
   riskClass: "medium",
   regions: ["asia-south1"],
 } satisfies Pack;
+const hired = { ...pack, installed: true, perRunCap: usd(5000), reviewerPool: "network" as const };
+const body = (over: object = {}) => ({
+  path: { org_id: "org_new" },
+  body: { packSlug: pack.slug, capMinor: 2000, reviewerPool: "team_then_network", ...over },
+});
+const summary = () => screen.getByRole("heading", { name: "Summary" }).closest("section")!;
+
+beforeEach(() => {
+  install.mockReset();
+  toast.mockClear();
+  state.live = false;
+  state.allowNetwork = true;
+});
 
 describe("InstallReview agents", () => {
-  it("links each agent the pack hires to its agent page", () => {
+  it("links each agent the pack uses to its agent page", () => {
     renderWithIntl(<InstallReview pack={pack} />);
     expect(screen.getByRole("link", { name: "Finance Agent" })).toHaveAttribute("href", "/app/agents/finance-agent");
     // An agent the catalog does not know still links, by its id.
@@ -46,14 +64,92 @@ describe("InstallReview agents", () => {
   });
 });
 
-describe("InstallReview hiring", () => {
-  it("hires into the signed-in user's org", async () => {
+describe("InstallReview adding a pack", () => {
+  it("adds the pack to the signed-in user's org with the team first, then the network", async () => {
     renderWithIntl(<InstallReview pack={pack} />);
     await userEvent.click(screen.getByRole("checkbox", { name: /agree/i }));
-    await userEvent.click(screen.getByRole("button", { name: /^Hire / }));
-    expect(install).toHaveBeenCalledWith(
-      { path: { org_id: "org_new" }, body: { packSlug: pack.slug, capMinor: 2000, reviewerPool: true } },
-      expect.anything(),
-    );
+    await userEvent.click(screen.getByRole("button", { name: /^Add / }));
+    expect(install).toHaveBeenCalledWith(body(), expect.anything());
+  });
+
+  it("can keep reviews inside the team", async () => {
+    renderWithIntl(<InstallReview pack={pack} />);
+    await userEvent.click(screen.getByRole("radio", { name: /^Your team only/ }));
+    await userEvent.click(screen.getByRole("checkbox", { name: /agree/i }));
+    await userEvent.click(screen.getByRole("button", { name: /^Add / }));
+    expect(install).toHaveBeenCalledWith(body({ reviewerPool: "team" }), expect.anything());
+  });
+
+  it("offers the three reviewer pools in the demo too", () => {
+    renderWithIntl(<InstallReview pack={pack} />);
+    expect(screen.getAllByRole("radio")).toHaveLength(3 + 3); // three caps, three pools
+    expect(screen.getByRole("radio", { name: /^The New Machines reviewer network/ })).toBeInTheDocument();
+    expect(within(summary()).getByText("Your team first, then the network")).toBeInTheDocument();
+  });
+
+  it("says the network is off when the workspace does not allow it", () => {
+    state.live = true;
+    state.allowNetwork = false;
+    renderWithIntl(<InstallReview pack={pack} />);
+    expect(screen.getByText(/The reviewer network is off for your workspace/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Open Reviewers" })).toHaveAttribute("href", "/app/reviewers");
+    // The summary does not claim network routing that cannot happen.
+    expect(within(summary()).getByText("Your team only, while the network is off")).toBeInTheDocument();
+    expect(within(summary()).queryByText(/then the network/)).toBeNull();
+  });
+
+  it("says nothing about the network being off when the team reviews alone", async () => {
+    state.live = true;
+    state.allowNetwork = false;
+    renderWithIntl(<InstallReview pack={pack} />);
+    await userEvent.click(screen.getByRole("radio", { name: /^Your team only/ }));
+    expect(screen.queryByText(/The reviewer network is off/)).toBeNull();
+    expect(within(summary()).getByText("Your team only")).toBeInTheDocument();
+  });
+
+  it("does not say the network is off in the demo", () => {
+    state.allowNetwork = false;
+    renderWithIntl(<InstallReview pack={pack} />);
+    expect(screen.queryByText(/The reviewer network is off/)).toBeNull();
+  });
+});
+
+describe("InstallReview pack settings", () => {
+  it("starts from the pack's cap and pool and saves without agreeing again", async () => {
+    state.live = true;
+    renderWithIntl(<InstallReview pack={hired} settings />);
+    expect(screen.getByRole("radio", { name: /^The New Machines reviewer network/ })).toBeChecked();
+    expect(screen.queryByRole("checkbox", { name: /agree/i })).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Save pack settings" }));
+    expect(install).toHaveBeenCalledWith(body({ capMinor: 5000, reviewerPool: "network" }), expect.anything());
+  });
+
+  it("says the settings could not be saved, not that the pack could not be added", async () => {
+    state.live = true;
+    install.mockImplementationOnce((_vars, opts: { onError: (e: Error) => void }) => opts.onError(new Error("x")));
+    renderWithIntl(<InstallReview pack={hired} settings />);
+    await userEvent.click(screen.getByRole("button", { name: "Save pack settings" }));
+    expect(toast).toHaveBeenCalledWith("Could not save the pack settings", expect.anything(), "blocked");
+  });
+
+  it("says the network is off in the settings too", () => {
+    state.live = true;
+    state.allowNetwork = false;
+    renderWithIntl(<InstallReview pack={hired} settings />);
+    expect(screen.getByText(/The reviewer network is off for your workspace/)).toBeInTheDocument();
+    expect(within(summary()).getByText("Your team only, while the network is off")).toBeInTheDocument();
+  });
+
+  it("asks for the agreement when not in settings mode, even for an added pack", () => {
+    renderWithIntl(<InstallReview pack={hired} />);
+    expect(screen.getByRole("checkbox", { name: /agree/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Save pack settings" })).toBeNull();
+  });
+
+  it("never uses the add wording in the settings", () => {
+    state.live = true;
+    renderWithIntl(<InstallReview pack={hired} settings />, { locale: "ja" });
+    expect(screen.getByRole("button", { name: "パックの設定を保存" })).toBeInTheDocument();
+    expect(screen.queryByText(/採用|追加/)).toBeNull();
   });
 });

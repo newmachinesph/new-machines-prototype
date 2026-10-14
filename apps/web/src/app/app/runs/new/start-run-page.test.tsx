@@ -70,10 +70,10 @@ describe("StartRunPage", () => {
     data.org = { monthlyCap: usd(25000), monthSpent: usd(100) };
   });
 
-  it("starts nothing when no pack is hired, and links to the marketplace", () => {
+  it("starts nothing when no pack is added, and links to the marketplace", () => {
     data.packs = [LOCALIZATION];
     renderWithIntl(<StartRunPage />);
-    expect(screen.getByRole("status")).toHaveTextContent("Hire a pack before starting a run.");
+    expect(screen.getByRole("status")).toHaveTextContent("Add a pack before starting a run.");
     expect(screen.getByRole("link", { name: "See all packs" })).toHaveAttribute("href", "/app/marketplace");
     expect(screen.queryByText(/form with/)).not.toBeInTheDocument();
   });
@@ -101,20 +101,20 @@ describe("StartRunPage", () => {
     ).toHaveTextContent("(/app/usage)");
   });
 
-  it("preselects a hired pack from the link without a notice", () => {
+  it("preselects an added pack from the link without a notice", () => {
     url.pack = "order-payment-reconciliation";
     renderWithIntl(<StartRunPage />);
     expect(screen.getByText(/preselecting order-payment-reconciliation/)).toBeInTheDocument();
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 
-  it("explains a pack that isn't hired and links to its marketplace page", () => {
+  it("explains a pack that isn't added and links to its marketplace page", () => {
     url.pack = "catalog-localization-en-ja";
     renderWithIntl(<StartRunPage />);
     expect(screen.getByRole("status")).toHaveTextContent(
-      "Catalog Localization isn't hired yet, so it can't start a run.",
+      "Catalog Localization hasn't been added yet, so it can't start a run.",
     );
-    expect(screen.getByRole("link", { name: "Hire this pack" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Add this pack" })).toHaveAttribute(
       "href",
       "/app/marketplace/catalog-localization-en-ja",
     );
@@ -131,8 +131,8 @@ describe("StartRunPage", () => {
   it("shows the notice in Japanese", () => {
     url.pack = "catalog-localization-en-ja";
     renderWithIntl(<StartRunPage />, { locale: "ja" });
-    expect(screen.getByRole("status")).toHaveTextContent("Catalog Localizationはまだ採用されていないため");
-    expect(screen.getByRole("link", { name: "このパックを採用" })).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("Catalog Localizationはまだ追加されていないため");
+    expect(screen.getByRole("link", { name: "このパックを追加" })).toBeInTheDocument();
   });
 
   it("offers inputs from sandbox apps too, and passes each pack's per-run cap", () => {

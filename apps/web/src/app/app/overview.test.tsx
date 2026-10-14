@@ -75,7 +75,7 @@ describe("Overview in a new workspace", () => {
     expect(within(checklist()).queryByLabelText("Done")).not.toBeInTheDocument();
   });
 
-  it("ticks hiring once a pack is hired, and connecting once its apps are connected", () => {
+  it("ticks adding once a pack is added, and connecting once its apps are connected", () => {
     data.packs = [{ ...RECON, installed: true }];
     data.conns = [connection("Shopify", "sandbox"), connection("Stripe", "not_connected")];
     const { unmount } = renderWithIntl(<Overview />);
@@ -90,7 +90,7 @@ describe("Overview in a new workspace", () => {
     expect(within(checklist()).getAllByLabelText("Done")).toHaveLength(2);
   });
 
-  it("hides the steps once a pack is hired and a run exists", () => {
+  it("hides the steps once a pack is added and a run exists", () => {
     data.packs = [{ ...RECON, installed: true }];
     data.runs = [RUN];
     renderWithIntl(<Overview />);
@@ -102,8 +102,8 @@ describe("Overview in a new workspace", () => {
     expect(
       screen.getByText("Nothing needs you right now. Approvals and review tasks show up here."),
     ).toBeInTheDocument();
-    expect(screen.getByText("No packs hired yet. Hire a pack to put agents to work.")).toBeInTheDocument();
-    expect(screen.getByText("No runs yet. Hire a pack first, then start a run.")).toBeInTheDocument();
+    expect(screen.getByText("No packs added yet. Add a pack to put agents to work.")).toBeInTheDocument();
+    expect(screen.getByText("No runs yet. Add a pack first, then start a run.")).toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: "Browse the marketplace" })[0]).toHaveAttribute(
       "href",
       "/app/marketplace",

@@ -19,7 +19,7 @@ def find_connection(app_name: str) -> Connection:
 
 @router.get("/connections", operation_id="listConnections", response_model=list[Connection])
 def list_connections(actor: CurrentActor) -> list[Connection]:
-    """In the live workspace: the apps the org's hired packs use, connected or not."""
+    """In the live workspace: the apps used by the packs the org added, connected or not."""
     if workspace.live():
         return live_connections.list_connections(actor.org_id)
     return get_store().connections

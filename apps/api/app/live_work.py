@@ -1,4 +1,5 @@
-"""Live workspace runs, memory and reviewer earnings: real rows only, each query scoped to the actor's org.
+"""Live workspace runs, memory and reviewer earnings: real rows only, each query scoped to the actor's org,
+except that earnings also include the network reviews the actor did for other orgs.
 
 A run starts only for a pack the org has hired whose apps are all connected, with an input that matches the
 pack's input schema and a budget within the hire's per-run cap, while the month's spend is below the
@@ -13,6 +14,7 @@ from app.models.org import MemoryItem
 from app.models.requests import StartRunRequest
 from app.models.runs import Run
 from app.models.work import Earning
+from app.redaction import scrub
 from app.runtime.memory import READABLE_BY_ORG, SHARED_SOURCES
 from app.store import iso
 
@@ -42,7 +44,7 @@ def start_run(body: StartRunRequest, actor: Actor) -> Run:
     name = str(pack.get("name") or slug)
     hire = live_catalog.installation(actor.org_id, slug)
     if hire is None:
-        raise ApiProblem(409, "PACK_NOT_HIRED", f"Hire {name} before starting a run.")
+        raise ApiProblem(409, "PACK_NOT_HIRED", f"Add {name} before starting a run.")
     missing = live_connections.missing_apps(actor.org_id, [str(c) for c in pack.get("connectors") or []])
     if missing:
         raise ApiProblem(
@@ -55,7 +57,7 @@ def start_run(body: StartRunRequest, actor: Actor) -> Run:
             409,
             "RUN_BUDGET_OVER_CAP",
             f"The budget is over the spending cap of {money_text(run_cap)} per run set when {name} was "
-            "hired. Lower the budget or raise the cap.",
+            "added. Lower the budget or raise the cap.",
         )
     org = workspace.organization(actor.org_id)
     cap = org.monthly_cap.amount_minor
@@ -168,7 +170,7 @@ def retract_memory(actor: Actor, item_id: str) -> MemoryItem:
 # --- earnings -------------------------------------------------------------------------------------------
 
 
-def _pay_minor(payload: dict) -> int:
+def pay_minor(payload: dict) -> int:
     """The task's pay: `pay` in minor units, or a Money object; 0 without one."""
     pay = payload.get("pay")
     if isinstance(pay, dict):
@@ -180,28 +182,38 @@ def _pay_minor(payload: dict) -> int:
 
 
 def earnings(actor: Actor) -> list[Earning]:
-    """The human tasks of the org's runs that the actor decided, newest first. No money moves yet, so each
-    earning is simulated."""
+    """The human tasks the actor decided, newest first: their org's (team reviews, unpaid: amount 0) and other
+    orgs' taken through the reviewer network (simulated pay; the task's public id, and the org's name and
+    contact details scrubbed from the title). `via` says which. No money moves, so each earning is
+    simulated."""
     with db.connect() as conn:
         rows = conn.execute(
-            "SELECT t.id, t.status, t.payload, t.result, t.decided_at FROM run_tasks t "
-            "JOIN runs r ON r.id = t.run_id WHERE r.org_id = %s AND t.kind = 'human' AND t.decided_by = %s "
-            "AND t.decided_at IS NOT NULL ORDER BY t.decided_at DESC, t.id DESC LIMIT %s",
-            (actor.org_id, actor.user_id, EARNINGS_LIMIT),
+            "SELECT t.id, t.public_id, t.status, t.payload, t.result, t.decided_at, o.name AS org_name, "
+            "r.org_id = %(org)s AS own FROM run_tasks t JOIN runs r ON r.id = t.run_id "
+            "JOIN orgs o ON o.id = r.org_id WHERE t.kind = 'human' AND t.decided_by = %(user)s "
+            "AND t.decided_at IS NOT NULL "
+            "AND (r.org_id = %(org)s OR t.payload->>'claimed_via' = 'network') "
+            "ORDER BY t.decided_at DESC, t.id DESC LIMIT %(limit)s",
+            {"org": actor.org_id, "user": actor.user_id, "limit": EARNINGS_LIMIT},
         ).fetchall()
     out = []
     for row in rows:
         payload, result = row["payload"] or {}, row["result"] or {}
         verdict = result.get("verdict") or VERDICTS.get(row["status"], "REJECTED")
+        title = str(payload.get("title") or "Review the result")
+        own = row["own"]
+        # A claim taken through the network keeps its simulated pay even if its holder later joined the org.
+        network = not own or payload.get("claimed_via") == "network"
         out.append(
             Earning(
-                task_id=row["id"],
-                title=str(payload.get("title") or "Review the result"),
+                task_id=row["id"] if own else row["public_id"],
+                title=title if own else scrub(title, row["org_name"]),
                 at=iso(row["decided_at"]),
-                amount=Money(amount_minor=_pay_minor(payload)),
+                amount=Money(amount_minor=pay_minor(payload) if network else 0),
                 verdict=verdict,
                 status="PAID_SIMULATED",
                 simulated=True,
+                via="network" if network else "team",
             )
         )
     return out

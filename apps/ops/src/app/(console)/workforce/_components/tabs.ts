@@ -21,10 +21,15 @@ export function countByTab(reviewers: Reviewer[]): Record<Tab, number> {
   };
 }
 
-/** The URL's tab wins; otherwise applicants when anyone is waiting, else active. */
-export function resolveTab(requested: Tab | null, counts: Record<Tab, number>): Tab {
-  if (requested) return requested;
-  return counts.applicants > 0 ? "applicants" : "active";
+/** The live network has no applicants: people join from the reviewer portal. */
+const LIVE_TABS: readonly Tab[] = ["active", "suspended"];
+
+export const tabsFor = (live: boolean): readonly Tab[] => (live ? LIVE_TABS : TABS);
+
+/** The URL's tab wins when the workspace has it; otherwise applicants when anyone is waiting, else active. */
+export function resolveTab(requested: Tab | null, counts: Record<Tab, number>, live = false): Tab {
+  if (requested && tabsFor(live).includes(requested)) return requested;
+  return !live && counts.applicants > 0 ? "applicants" : "active";
 }
 
 /** The level dialog only confirms a real change. */

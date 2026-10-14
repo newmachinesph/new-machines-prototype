@@ -8,19 +8,29 @@ import { Button, ButtonLink, Callout, Id, KeyValues, MockTag, Section } from "@/
 import { useErrorText } from "@/lib/api/use-error-text";
 import { usd } from "@/lib/format";
 import { useAgentById, useInstallPack } from "@/lib/queries/catalog";
-import { useOrgId } from "@/lib/queries/me";
+import { useIsLive, useOrgId } from "@/lib/queries/me";
+import { useOrgReviewers } from "@/lib/queries/reviewers";
 import { useFormat } from "@/lib/use-format";
 import type { Pack } from "@/lib/types";
 
 const CAPS = [500, 2000, 5000];
+const POOLS = ["team_then_network", "team", "network"] as const;
+type Pool = (typeof POOLS)[number];
 
-export function InstallReview({ pack: p }: { pack: Pack }) {
+/**
+ * Add a pack, or with `settings` (an added pack in the live workspace; the page decides) change its
+ * settings: cap and reviewers, with no agreement step.
+ */
+export function InstallReview({ pack: p, settings = false }: { pack: Pack; settings?: boolean }) {
   const t = useTranslations("marketplace.install");
   const tc = useTranslations("common");
   const { money, list } = useFormat();
   const errorText = useErrorText();
-  const [cap, setCap] = useState(2000);
-  const [pool, setPool] = useState(true);
+  const live = useIsLive();
+  const startCap = p.perRunCap?.amountMinor ?? 2000;
+  const caps = [...new Set([...CAPS, startCap])].sort((a, b) => a - b);
+  const [cap, setCap] = useState(startCap);
+  const [pool, setPool] = useState<Pool>(p.reviewerPool ?? "team_then_network");
   const [agree, setAgree] = useState(false);
   const [hired, setHired] = useState<string | null>(null);
   const agentById = useAgentById();
@@ -28,6 +38,9 @@ export function InstallReview({ pack: p }: { pack: Pack }) {
   const confirmation = useRef<HTMLDivElement>(null);
   const toast = useToast();
   const orgId = useOrgId();
+  const reviewers = useOrgReviewers();
+  // With the org's network switch off, a pool that names the network still routes to the team alone.
+  const networkOff = live && reviewers.data?.allowNetwork === false && pool !== "team";
 
   const needsReviewers = p.estimate.humanMax.amountMinor > 0;
   const hire = () =>
@@ -36,12 +49,16 @@ export function InstallReview({ pack: p }: { pack: Pack }) {
       { path: { org_id: orgId }, body: { packSlug: p.slug, capMinor: cap, reviewerPool: pool } },
       {
         onSuccess: (res) => {
+          if (settings) {
+            toast(t("savedToast"), res.summary);
+            return;
+          }
           setHired(res.summary);
           toast(t("hiredToast", { name: p.name }), res.summary);
           // The hire button goes away with the form, so move focus to the confirmation.
           focusAfterClose(() => confirmation.current);
         },
-        onError: (e) => toast(t("hireFailed"), errorText(e), "blocked"),
+        onError: (e) => toast(settings ? t("saveFailed") : t("hireFailed"), errorText(e), "blocked"),
       },
     );
 
@@ -114,7 +131,7 @@ export function InstallReview({ pack: p }: { pack: Pack }) {
               layout="row"
               value={String(cap)}
               onValueChange={(v) => setCap(Number(v))}
-              options={CAPS.map((c) => ({ value: String(c), label: <span className="tnum">{money(usd(c))}</span> }))}
+              options={caps.map((c) => ({ value: String(c), label: <span className="tnum">{money(usd(c))}</span> }))}
             />
             <p className="mt-3 text-sm text-muted">{t("capNote")}</p>
           </div>
@@ -122,11 +139,21 @@ export function InstallReview({ pack: p }: { pack: Pack }) {
 
         {needsReviewers ? (
           <Section title={t("reviewers")}>
-            <div className="px-5 py-4">
-              <Checkbox checked={pool} onCheckedChange={setPool}>
-                {t("poolLabel")}
-                <span className="mt-1 block text-muted">{t("poolNote")}</span>
-              </Checkbox>
+            <div className="space-y-3 px-5 py-4">
+              <Choices
+                label={t("reviewers")}
+                value={pool}
+                onValueChange={setPool}
+                options={POOLS.map((v) => ({ value: v, label: t(`pool.${v}`), description: t(`pool.${v}Note`) }))}
+              />
+              {networkOff ? (
+                <p className="text-sm text-muted">
+                  {t("networkOff")}{" "}
+                  <Link href="/app/reviewers" className="link">
+                    {t("networkOffLink")}
+                  </Link>
+                </p>
+              ) : null}
             </div>
           </Section>
         ) : null}
@@ -148,36 +175,47 @@ export function InstallReview({ pack: p }: { pack: Pack }) {
                   ),
                 },
                 { label: t("cap"), value: <span className="tnum">{t("capPerRun", { amount: money(usd(cap)) })}</span> },
+                ...(needsReviewers
+                  ? [{ label: t("reviewers"), value: networkOff ? t("poolOff") : t(`pool.${pool}`) }]
+                  : []),
                 { label: t("region"), value: list(p.regions) },
               ]}
             />
           </div>
           <div className="border-t border-rule px-5 py-4">
-            <Checkbox checked={agree} onCheckedChange={setAgree}>
-              {t("agree")}
-            </Checkbox>
-            <Modal
-              trigger={
-                <button type="button" className="link mt-1.5 ml-7 text-sm">
-                  {t("readContract")}
-                </button>
-              }
-              title={t("contractTitle", { name: p.name, version: p.version })}
-              description={t("contractDescription")}
+            {settings ? null : (
+              <>
+                <Checkbox checked={agree} onCheckedChange={setAgree}>
+                  {t("agree")}
+                </Checkbox>
+                <Modal
+                  trigger={
+                    <button type="button" className="link mt-1.5 ml-7 text-sm">
+                      {t("readContract")}
+                    </button>
+                  }
+                  title={t("contractTitle", { name: p.name, version: p.version })}
+                  description={t("contractDescription")}
+                >
+                  <ul className="mt-4 list-disc space-y-2 pl-5 text-sm leading-relaxed text-grey-700">
+                    <li>{t("contract.pay")}</li>
+                    <li>{t("contract.delivered")}</li>
+                    <li>{t("contract.reviewers")}</li>
+                    <li>{t("contract.data", { regions: list(p.regions) })}</li>
+                    <li>{t("contract.updates")}</li>
+                  </ul>
+                  <div className="mt-5 flex justify-end">
+                    <ModalClose render={<Button variant="secondary" />}>{tc("close")}</ModalClose>
+                  </div>
+                </Modal>
+              </>
+            )}
+            <Button
+              className="mt-4 w-full"
+              disabled={(!agree && !settings) || !orgId || install.isPending}
+              onClick={hire}
             >
-              <ul className="mt-4 list-disc space-y-2 pl-5 text-sm leading-relaxed text-grey-700">
-                <li>{t("contract.pay")}</li>
-                <li>{t("contract.delivered")}</li>
-                <li>{t("contract.reviewers")}</li>
-                <li>{t("contract.data", { regions: list(p.regions) })}</li>
-                <li>{t("contract.updates")}</li>
-              </ul>
-              <div className="mt-5 flex justify-end">
-                <ModalClose render={<Button variant="secondary" />}>{tc("close")}</ModalClose>
-              </div>
-            </Modal>
-            <Button className="mt-4 w-full" disabled={!agree || !orgId || install.isPending} onClick={hire}>
-              {t("hire", { name: p.name })}
+              {settings ? t("saveSettings") : t("hire", { name: p.name })}
             </Button>
           </div>
         </Section>

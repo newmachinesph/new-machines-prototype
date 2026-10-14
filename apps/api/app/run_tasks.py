@@ -57,44 +57,84 @@ def _locked(conn, org_id: str, kind: str, task_id: str) -> dict:
     return row
 
 
-def claim(org_id: str, task_id: str, by: str) -> dict:
-    """Mark an open human task as claimed by `by` (kept in its payload; the row stays open). 409 otherwise."""
-    with db.connect() as conn:
-        row = _locked(conn, org_id, "human", task_id)
-        holder = (row["payload"] or {}).get("claimed_by")
-        if row["status"] != OPEN_STATUSES["human"] or holder not in (None, by):
-            raise ApiProblem(409, "CONFLICT", "This task can no longer be claimed.")
+def apply_claim(conn, row: dict, by: str, marks: dict | None = None) -> None:
+    """Claim `row`, an open human task locked FOR UPDATE in this transaction, for `by`: the holder, the time
+    and `marks` merge into its payload (the row stays open). Does not commit. Claiming a task `by` already
+    holds changes nothing; a decided task, or one someone else holds, is a 409."""
+    holder = (row["payload"] or {}).get("claimed_by")
+    if row["status"] != OPEN_STATUSES["human"] or holder not in (None, by):
+        raise ApiProblem(409, "CONFLICT", "This task can no longer be claimed.")
+    if holder is None:
+        claim_marks = {"claimed_by": by, "claimed_at": utc_now(), **(marks or {})}
         conn.execute(
-            "UPDATE run_tasks SET payload = payload || %s WHERE id = %s",
-            (Jsonb({"claimed_by": by, "claimed_at": utc_now()}), task_id),
+            "UPDATE run_tasks SET payload = payload || %s WHERE id = %s", (Jsonb(claim_marks), row["id"])
         )
+
+
+def claim(org_id: str, task_id: str, by: str) -> dict:
+    """Claim an open human task of the org for `by` (`apply_claim`) and commit. Returns the updated row."""
+    with db.connect() as conn:
+        apply_claim(conn, _locked(conn, org_id, "human", task_id), by)
         updated = conn.execute(f"{_SELECT} AND t.id = %s", (org_id, "human", task_id)).fetchone()
         conn.commit()
     return updated
 
 
-def decide(org_id: str, kind: str, task_id: str, status: str, by: str, result: dict) -> dict:
-    """Record the decision on an open task and commit. Returns the updated row.
+_RELEASE = (
+    "UPDATE run_tasks t SET payload = t.payload - 'claimed_by' - 'claimed_at' - 'claimed_via' - 'pay' "
+    "FROM runs r WHERE r.id = t.run_id AND t.kind = 'human' AND t.status = 'open' "
+    "AND t.payload->>'claimed_by' IS NOT NULL "
+    "AND (%(org)s::text IS NULL OR r.org_id = %(org)s) "
+    "AND (%(pack)s::text IS NULL OR r.pack_slug = %(pack)s) "
+    "AND (%(user)s::text IS NULL OR t.payload->>'claimed_by' = %(user)s) "
+    "AND (%(via)s::text IS NULL OR t.payload->>'claimed_via' = %(via)s)"
+)
 
-    The same person repeating the decision already recorded gets the stored row back unchanged (so the caller
-    can signal it again); any other change to a decided task is a 409, as is a human task not claimed by `by`.
-    """
+
+def release_claims(
+    conn,
+    *,
+    org_id: str | None = None,
+    user_id: str | None = None,
+    via: str | None = None,
+    pack_slug: str | None = None,
+) -> int:
+    """Put open human tasks back in the queue by removing their claim (holder, time, route and network pay).
+    Filters: tasks of `org_id`'s runs, of runs of `pack_slug`, claimed by `user_id`, claimed through `via`
+    ("team" or "network"); at least one of org, user and route is required. Does not commit. Returns how many
+    tasks were released."""
+    if org_id is None and user_id is None and via is None:
+        raise ValueError("release_claims needs a filter")
+    params = {"org": org_id, "pack": pack_slug, "user": user_id, "via": via}
+    return conn.execute(_RELEASE, params).rowcount
+
+
+def apply_decision(conn, row: dict, kind: str, status: str, by: str, result: dict) -> bool:
+    """Record a decision on `row`, a task row locked FOR UPDATE in this transaction; does not commit. False
+    when `by` repeats the decision already recorded (nothing is written, so the caller can signal it again);
+    a 409 for any other change to a decided task, and for a human task not claimed by `by`."""
+    if row["status"] != OPEN_STATUSES[kind]:
+        if row["status"] == status and row["decided_by"] == by:
+            return False
+        raise ApiProblem(409, "CONFLICT", f"This {_noun(kind)} is already {row['status']}.")
+    if kind == "human" and (row["payload"] or {}).get("claimed_by") != by:
+        raise ApiProblem(409, "CONFLICT", "Claim the task before submitting a review.")
+    conn.execute(
+        "UPDATE run_tasks SET status = %s, decided_by = %s, decided_at = now(), result = %s WHERE id = %s",
+        (status, by, Jsonb(result), row["id"]),
+    )
+    return True
+
+
+def decide(org_id: str, kind: str, task_id: str, status: str, by: str, result: dict) -> dict:
+    """Record the decision on an open task of the org (`apply_decision`) and commit. Returns the updated row;
+    the same person repeating the recorded decision gets the stored row back unchanged."""
     with db.connect() as conn:
         row = _locked(conn, org_id, kind, task_id)
-        if row["status"] != OPEN_STATUSES[kind]:
-            if row["status"] == status and row["decided_by"] == by:
-                return row
-            raise ApiProblem(409, "CONFLICT", f"This {_noun(kind)} is already {row['status']}.")
-        if kind == "human" and (row["payload"] or {}).get("claimed_by") != by:
-            raise ApiProblem(409, "CONFLICT", "Claim the task before submitting a review.")
-        conn.execute(
-            "UPDATE run_tasks SET status = %s, decided_by = %s, decided_at = now(), result = %s "
-            "WHERE id = %s",
-            (status, by, Jsonb(result), task_id),
-        )
-        updated = conn.execute(f"{_SELECT} AND t.id = %s", (org_id, kind, task_id)).fetchone()
+        if apply_decision(conn, row, kind, status, by, result):
+            row = conn.execute(f"{_SELECT} AND t.id = %s", (org_id, kind, task_id)).fetchone()
         conn.commit()
-    return updated
+    return row
 
 
 def signal(send: Callable[..., None], run_id: str, *args: Any) -> None:

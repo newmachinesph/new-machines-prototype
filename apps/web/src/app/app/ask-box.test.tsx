@@ -45,29 +45,29 @@ describe("AskBox suggested pack", () => {
     suggestion.data = undefined;
   });
 
-  it("starts a run of a hired pack", () => {
+  it("starts a run of an added pack", () => {
     suggest("order-payment-reconciliation", true);
     renderWithIntl(<AskBox />);
     expect(screen.getByRole("link", { name: "Start this run" })).toHaveAttribute(
       "href",
       "/app/runs/new?pack=order-payment-reconciliation",
     );
-    expect(screen.queryByRole("link", { name: "Hire this pack" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Add this pack" })).not.toBeInTheDocument();
   });
 
-  it("sends a pack that isn't hired to its marketplace page instead", () => {
+  it("sends a pack that isn't added to its marketplace page instead", () => {
     suggest("catalog-localization-en-ja", false);
     renderWithIntl(<AskBox />);
-    expect(screen.getByRole("link", { name: "Hire this pack" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Add this pack" })).toHaveAttribute(
       "href",
       "/app/marketplace/catalog-localization-en-ja",
     );
     expect(screen.queryByRole("link", { name: "Start this run" })).not.toBeInTheDocument();
   });
 
-  it("labels the hire link in Japanese", () => {
+  it("labels the add link in Japanese", () => {
     suggest("catalog-localization-en-ja", false);
     renderWithIntl(<AskBox />, { locale: "ja" });
-    expect(screen.getByRole("link", { name: "このパックを採用" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "このパックを追加" })).toBeInTheDocument();
   });
 });

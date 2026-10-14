@@ -169,8 +169,7 @@ def install_workflow_pack(org_id: str, body: InstallRequest, actor: CurrentActor
     with locked_store():
         pack = find_pack(body.pack_slug)
         pack.installed = True
-    reviewers = "your team and the New Machines reviewer pool" if body.reviewer_pool else "your team only"
-    summary = f"Spending cap ${body.cap_minor / 100:.2f} per run. Reviewers: {reviewers}."
+    summary = live_catalog.hire_summary(body.cap_minor, body.reviewer_pool)
     return Installation(
         pack_slug=pack.slug, cap_minor=body.cap_minor, reviewer_pool=body.reviewer_pool, summary=summary
     )

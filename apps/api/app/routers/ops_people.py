@@ -5,7 +5,7 @@ from typing import Annotated
 
 from fastapi import Query
 
-from app import db, ops_state, real_runs, settings, workspace
+from app import db, ops_reviewers, ops_state, real_runs, settings, workspace
 from app.auth import CurrentOps, OpsActor, OpsWriter
 from app.errors import NO_CHANGE, NOT_AVAILABLE_LIVE, ApiProblem, conflicts
 from app.models.ops import (
@@ -29,7 +29,7 @@ from app.store import Store, iso, locked_store, utc_now
 router = ApiRouter(prefix="/v1/ops", tags=["ops"])
 
 USD_MINOR = "usd_minor"
-LIVE_REVIEWERS = "In the live workspace, reviewers are managed by each company."
+LIVE_REVIEWERS = "In the live workspace, network reviewers join from the reviewer portal and have no level."
 
 
 # Reviewers ---------------------------------------------------------------------------------------------
@@ -43,9 +43,26 @@ def find_reviewer(store: Store, reviewer_id: str) -> Reviewer:
 
 
 def refuse_live_reviewer_writes() -> None:
-    """Reviewers are fixtures; the live workspace refuses to change them (no store change, no audit)."""
+    """Approve and set level have no live meaning (no applicants, no levels): refused there, no audit."""
     if workspace.live():
         raise ApiProblem(409, NOT_AVAILABLE_LIVE, LIVE_REVIEWERS)
+
+
+def _live_move(
+    reviewer_id: str,
+    reason: Reason,
+    actor: OpsActor,
+    verb: str,
+    allowed: ReviewerStatus,
+    target: ReviewerStatus,
+) -> Reviewer:
+    """A network reviewer's status step in the live workspace (`ops_reviewers.move`), committed."""
+    with db.connect() as conn:
+        reviewer = ops_reviewers.move(
+            conn, reviewer_id, verb, allowed, target, actor.email, reason, actor_role=actor.role
+        )
+        conn.commit()
+    return reviewer
 
 
 def move_reviewer(
@@ -75,6 +92,11 @@ def move_reviewer(
 
 @router.get("/reviewers", operation_id="opsListReviewers", response_model=list[Reviewer])
 def ops_list_reviewers(_: CurrentOps, status: ReviewerStatus | None = None) -> list[Reviewer]:
+    """The reviewer workforce: the New Machines reviewer network in the live workspace, the fixture pool in
+    the demo."""
+    if workspace.live():
+        with db.connect() as conn:
+            return ops_reviewers.list_reviewers(conn, status)
     with locked_store() as store:
         return [r.model_copy() for r in store.reviewers.values() if status is None or r.status == status]
 
@@ -92,20 +114,27 @@ def ops_approve_reviewer(reviewer_id: PathId, body: ReasonRequest, actor: OpsWri
 @router.post(
     "/reviewers/{reviewer_id}:suspend",
     operation_id="opsSuspendReviewer",
-    responses=conflicts(NOT_AVAILABLE_LIVE, "INVALID_TRANSITION"),
+    responses=conflicts("INVALID_TRANSITION"),
     response_model=Reviewer,
 )
 def ops_suspend_reviewer(reviewer_id: PathId, body: ReasonRequest, actor: OpsWriter) -> Reviewer:
+    """Stop offering the reviewer tasks. In the live workspace, their open network claims return to the
+    queue."""
+    if workspace.live():
+        return _live_move(reviewer_id, body.reason, actor, "suspend", "active", "suspended")
     return move_reviewer(reviewer_id, body.reason, actor, "suspend", "active", "suspended")
 
 
 @router.post(
     "/reviewers/{reviewer_id}:reinstate",
     operation_id="opsReinstateReviewer",
-    responses=conflicts(NOT_AVAILABLE_LIVE, "INVALID_TRANSITION"),
+    responses=conflicts("INVALID_TRANSITION"),
     response_model=Reviewer,
 )
 def ops_reinstate_reviewer(reviewer_id: PathId, body: ReasonRequest, actor: OpsWriter) -> Reviewer:
+    """Offer a suspended reviewer tasks again."""
+    if workspace.live():
+        return _live_move(reviewer_id, body.reason, actor, "reinstate", "suspended", "active")
     return move_reviewer(reviewer_id, body.reason, actor, "reinstate", "suspended", "active")
 
 

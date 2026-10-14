@@ -5,6 +5,7 @@ import { QueryState } from "@/components/query-state";
 import { Skeleton } from "@/components/skeleton";
 import { Amount, ButtonLink, EmptyState, Id, PageHeader, Pill, Section, SimTag } from "@/components/ui";
 import { sumMoney, WORKER_TZ } from "@/lib/format";
+import { useIsDemo } from "@/lib/queries/me";
 import { useEarnings } from "@/lib/queries/tasks";
 import { useFormat } from "@/lib/use-format";
 import type { Earning } from "@/lib/types";
@@ -27,15 +28,17 @@ function EarningsSkeleton() {
 
 export function EarningsView() {
   const t = useTranslations("work.earnings");
+  const work = useTranslations("work");
   const nav = useTranslations("nav");
   const { dateTime } = useFormat();
+  const demo = useIsDemo();
   const earnings = useEarnings();
   return (
     <>
       <PageHeader
         title={nav("earnings")}
-        lede={t("lede")}
-        actions={<SimTag className="px-2 py-1 text-xs">{t("simulated")}</SimTag>}
+        lede={t(demo ? "lede" : "ledeLive")}
+        actions={<SimTag className="px-2 py-1 text-xs">{t(demo ? "simulated" : "simulatedLive")}</SimTag>}
       />
       <QueryState query={earnings} skeleton={<EarningsSkeleton />}>
         {(rows) => {
@@ -82,8 +85,14 @@ export function EarningsView() {
                             <p className="mt-1 text-xs text-grey-700">{t("failedCheck")}</p>
                           ) : null}
                         </div>
-                        <Pill tone={STATUS_TONE[e.status]}>{t(`status.${e.status}`)}</Pill>
-                        <Amount value={e.amount} className="text-sm font-medium sm:w-16 sm:text-right" />
+                        {e.via === "team" ? (
+                          <span className="text-sm text-muted sm:col-span-2 sm:text-right">{work("teamUnpaid")}</span>
+                        ) : (
+                          <>
+                            <Pill tone={STATUS_TONE[e.status]}>{t(`status.${e.status}`)}</Pill>
+                            <Amount value={e.amount} className="text-sm font-medium sm:w-16 sm:text-right" />
+                          </>
+                        )}
                       </li>
                     ))}
                   </ul>
