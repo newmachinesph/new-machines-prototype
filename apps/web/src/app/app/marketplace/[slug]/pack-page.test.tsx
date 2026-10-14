@@ -1,5 +1,5 @@
 import { screen, within } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { renderWithIntl } from "@/test/intl";
 import { PackPage } from "./pack-page";
 
@@ -43,11 +43,18 @@ const agents = [
     capabilities: [],
   },
 ];
+const state = vi.hoisted(() => ({ installed: false, live: false }));
+vi.mock("@/lib/queries/me", () => ({ useIsLive: () => state.live }));
 vi.mock("@/lib/queries/catalog", () => ({
-  usePack: () => ok(pack),
+  usePack: () => ok({ ...pack, installed: state.installed }),
   useAgents: () => ok(agents),
   useAgentById: () => (id: string) => agents.find((a) => a.id === id),
 }));
+
+afterEach(() => {
+  state.installed = false;
+  state.live = false;
+});
 
 describe("PackPage agents", () => {
   it("links each agent to its agent page", () => {
@@ -61,5 +68,21 @@ describe("PackPage agents", () => {
       "href",
       "/app/agents/ops-agent",
     );
+  });
+});
+
+describe("PackPage pack settings", () => {
+  it("links an added pack to its settings in a live workspace only", () => {
+    state.installed = true;
+    state.live = true;
+    const { unmount } = renderWithIntl(<PackPage slug="order-payment-reconciliation" />);
+    expect(screen.getByRole("link", { name: "Pack settings" })).toHaveAttribute(
+      "href",
+      "/app/marketplace/order-payment-reconciliation/install",
+    );
+    unmount();
+    state.live = false;
+    renderWithIntl(<PackPage slug="order-payment-reconciliation" />);
+    expect(screen.queryByRole("link", { name: "Pack settings" })).toBeNull();
   });
 });

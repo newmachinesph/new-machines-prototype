@@ -27,3 +27,18 @@ export function useSubmitReview() {
   const qc = useQueryClient();
   return useMutation({ ...q.submitHumanTaskMutation(), onSuccess: (task) => refreshTask(qc, task) });
 }
+
+/** The user's network reviewer profile (live workspace only). */
+export const useReviewerProfile = (enabled = true) => useQuery({ ...q.getReviewerProfileOptions(), enabled });
+
+/** Saving the profile changes which tasks are offered. */
+export function useUpdateReviewerProfile() {
+  const qc = useQueryClient();
+  return useMutation({
+    ...q.updateReviewerProfileMutation(),
+    onSuccess: (profile) => {
+      qc.setQueryData(q.getReviewerProfileQueryKey(), profile);
+      void qc.invalidateQueries({ queryKey: q.listEligibleHumanTasksQueryKey() });
+    },
+  });
+}

@@ -20,6 +20,13 @@ export const zAddMemoryItemRequest = z.object({
 });
 
 /**
+ * AddReviewerRequest
+ */
+export const zAddReviewerRequest = z.object({
+    email: z.string().max(254).regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)
+});
+
+/**
  * AgentPackRef
  */
 export const zAgentPackRef = z.object({
@@ -581,7 +588,11 @@ export const zIncident = z.object({
  */
 export const zInstallRequest = z.object({
     capMinor: z.int().gt(0),
-    reviewerPool: z.boolean(),
+    reviewerPool: z.enum([
+        'team',
+        'network',
+        'team_then_network'
+    ]).optional().default('team_then_network'),
     packSlug: z.string()
 });
 
@@ -591,7 +602,11 @@ export const zInstallRequest = z.object({
 export const zInstallation = z.object({
     packSlug: z.string(),
     capMinor: z.int(),
-    reviewerPool: z.boolean(),
+    reviewerPool: z.enum([
+        'team',
+        'network',
+        'team_then_network'
+    ]),
     summary: z.string()
 });
 
@@ -735,7 +750,8 @@ export const zEarning = z.object({
         'PAID_SIMULATED',
         'IN_REVIEW'
     ]),
-    simulated: z.boolean().optional()
+    simulated: z.boolean().optional(),
+    via: z.enum(['team', 'network']).optional()
 });
 
 /**
@@ -753,6 +769,33 @@ export const zInvoice = z.object({
         'overdue',
         'void'
     ])
+});
+
+/**
+ * NetworkProfile
+ *
+ * The signed-in user's profile as a New Machines network reviewer. `suspended`: New Machines paused
+ * it.
+ */
+export const zNetworkProfile = z.object({
+    enabled: z.boolean(),
+    suspended: z.boolean(),
+    name: z.string(),
+    languages: z.array(z.string()),
+    skills: z.array(z.string())
+});
+
+/**
+ * NetworkProfileRequest
+ *
+ * The user's switch "Review for the network" and their profile. Entries are trimmed; repeated languages
+ * or skills are kept once (compared without case, the first spelling kept).
+ */
+export const zNetworkProfileRequest = z.object({
+    enabled: z.boolean(),
+    name: z.string().min(1).max(80),
+    languages: z.array(z.string().min(2).max(40)).max(10).optional(),
+    skills: z.array(z.string().min(1).max(60)).max(20).optional()
 });
 
 /**
@@ -860,6 +903,33 @@ export const zOrderSide = z.object({
     customer: z.string(),
     amount: z.string(),
     paymentRef: z.string()
+});
+
+/**
+ * OrgReviewer
+ *
+ * A member with the reviewer capability, or a pending Reviewer invitation.
+ */
+export const zOrgReviewer = z.object({
+    email: z.string(),
+    name: z.string(),
+    role: z.enum([
+        'owner',
+        'admin',
+        'member',
+        'reviewer'
+    ]),
+    pending: z.boolean()
+});
+
+/**
+ * OrgReviewers
+ *
+ * The org's reviewers, active first, and its switch for the New Machines reviewer network.
+ */
+export const zOrgReviewers = z.object({
+    allowNetwork: z.boolean(),
+    reviewers: z.array(zOrgReviewer)
 });
 
 /**
@@ -1021,7 +1091,8 @@ export const zPendingInvitation = z.object({
     role: z.enum([
         'owner',
         'admin',
-        'member'
+        'member',
+        'reviewer'
     ]),
     invitedAt: z.string()
 });
@@ -1040,7 +1111,8 @@ export const zMe = z.object({
     role: z.enum([
         'owner',
         'admin',
-        'member'
+        'member',
+        'reviewer'
     ]),
     workspace: z.enum(['demo', 'live']).optional().default('demo'),
     invitations: z.array(zPendingInvitation).optional().default([])
@@ -1231,7 +1303,15 @@ export const zHumanTask = z.object({
     leaseMinutes: z.int(),
     buyer: z.string(),
     realRun: z.boolean().optional(),
-    runOutcome: z.enum(['CONTINUES', 'STOPS']).optional()
+    runOutcome: z.enum(['CONTINUES', 'STOPS']).optional(),
+    via: z.enum(['team', 'network']).optional()
+});
+
+/**
+ * RemoveReviewerRequest
+ */
+export const zRemoveReviewerRequest = z.object({
+    email: z.string().max(254).regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)
 });
 
 /**
@@ -1260,6 +1340,13 @@ export const zReviewer = z.object({
     earnings30d: zMoney,
     joinedAt: z.string(),
     queue: z.int()
+});
+
+/**
+ * ReviewerNetworkRequest
+ */
+export const zReviewerNetworkRequest = z.object({
+    allow: z.boolean()
 });
 
 /**
@@ -1839,7 +1926,12 @@ export const zPack = z.object({
     industries: z.array(z.string()).optional(),
     priceNote: z.string().optional(),
     inputSchema: z.record(z.string(), z.unknown()).optional(),
-    perRunCap: zMoney.optional()
+    perRunCap: zMoney.optional(),
+    reviewerPool: z.enum([
+        'team',
+        'network',
+        'team_then_network'
+    ]).optional()
 });
 
 /**
@@ -2151,6 +2243,18 @@ export const zGetHumanTaskResponse = zHumanTask;
  */
 export const zListEarningsResponse = z.array(zEarning);
 
+/**
+ * Successful Response
+ */
+export const zGetReviewerProfileResponse = zNetworkProfile;
+
+export const zUpdateReviewerProfileBody = zNetworkProfileRequest;
+
+/**
+ * Successful Response
+ */
+export const zUpdateReviewerProfileResponse = zNetworkProfile;
+
 export const zClaimHumanTaskPath = z.object({
     task_id: z.string()
 });
@@ -2341,6 +2445,48 @@ export const zRevokeTokenPath = z.object({
  * Successful Response
  */
 export const zRevokeTokenResponse = z.void();
+
+export const zListOrgReviewersPath = z.object({
+    org_id: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zListOrgReviewersResponse = zOrgReviewers;
+
+export const zAddOrgReviewerBody = zAddReviewerRequest;
+
+export const zAddOrgReviewerPath = z.object({
+    org_id: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zAddOrgReviewerResponse = zOrgReviewer;
+
+export const zRemoveOrgReviewerBody = zRemoveReviewerRequest;
+
+export const zRemoveOrgReviewerPath = z.object({
+    org_id: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zRemoveOrgReviewerResponse = z.void();
+
+export const zSetReviewerNetworkBody = zReviewerNetworkRequest;
+
+export const zSetReviewerNetworkPath = z.object({
+    org_id: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zSetReviewerNetworkResponse = zOrgReviewers;
 
 export const zOpsListPacksQuery = z.object({
     status: z.enum([

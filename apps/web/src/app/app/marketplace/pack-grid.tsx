@@ -15,7 +15,7 @@ import { useFormat } from "@/lib/use-format";
 
 // Sentinel values double as the `category` URL parameter, so they stay English; the labels shown are translated.
 const ALL = "All packs";
-const HIRED = "Hired";
+const HIRED = "Added";
 const ALL_INDUSTRIES = "";
 
 export function PackGrid() {
@@ -60,7 +60,7 @@ export function PackGrid() {
                   >
                     {filters.map((f, i) => (
                       <Fragment key={f.label}>
-                        {/* Views (All packs, Hired) above the line, categories below it. */}
+                        {/* Views (All packs, Added) above the line, categories below it. */}
                         {i === 2 ? (
                           <span
                             aria-hidden

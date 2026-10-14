@@ -688,7 +688,7 @@
           "runs"
         ],
         "summary": "Start Workflow Run",
-        "description": "Returns 202: the run is registered and started, not finished (API.md section 3). With the runtime on,\na pack that has a definition runs for real on Temporal; any other pack keeps the fixture behaviour. In\nthe live workspace every run is real: the org must have hired the pack and connected its apps, the\ninput must match the pack's input schema and the month's spend must be below the monthly cap.",
+        "description": "Returns 202: the run is registered and started, not finished (API.md section 3). With the runtime on,\na pack that has a definition runs for real on Temporal; any other pack keeps the fixture behaviour. In\nthe live workspace every run is real: the org must have added the pack and connected its apps, the\ninput must match the pack's input schema and the month's spend must be below the monthly cap.",
         "operationId": "startWorkflowRun",
         "security": [
           {
@@ -1400,7 +1400,7 @@
           "reviewers"
         ],
         "summary": "List Earnings",
-        "description": "In the live workspace: the caller's decided tasks of the org's runs, simulated (no money moves).",
+        "description": "In the live workspace: the caller's decided tasks of the org's runs and the network reviews they did\nfor other orgs, simulated (no money moves).",
         "operationId": "listEarnings",
         "responses": {
           "200": {
@@ -1413,6 +1413,168 @@
                   },
                   "type": "array",
                   "title": "Response Listearnings"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v1/reviewer/profile": {
+      "get": {
+        "tags": [
+          "reviewers"
+        ],
+        "summary": "Get Reviewer Profile",
+        "description": "The signed-in user's profile as a New Machines network reviewer; not enabled until they turn it on.\nLive workspace only (404 in the demo).",
+        "operationId": "getReviewerProfile",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NetworkProfile"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "reviewers"
+        ],
+        "summary": "Update Reviewer Profile",
+        "description": "Turn \"Review for the network\" on or off and save the profile (name, languages, skills). Turning it off\nreturns the open tasks the user claimed through the network to the queue. Live workspace only.",
+        "operationId": "updateReviewerProfile",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NetworkProfileRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NetworkProfile"
                 }
               }
             }
@@ -1931,7 +2093,7 @@
           "connections"
         ],
         "summary": "List Connections",
-        "description": "In the live workspace: the apps the org's hired packs use, connected or not.",
+        "description": "In the live workspace: the apps used by the packs the org added, connected or not.",
         "operationId": "listConnections",
         "responses": {
           "200": {
@@ -3270,6 +3432,379 @@
         "responses": {
           "204": {
             "description": "Successful Response"
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/organizations/{org_id}/reviewers": {
+      "get": {
+        "tags": [
+          "organization"
+        ],
+        "summary": "List Org Reviewers",
+        "description": "The org's reviewers (members with the reviewer capability, then pending Reviewer invitations) and\nwhether the org allows the New Machines reviewer network.",
+        "operationId": "listOrgReviewers",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Org Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrgReviewers"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "organization"
+        ],
+        "summary": "Add Org Reviewer",
+        "description": "Give a member the reviewer capability, or invite anyone else as a Reviewer; they accept explicitly.\nOwners and admins only; 409 when the person already reviews for the org.",
+        "operationId": "addOrgReviewer",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Org Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddReviewerRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrgReviewer"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/organizations/{org_id}/reviewers:remove": {
+      "post": {
+        "tags": [
+          "organization"
+        ],
+        "summary": "Remove Org Reviewer",
+        "description": "Remove a reviewer: a member keeps their membership without the capability, a Reviewer member leaves the\norg, a pending Reviewer invitation is withdrawn. Their claimed open tasks go back to the queue. Owners and\nadmins only; 404 when the email is not a reviewer here.",
+        "operationId": "removeOrgReviewer",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Org Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemoveReviewerRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/organizations/{org_id}/reviewer-network": {
+      "put": {
+        "tags": [
+          "organization"
+        ],
+        "summary": "Set Reviewer Network",
+        "description": "Allow or stop the New Machines reviewer network for the org's tasks. Turning it off returns the tasks\nnetwork reviewers claimed to the queue. Owners and admins only.",
+        "operationId": "setReviewerNetwork",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Org Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewerNetworkRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrgReviewers"
+                }
+              }
+            }
           },
           "401": {
             "description": "Sign in required",
@@ -6192,6 +6727,7 @@
           "ops"
         ],
         "summary": "Ops List Reviewers",
+        "description": "The reviewer workforce: the New Machines reviewer network in the live workspace, the fixture pool in\nthe demo.",
         "operationId": "opsListReviewers",
         "security": [
           {
@@ -6393,6 +6929,7 @@
           "ops"
         ],
         "summary": "Ops Suspend Reviewer",
+        "description": "Stop offering the reviewer tasks. In the live workspace, their open network claims return to the\nqueue.",
         "operationId": "opsSuspendReviewer",
         "security": [
           {
@@ -6463,7 +7000,7 @@
             }
           },
           "409": {
-            "description": "Conflict (NOT_AVAILABLE_LIVE, INVALID_TRANSITION).",
+            "description": "Conflict (INVALID_TRANSITION).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -6491,6 +7028,7 @@
           "ops"
         ],
         "summary": "Ops Reinstate Reviewer",
+        "description": "Offer a suspended reviewer tasks again.",
         "operationId": "opsReinstateReviewer",
         "security": [
           {
@@ -6561,7 +7099,7 @@
             }
           },
           "409": {
-            "description": "Conflict (NOT_AVAILABLE_LIVE, INVALID_TRANSITION).",
+            "description": "Conflict (INVALID_TRANSITION).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -8265,6 +8803,22 @@
         ],
         "title": "AddMemoryItemRequest"
       },
+      "AddReviewerRequest": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "maxLength": 254,
+            "pattern": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$",
+            "title": "Email"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "email"
+        ],
+        "title": "AddReviewerRequest"
+      },
       "Agent": {
         "properties": {
           "id": {
@@ -9729,6 +10283,14 @@
           "simulated": {
             "type": "boolean",
             "title": "Simulated"
+          },
+          "via": {
+            "type": "string",
+            "enum": [
+              "team",
+              "network"
+            ],
+            "title": "Via"
           }
         },
         "type": "object",
@@ -10108,6 +10670,14 @@
               "STOPS"
             ],
             "title": "Runoutcome"
+          },
+          "via": {
+            "type": "string",
+            "enum": [
+              "team",
+              "network"
+            ],
+            "title": "Via"
           }
         },
         "type": "object",
@@ -10230,8 +10800,14 @@
             "title": "Capminor"
           },
           "reviewerPool": {
-            "type": "boolean",
-            "title": "Reviewerpool"
+            "type": "string",
+            "enum": [
+              "team",
+              "network",
+              "team_then_network"
+            ],
+            "title": "Reviewerpool",
+            "default": "team_then_network"
           },
           "packSlug": {
             "type": "string",
@@ -10242,7 +10818,6 @@
         "type": "object",
         "required": [
           "capMinor",
-          "reviewerPool",
           "packSlug"
         ],
         "title": "InstallRequest"
@@ -10258,7 +10833,12 @@
             "title": "Capminor"
           },
           "reviewerPool": {
-            "type": "boolean",
+            "type": "string",
+            "enum": [
+              "team",
+              "network",
+              "team_then_network"
+            ],
             "title": "Reviewerpool"
           },
           "summary": {
@@ -10507,7 +11087,8 @@
             "enum": [
               "owner",
               "admin",
-              "member"
+              "member",
+              "reviewer"
             ],
             "title": "Role"
           },
@@ -10762,6 +11343,88 @@
           "amountMinor"
         ],
         "title": "Money"
+      },
+      "NetworkProfile": {
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled"
+          },
+          "suspended": {
+            "type": "boolean",
+            "title": "Suspended"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "languages": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Languages"
+          },
+          "skills": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Skills"
+          }
+        },
+        "type": "object",
+        "required": [
+          "enabled",
+          "suspended",
+          "name",
+          "languages",
+          "skills"
+        ],
+        "title": "NetworkProfile",
+        "description": "The signed-in user's profile as a New Machines network reviewer. `suspended`: New Machines paused\nit."
+      },
+      "NetworkProfileRequest": {
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "languages": {
+            "items": {
+              "type": "string",
+              "maxLength": 40,
+              "minLength": 2
+            },
+            "type": "array",
+            "maxItems": 10,
+            "title": "Languages"
+          },
+          "skills": {
+            "items": {
+              "type": "string",
+              "maxLength": 60,
+              "minLength": 1
+            },
+            "type": "array",
+            "maxItems": 20,
+            "title": "Skills"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "enabled",
+          "name"
+        ],
+        "title": "NetworkProfileRequest",
+        "description": "The user's switch \"Review for the network\" and their profile. Entries are trimmed; repeated languages\nor skills are kept once (compared without case, the first spelling kept)."
       },
       "OpsAttentionItem": {
         "properties": {
@@ -11147,6 +11810,63 @@
         ],
         "title": "OrderSide"
       },
+      "OrgReviewer": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "owner",
+              "admin",
+              "member",
+              "reviewer"
+            ],
+            "title": "Role"
+          },
+          "pending": {
+            "type": "boolean",
+            "title": "Pending"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "name",
+          "role",
+          "pending"
+        ],
+        "title": "OrgReviewer",
+        "description": "A member with the reviewer capability, or a pending Reviewer invitation."
+      },
+      "OrgReviewers": {
+        "properties": {
+          "allowNetwork": {
+            "type": "boolean",
+            "title": "Allownetwork"
+          },
+          "reviewers": {
+            "items": {
+              "$ref": "#/components/schemas/OrgReviewer"
+            },
+            "type": "array",
+            "title": "Reviewers"
+          }
+        },
+        "type": "object",
+        "required": [
+          "allowNetwork",
+          "reviewers"
+        ],
+        "title": "OrgReviewers",
+        "description": "The org's reviewers, active first, and its switch for the New Machines reviewer network."
+      },
       "Organization": {
         "properties": {
           "id": {
@@ -11294,6 +12014,15 @@
           "perRunCap": {
             "$ref": "#/components/schemas/Money",
             "title": "Perruncap"
+          },
+          "reviewerPool": {
+            "type": "string",
+            "enum": [
+              "team",
+              "network",
+              "team_then_network"
+            ],
+            "title": "Reviewerpool"
           }
         },
         "type": "object",
@@ -11787,7 +12516,8 @@
             "enum": [
               "owner",
               "admin",
-              "member"
+              "member",
+              "reviewer"
             ],
             "title": "Role"
           },
@@ -12142,6 +12872,22 @@
         ],
         "title": "RedactedRecord"
       },
+      "RemoveReviewerRequest": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "maxLength": 254,
+            "pattern": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$",
+            "title": "Email"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "email"
+        ],
+        "title": "RemoveReviewerRequest"
+      },
       "Reviewer": {
         "properties": {
           "id": {
@@ -12236,6 +12982,20 @@
           "queue"
         ],
         "title": "Reviewer"
+      },
+      "ReviewerNetworkRequest": {
+        "properties": {
+          "allow": {
+            "type": "boolean",
+            "title": "Allow"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "allow"
+        ],
+        "title": "ReviewerNetworkRequest"
       },
       "Run": {
         "properties": {

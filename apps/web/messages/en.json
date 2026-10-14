@@ -3,7 +3,7 @@
     "language": "Language",
     "skipToContent": "Skip to content",
     "meta": {
-      "description": "Hire AI agents and expert reviewers, and get verified results with the evidence behind them."
+      "description": "Deploy AI agents, hire expert reviewers, and get verified results with the evidence behind them."
     },
     "notifications": "Notifications",
     "dismiss": "Dismiss",
@@ -45,10 +45,11 @@
     "connections": "Connections",
     "usage": "Usage and billing",
     "settings": "Settings",
+    "reviewers": "Reviewers",
     "availableTasks": "Available tasks",
     "earnings": "Earnings",
     "crumbDeliverable": "Deliverable",
-    "crumbHire": "Hire",
+    "crumbHire": "Add",
     "crumbStartRun": "Start a run",
     "breadcrumb": "Breadcrumb",
     "main": "Main",
@@ -72,8 +73,8 @@
     "demoBadge": "Demo workspace: synthetic data, simulated billing",
     "browsePacks": "Browse packs",
     "startRun": "Start a run",
-    "choosePack": "Choose a hired pack",
-    "hireAnother": "Hire another pack",
+    "choosePack": "Choose one of your packs",
+    "hireAnother": "Add another pack",
     "startHelp": "Choose a pack, then the data it should work on.",
     "palette": {
       "title": "Find anything",
@@ -81,7 +82,7 @@
       "empty": "Nothing matches. Try a run ID such as run_1047, or a pack name.",
       "goToPage": "Go to page",
       "approval": "Approval",
-      "hired": "Hired",
+      "hired": "Added",
       "toMove": "to move",
       "toOpen": "to open",
       "loading": "Loading runs, packs and tasks",
@@ -98,7 +99,8 @@
     "roles": {
       "owner": "Owner",
       "admin": "Admin",
-      "member": "Member"
+      "member": "Member",
+      "reviewer": "Reviewer"
     },
     "sandboxBadge": "Sandbox apps, simulated billing",
     "sandboxTooltip": "Your apps use sandbox data until live connections arrive, so nothing reaches your real accounts. Billing is simulated: no money moves.",
@@ -414,7 +416,7 @@
     "plan": "{plan} plan",
     "capNote": "Runs stop before passing the cap.",
     "needsYou": "Needs you",
-    "hiredPacks": "Hired packs",
+    "hiredPacks": "Your packs",
     "findMore": "Find more",
     "packMeta": "{version}, {n, plural, one {# run} other {# runs}} in 30 days",
     "runs": "Runs",
@@ -428,7 +430,7 @@
       "finding": "Finding a pack...",
       "simulated": "Simulated suggestion",
       "startThis": "Start this run",
-      "hireThis": "Hire this pack",
+      "hireThis": "Add this pack",
       "failed": "Could not get a suggestion",
       "suggestions": {
         "reconcile": "Match last week's orders to Stripe payouts",
@@ -439,17 +441,17 @@
       }
     },
     "nothingNeedsYou": "Nothing needs you right now. Approvals and review tasks show up here.",
-    "noPacks": "No packs hired yet. Hire a pack to put agents to work.",
+    "noPacks": "No packs added yet. Add a pack to put agents to work.",
     "browseMarketplace": "Browse the marketplace",
     "noRuns": "No runs yet. Start one to see the work and its receipt here.",
-    "noRunsNoPacks": "No runs yet. Hire a pack first, then start a run.",
+    "noRunsNoPacks": "No runs yet. Add a pack first, then start a run.",
     "startFirstRun": "Start a run",
     "start": {
       "title": "Get started",
       "lede": "Three steps to your first verified result",
       "done": "Done",
       "hire": {
-        "title": "Hire a pack",
+        "title": "Add a pack",
         "detail": "Pick the work you want done from the marketplace."
       },
       "connect": {
@@ -523,14 +525,14 @@
   },
   "connections": {
     "title": "Connections",
-    "lede": "Connect an app once. Each hired pack then gets only the access you grant it. The app's own sign-in permissions and the grants below are separate, and you can revoke either one.",
+    "lede": "Connect an app once. Each pack you add then gets only the access you grant it. The app's own sign-in permissions and the grants below are separate, and you can revoke either one.",
     "connect": {
       "title": "Connect an app",
       "titleApp": "Connect {app}",
       "description": "New Machines sends you to the app's own sign-in page through Composio. You approve the permissions there, and we never see your password.",
       "liveOnly": "Available in the live product",
       "demoNote": "This demo workspace cannot connect real accounts. Google Sheets, Gmail and Drive are already connected to a test account.",
-      "liveNote": "Live app connections are not available yet. The apps your hired packs need are listed on this page, and you can connect them to sandbox data."
+      "liveNote": "Live app connections are not available yet. The apps your packs need are listed on this page, and you can connect them to sandbox data."
     },
     "status": {
       "connected": "Connected",
@@ -553,8 +555,8 @@
     "viaComposio": "Via Composio",
     "disconnectApp": "Disconnect {app}",
     "disconnectTitle": "Disconnect {app}?",
-    "disconnectDescription": "Every hired pack loses access to {app} at once. Runs that need it will stop and ask you before going on.",
-    "grantsHeading": "What each hired pack may do",
+    "disconnectDescription": "Every pack you added loses access to {app} at once. Runs that need it will stop and ask you before going on.",
+    "grantsHeading": "What each of your packs may do",
     "denied": "Denied by policy",
     "writesWithApproval": "Writes with approval",
     "revoke": "Revoke",
@@ -563,7 +565,7 @@
     "revokeConfirm": "Revoke access",
     "noPack": "No pack uses this connection.",
     "disconnectedToastBodyLive": "Runs that need it can't start until you connect it again.",
-    "empty": "No apps yet. Hire a pack and the apps it needs appear here, ready to connect.",
+    "empty": "No apps yet. Add a pack and the apps it needs appear here, ready to connect.",
     "browseMarketplace": "Browse the marketplace",
     "connectSandbox": "Connect {app} (sandbox)",
     "connectedToast": "{app} connected",
@@ -639,8 +641,8 @@
   "marketplace": {
     "grid": {
       "all": "All packs",
-      "hired": "Hired",
-      "intro": "Workflow Packs bundle agents, the reviewers they need and the checks that prove the work. Try any pack on sample data before you hire it.",
+      "hired": "Added",
+      "intro": "Workflow Packs bundle agents, the reviewers they need and the checks that prove the work. Try any pack on sample data before you add it.",
       "filterLabel": "Filter packs",
       "industryLabel": "Filter by industry",
       "allIndustries": "All industries",
@@ -682,9 +684,10 @@
     },
     "pack": {
       "seeRuns": "See its runs",
-      "reviewHire": "Review and hire",
+      "packSettings": "Pack settings",
+      "reviewHire": "Review and add",
       "publisherVersion": "{publisher}, version {version}",
-      "hired": "Hired",
+      "hired": "Added",
       "notCertified": "Not yet certified",
       "whoWorks": "Who does the work",
       "humanReviewers": "Human reviewers",
@@ -721,11 +724,12 @@
       "publisherSeesValue": "Aggregate quality numbers only. Never your data or runs."
     },
     "install": {
-      "hire": "Hire {name}",
-      "lede": "Check what this pack will be allowed to do before you hire it. You can change any of this later, and nothing runs until you start it.",
-      "hiredToast": "{name} hired",
-      "hireFailed": "Could not hire this pack",
-      "hiredTitle": "{name} {version} is hired",
+      "hire": "Add {name}",
+      "lede": "Check what this pack will be allowed to do before you add it. You can change any of this later, and nothing runs until you start it.",
+      "hiredToast": "{name} added",
+      "hireFailed": "Could not add this pack",
+      "saveFailed": "Could not save the pack settings",
+      "hiredTitle": "{name} {version} added to your workspace",
       "goHome": "Go to home",
       "hiredBody": "Pinned to version {version}. It will not update without asking you. Start a run from home, or let it run on a schedule.",
       "access": "Access it gets",
@@ -735,8 +739,21 @@
       "capTitle": "Spending cap per run",
       "capNote": "A run stops and asks you before it would go past this amount, including reviewer pay.",
       "reviewers": "Human reviewers",
-      "poolLabel": "Use the New Machines invoice reviewer pool (US and Philippines). Reviewers see only the records they are asked about, with customer names and emails hidden, for the length of the task.",
-      "poolNote": "Policy human_review@4 still requires a person for payment mismatches, whatever you choose here.",
+      "pool": {
+        "team": "Your team only",
+        "teamNote": "Only your workspace's reviewers see these tasks. Team reviews are unpaid.",
+        "team_then_network": "Your team first, then the network",
+        "team_then_networkNote": "If nobody on your team claims a task within 30 minutes, the New Machines reviewer network can take it.",
+        "network": "The New Machines reviewer network",
+        "networkNote": "Network reviewers see a redacted copy: no workspace name, emails or phone numbers. Their pay is simulated. While the network is on, your own team does not see these tasks, and a task nobody claims waits until it times out."
+      },
+      "poolOff": "Your team only, while the network is off",
+      "networkOff": "The reviewer network is off for your workspace, so your team reviews every task until an owner or admin allows it.",
+      "networkOffLink": "Open Reviewers",
+      "saveSettings": "Save pack settings",
+      "savedToast": "Pack settings saved",
+      "settingsTitle": "Settings for {name}",
+      "settingsLede": "Change the spending cap and who reviews this pack's tasks.",
       "summary": "Summary",
       "pack": "Pack",
       "version": "Version",
@@ -799,7 +816,7 @@
   "runs": {
     "new": {
       "title": "Start a run",
-      "lede": "Choose a hired pack and the data it should work on. You can stop the run at any time.",
+      "lede": "Choose one of your packs and the data it should work on. You can stop the run at any time.",
       "pack": "Pack",
       "input": "Data to work on",
       "needInput": "Connect an app with this data first.",
@@ -809,9 +826,9 @@
       "start": "Start run",
       "starting": "Starting…",
       "failed": "Could not start the run",
-      "notHired": "{name} isn't hired yet, so it can't start a run.",
+      "notHired": "{name} hasn't been added yet, so it can't start a run.",
       "unknownPack": "There is no pack called {slug}.",
-      "hireThis": "Hire this pack",
+      "hireThis": "Add this pack",
       "seeAllPacks": "See all packs",
       "optional": "(optional)",
       "noInputNeeded": "This pack needs no input.",
@@ -819,11 +836,11 @@
       "capReached": "This month's spend has reached the {cap} monthly cap. New runs start again next month.",
       "seeUsage": "See usage",
       "changeCap": "Change the per-run cap",
-      "noHiredPacks": "Hire a pack before starting a run.",
+      "noHiredPacks": "Add a pack before starting a run.",
       "noChoice": "None",
       "perRunCap": "This pack's spending cap per run is {cap}."
     },
-    "empty": "No runs yet. Start a run of a hired pack and follow its work here.",
+    "empty": "No runs yet. Start a run of one of your packs and follow its work here.",
     "startRun": "Start a run"
   },
   "forms": {
@@ -896,9 +913,9 @@
       "namePlaceholder": "For example, Team assistant",
       "scopes": "What it can do",
       "scope": {
-        "agents:read": "See hired packs and agents",
+        "agents:read": "See your packs and agents",
         "runs:read": "See runs and their results",
-        "runs:start": "Start runs of hired packs",
+        "runs:start": "Start runs of your packs",
         "approvals:list": "See what is waiting for approval"
       },
       "lede": "Let an AI tool list your packs, start runs and see what is waiting. Tokens can never approve or decline anything.",
@@ -926,6 +943,46 @@
       "copyByHand": "The token is selected. Copy it with Ctrl+C or ⌘C."
     }
   },
+  "reviewers": {
+    "title": "Reviewers",
+    "lede": "The people who check work a pack sends for review. Your team reviews unpaid; the New Machines reviewer network steps in only when you allow it.",
+    "liveOnly": "Reviewers are managed in a live workspace. In the demo, sample review work is in the reviewer portal.",
+    "team": "Your team",
+    "add": "Add reviewer",
+    "addTitle": "Add a reviewer",
+    "addDescription": "A member of this workspace becomes a reviewer at once. Anyone else is invited as a reviewer and joins after accepting with that email.",
+    "email": "Email",
+    "emailPlaceholder": "name@company.com",
+    "emailInvalid": "Enter a full email address, like name@company.com.",
+    "send": "Add",
+    "added": "Reviewer added",
+    "addedPending": "{address} is invited as a reviewer and joins once they accept.",
+    "addedMember": "{address} can now review your team's tasks.",
+    "addFailed": "Could not add the reviewer",
+    "pending": "Invited",
+    "pendingNote": "Invitation sent, not accepted yet",
+    "remove": "Remove",
+    "removeLabel": "Remove {name}",
+    "removeTitle": "Remove {name} as a reviewer?",
+    "removeDescription": "They stop seeing your team's review tasks, and tasks they claimed go back to the queue. Someone who joined as a reviewer also leaves this workspace.",
+    "removeConfirm": "Remove reviewer",
+    "removed": "Reviewer removed",
+    "removeFailed": "Could not remove the reviewer",
+    "empty": "No reviewers yet. Add someone from your team, or allow the reviewer network.",
+    "managersOnly": "Only owners and admins can change reviewers.",
+    "network": "Reviewer network",
+    "allowNetwork": "Allow the New Machines reviewer network",
+    "networkIsOn": "The New Machines reviewer network is allowed.",
+    "networkIsOff": "The New Machines reviewer network is not allowed.",
+    "allowNetworkNote": "Network reviewers see a redacted copy of a task: no workspace name, emails or phone numbers. For each pack you deploy, you choose whether its tasks go to your team, the network, or your team first.",
+    "networkPay": "Network review pay is simulated: no money moves.",
+    "networkOn": "Reviewer network allowed",
+    "networkOff": "Reviewer network turned off",
+    "networkFailed": "Could not change the reviewer network",
+    "networkOffTitle": "Turn off the reviewer network?",
+    "networkOffDescription": "Tasks network reviewers have claimed go back to the queue.",
+    "networkOffConfirm": "Turn off"
+  },
   "usage": {
     "title": "Usage and billing",
     "lede": "Every charge comes from a recorded run step and is posted twice: once against your account and once against where the money goes. In this demo no money moves.",
@@ -951,7 +1008,7 @@
     "plan": "Plan",
     "planValue": "{plan}, {price} a month (simulated)",
     "includes": "Includes",
-    "includesValue": "Unlimited hired packs, 5 members, 30-day run history",
+    "includesValue": "Unlimited packs, 5 members, 30-day run history",
     "payment": "Payment method",
     "paymentValue": "None. This demo workspace never charges a card.",
     "ledeLive": "Every charge comes from a recorded run step and is posted twice: once against your account and once against where the money goes. Billing is simulated: no money moves.",
@@ -989,6 +1046,7 @@
     "dataConfidential": "Confidential, redacted",
     "dataNone": "No customer data",
     "paidOnAccept": "Paid once your submission is accepted",
+    "simulatedOnAccept": "Simulated pay once your submission is accepted: no money moves",
     "readTask": "Read the task",
     "yourWork": "Your work",
     "openOffers": "Open offers",
@@ -1003,6 +1061,8 @@
     "earnings": {
       "lede": "You are paid for every accepted submission, including when you reject the agent's work or a later step fails.",
       "simulated": "No real payouts in this demo",
+      "ledeLive": "Reviews you do for the New Machines reviewer network earn simulated pay: no money moves. Reviews for your own workspace's team are unpaid.",
+      "simulatedLive": "Pay is simulated",
       "owed": "Owed to you",
       "paid": "Paid so far",
       "tasks": "Tasks",
@@ -1023,7 +1083,27 @@
       "seeTasks": "See available tasks"
     },
     "empty": "No review tasks are open right now. New ones appear here when a run needs a person.",
-    "simulatedPayLive": "Pay is simulated"
+    "simulatedPayLive": "Pay is simulated",
+    "teamUnpaid": "Team review, unpaid",
+    "network": "Network",
+    "profile": {
+      "title": "The New Machines reviewer network",
+      "body": "Take redacted review tasks from other New Machines customers. Pay is simulated: no money moves.",
+      "toggle": "Review for the network",
+      "edit": "Edit profile",
+      "formTitle": "Your reviewer profile",
+      "formDescription": "Customers never see your profile. New Machines uses it to offer you suitable tasks.",
+      "name": "Name",
+      "languages": "Languages",
+      "languagesHint": "For example English, Tagalog",
+      "skills": "Skills",
+      "skillsHint": "For example Reconciliation, Refunds",
+      "save": "Save and review for the network",
+      "on": "You review for the network",
+      "off": "You no longer review for the network",
+      "failed": "Could not update your reviewer profile",
+      "suspended": "New Machines has paused your network reviews. Contact support to resume."
+    }
   },
   "task": {
     "byline": "{buyer}, {pack}",
@@ -1054,7 +1134,10 @@
     },
     "accepted": {
       "title": "Accepted. {pay} is owed to you.",
+      "titleTeam": "Accepted. Team reviews are unpaid.",
+      "titleNetwork": "Accepted. {pay} in simulated pay: no money moves.",
       "body": "Your pay is owed now, whatever happens in later steps. The run resumes from its checkpoint with your corrections, and the steps that already finished do not run again.",
+      "bodyRun": "The run resumes from its checkpoint with your corrections, and the steps that already finished do not run again.",
       "runNote": "In the business workspace, this shows up on <run>{id}</run>. Your access to the records has ended."
     },
     "offer": {
@@ -1071,6 +1154,8 @@
       "obligations": "Your obligations",
       "willBePaid": "You will be paid",
       "owedNote": "Owed as soon as your submission is accepted, even if a later step fails.",
+      "teamNote": "Reviews for your own team are not paid.",
+      "networkNote": "Simulated pay: no money moves.",
       "claim": "Claim this task",
       "demoOnly": "Only the reconciliation task can be claimed in this demo.",
       "claimFailed": "Could not claim this task"
@@ -1145,6 +1230,11 @@
       "recordedTitle": "Review recorded",
       "recordedBody": "The run has your verdict."
     },
-    "simulatedPayLive": "Simulated pay"
+    "payNote": {
+      "team": "Team reviews are unpaid.",
+      "network": "Simulated pay for this review: {pay}. No money moves."
+    },
+    "simulatedPayLive": "Simulated pay",
+    "teamUnpaid": "Team review, unpaid"
   }
 }

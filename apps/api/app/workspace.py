@@ -13,7 +13,7 @@ from typing import Any
 
 import psycopg
 
-from app import db, settings
+from app import db, run_tasks, settings
 from app.errors import ApiProblem
 from app.models.common import Money, money_text
 from app.models.org import (
@@ -44,7 +44,7 @@ LEDGER_LIMIT = 100
 FAILED_RUN_DAYS = 7
 FAILED_RUN_LIMIT = 10
 SPEND_WARN_PERCENT = 80
-ROLE_NAMES = {"owner": "Owner", "admin": "Admin", "member": "Member"}
+ROLE_NAMES = {"owner": "Owner", "admin": "Admin", "member": "Member", "reviewer": "Reviewer"}
 INVITER_ROLES = frozenset({"owner", "admin"})
 _PROVISION_LOCK = "nm-workspace-member:"
 
@@ -154,8 +154,8 @@ def _provision(conn, identity: Identity) -> None:
     org_id = f"org_{secrets.token_hex(8)}"
     conn.execute("INSERT INTO orgs (id, name) VALUES (%s, %s)", (org_id, workspace_name(identity.name)))
     conn.execute(
-        "INSERT INTO org_members (org_id, user_id, email, name, role, status) "
-        "VALUES (%s, %s, %s, %s, 'owner', 'active')",
+        "INSERT INTO org_members (org_id, user_id, email, name, role, status, reviewer) "
+        "VALUES (%s, %s, %s, %s, 'owner', 'active', true)",
         (org_id, identity.user_id, identity.email, identity.name),
     )
     log.info("Provisioned %s for user %s.", org_id, identity.user_id)
@@ -263,7 +263,8 @@ def _is_empty(conn, org_id: str, user_id: str) -> bool:
 def _leave(conn, user_id: str, org_id: str) -> None:
     """End the user's membership of `org_id`. An empty org is deleted with the user's row and tokens, in a
     savepoint after locking the org row and checking again; if anything still refers to it, or it is not
-    empty, the org keeps its data, the user's row becomes inactive and their tokens in it are revoked."""
+    empty, the org keeps its data, the user's row becomes inactive, their tokens in it are revoked and the
+    org's open human tasks they had claimed return to the queue."""
     if _is_empty(conn, org_id, user_id):
         try:
             with conn.transaction():
@@ -286,6 +287,7 @@ def _leave(conn, user_id: str, org_id: str) -> None:
         "UPDATE api_tokens SET revoked_at = now() WHERE org_id = %s AND user_id = %s AND revoked_at IS NULL",
         (org_id, user_id),
     )
+    run_tasks.release_claims(conn, org_id=org_id, user_id=user_id)
     log.info("User %s left %s, which keeps its data.", user_id, org_id)
 
 
@@ -421,15 +423,16 @@ def members(org_id: str) -> list[Member]:
 
 def invite(org_id: str, inviter_role: str, email: str, role: str) -> Member:
     """Add a pending member. Owners and admins invite; an email already in the org (member or invited) is a
-    409, while a former member (inactive) can be invited again."""
+    409, while a former member (inactive) can be invited again, without a reviewer capability they had unless
+    the invitation is for a Reviewer."""
     if inviter_role not in INVITER_ROLES:
         raise ApiProblem(403, "POLICY_DENIED", "Only owners and admins can invite people.")
     with db.connect() as conn:
         row = conn.execute(
             "INSERT INTO org_members (org_id, email, role, status) VALUES (%s, %s, %s, 'invited') "
             "ON CONFLICT (org_id, email) DO UPDATE SET user_id = NULL, role = EXCLUDED.role, "
-            "status = 'invited', created_at = now() WHERE org_members.status = 'inactive' "
-            "RETURNING email, name, role, status",
+            "status = 'invited', reviewer = (EXCLUDED.role = 'reviewer'), created_at = now() "
+            "WHERE org_members.status = 'inactive' RETURNING email, name, role, status",
             (org_id, email.strip().lower(), role.lower()),
         ).fetchone()
         conn.commit()

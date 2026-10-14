@@ -103,7 +103,7 @@ class AttentionItem(Model):
     when: str
 
 
-MemberRole = Literal["owner", "admin", "member"]
+MemberRole = Literal["owner", "admin", "member", "reviewer"]
 
 
 class PendingInvitation(Model):

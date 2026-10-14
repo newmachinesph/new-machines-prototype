@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/skeleton";
 import { ActorGlyph, ButtonLink, Id, KeyValues, MockTag, PageHeader, Pill, Section } from "@/components/ui";
 import { ApiError } from "@/lib/api/errors";
 import { useAgentById, useAgents, usePack } from "@/lib/queries/catalog";
+import { useIsLive } from "@/lib/queries/me";
 import { useFormat } from "@/lib/use-format";
 import { SandboxTrial } from "./sandbox-trial";
 
@@ -18,6 +19,7 @@ export function PackPage({ slug }: { slug: string }) {
   const packQuery = usePack(slug);
   const agentsQuery = useAgents();
   const agentById = useAgentById();
+  const live = useIsLive();
   if (packQuery.error instanceof ApiError && packQuery.error.status === 404) notFound();
 
   return (
@@ -34,9 +36,16 @@ export function PackPage({ slug }: { slug: string }) {
                   lede={p.description}
                   actions={
                     p.installed ? (
-                      <ButtonLink href="/app/runs" variant="secondary">
-                        {t("seeRuns")}
-                      </ButtonLink>
+                      <>
+                        {live ? (
+                          <ButtonLink href={`/app/marketplace/${p.slug}/install`} variant="secondary">
+                            {t("packSettings")}
+                          </ButtonLink>
+                        ) : null}
+                        <ButtonLink href="/app/runs" variant="secondary">
+                          {t("seeRuns")}
+                        </ButtonLink>
+                      </>
                     ) : (
                       <ButtonLink href={`/app/marketplace/${p.slug}/install`}>{t("reviewHire")}</ButtonLink>
                     )

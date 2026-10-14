@@ -86,7 +86,7 @@ class As:
     def delete(self, path: str, **kw):
         return self.api.delete(path, headers=self.headers, **kw)
 
-    def hire(self, cap: int = 2000, pool: bool = True):
+    def hire(self, cap: int = 2000, pool: str = "team_then_network"):
         body = {"packSlug": PACK, "capMinor": cap, "reviewerPool": pool}
         return self.post(f"/v1/organizations/{self.org_id}/agent-installations", json=body)
 
@@ -187,7 +187,7 @@ def test_a_seed_pack_is_hired_connected_in_sandbox_and_started(ana, starts):
     slug = "overdue-invoice-follow-up"
     hired = ana.post(
         f"/v1/organizations/{ana.org_id}/agent-installations",
-        json={"packSlug": slug, "capMinor": 1500, "reviewerPool": True},
+        json={"packSlug": slug, "capMinor": 1500, "reviewerPool": "team_then_network"},
     )
     assert hired.status_code == 201
     # Grants follow the pack's contract: this pack reads invoices, not charges, and writes mail drafts.
@@ -222,15 +222,15 @@ def test_suggest_matches_over_pack_definitions(ana):
 
 def test_hiring_upserts_the_orgs_installation_only(ana, ben, db):
     before = [(p.slug, p.installed) for p in get_store().packs]
-    res = ana.hire(cap=500, pool=False)
+    res = ana.hire(cap=500, pool="team")
     assert res.status_code == 201, res.text
     assert res.json() == {
         "packSlug": PACK,
         "capMinor": 500,
-        "reviewerPool": False,
+        "reviewerPool": "team",
         "summary": "Spending cap $5.00 per run. Reviewers: your team only.",
     }
-    assert ana.hire(cap=2000, pool=True).status_code == 201  # again: updates, one row
+    assert ana.hire(cap=2000).status_code == 201  # again: updates, one row
     rows = _rows(
         db,
         "SELECT org_id, pack_slug, pack_version, cap_minor, reviewer_pool, installed_by FROM installations",
@@ -241,7 +241,7 @@ def test_hiring_upserts_the_orgs_installation_only(ana, ben, db):
             "pack_slug": PACK,
             "pack_version": 1,
             "cap_minor": 2000,
-            "reviewer_pool": "team_and_pool",
+            "reviewer_pool": "team_then_network",
             "installed_by": "uid_ana",
         }
     ]
@@ -250,15 +250,22 @@ def test_hiring_upserts_the_orgs_installation_only(ana, ben, db):
     assert ana.get(f"/v1/workflow-packs/{PACK}").json()["installed"] is True
     # Another org sees the pack as not hired and cannot hire into Ana's org.
     assert ben.get("/v1/workflow-packs").json()[0]["installed"] is False
-    body = {"packSlug": PACK, "capMinor": 500, "reviewerPool": True}
+    body = {"packSlug": PACK, "capMinor": 500, "reviewerPool": "team_then_network"}
     assert ben.post(f"/v1/organizations/{ana.org_id}/agent-installations", json=body).status_code == 403
 
 
 def test_hiring_checks_the_pack_and_cap(ana):
     url = f"/v1/organizations/{ana.org_id}/agent-installations"
-    fixture_only = {"packSlug": "weekly-inventory-report", "capMinor": 500, "reviewerPool": True}
+    fixture_only = {
+        "packSlug": "weekly-inventory-report",
+        "capMinor": 500,
+        "reviewerPool": "team_then_network",
+    }
     assert ana.post(url, json=fixture_only).status_code == 404
-    assert ana.post(url, json={"packSlug": PACK, "capMinor": 0, "reviewerPool": True}).status_code == 422
+    assert (
+        ana.post(url, json={"packSlug": PACK, "capMinor": 0, "reviewerPool": "team_then_network"}).status_code
+        == 422
+    )
     assert ana.post(url, json={"packSlug": PACK, "capMinor": 500, "reviewerPool": "maybe"}).status_code == 422
 
 
@@ -342,7 +349,7 @@ def test_another_org_can_neither_see_nor_change_an_orgs_connections(ana, ben, db
 def test_a_run_needs_the_pack_hired(ana, starts):
     res = ana.start()
     assert res.status_code == 409 and res.json()["code"] == "PACK_NOT_HIRED"
-    assert res.json()["detail"] == f"Hire {PACK_NAME} before starting a run."
+    assert res.json()["detail"] == f"Add {PACK_NAME} before starting a run."
     assert starts.calls == []
 
 
@@ -537,7 +544,7 @@ def test_approvals_and_tasks_of_an_orgs_runs_stay_in_that_org(ana, ben, db):
     db.commit()
     assert [a["id"] for a in ana.get("/v1/approvals").json()] == ["approval_a"]
     assert [t["id"] for t in ana.get("/v1/human-tasks/eligible").json()] == ["human_a"]
-    assert ana.get("/v1/human-tasks/eligible").json()[0]["payTerms"].startswith("Simulated pay")
+    assert ana.get("/v1/human-tasks/eligible").json()[0]["payTerms"] == "Team review: unpaid"
     assert ben.get("/v1/approvals").json() == [] and ben.get("/v1/human-tasks/eligible").json() == []
     assert ben.post("/v1/approvals/approval_a:approve").status_code == 404
     assert ben.post("/v1/approvals/approval_a:decline").status_code == 404
@@ -626,40 +633,52 @@ def test_runs_recall_and_remember_within_their_org(db, starts):
 
 
 def test_migration_003_gives_old_run_items_their_org_and_quarantines_the_rest(db):
-    db.execute(
-        "ALTER TABLE memory_items DROP COLUMN status, DROP COLUMN retracted_by, DROP COLUMN retracted_at"
-    )
-    db.execute("ALTER TABLE installations DROP CONSTRAINT installations_reviewer_pool_check")
-    db.execute("ALTER TABLE connections DROP CONSTRAINT connections_status_check")
-    db.execute("DELETE FROM schema_migrations WHERE name = '003_live_catalog.sql'")
-    db.execute(
-        "INSERT INTO runs (id, org_id, pack_slug, status, snapshot, projection, input) "
-        "VALUES ('run_7', 'org_a', 'p', 'COMPLETED', '{}', '{}', '{}')"
-    )
-    items = [
-        ("m_run", "run:run_7:learn:1"),
-        ("m_lost", "run:run_gone:learn:1"),
-        ("m_other", "import"),
-        ("m_seed", "seed"),
-        ("m_console", "console"),
-    ]
-    for item_id, source in items:
+    try:
         db.execute(
-            "INSERT INTO memory_items (id, space, text, source, created_by) VALUES (%s, 's', 't', %s, 'x')",
-            (item_id, source),
+            "ALTER TABLE memory_items DROP COLUMN status, DROP COLUMN retracted_by, DROP COLUMN retracted_at"
         )
-    db.commit()
-    assert app_db.migrate(db) == ["003_live_catalog.sql"]
-    rows = {
-        r["id"]: (r["org_id"], r["status"]) for r in _rows(db, "SELECT id, org_id, status FROM memory_items")
-    }
-    assert rows == {
-        "m_run": ("org_a", "active"),
-        "m_lost": (None, "quarantined"),
-        "m_other": (None, "quarantined"),
-        "m_seed": (None, "active"),
-        "m_console": (None, "active"),
-    }
+        db.execute("ALTER TABLE installations DROP CONSTRAINT installations_reviewer_pool_check")
+        db.execute("ALTER TABLE connections DROP CONSTRAINT connections_status_check")
+        db.execute("DELETE FROM schema_migrations WHERE name = '003_live_catalog.sql'")
+        db.execute(
+            "INSERT INTO runs (id, org_id, pack_slug, status, snapshot, projection, input) "
+            "VALUES ('run_7', 'org_a', 'p', 'COMPLETED', '{}', '{}', '{}')"
+        )
+        items = [
+            ("m_run", "run:run_7:learn:1"),
+            ("m_lost", "run:run_gone:learn:1"),
+            ("m_other", "import"),
+            ("m_seed", "seed"),
+            ("m_console", "console"),
+        ]
+        for item_id, source in items:
+            db.execute(
+                "INSERT INTO memory_items (id, space, text, source, created_by) "
+                "VALUES (%s, 's', 't', %s, 'x')",
+                (item_id, source),
+            )
+        db.commit()
+        assert app_db.migrate(db) == ["003_live_catalog.sql"]
+        rows = {
+            r["id"]: (r["org_id"], r["status"])
+            for r in _rows(db, "SELECT id, org_id, status FROM memory_items")
+        }
+        assert rows == {
+            "m_run": ("org_a", "active"),
+            "m_lost": (None, "quarantined"),
+            "m_other": (None, "quarantined"),
+            "m_seed": (None, "active"),
+            "m_console": (None, "active"),
+        }
+    finally:  # whatever failed above, `nm_test` keeps 003 and 008's pools for the tests after this one
+        db.rollback()
+        app_db.migrate(db)  # 003 re-adds its own pool check: put 008's back
+        db.execute("ALTER TABLE installations DROP CONSTRAINT IF EXISTS installations_reviewer_pool_check")
+        db.execute(
+            "ALTER TABLE installations ADD CONSTRAINT installations_reviewer_pool_check "
+            "CHECK (reviewer_pool IN ('team', 'network', 'team_then_network'))"
+        )
+        db.commit()
 
 
 # --- earnings -------------------------------------------------------------------------------------------
@@ -683,9 +702,10 @@ def test_earnings_are_the_tasks_the_reviewer_decided(ana, ben, db):
         )
     db.commit()
     earned = ana.get("/v1/reviewer/earnings").json()
-    assert [(e["taskId"], e["amount"]["amountMinor"], e["verdict"]) for e in earned] == [
-        ("ht_paid", 750, "REVISION_REQUIRED"),
-        ("ht_free", 0, "REJECTED"),
+    # Team reviews of the org's own tasks are unpaid, whatever pay the task names.
+    assert [(e["taskId"], e["amount"]["amountMinor"], e["verdict"], e["via"]) for e in earned] == [
+        ("ht_paid", 0, "REVISION_REQUIRED", "team"),
+        ("ht_free", 0, "REJECTED", "team"),
     ]
     assert all(e["status"] == "PAID_SIMULATED" and e["simulated"] is True for e in earned)
     assert ben.get("/v1/reviewer/earnings").json() == []  # Ben's decision was in Ana's org

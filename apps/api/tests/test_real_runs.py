@@ -609,6 +609,7 @@ def test_a_real_human_task_is_offered_claimed_and_submitted(api, rec, db):
     assert task["records"][1]["agentNote"] == "The charge is short by the card fee."
     assert task["deadline"] == "2026-10-14T10:00:00Z" and task["packName"] == run["title"]
     assert task["realRun"] is True and "runOutcome" not in task
+    assert task["payTerms"] == "Demo run: no reviewer pay" and "via" not in task  # the demo copy, unrouted
 
     review = {"verdict": "APPROVED", "feedbackText": "Both explained.", "recordCalls": {"#1004": "timing"}}
     assert api.post(f"/v1/human-tasks/{task_id}:submit", json=review).status_code == 409

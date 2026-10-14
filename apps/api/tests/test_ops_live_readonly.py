@@ -1,6 +1,6 @@
-"""Ops writes still backed by fixtures are refused in the live workspace: reviewers, marketplace packs and
-incidents answer 409 NOT_AVAILABLE_LIVE without touching the store or the ops audit. The live runs list
-holds real runs only. The demo workspace keeps all of them."""
+"""Ops writes still backed by fixtures are refused in the live workspace: reviewer approval and levels,
+marketplace packs and incidents answer 409 NOT_AVAILABLE_LIVE without touching the store or the ops audit.
+The live runs list holds real runs only. The demo workspace keeps all of them."""
 
 import copy
 
@@ -12,7 +12,7 @@ from app.store import get_store
 from tests.test_live_catalog import As, Starts, _ready
 from tests.test_ops_state import OPS, REASON
 
-REVIEWERS = "In the live workspace, reviewers are managed by each company."
+REVIEWERS = "In the live workspace, network reviewers join from the reviewer portal and have no level."
 PACKS = "In the live workspace, packs are published as definitions."
 INCIDENTS = "Incidents are not tracked in the live workspace yet."
 
@@ -31,8 +31,6 @@ NEW_PACK = {
 # (path, body, detail): each would succeed in the demo workspace against the fixtures named.
 REFUSED = [
     ("/v1/ops/reviewers/rev_ph_024:approve", {}, REVIEWERS),
-    ("/v1/ops/reviewers/rev_ph_003:suspend", {}, REVIEWERS),
-    ("/v1/ops/reviewers/rev_sg_002:reinstate", {}, REVIEWERS),
     ("/v1/ops/reviewers/rev_ph_017:setLevel", {"level": "qualified"}, REVIEWERS),
     ("/v1/ops/packs", NEW_PACK, PACKS),
     ("/v1/ops/packs/supplier-onboarding:submit", {}, PACKS),

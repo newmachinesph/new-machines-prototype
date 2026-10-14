@@ -180,3 +180,62 @@ describe("TaskWorkspace pay terms", () => {
     expect(screen.queryByText(/Demo run/)).not.toBeInTheDocument();
   });
 });
+
+describe("TaskWorkspace team and network reviews", () => {
+  const team = { ...task, realRun: true, via: "team", pay: { amountMinor: 0, currency: "USD" } } as HumanTask;
+  const network = { ...task, realRun: true, via: "network", runId: "", pay: { amountMinor: 150, currency: "USD" } };
+
+  async function submit(t: HumanTask) {
+    const user = userEvent.setup();
+    renderWithIntl(<TaskWorkspace task={t} buyer={t.buyer} />);
+    await user.click(screen.getByRole("button", { name: "Claim this task" }));
+    await user.click(screen.getByRole("radio", { name: "Same payment" }));
+    await user.type(screen.getByRole("textbox", { name: "Feedback for the agent" }), "They are the same payment.");
+    await user.click(screen.getByRole("button", { name: "Submit review" }));
+  }
+
+  it("labels a team review unpaid before the claim, with no pay owed", () => {
+    workspace.demo = false;
+    renderWithIntl(<TaskWorkspace task={team} buyer={team.buyer} />);
+    expect(screen.getAllByText("Team review, unpaid").length).toBeGreaterThan(0);
+    expect(screen.getByText("Reviews for your own team are not paid.")).toBeInTheDocument();
+    expect(screen.queryByText("$0.00")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Owed as soon as/)).not.toBeInTheDocument();
+  });
+
+  it("confirms a team review as unpaid, with no is-owed line", async () => {
+    workspace.demo = false;
+    await submit(team);
+    expect(screen.getByText("Review recorded. The run goes on with it.")).toBeInTheDocument();
+    expect(screen.getByText("Team reviews are unpaid.")).toBeInTheDocument();
+    expect(screen.queryByText(/is owed/)).not.toBeInTheDocument();
+  });
+
+  it("labels network pay as simulated before the claim", () => {
+    workspace.demo = false;
+    renderWithIntl(<TaskWorkspace task={network as HumanTask} buyer="A New Machines customer" />);
+    expect(screen.getByText("Simulated pay: no money moves.")).toBeInTheDocument();
+    expect(screen.queryByText(/Owed as soon as/)).not.toBeInTheDocument();
+  });
+
+  it("confirms a network review with simulated pay and no run link", async () => {
+    workspace.demo = false;
+    await submit(network as HumanTask);
+    expect(screen.getByText("Simulated pay for this review: $1.50. No money moves.")).toBeInTheDocument();
+    expect(screen.queryByText(/is owed/)).not.toBeInTheDocument();
+    expect(document.querySelector('a[href^="/app/runs"]')).toBeNull();
+  });
+
+  it("shows an accepted network review with simulated pay, no run note and no run link", () => {
+    renderWithIntl(<TaskWorkspace task={{ ...(network as HumanTask), state: "ACCEPTED" }} buyer="A customer" />);
+    expect(screen.getByText("Accepted. $1.50 in simulated pay: no money moves.")).toBeInTheDocument();
+    expect(screen.queryByText(/business workspace/)).not.toBeInTheDocument();
+    expect(document.querySelector('a[href^="/app/runs"]')).toBeNull();
+  });
+
+  it("shows an accepted team review as unpaid", () => {
+    renderWithIntl(<TaskWorkspace task={{ ...team, state: "ACCEPTED" }} buyer={team.buyer} />, { locale: "ja" });
+    expect(screen.getByText("受け入れられました。チームのレビューは無報酬です。")).toBeInTheDocument();
+    expect(screen.queryByText(/支払われます/)).not.toBeInTheDocument();
+  });
+});

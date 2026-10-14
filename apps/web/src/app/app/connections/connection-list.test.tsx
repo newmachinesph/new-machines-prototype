@@ -102,7 +102,7 @@ describe("ConnectionList in a live workspace", () => {
     data.conns = [];
     renderWithIntl(<ConnectionList />);
     expect(
-      screen.getByText("No apps yet. Hire a pack and the apps it needs appear here, ready to connect."),
+      screen.getByText("No apps yet. Add a pack and the apps it needs appear here, ready to connect."),
     ).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Browse the marketplace" })).toHaveAttribute("href", "/app/marketplace");
   });

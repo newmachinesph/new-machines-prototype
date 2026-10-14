@@ -353,16 +353,23 @@ const MODAL = cn(
   "fixed top-1/2 left-1/2 z-50 w-[min(480px,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 p-5",
 );
 
-/** Asks before an action that is hard to undo. The confirm button repeats the action's name. */
+/**
+ * Asks before an action that is hard to undo. The confirm button repeats the action's name. Opened by its
+ * `trigger`, or controlled with `open` and `onOpenChange` when another control (a checkbox) asks.
+ */
 export function Confirm({
   trigger,
+  open,
+  onOpenChange,
   title,
   description,
   confirmLabel,
   onConfirm,
   danger,
 }: {
-  trigger: ReactElement;
+  trigger?: ReactElement;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   title: string;
   description: ReactNode;
   confirmLabel: string;
@@ -371,8 +378,8 @@ export function Confirm({
 }) {
   const t = useTranslations("common");
   return (
-    <AlertDialog.Root>
-      <AlertDialog.Trigger render={trigger} />
+    <AlertDialog.Root open={open} onOpenChange={onOpenChange ? (o) => onOpenChange(o) : undefined}>
+      {trigger ? <AlertDialog.Trigger render={trigger} /> : null}
       <AlertDialog.Portal>
         <AlertDialog.Backdrop className={BACKDROP} />
         <AlertDialog.Popup className={MODAL}>

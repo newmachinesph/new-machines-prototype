@@ -59,12 +59,12 @@ export function ReviewerActions({ reviewer }: { reviewer: Reviewer }) {
   const suspend = useSuspendReviewer();
   const reinstate = useReinstateReviewer();
 
-  // Reviewers are fixtures in the live workspace, and the API refuses to change them there.
-  if (live) return null;
+  // Live network reviewers join from the reviewer portal and have no level: only suspend and reinstate apply.
+  if (live && reviewer.status === "applicant") return null;
   if (!canWrite) {
     const labels = {
       applicant: ["Approve as trainee"],
-      active: ["Set level", "Suspend"],
+      active: live ? ["Suspend"] : ["Set level", "Suspend"],
       suspended: ["Reinstate"],
     }[reviewer.status];
     return (
@@ -113,7 +113,11 @@ export function ReviewerActions({ reviewer }: { reviewer: Reviewer }) {
           </Button>
         }
         title={`Reinstate ${reviewer.name}?`}
-        consequence={`${reviewer.name} can receive tasks again at their current level.`}
+        consequence={
+          live
+            ? `${reviewer.name} can receive network tasks again.`
+            : `${reviewer.name} can receive tasks again at their current level.`
+        }
         confirmLabel="Reinstate reviewer"
         onConfirm={async (reason) => {
           await reinstate.mutateAsync({ path, body: { reason } });
@@ -125,7 +129,7 @@ export function ReviewerActions({ reviewer }: { reviewer: Reviewer }) {
   }
   return (
     <div className="flex justify-end gap-2">
-      <LevelAction reviewer={reviewer} />
+      {live ? null : <LevelAction reviewer={reviewer} />}
       <ConfirmAction
         trigger={
           <Button variant="danger" aria-label={named("Suspend", reviewer)}>
@@ -133,7 +137,11 @@ export function ReviewerActions({ reviewer }: { reviewer: Reviewer }) {
           </Button>
         }
         title={`Suspend ${reviewer.name}?`}
-        consequence={`${reviewer.name} stops receiving tasks. Tasks already claimed return to the queue.`}
+        consequence={
+          live
+            ? `${reviewer.name} stops receiving network tasks. Network tasks already claimed return to the queue.`
+            : `${reviewer.name} stops receiving tasks. Tasks already claimed return to the queue.`
+        }
         confirmLabel="Suspend reviewer"
         destructive
         onConfirm={async (reason) => {

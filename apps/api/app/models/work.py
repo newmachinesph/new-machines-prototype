@@ -59,6 +59,9 @@ class HumanTask(Model):
     real_run: bool | Opt = None
     # A submitted real-run task: whether the run goes on with the review or stops (reject or escalate).
     run_outcome: Literal["CONTINUES", "STOPS"] | Opt = None
+    # Live workspace: how this reviewer reaches the task. "team": the org's own copy, unpaid; "network": a
+    # copy without the org's name or contact details, with simulated pay.
+    via: Literal["team", "network"] | Opt = None
 
 
 class DigestRow(Model):
@@ -110,3 +113,6 @@ class Earning(Model):
     status: Literal["OWED", "ELIGIBLE", "PAID_SIMULATED", "IN_REVIEW"]
     # Live workspace: no money moves yet, so every earning is simulated.
     simulated: bool | Opt = None
+    # Live workspace: how the review came: "team" (the org's own task, unpaid, amount 0) or "network"
+    # (another org's task, simulated pay). Omitted in the demo.
+    via: Literal["team", "network"] | Opt = None

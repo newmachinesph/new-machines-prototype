@@ -4,8 +4,8 @@ import * as z from 'zod';
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { AcceptInvitationData, AcceptInvitationErrors, AcceptInvitationResponses, ApproveApprovalData, ApproveApprovalErrors, ApproveApprovalResponses, ClaimHumanTaskData, ClaimHumanTaskErrors, ClaimHumanTaskResponses, ConnectConnectionData, ConnectConnectionErrors, ConnectConnectionResponses, CreateTokenData, CreateTokenErrors, CreateTokenResponses, DeclineApprovalData, DeclineApprovalErrors, DeclineApprovalResponses, DeclineInvitationData, DeclineInvitationErrors, DeclineInvitationResponses, DisconnectConnectionData, DisconnectConnectionErrors, DisconnectConnectionResponses, GetAgentData, GetAgentErrors, GetAgentResponses, GetCatalogTaxonomyData, GetCatalogTaxonomyErrors, GetCatalogTaxonomyResponses, GetHumanTaskData, GetHumanTaskErrors, GetHumanTaskResponses, GetMeData, GetMeErrors, GetMeResponses, GetOrganizationData, GetOrganizationErrors, GetOrganizationResponses, GetUsageData, GetUsageErrors, GetUsageResponses, GetWorkflowPackData, GetWorkflowPackErrors, GetWorkflowPackResponses, GetWorkflowRunData, GetWorkflowRunErrors, GetWorkflowRunReceiptData, GetWorkflowRunReceiptErrors, GetWorkflowRunReceiptResponses, GetWorkflowRunResponses, InstallWorkflowPackData, InstallWorkflowPackErrors, InstallWorkflowPackResponses, InviteMemberData, InviteMemberErrors, InviteMemberResponses, ListAgentsData, ListAgentsErrors, ListAgentsResponses, ListApprovalsData, ListApprovalsErrors, ListApprovalsResponses, ListAttentionData, ListAttentionErrors, ListAttentionResponses, ListConnectionsData, ListConnectionsErrors, ListConnectionsResponses, ListEarningsData, ListEarningsErrors, ListEarningsResponses, ListEligibleHumanTasksData, ListEligibleHumanTasksErrors, ListEligibleHumanTasksResponses, ListMembersData, ListMembersErrors, ListMembersResponses, ListMemoryData, ListMemoryErrors, ListMemoryResponses, ListPoliciesData, ListPoliciesErrors, ListPoliciesResponses, ListTokensData, ListTokensErrors, ListTokensResponses, ListWorkflowPacksData, ListWorkflowPacksErrors, ListWorkflowPacksResponses, ListWorkflowRunsData, ListWorkflowRunsErrors, ListWorkflowRunsResponses, OpsAddConnectorData, OpsAddConnectorErrors, OpsAddConnectorResponses, OpsAddMemoryItemData, OpsAddMemoryItemErrors, OpsAddMemoryItemResponses, OpsApprovePackData, OpsApprovePackErrors, OpsApprovePackResponses, OpsApproveReviewerData, OpsApproveReviewerErrors, OpsApproveReviewerResponses, OpsCertifyPackData, OpsCertifyPackErrors, OpsCertifyPackResponses, OpsCreatePackData, OpsCreatePackErrors, OpsCreatePackResponses, OpsCreateTenantData, OpsCreateTenantErrors, OpsCreateTenantResponses, OpsDeclareIncidentData, OpsDeclareIncidentErrors, OpsDeclareIncidentResponses, OpsDeleteMemoryItemData, OpsDeleteMemoryItemErrors, OpsDeleteMemoryItemResponses, OpsDeprecatePackData, OpsDeprecatePackErrors, OpsDeprecatePackResponses, OpsDisableConnectorData, OpsDisableConnectorErrors, OpsDisableConnectorResponses, OpsEnableConnectorData, OpsEnableConnectorErrors, OpsEnableConnectorResponses, OpsExportDefinitionData, OpsExportDefinitionErrors, OpsExportDefinitionResponses, OpsGetBillingData, OpsGetBillingErrors, OpsGetBillingResponses, OpsGetDefinitionData, OpsGetDefinitionErrors, OpsGetDefinitionResponses, OpsGetHealthData, OpsGetHealthErrors, OpsGetHealthResponses, OpsGetMeData, OpsGetMeErrors, OpsGetMeResponses, OpsGetOverviewData, OpsGetOverviewErrors, OpsGetOverviewResponses, OpsGetPackData, OpsGetPackErrors, OpsGetPackResponses, OpsGetRunData, OpsGetRunErrors, OpsGetRunResponses, OpsGetRuntimeStatusData, OpsGetRuntimeStatusErrors, OpsGetRuntimeStatusResponses, OpsGetTenantData, OpsGetTenantErrors, OpsGetTenantResponses, OpsHealthCheckConnectorData, OpsHealthCheckConnectorErrors, OpsHealthCheckConnectorResponses, OpsListAuditData, OpsListAuditErrors, OpsListAuditResponses, OpsListAvailableToolkitsData, OpsListAvailableToolkitsErrors, OpsListAvailableToolkitsResponses, OpsListConnectorsData, OpsListConnectorsErrors, OpsListConnectorsResponses, OpsListDefinitionsData, OpsListDefinitionsErrors, OpsListDefinitionsResponses, OpsListGuardrailsData, OpsListGuardrailsErrors, OpsListGuardrailsResponses, OpsListMemoryItemsData, OpsListMemoryItemsErrors, OpsListMemoryItemsResponses, OpsListMemorySpacesData, OpsListMemorySpacesErrors, OpsListMemorySpacesResponses, OpsListPacksData, OpsListPacksErrors, OpsListPacksResponses, OpsListReviewersData, OpsListReviewersErrors, OpsListReviewersResponses, OpsListRunsData, OpsListRunsErrors, OpsListRunsResponses, OpsListTeamData, OpsListTeamErrors, OpsListTeamResponses, OpsListTenantsData, OpsListTenantsErrors, OpsListTenantsResponses, OpsPublishDefinitionData, OpsPublishDefinitionErrors, OpsPublishDefinitionResponses, OpsReactivateTenantData, OpsReactivateTenantErrors, OpsReactivateTenantResponses, OpsReinstateReviewerData, OpsReinstateReviewerErrors, OpsReinstateReviewerResponses, OpsRejectPackData, OpsRejectPackErrors, OpsRejectPackResponses, OpsRepublishPackData, OpsRepublishPackErrors, OpsRepublishPackResponses, OpsSetConnectorDefaultsData, OpsSetConnectorDefaultsErrors, OpsSetConnectorDefaultsResponses, OpsSetGuardrailData, OpsSetGuardrailErrors, OpsSetGuardrailResponses, OpsSetReviewerLevelData, OpsSetReviewerLevelErrors, OpsSetReviewerLevelResponses, OpsSetTenantPlanData, OpsSetTenantPlanErrors, OpsSetTenantPlanResponses, OpsSetTenantSpendCapData, OpsSetTenantSpendCapErrors, OpsSetTenantSpendCapResponses, OpsSubmitPackData, OpsSubmitPackErrors, OpsSubmitPackResponses, OpsSuspendReviewerData, OpsSuspendReviewerErrors, OpsSuspendReviewerResponses, OpsSuspendTenantData, OpsSuspendTenantErrors, OpsSuspendTenantResponses, OpsUpdateIncidentData, OpsUpdateIncidentErrors, OpsUpdateIncidentResponses, OpsValidateDefinitionData, OpsValidateDefinitionErrors, OpsValidateDefinitionResponses, RetractMemoryData, RetractMemoryErrors, RetractMemoryResponses, ReviewMemoryCandidateData, ReviewMemoryCandidateErrors, ReviewMemoryCandidateResponses, RevokeGrantData, RevokeGrantErrors, RevokeGrantResponses, RevokeTokenData, RevokeTokenErrors, RevokeTokenResponses, StartWorkflowRunData, StartWorkflowRunErrors, StartWorkflowRunResponses, SubmitHumanTaskData, SubmitHumanTaskErrors, SubmitHumanTaskResponses, SuggestWorkflowPackData, SuggestWorkflowPackErrors, SuggestWorkflowPackResponses } from './types.gen';
-import { zAcceptInvitationPath, zAcceptInvitationResponse, zApproveApprovalPath, zApproveApprovalResponse, zClaimHumanTaskPath, zClaimHumanTaskResponse, zConnectConnectionPath, zConnectConnectionResponse, zCreateTokenBody, zCreateTokenResponse, zDeclineApprovalPath, zDeclineApprovalResponse, zDeclineInvitationPath, zDeclineInvitationResponse, zDisconnectConnectionPath, zDisconnectConnectionResponse, zGetAgentPath, zGetAgentResponse, zGetCatalogTaxonomyResponse, zGetHumanTaskPath, zGetHumanTaskResponse, zGetMeResponse, zGetOrganizationPath, zGetOrganizationResponse, zGetUsagePath, zGetUsageResponse, zGetWorkflowPackPath, zGetWorkflowPackResponse, zGetWorkflowRunPath, zGetWorkflowRunReceiptPath, zGetWorkflowRunReceiptResponse, zGetWorkflowRunResponse, zInstallWorkflowPackBody, zInstallWorkflowPackPath, zInstallWorkflowPackResponse, zInviteMemberBody, zInviteMemberPath, zInviteMemberResponse, zListAgentsResponse, zListApprovalsResponse, zListAttentionPath, zListAttentionResponse, zListConnectionsResponse, zListEarningsResponse, zListEligibleHumanTasksResponse, zListMembersPath, zListMembersResponse, zListMemoryResponse, zListPoliciesPath, zListPoliciesResponse, zListTokensResponse, zListWorkflowPacksResponse, zListWorkflowRunsResponse, zOpsAddConnectorBody, zOpsAddConnectorResponse, zOpsAddMemoryItemBody, zOpsAddMemoryItemPath, zOpsAddMemoryItemResponse, zOpsApprovePackBody, zOpsApprovePackPath, zOpsApprovePackResponse, zOpsApproveReviewerBody, zOpsApproveReviewerPath, zOpsApproveReviewerResponse, zOpsCertifyPackBody, zOpsCertifyPackPath, zOpsCertifyPackResponse, zOpsCreatePackBody, zOpsCreatePackResponse, zOpsCreateTenantBody, zOpsCreateTenantResponse, zOpsDeclareIncidentBody, zOpsDeclareIncidentResponse, zOpsDeleteMemoryItemBody, zOpsDeleteMemoryItemPath, zOpsDeleteMemoryItemResponse, zOpsDeprecatePackBody, zOpsDeprecatePackPath, zOpsDeprecatePackResponse, zOpsDisableConnectorBody, zOpsDisableConnectorPath, zOpsDisableConnectorResponse, zOpsEnableConnectorBody, zOpsEnableConnectorPath, zOpsEnableConnectorResponse, zOpsExportDefinitionPath, zOpsExportDefinitionQuery, zOpsExportDefinitionResponse, zOpsGetBillingResponse, zOpsGetDefinitionPath, zOpsGetDefinitionQuery, zOpsGetDefinitionResponse, zOpsGetHealthResponse, zOpsGetMeResponse, zOpsGetOverviewResponse, zOpsGetPackPath, zOpsGetPackResponse, zOpsGetRunPath, zOpsGetRunResponse, zOpsGetRuntimeStatusResponse, zOpsGetTenantPath, zOpsGetTenantResponse, zOpsHealthCheckConnectorPath, zOpsHealthCheckConnectorResponse, zOpsListAuditQuery, zOpsListAuditResponse, zOpsListAvailableToolkitsResponse, zOpsListConnectorsResponse, zOpsListDefinitionsResponse, zOpsListGuardrailsResponse, zOpsListMemoryItemsPath, zOpsListMemoryItemsResponse, zOpsListMemorySpacesResponse, zOpsListPacksQuery, zOpsListPacksResponse, zOpsListReviewersQuery, zOpsListReviewersResponse, zOpsListRunsQuery, zOpsListRunsResponse, zOpsListTeamResponse, zOpsListTenantsQuery, zOpsListTenantsResponse, zOpsPublishDefinitionBody, zOpsPublishDefinitionPath, zOpsPublishDefinitionResponse, zOpsReactivateTenantBody, zOpsReactivateTenantPath, zOpsReactivateTenantResponse, zOpsReinstateReviewerBody, zOpsReinstateReviewerPath, zOpsReinstateReviewerResponse, zOpsRejectPackBody, zOpsRejectPackPath, zOpsRejectPackResponse, zOpsRepublishPackBody, zOpsRepublishPackPath, zOpsRepublishPackResponse, zOpsSetConnectorDefaultsBody, zOpsSetConnectorDefaultsPath, zOpsSetConnectorDefaultsResponse, zOpsSetGuardrailBody, zOpsSetGuardrailPath, zOpsSetGuardrailResponse, zOpsSetReviewerLevelBody, zOpsSetReviewerLevelPath, zOpsSetReviewerLevelResponse, zOpsSetTenantPlanBody, zOpsSetTenantPlanPath, zOpsSetTenantPlanResponse, zOpsSetTenantSpendCapBody, zOpsSetTenantSpendCapPath, zOpsSetTenantSpendCapResponse, zOpsSubmitPackBody, zOpsSubmitPackPath, zOpsSubmitPackResponse, zOpsSuspendReviewerBody, zOpsSuspendReviewerPath, zOpsSuspendReviewerResponse, zOpsSuspendTenantBody, zOpsSuspendTenantPath, zOpsSuspendTenantResponse, zOpsUpdateIncidentBody, zOpsUpdateIncidentPath, zOpsUpdateIncidentResponse, zOpsValidateDefinitionBody, zOpsValidateDefinitionPath, zOpsValidateDefinitionResponse, zRetractMemoryPath, zRetractMemoryResponse, zReviewMemoryCandidateBody, zReviewMemoryCandidatePath, zReviewMemoryCandidateResponse, zRevokeGrantQuery, zRevokeGrantResponse, zRevokeTokenPath, zRevokeTokenResponse, zStartWorkflowRunBody, zStartWorkflowRunHeaders, zStartWorkflowRunResponse, zSubmitHumanTaskBody, zSubmitHumanTaskPath, zSubmitHumanTaskResponse, zSuggestWorkflowPackBody, zSuggestWorkflowPackResponse } from './zod.gen';
+import type { AcceptInvitationData, AcceptInvitationErrors, AcceptInvitationResponses, AddOrgReviewerData, AddOrgReviewerErrors, AddOrgReviewerResponses, ApproveApprovalData, ApproveApprovalErrors, ApproveApprovalResponses, ClaimHumanTaskData, ClaimHumanTaskErrors, ClaimHumanTaskResponses, ConnectConnectionData, ConnectConnectionErrors, ConnectConnectionResponses, CreateTokenData, CreateTokenErrors, CreateTokenResponses, DeclineApprovalData, DeclineApprovalErrors, DeclineApprovalResponses, DeclineInvitationData, DeclineInvitationErrors, DeclineInvitationResponses, DisconnectConnectionData, DisconnectConnectionErrors, DisconnectConnectionResponses, GetAgentData, GetAgentErrors, GetAgentResponses, GetCatalogTaxonomyData, GetCatalogTaxonomyErrors, GetCatalogTaxonomyResponses, GetHumanTaskData, GetHumanTaskErrors, GetHumanTaskResponses, GetMeData, GetMeErrors, GetMeResponses, GetOrganizationData, GetOrganizationErrors, GetOrganizationResponses, GetReviewerProfileData, GetReviewerProfileErrors, GetReviewerProfileResponses, GetUsageData, GetUsageErrors, GetUsageResponses, GetWorkflowPackData, GetWorkflowPackErrors, GetWorkflowPackResponses, GetWorkflowRunData, GetWorkflowRunErrors, GetWorkflowRunReceiptData, GetWorkflowRunReceiptErrors, GetWorkflowRunReceiptResponses, GetWorkflowRunResponses, InstallWorkflowPackData, InstallWorkflowPackErrors, InstallWorkflowPackResponses, InviteMemberData, InviteMemberErrors, InviteMemberResponses, ListAgentsData, ListAgentsErrors, ListAgentsResponses, ListApprovalsData, ListApprovalsErrors, ListApprovalsResponses, ListAttentionData, ListAttentionErrors, ListAttentionResponses, ListConnectionsData, ListConnectionsErrors, ListConnectionsResponses, ListEarningsData, ListEarningsErrors, ListEarningsResponses, ListEligibleHumanTasksData, ListEligibleHumanTasksErrors, ListEligibleHumanTasksResponses, ListMembersData, ListMembersErrors, ListMembersResponses, ListMemoryData, ListMemoryErrors, ListMemoryResponses, ListOrgReviewersData, ListOrgReviewersErrors, ListOrgReviewersResponses, ListPoliciesData, ListPoliciesErrors, ListPoliciesResponses, ListTokensData, ListTokensErrors, ListTokensResponses, ListWorkflowPacksData, ListWorkflowPacksErrors, ListWorkflowPacksResponses, ListWorkflowRunsData, ListWorkflowRunsErrors, ListWorkflowRunsResponses, OpsAddConnectorData, OpsAddConnectorErrors, OpsAddConnectorResponses, OpsAddMemoryItemData, OpsAddMemoryItemErrors, OpsAddMemoryItemResponses, OpsApprovePackData, OpsApprovePackErrors, OpsApprovePackResponses, OpsApproveReviewerData, OpsApproveReviewerErrors, OpsApproveReviewerResponses, OpsCertifyPackData, OpsCertifyPackErrors, OpsCertifyPackResponses, OpsCreatePackData, OpsCreatePackErrors, OpsCreatePackResponses, OpsCreateTenantData, OpsCreateTenantErrors, OpsCreateTenantResponses, OpsDeclareIncidentData, OpsDeclareIncidentErrors, OpsDeclareIncidentResponses, OpsDeleteMemoryItemData, OpsDeleteMemoryItemErrors, OpsDeleteMemoryItemResponses, OpsDeprecatePackData, OpsDeprecatePackErrors, OpsDeprecatePackResponses, OpsDisableConnectorData, OpsDisableConnectorErrors, OpsDisableConnectorResponses, OpsEnableConnectorData, OpsEnableConnectorErrors, OpsEnableConnectorResponses, OpsExportDefinitionData, OpsExportDefinitionErrors, OpsExportDefinitionResponses, OpsGetBillingData, OpsGetBillingErrors, OpsGetBillingResponses, OpsGetDefinitionData, OpsGetDefinitionErrors, OpsGetDefinitionResponses, OpsGetHealthData, OpsGetHealthErrors, OpsGetHealthResponses, OpsGetMeData, OpsGetMeErrors, OpsGetMeResponses, OpsGetOverviewData, OpsGetOverviewErrors, OpsGetOverviewResponses, OpsGetPackData, OpsGetPackErrors, OpsGetPackResponses, OpsGetRunData, OpsGetRunErrors, OpsGetRunResponses, OpsGetRuntimeStatusData, OpsGetRuntimeStatusErrors, OpsGetRuntimeStatusResponses, OpsGetTenantData, OpsGetTenantErrors, OpsGetTenantResponses, OpsHealthCheckConnectorData, OpsHealthCheckConnectorErrors, OpsHealthCheckConnectorResponses, OpsListAuditData, OpsListAuditErrors, OpsListAuditResponses, OpsListAvailableToolkitsData, OpsListAvailableToolkitsErrors, OpsListAvailableToolkitsResponses, OpsListConnectorsData, OpsListConnectorsErrors, OpsListConnectorsResponses, OpsListDefinitionsData, OpsListDefinitionsErrors, OpsListDefinitionsResponses, OpsListGuardrailsData, OpsListGuardrailsErrors, OpsListGuardrailsResponses, OpsListMemoryItemsData, OpsListMemoryItemsErrors, OpsListMemoryItemsResponses, OpsListMemorySpacesData, OpsListMemorySpacesErrors, OpsListMemorySpacesResponses, OpsListPacksData, OpsListPacksErrors, OpsListPacksResponses, OpsListReviewersData, OpsListReviewersErrors, OpsListReviewersResponses, OpsListRunsData, OpsListRunsErrors, OpsListRunsResponses, OpsListTeamData, OpsListTeamErrors, OpsListTeamResponses, OpsListTenantsData, OpsListTenantsErrors, OpsListTenantsResponses, OpsPublishDefinitionData, OpsPublishDefinitionErrors, OpsPublishDefinitionResponses, OpsReactivateTenantData, OpsReactivateTenantErrors, OpsReactivateTenantResponses, OpsReinstateReviewerData, OpsReinstateReviewerErrors, OpsReinstateReviewerResponses, OpsRejectPackData, OpsRejectPackErrors, OpsRejectPackResponses, OpsRepublishPackData, OpsRepublishPackErrors, OpsRepublishPackResponses, OpsSetConnectorDefaultsData, OpsSetConnectorDefaultsErrors, OpsSetConnectorDefaultsResponses, OpsSetGuardrailData, OpsSetGuardrailErrors, OpsSetGuardrailResponses, OpsSetReviewerLevelData, OpsSetReviewerLevelErrors, OpsSetReviewerLevelResponses, OpsSetTenantPlanData, OpsSetTenantPlanErrors, OpsSetTenantPlanResponses, OpsSetTenantSpendCapData, OpsSetTenantSpendCapErrors, OpsSetTenantSpendCapResponses, OpsSubmitPackData, OpsSubmitPackErrors, OpsSubmitPackResponses, OpsSuspendReviewerData, OpsSuspendReviewerErrors, OpsSuspendReviewerResponses, OpsSuspendTenantData, OpsSuspendTenantErrors, OpsSuspendTenantResponses, OpsUpdateIncidentData, OpsUpdateIncidentErrors, OpsUpdateIncidentResponses, OpsValidateDefinitionData, OpsValidateDefinitionErrors, OpsValidateDefinitionResponses, RemoveOrgReviewerData, RemoveOrgReviewerErrors, RemoveOrgReviewerResponses, RetractMemoryData, RetractMemoryErrors, RetractMemoryResponses, ReviewMemoryCandidateData, ReviewMemoryCandidateErrors, ReviewMemoryCandidateResponses, RevokeGrantData, RevokeGrantErrors, RevokeGrantResponses, RevokeTokenData, RevokeTokenErrors, RevokeTokenResponses, SetReviewerNetworkData, SetReviewerNetworkErrors, SetReviewerNetworkResponses, StartWorkflowRunData, StartWorkflowRunErrors, StartWorkflowRunResponses, SubmitHumanTaskData, SubmitHumanTaskErrors, SubmitHumanTaskResponses, SuggestWorkflowPackData, SuggestWorkflowPackErrors, SuggestWorkflowPackResponses, UpdateReviewerProfileData, UpdateReviewerProfileErrors, UpdateReviewerProfileResponses } from './types.gen';
+import { zAcceptInvitationPath, zAcceptInvitationResponse, zAddOrgReviewerBody, zAddOrgReviewerPath, zAddOrgReviewerResponse, zApproveApprovalPath, zApproveApprovalResponse, zClaimHumanTaskPath, zClaimHumanTaskResponse, zConnectConnectionPath, zConnectConnectionResponse, zCreateTokenBody, zCreateTokenResponse, zDeclineApprovalPath, zDeclineApprovalResponse, zDeclineInvitationPath, zDeclineInvitationResponse, zDisconnectConnectionPath, zDisconnectConnectionResponse, zGetAgentPath, zGetAgentResponse, zGetCatalogTaxonomyResponse, zGetHumanTaskPath, zGetHumanTaskResponse, zGetMeResponse, zGetOrganizationPath, zGetOrganizationResponse, zGetReviewerProfileResponse, zGetUsagePath, zGetUsageResponse, zGetWorkflowPackPath, zGetWorkflowPackResponse, zGetWorkflowRunPath, zGetWorkflowRunReceiptPath, zGetWorkflowRunReceiptResponse, zGetWorkflowRunResponse, zInstallWorkflowPackBody, zInstallWorkflowPackPath, zInstallWorkflowPackResponse, zInviteMemberBody, zInviteMemberPath, zInviteMemberResponse, zListAgentsResponse, zListApprovalsResponse, zListAttentionPath, zListAttentionResponse, zListConnectionsResponse, zListEarningsResponse, zListEligibleHumanTasksResponse, zListMembersPath, zListMembersResponse, zListMemoryResponse, zListOrgReviewersPath, zListOrgReviewersResponse, zListPoliciesPath, zListPoliciesResponse, zListTokensResponse, zListWorkflowPacksResponse, zListWorkflowRunsResponse, zOpsAddConnectorBody, zOpsAddConnectorResponse, zOpsAddMemoryItemBody, zOpsAddMemoryItemPath, zOpsAddMemoryItemResponse, zOpsApprovePackBody, zOpsApprovePackPath, zOpsApprovePackResponse, zOpsApproveReviewerBody, zOpsApproveReviewerPath, zOpsApproveReviewerResponse, zOpsCertifyPackBody, zOpsCertifyPackPath, zOpsCertifyPackResponse, zOpsCreatePackBody, zOpsCreatePackResponse, zOpsCreateTenantBody, zOpsCreateTenantResponse, zOpsDeclareIncidentBody, zOpsDeclareIncidentResponse, zOpsDeleteMemoryItemBody, zOpsDeleteMemoryItemPath, zOpsDeleteMemoryItemResponse, zOpsDeprecatePackBody, zOpsDeprecatePackPath, zOpsDeprecatePackResponse, zOpsDisableConnectorBody, zOpsDisableConnectorPath, zOpsDisableConnectorResponse, zOpsEnableConnectorBody, zOpsEnableConnectorPath, zOpsEnableConnectorResponse, zOpsExportDefinitionPath, zOpsExportDefinitionQuery, zOpsExportDefinitionResponse, zOpsGetBillingResponse, zOpsGetDefinitionPath, zOpsGetDefinitionQuery, zOpsGetDefinitionResponse, zOpsGetHealthResponse, zOpsGetMeResponse, zOpsGetOverviewResponse, zOpsGetPackPath, zOpsGetPackResponse, zOpsGetRunPath, zOpsGetRunResponse, zOpsGetRuntimeStatusResponse, zOpsGetTenantPath, zOpsGetTenantResponse, zOpsHealthCheckConnectorPath, zOpsHealthCheckConnectorResponse, zOpsListAuditQuery, zOpsListAuditResponse, zOpsListAvailableToolkitsResponse, zOpsListConnectorsResponse, zOpsListDefinitionsResponse, zOpsListGuardrailsResponse, zOpsListMemoryItemsPath, zOpsListMemoryItemsResponse, zOpsListMemorySpacesResponse, zOpsListPacksQuery, zOpsListPacksResponse, zOpsListReviewersQuery, zOpsListReviewersResponse, zOpsListRunsQuery, zOpsListRunsResponse, zOpsListTeamResponse, zOpsListTenantsQuery, zOpsListTenantsResponse, zOpsPublishDefinitionBody, zOpsPublishDefinitionPath, zOpsPublishDefinitionResponse, zOpsReactivateTenantBody, zOpsReactivateTenantPath, zOpsReactivateTenantResponse, zOpsReinstateReviewerBody, zOpsReinstateReviewerPath, zOpsReinstateReviewerResponse, zOpsRejectPackBody, zOpsRejectPackPath, zOpsRejectPackResponse, zOpsRepublishPackBody, zOpsRepublishPackPath, zOpsRepublishPackResponse, zOpsSetConnectorDefaultsBody, zOpsSetConnectorDefaultsPath, zOpsSetConnectorDefaultsResponse, zOpsSetGuardrailBody, zOpsSetGuardrailPath, zOpsSetGuardrailResponse, zOpsSetReviewerLevelBody, zOpsSetReviewerLevelPath, zOpsSetReviewerLevelResponse, zOpsSetTenantPlanBody, zOpsSetTenantPlanPath, zOpsSetTenantPlanResponse, zOpsSetTenantSpendCapBody, zOpsSetTenantSpendCapPath, zOpsSetTenantSpendCapResponse, zOpsSubmitPackBody, zOpsSubmitPackPath, zOpsSubmitPackResponse, zOpsSuspendReviewerBody, zOpsSuspendReviewerPath, zOpsSuspendReviewerResponse, zOpsSuspendTenantBody, zOpsSuspendTenantPath, zOpsSuspendTenantResponse, zOpsUpdateIncidentBody, zOpsUpdateIncidentPath, zOpsUpdateIncidentResponse, zOpsValidateDefinitionBody, zOpsValidateDefinitionPath, zOpsValidateDefinitionResponse, zRemoveOrgReviewerBody, zRemoveOrgReviewerPath, zRemoveOrgReviewerResponse, zRetractMemoryPath, zRetractMemoryResponse, zReviewMemoryCandidateBody, zReviewMemoryCandidatePath, zReviewMemoryCandidateResponse, zRevokeGrantQuery, zRevokeGrantResponse, zRevokeTokenPath, zRevokeTokenResponse, zSetReviewerNetworkBody, zSetReviewerNetworkPath, zSetReviewerNetworkResponse, zStartWorkflowRunBody, zStartWorkflowRunHeaders, zStartWorkflowRunResponse, zSubmitHumanTaskBody, zSubmitHumanTaskPath, zSubmitHumanTaskResponse, zSuggestWorkflowPackBody, zSuggestWorkflowPackResponse, zUpdateReviewerProfileBody, zUpdateReviewerProfileResponse } from './zod.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -170,7 +170,7 @@ export const listWorkflowRuns = <ThrowOnError extends boolean = false>(options?:
  *
  * Returns 202: the run is registered and started, not finished (API.md section 3). With the runtime on,
  * a pack that has a definition runs for real on Temporal; any other pack keeps the fixture behaviour. In
- * the live workspace every run is real: the org must have hired the pack and connected its apps, the
+ * the live workspace every run is real: the org must have added the pack and connected its apps, the
  * input must match the pack's input schema and the month's spend must be below the monthly cap.
  */
 export const startWorkflowRun = <ThrowOnError extends boolean = false>(options: Options<StartWorkflowRunData, ThrowOnError>): RequestResult<StartWorkflowRunResponses, StartWorkflowRunErrors, ThrowOnError> => (options.client ?? client).post<StartWorkflowRunResponses, StartWorkflowRunErrors, ThrowOnError>({
@@ -302,7 +302,8 @@ export const getHumanTask = <ThrowOnError extends boolean = false>(options: Opti
 /**
  * List Earnings
  *
- * In the live workspace: the caller's decided tasks of the org's runs, simulated (no money moves).
+ * In the live workspace: the caller's decided tasks of the org's runs and the network reviews they did
+ * for other orgs, simulated (no money moves).
  */
 export const listEarnings = <ThrowOnError extends boolean = false>(options?: Options<ListEarningsData, ThrowOnError>): RequestResult<ListEarningsResponses, ListEarningsErrors, ThrowOnError> => (options?.client ?? client).get<ListEarningsResponses, ListEarningsErrors, ThrowOnError>({
     requestValidator: async (data) => await z.object({
@@ -314,6 +315,46 @@ export const listEarnings = <ThrowOnError extends boolean = false>(options?: Opt
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/v1/reviewer/earnings',
     ...options
+});
+
+/**
+ * Get Reviewer Profile
+ *
+ * The signed-in user's profile as a New Machines network reviewer; not enabled until they turn it on.
+ * Live workspace only (404 in the demo).
+ */
+export const getReviewerProfile = <ThrowOnError extends boolean = false>(options?: Options<GetReviewerProfileData, ThrowOnError>): RequestResult<GetReviewerProfileResponses, GetReviewerProfileErrors, ThrowOnError> => (options?.client ?? client).get<GetReviewerProfileResponses, GetReviewerProfileErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: z.never().optional(),
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zGetReviewerProfileResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/reviewer/profile',
+    ...options
+});
+
+/**
+ * Update Reviewer Profile
+ *
+ * Turn "Review for the network" on or off and save the profile (name, languages, skills). Turning it off
+ * returns the open tasks the user claimed through the network to the queue. Live workspace only.
+ */
+export const updateReviewerProfile = <ThrowOnError extends boolean = false>(options: Options<UpdateReviewerProfileData, ThrowOnError>): RequestResult<UpdateReviewerProfileResponses, UpdateReviewerProfileErrors, ThrowOnError> => (options.client ?? client).put<UpdateReviewerProfileResponses, UpdateReviewerProfileErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zUpdateReviewerProfileBody,
+        path: z.never().optional(),
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zUpdateReviewerProfileResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/reviewer/profile',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
 });
 
 /**
@@ -407,7 +448,7 @@ export const retractMemory = <ThrowOnError extends boolean = false>(options: Opt
 /**
  * List Connections
  *
- * In the live workspace: the apps the org's hired packs use, connected or not.
+ * In the live workspace: the apps used by the packs the org added, connected or not.
  */
 export const listConnections = <ThrowOnError extends boolean = false>(options?: Options<ListConnectionsData, ThrowOnError>): RequestResult<ListConnectionsResponses, ListConnectionsErrors, ThrowOnError> => (options?.client ?? client).get<ListConnectionsResponses, ListConnectionsErrors, ThrowOnError>({
     requestValidator: async (data) => await z.object({
@@ -666,6 +707,91 @@ export const revokeToken = <ThrowOnError extends boolean = false>(options: Optio
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/v1/tokens/{token_id}',
     ...options
+});
+
+/**
+ * List Org Reviewers
+ *
+ * The org's reviewers (members with the reviewer capability, then pending Reviewer invitations) and
+ * whether the org allows the New Machines reviewer network.
+ */
+export const listOrgReviewers = <ThrowOnError extends boolean = false>(options: Options<ListOrgReviewersData, ThrowOnError>): RequestResult<ListOrgReviewersResponses, ListOrgReviewersErrors, ThrowOnError> => (options.client ?? client).get<ListOrgReviewersResponses, ListOrgReviewersErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zListOrgReviewersPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zListOrgReviewersResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/organizations/{org_id}/reviewers',
+    ...options
+});
+
+/**
+ * Add Org Reviewer
+ *
+ * Give a member the reviewer capability, or invite anyone else as a Reviewer; they accept explicitly.
+ * Owners and admins only; 409 when the person already reviews for the org.
+ */
+export const addOrgReviewer = <ThrowOnError extends boolean = false>(options: Options<AddOrgReviewerData, ThrowOnError>): RequestResult<AddOrgReviewerResponses, AddOrgReviewerErrors, ThrowOnError> => (options.client ?? client).post<AddOrgReviewerResponses, AddOrgReviewerErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zAddOrgReviewerBody,
+        path: zAddOrgReviewerPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zAddOrgReviewerResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/organizations/{org_id}/reviewers',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Remove Org Reviewer
+ *
+ * Remove a reviewer: a member keeps their membership without the capability, a Reviewer member leaves the
+ * org, a pending Reviewer invitation is withdrawn. Their claimed open tasks go back to the queue. Owners and
+ * admins only; 404 when the email is not a reviewer here.
+ */
+export const removeOrgReviewer = <ThrowOnError extends boolean = false>(options: Options<RemoveOrgReviewerData, ThrowOnError>): RequestResult<RemoveOrgReviewerResponses, RemoveOrgReviewerErrors, ThrowOnError> => (options.client ?? client).post<RemoveOrgReviewerResponses, RemoveOrgReviewerErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zRemoveOrgReviewerBody,
+        path: zRemoveOrgReviewerPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zRemoveOrgReviewerResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/organizations/{org_id}/reviewers:remove',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Set Reviewer Network
+ *
+ * Allow or stop the New Machines reviewer network for the org's tasks. Turning it off returns the tasks
+ * network reviewers claimed to the queue. Owners and admins only.
+ */
+export const setReviewerNetwork = <ThrowOnError extends boolean = false>(options: Options<SetReviewerNetworkData, ThrowOnError>): RequestResult<SetReviewerNetworkResponses, SetReviewerNetworkErrors, ThrowOnError> => (options.client ?? client).put<SetReviewerNetworkResponses, SetReviewerNetworkErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zSetReviewerNetworkBody,
+        path: zSetReviewerNetworkPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zSetReviewerNetworkResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/organizations/{org_id}/reviewer-network',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
 });
 
 /**
@@ -1205,6 +1331,9 @@ export const opsGetOverview = <ThrowOnError extends boolean = false>(options?: O
 
 /**
  * Ops List Reviewers
+ *
+ * The reviewer workforce: the New Machines reviewer network in the live workspace, the fixture pool in
+ * the demo.
  */
 export const opsListReviewers = <ThrowOnError extends boolean = false>(options?: Options<OpsListReviewersData, ThrowOnError>): RequestResult<OpsListReviewersResponses, OpsListReviewersErrors, ThrowOnError> => (options?.client ?? client).get<OpsListReviewersResponses, OpsListReviewersErrors, ThrowOnError>({
     requestValidator: async (data) => await z.object({
@@ -1239,6 +1368,9 @@ export const opsApproveReviewer = <ThrowOnError extends boolean = false>(options
 
 /**
  * Ops Suspend Reviewer
+ *
+ * Stop offering the reviewer tasks. In the live workspace, their open network claims return to the
+ * queue.
  */
 export const opsSuspendReviewer = <ThrowOnError extends boolean = false>(options: Options<OpsSuspendReviewerData, ThrowOnError>): RequestResult<OpsSuspendReviewerResponses, OpsSuspendReviewerErrors, ThrowOnError> => (options.client ?? client).post<OpsSuspendReviewerResponses, OpsSuspendReviewerErrors, ThrowOnError>({
     requestValidator: async (data) => await z.object({
@@ -1258,6 +1390,8 @@ export const opsSuspendReviewer = <ThrowOnError extends boolean = false>(options
 
 /**
  * Ops Reinstate Reviewer
+ *
+ * Offer a suspended reviewer tasks again.
  */
 export const opsReinstateReviewer = <ThrowOnError extends boolean = false>(options: Options<OpsReinstateReviewerData, ThrowOnError>): RequestResult<OpsReinstateReviewerResponses, OpsReinstateReviewerErrors, ThrowOnError> => (options.client ?? client).post<OpsReinstateReviewerResponses, OpsReinstateReviewerErrors, ThrowOnError>({
     requestValidator: async (data) => await z.object({

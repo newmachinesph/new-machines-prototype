@@ -37,6 +37,16 @@ export type AddMemoryItemRequest = {
 };
 
 /**
+ * AddReviewerRequest
+ */
+export type AddReviewerRequest = {
+    /**
+     * Email
+     */
+    email: string;
+};
+
+/**
  * Agent
  *
  * A catalog agent. `source` is "definition" for an agent definition, "sample" for a demo fixture
@@ -939,6 +949,10 @@ export type Earning = {
      * Simulated
      */
     simulated?: boolean;
+    /**
+     * Via
+     */
+    via?: 'team' | 'network';
 };
 
 /**
@@ -1204,6 +1218,10 @@ export type HumanTask = {
      * Runoutcome
      */
     runOutcome?: 'CONTINUES' | 'STOPS';
+    /**
+     * Via
+     */
+    via?: 'team' | 'network';
 };
 
 /**
@@ -1273,7 +1291,7 @@ export type InstallRequest = {
     /**
      * Reviewerpool
      */
-    reviewerPool: boolean;
+    reviewerPool?: 'team' | 'network' | 'team_then_network';
     /**
      * Packslug
      */
@@ -1295,7 +1313,7 @@ export type Installation = {
     /**
      * Reviewerpool
      */
-    reviewerPool: boolean;
+    reviewerPool: 'team' | 'network' | 'team_then_network';
     /**
      * Summary
      */
@@ -1464,7 +1482,7 @@ export type Me = {
     /**
      * Role
      */
-    role: 'owner' | 'admin' | 'member';
+    role: 'owner' | 'admin' | 'member' | 'reviewer';
     /**
      * Workspace
      */
@@ -1637,6 +1655,60 @@ export type Money = {
      * Currency
      */
     currency?: 'USD';
+};
+
+/**
+ * NetworkProfile
+ *
+ * The signed-in user's profile as a New Machines network reviewer. `suspended`: New Machines paused
+ * it.
+ */
+export type NetworkProfile = {
+    /**
+     * Enabled
+     */
+    enabled: boolean;
+    /**
+     * Suspended
+     */
+    suspended: boolean;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Languages
+     */
+    languages: Array<string>;
+    /**
+     * Skills
+     */
+    skills: Array<string>;
+};
+
+/**
+ * NetworkProfileRequest
+ *
+ * The user's switch "Review for the network" and their profile. Entries are trimmed; repeated languages
+ * or skills are kept once (compared without case, the first spelling kept).
+ */
+export type NetworkProfileRequest = {
+    /**
+     * Enabled
+     */
+    enabled: boolean;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Languages
+     */
+    languages?: Array<string>;
+    /**
+     * Skills
+     */
+    skills?: Array<string>;
 };
 
 /**
@@ -1882,6 +1954,46 @@ export type OrderSide = {
 };
 
 /**
+ * OrgReviewer
+ *
+ * A member with the reviewer capability, or a pending Reviewer invitation.
+ */
+export type OrgReviewer = {
+    /**
+     * Email
+     */
+    email: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Role
+     */
+    role: 'owner' | 'admin' | 'member' | 'reviewer';
+    /**
+     * Pending
+     */
+    pending: boolean;
+};
+
+/**
+ * OrgReviewers
+ *
+ * The org's reviewers, active first, and its switch for the New Machines reviewer network.
+ */
+export type OrgReviewers = {
+    /**
+     * Allownetwork
+     */
+    allowNetwork: boolean;
+    /**
+     * Reviewers
+     */
+    reviewers: Array<OrgReviewer>;
+};
+
+/**
  * Organization
  */
 export type Organization = {
@@ -2000,6 +2112,10 @@ export type Pack = {
      * Perruncap
      */
     perRunCap?: Money;
+    /**
+     * Reviewerpool
+     */
+    reviewerPool?: 'team' | 'network' | 'team_then_network';
 };
 
 /**
@@ -2328,7 +2444,7 @@ export type PendingInvitation = {
     /**
      * Role
      */
-    role: 'owner' | 'admin' | 'member';
+    role: 'owner' | 'admin' | 'member' | 'reviewer';
     /**
      * Invitedat
      */
@@ -2577,6 +2693,16 @@ export type RedactedRecord = {
 };
 
 /**
+ * RemoveReviewerRequest
+ */
+export type RemoveReviewerRequest = {
+    /**
+     * Email
+     */
+    email: string;
+};
+
+/**
  * Reviewer
  */
 export type Reviewer = {
@@ -2633,6 +2759,16 @@ export type Reviewer = {
      * Queue
      */
     queue: number;
+};
+
+/**
+ * ReviewerNetworkRequest
+ */
+export type ReviewerNetworkRequest = {
+    /**
+     * Allow
+     */
+    allow: boolean;
 };
 
 /**
@@ -4362,6 +4498,88 @@ export type ListEarningsResponses = {
 
 export type ListEarningsResponse = ListEarningsResponses[keyof ListEarningsResponses];
 
+export type GetReviewerProfileData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/reviewer/profile';
+};
+
+export type GetReviewerProfileErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type GetReviewerProfileError = GetReviewerProfileErrors[keyof GetReviewerProfileErrors];
+
+export type GetReviewerProfileResponses = {
+    /**
+     * Successful Response
+     */
+    200: NetworkProfile;
+};
+
+export type GetReviewerProfileResponse = GetReviewerProfileResponses[keyof GetReviewerProfileResponses];
+
+export type UpdateReviewerProfileData = {
+    body: NetworkProfileRequest;
+    path?: never;
+    query?: never;
+    url: '/v1/reviewer/profile';
+};
+
+export type UpdateReviewerProfileErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type UpdateReviewerProfileError = UpdateReviewerProfileErrors[keyof UpdateReviewerProfileErrors];
+
+export type UpdateReviewerProfileResponses = {
+    /**
+     * Successful Response
+     */
+    200: NetworkProfile;
+};
+
+export type UpdateReviewerProfileResponse = UpdateReviewerProfileResponses[keyof UpdateReviewerProfileResponses];
+
 export type ClaimHumanTaskData = {
     body?: never;
     path: {
@@ -5326,6 +5544,190 @@ export type RevokeTokenResponses = {
 };
 
 export type RevokeTokenResponse = RevokeTokenResponses[keyof RevokeTokenResponses];
+
+export type ListOrgReviewersData = {
+    body?: never;
+    path: {
+        /**
+         * Org Id
+         */
+        org_id: string;
+    };
+    query?: never;
+    url: '/v1/organizations/{org_id}/reviewers';
+};
+
+export type ListOrgReviewersErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type ListOrgReviewersError = ListOrgReviewersErrors[keyof ListOrgReviewersErrors];
+
+export type ListOrgReviewersResponses = {
+    /**
+     * Successful Response
+     */
+    200: OrgReviewers;
+};
+
+export type ListOrgReviewersResponse = ListOrgReviewersResponses[keyof ListOrgReviewersResponses];
+
+export type AddOrgReviewerData = {
+    body: AddReviewerRequest;
+    path: {
+        /**
+         * Org Id
+         */
+        org_id: string;
+    };
+    query?: never;
+    url: '/v1/organizations/{org_id}/reviewers';
+};
+
+export type AddOrgReviewerErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type AddOrgReviewerError = AddOrgReviewerErrors[keyof AddOrgReviewerErrors];
+
+export type AddOrgReviewerResponses = {
+    /**
+     * Successful Response
+     */
+    201: OrgReviewer;
+};
+
+export type AddOrgReviewerResponse = AddOrgReviewerResponses[keyof AddOrgReviewerResponses];
+
+export type RemoveOrgReviewerData = {
+    body: RemoveReviewerRequest;
+    path: {
+        /**
+         * Org Id
+         */
+        org_id: string;
+    };
+    query?: never;
+    url: '/v1/organizations/{org_id}/reviewers:remove';
+};
+
+export type RemoveOrgReviewerErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type RemoveOrgReviewerError = RemoveOrgReviewerErrors[keyof RemoveOrgReviewerErrors];
+
+export type RemoveOrgReviewerResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type RemoveOrgReviewerResponse = RemoveOrgReviewerResponses[keyof RemoveOrgReviewerResponses];
+
+export type SetReviewerNetworkData = {
+    body: ReviewerNetworkRequest;
+    path: {
+        /**
+         * Org Id
+         */
+        org_id: string;
+    };
+    query?: never;
+    url: '/v1/organizations/{org_id}/reviewer-network';
+};
+
+export type SetReviewerNetworkErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type SetReviewerNetworkError = SetReviewerNetworkErrors[keyof SetReviewerNetworkErrors];
+
+export type SetReviewerNetworkResponses = {
+    /**
+     * Successful Response
+     */
+    200: OrgReviewers;
+};
+
+export type SetReviewerNetworkResponse = SetReviewerNetworkResponses[keyof SetReviewerNetworkResponses];
 
 export type OpsListPacksData = {
     body?: never;
@@ -6814,7 +7216,7 @@ export type OpsSuspendReviewerErrors = {
      */
     404: Problem;
     /**
-     * Conflict (NOT_AVAILABLE_LIVE, INVALID_TRANSITION).
+     * Conflict (INVALID_TRANSITION).
      */
     409: Problem;
     /**
@@ -6860,7 +7262,7 @@ export type OpsReinstateReviewerErrors = {
      */
     404: Problem;
     /**
-     * Conflict (NOT_AVAILABLE_LIVE, INVALID_TRANSITION).
+     * Conflict (INVALID_TRANSITION).
      */
     409: Problem;
     /**

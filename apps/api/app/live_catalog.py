@@ -5,7 +5,7 @@ the runtime on) and never the demo fixtures. Every installation query is scoped 
 import re
 from dataclasses import dataclass
 
-from app import db, live_connections, workspace
+from app import db, live_connections, run_tasks, workspace
 from app.auth import Actor
 from app.catalog.packs import SandboxForecast, pack_connectors
 from app.defs import registry
@@ -16,8 +16,28 @@ from app.models.ops import PackListing
 from app.models.requests import Installation, InstallRequest
 from app.store import locked_store
 
-# The reviewer pool choice on a hire (InstallRequest.reviewer_pool) as stored in installations.reviewer_pool.
-REVIEWER_POOLS = {True: "team_and_pool", False: "team"}
+# How each reviewer pool reads in a hire's summary.
+POOL_WORDS: dict[str, str] = {
+    "team": "your team only",
+    "network": "the New Machines reviewer network",
+    "team_then_network": "your team first, then the New Machines reviewer network after 30 minutes",
+}
+
+
+# A pool that names the network while the org's switch is off: its tasks stay with the team.
+TEAM_FOR_NOW = (
+    "your team only for now. The reviewer network is off for your workspace, so your team reviews every task "
+    "until an owner or admin allows the network on Reviewers"
+)
+
+
+def hire_summary(cap_minor: int, pool: str, network_on: bool = True) -> str:
+    """The hire's cap and reviewers. With the org's network switch off (live workspace), a pool that names the
+    network does not claim network routing that cannot happen."""
+    words = POOL_WORDS[pool] if network_on or pool == "team" else TEAM_FOR_NOW
+    return f"Spending cap ${cap_minor / 100:.2f} per run. Reviewers: {words}."
+
+
 _WORD = re.compile(r"[a-z0-9]+")
 _STOP_WORDS = frozenset(
     {
@@ -135,9 +155,10 @@ def pack_of(
     *,
     detail: bool = False,
     cap_minor: int | None = None,
+    reviewer_pool: str | None = None,
 ) -> Pack:
     """A pack definition as the marketplace Pack (`detail` adds the input schema; `cap_minor` is the org's
-    per-run cap from its hire)."""
+    per-run cap from its hire, and `reviewer_pool` its reviewer pool)."""
     body = version.body
     connectors = defs.bodies("connector")
     return Pack(
@@ -163,6 +184,7 @@ def pack_of(
         price_note=str(body.get("price_note") or "") or None,
         input_schema=input_schema(defs, body) if detail else None,
         per_run_cap=Money(amount_minor=cap_minor) if installed and cap_minor is not None else None,
+        reviewer_pool=reviewer_pool if installed else None,
     )
 
 
@@ -227,7 +249,8 @@ def get_pack(org_id: str, slug: str) -> Pack:
     version, hired = _find(defs, org_id, slug)
     hire = installation(org_id, slug_of(version)) if hired else None
     cap = hire["cap_minor"] if hire else None
-    return pack_of(defs, version, hired, SandboxForecast(), detail=True, cap_minor=cap)
+    pool = hire["reviewer_pool"] if hire else None
+    return pack_of(defs, version, hired, SandboxForecast(), detail=True, cap_minor=cap, reviewer_pool=pool)
 
 
 # --- suggest --------------------------------------------------------------------------------------------
@@ -283,27 +306,51 @@ def suggest(org_id: str, text: str) -> Suggestion:
 # --- install --------------------------------------------------------------------------------------------
 
 
+def _pinned_version(conn, latest: registry.Version, org_id: str, slug: str) -> registry.Version:
+    """The pack version the org's hire is pinned to (locked for the update), or `latest` for a first hire.
+    A pin the registry no longer has falls back to `latest` for its body; the pin itself is kept."""
+    row = conn.execute(
+        "SELECT pack_version FROM installations WHERE org_id = %s AND pack_slug = %s FOR UPDATE",
+        (org_id, slug),
+    ).fetchone()
+    if row is None:
+        return latest
+    return registry.get_version(conn, "pack", latest.key, row["pack_version"]) or latest
+
+
 def install(actor: Actor, body: InstallRequest) -> Installation:
-    """Hire the pack for the actor's org: insert or update its installations row (idempotent), and give
-    the org's apps already connected the grants this pack uses. Never touches the demo store."""
+    """Hire the pack for the actor's org, or save an existing hire's settings: insert or update its
+    installations row (idempotent), and give the org's apps already connected the grants this pack uses.
+    A first hire pins the latest version; saving settings keeps the pin (updates need their own approval).
+    Saving the pool as `team` returns the open tasks of the org's runs of this pack that network reviewers
+    claimed to the queue, so only the team holds them. Never touches the demo store."""
     defs = definitions()
-    version, _ = _find(defs, actor.org_id, body.pack_slug)
-    slug = slug_of(version)
-    pool = REVIEWER_POOLS[body.reviewer_pool]
+    latest, _ = _find(defs, actor.org_id, body.pack_slug)
+    slug = slug_of(latest)
+    pool = body.reviewer_pool
     with db.connect() as conn:
+        # The org row first, then its tasks: the lock order of `app.review_routing`. A claim in flight holds
+        # the org FOR SHARE, so this waits for it and then releases it; a claim that waits here reads the
+        # new pool once this commits.
+        org = conn.execute(
+            "SELECT allow_network FROM orgs WHERE id = %s FOR NO KEY UPDATE", (actor.org_id,)
+        ).fetchone()
+        version = _pinned_version(conn, latest, actor.org_id, slug)
         conn.execute(
             "INSERT INTO installations (org_id, pack_slug, pack_version, cap_minor, reviewer_pool, "
             "installed_by) VALUES (%s, %s, %s, %s, %s, %s) ON CONFLICT (org_id, pack_slug) DO UPDATE SET "
-            "pack_version = EXCLUDED.pack_version, cap_minor = EXCLUDED.cap_minor, "
-            "reviewer_pool = EXCLUDED.reviewer_pool",
+            "cap_minor = EXCLUDED.cap_minor, reviewer_pool = EXCLUDED.reviewer_pool",
             (actor.org_id, slug, version.version, body.cap_minor, pool, actor.user_id),
         )
         live_connections.grant_pack(
             conn, defs.bodies("connector"), actor.org_id, version.body, defs.bodies("contract")
         )
+        if pool == "team":
+            run_tasks.release_claims(conn, org_id=actor.org_id, pack_slug=slug, via="network")
         conn.commit()
-    reviewers = "your team and the New Machines reviewer pool" if body.reviewer_pool else "your team only"
-    summary = f"Spending cap ${body.cap_minor / 100:.2f} per run. Reviewers: {reviewers}."
     return Installation(
-        pack_slug=slug, cap_minor=body.cap_minor, reviewer_pool=body.reviewer_pool, summary=summary
+        pack_slug=slug,
+        cap_minor=body.cap_minor,
+        reviewer_pool=pool,
+        summary=hire_summary(body.cap_minor, pool, network_on=bool(org and org["allow_network"])),
     )

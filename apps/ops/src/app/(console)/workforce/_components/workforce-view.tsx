@@ -11,7 +11,7 @@ import { count, date, pct } from "@/lib/format";
 import { useOpsWorkspace } from "@/lib/queries/ops";
 import { useReviewers } from "@/lib/queries/workforce";
 import { ReviewerActions } from "./reviewer-actions";
-import { TABS, TAB_STATUS, type Tab, capitalize, countByTab, resolveTab } from "./tabs";
+import { TABS, TAB_STATUS, type Tab, capitalize, countByTab, resolveTab, tabsFor } from "./tabs";
 
 const LEVEL_TONE = { trainee: "quiet", qualified: "machine", senior: "ink" } as const;
 
@@ -21,15 +21,19 @@ const EMPTY: Record<Tab, string> = {
   suspended: "Nobody is suspended.",
 };
 
+/** The live network has no applicants, so its empty states never mention approving one. */
+const LIVE_EMPTY: Record<Tab, string> = {
+  ...EMPTY,
+  active: "No network reviewers yet. People join when they turn on Review for the network in the reviewer portal.",
+};
+
 const person: Column<Reviewer> = {
   key: "name",
   header: "Reviewer",
   cell: (r) => (
     <div className="min-w-0">
       <div className="font-medium">{r.name}</div>
-      <div className="truncate text-xs text-muted">
-        {r.email} · {r.country}
-      </div>
+      <div className="truncate text-xs text-muted">{r.country ? `${r.email} · ${r.country}` : r.email}</div>
     </div>
   ),
 };
@@ -90,15 +94,36 @@ const MEMBER_COLUMNS: Column<Reviewer>[] = [
   actions,
 ];
 
-/** The page lede. Reviewers cannot be changed in the live workspace, so there it invites no actions. */
+/** The live network has no levels or accuracy yet; its earnings are simulated. */
+const LIVE_COLUMNS: Column<Reviewer>[] = [
+  person,
+  { key: "langs", header: "Languages", className: "hidden md:table-cell", cell: (r) => r.languages.join(", ") },
+  skills,
+  { key: "tasks", header: "Network tasks (30d)", numeric: true, cell: (r) => count(r.tasksDone30d) },
+  {
+    key: "median",
+    header: "Median min",
+    numeric: true,
+    className: "hidden 2xl:table-cell",
+    cell: (r) => r.medianMinutes,
+  },
+  {
+    key: "earn",
+    header: "Simulated earnings (30d)",
+    numeric: true,
+    className: "hidden md:table-cell",
+    cell: (r) => <Amount value={r.earnings30d} />,
+  },
+  { key: "queue", header: "Queue", numeric: true, className: "hidden 2xl:table-cell", cell: (r) => count(r.queue) },
+  actions,
+];
+
+/** The page lede. The live workspace lists the New Machines reviewer network. */
 export function WorkforceLede() {
   return useOpsWorkspace() === "live"
-    ? "Human reviewers who take on tasks when a run needs a person. The live workspace shows them read-only."
+    ? "Network reviewers who chose to review for New Machines from the reviewer portal. Suspend anyone who should stop receiving network tasks."
     : "Human reviewers who take on tasks when a run needs a person. Approve applicants, set levels, and pause anyone who should stop receiving work.";
 }
-
-/** The live workspace offers no reviewer actions, so it leaves out their (empty) column. */
-const withoutActions = (columns: Column<Reviewer>[]) => columns.filter((c) => c !== actions);
 
 export function WorkforceView() {
   const query = useReviewers();
@@ -109,9 +134,9 @@ export function WorkforceView() {
     <QueryState query={query} skeleton={<Skeleton className="h-96" />}>
       {(reviewers) => {
         const counts = countByTab(reviewers);
-        const tab = resolveTab(requested, counts);
+        const tab = resolveTab(requested, counts, live);
         const rows = reviewers.filter((r) => r.status === TAB_STATUS[tab]);
-        const columns = tab === "applicants" ? APPLICANT_COLUMNS : MEMBER_COLUMNS;
+        const columns = live ? LIVE_COLUMNS : tab === "applicants" ? APPLICANT_COLUMNS : MEMBER_COLUMNS;
         return (
           <div className="space-y-4">
             <div className="flex">
@@ -119,16 +144,16 @@ export function WorkforceView() {
                 label="Reviewer status"
                 value={tab}
                 onValueChange={(t) => void setTab(t)}
-                options={TABS.map((t) => ({ value: t, label: capitalize(t), count: counts[t] }))}
+                options={tabsFor(live).map((t) => ({ value: t, label: capitalize(t), count: counts[t] }))}
               />
             </div>
             <Section>
               <DataTable
                 label={`${capitalize(tab)} reviewers`}
-                columns={live ? withoutActions(columns) : columns}
+                columns={columns}
                 rows={rows}
                 rowKey={(r) => r.id}
-                empty={EMPTY[tab]}
+                empty={(live ? LIVE_EMPTY : EMPTY)[tab]}
                 maxHeight="max-h-[70vh]"
               />
             </Section>

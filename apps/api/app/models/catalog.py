@@ -3,6 +3,7 @@ from typing import Any, Literal
 from pydantic import Field
 
 from app.models.common import Model, Money, Opt
+from app.models.workforce import ReviewerPool
 
 
 class SampleAgent(Model):
@@ -96,6 +97,8 @@ class Pack(Model):
     input_schema: dict[str, Any] | Opt = None
     # Live workspace, hired packs only: the per-run spending cap the org set when it hired the pack.
     per_run_cap: Money | Opt = None
+    # Live workspace, hired packs only: who reviews the hire's tasks.
+    reviewer_pool: ReviewerPool | Opt = None
 
 
 class Suggestion(Model):

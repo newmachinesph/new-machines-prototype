@@ -270,7 +270,9 @@ def test_migration_007_adds_tool_results_to_a_database_at_006(db):
         db.execute("DROP TABLE IF EXISTS tool_results")
         db.commit()
         applied = [r["name"] for r in _rows(db, "SELECT name FROM schema_migrations ORDER BY name")]
-        assert applied[-1] == "006_ops_state.sql"
+        # at 006: later migrations (008 on) may already be applied, 007 is not
+        assert [n for n in applied if n < "007"][-1] == "006_ops_state.sql"
+        assert "007_tool_results.sql" not in applied
         assert app_db.migrate(db) == ["007_tool_results.sql"]
         columns = _rows(
             db,

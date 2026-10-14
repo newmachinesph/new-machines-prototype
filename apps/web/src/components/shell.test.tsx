@@ -20,7 +20,12 @@ const data = vi.hoisted(() => ({
 
 vi.mock("next/navigation", () => ({ usePathname: () => "/app" }));
 vi.mock("@/lib/auth/session", () => ({ useSession: () => ({ signOut: vi.fn() }) }));
-vi.mock("./command-palette", () => ({ CommandPalette: () => null }));
+// The palette itself is tested on its own; here it only reports the pages AppShell hands it.
+vi.mock("./command-palette", () => ({
+  CommandPalette: ({ pages }: { pages: { href: string }[] }) => (
+    <div data-testid="palette-pages" data-hrefs={pages.map((p) => p.href).join(" ")} />
+  ),
+}));
 vi.mock("./base", async (importOriginal) => ({
   ...(await importOriginal<typeof import("./base")>()),
   useToast: () => vi.fn(),
@@ -92,6 +97,27 @@ describe("AppShell", () => {
     renderWithIntl(<AppShell>page</AppShell>);
     expect(screen.getByText("You")).toBeInTheDocument();
     expect(screen.queryByText("Demo operator")).not.toBeInTheDocument();
+  });
+
+  it("lists Reviewers only in a live workspace", () => {
+    const { unmount } = renderWithIntl(<AppShell>page</AppShell>);
+    expect(screen.getAllByRole("link", { name: "Reviewers" })[0]).toHaveAttribute("href", "/app/reviewers");
+    unmount();
+    data.me = ok({ ...LIVE_ME, workspace: "demo" });
+    renderWithIntl(<AppShell>page</AppShell>);
+    expect(screen.queryByRole("link", { name: "Reviewers" })).toBeNull();
+  });
+
+  it("offers Reviewers in the command palette only in a live workspace", () => {
+    const hrefs = () => (screen.getByTestId("palette-pages").dataset.hrefs ?? "").split(" ");
+    const { unmount } = renderWithIntl(<AppShell>page</AppShell>);
+    expect(hrefs()).toContain("/app/reviewers");
+    expect(hrefs()).toContain("/app/settings");
+    unmount();
+    data.me = ok({ ...LIVE_ME, workspace: "demo" });
+    renderWithIntl(<AppShell>page</AppShell>);
+    expect(hrefs()).not.toContain("/app/reviewers");
+    expect(hrefs()).toContain("/app/settings");
   });
 
   it("gives the workspace control a name while /v1/me loads", () => {

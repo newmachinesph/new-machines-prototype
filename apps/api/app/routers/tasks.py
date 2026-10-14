@@ -1,11 +1,11 @@
-import re
-
-from app import live_work, run_tasks, temporal_client, workspace
+from app import live_work, network_reviewers, review_routing, run_tasks, temporal_client, workspace
 from app.auth import Actor, CurrentActor
 from app.errors import ApiProblem
-from app.models.common import Money, money_text
+from app.models.common import Model, Money, money_text
 from app.models.requests import SubmitReviewRequest
 from app.models.work import Earning, HumanTask, OrderSide, PaymentSide, RedactedRecord
+from app.models.workforce import NetworkProfile, NetworkProfileRequest
+from app.redaction import redacted, scrub, without_name
 from app.routing import ApiRouter
 from app.store import get_store, iso, locked_store
 
@@ -30,25 +30,9 @@ OBLIGATIONS = [
     "Customer names are hidden. Do not try to find them.",
     "No copying, screenshots or downloads.",
 ]
-
-
-# An agent's free-text note or flag may quote the customer. Reviewers see neither email addresses nor phone
-# numbers: an email-like token, and a run of 9 to 15 digits written as a phone number (a lone ISO date, an
-# amount or an order number does not qualify), read "Hidden".
-EMAIL_LIKE = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
-PHONE_LIKE = re.compile(r"(?<![\w#$.,/-])\+?\(?\d[\d\s().-]{7,}\d(?!\w)")
-PHONE_DIGITS = range(9, 16)
-HIDDEN = "Hidden"
-
-
-def _phone(match: re.Match[str]) -> str:
-    text = match.group(0)
-    return HIDDEN if sum(c.isdigit() for c in text) in PHONE_DIGITS else text
-
-
-def _redacted(text: str) -> str:
-    """`text` with email-like and phone-like tokens shown as "Hidden"."""
-    return PHONE_LIKE.sub(_phone, EMAIL_LIKE.sub(HIDDEN, text))
+TEAM_PAY_TERMS = "Team review: unpaid"
+NETWORK_PAY_TERMS = "Simulated pay: no money moves"
+DEMO_PAY_TERMS = "Demo run: no reviewer pay"
 
 
 def find_task(task_id: str) -> HumanTask:
@@ -77,8 +61,8 @@ def _generic_record(item: dict) -> RedactedRecord:
         id=ref,
         order=order,
         payment=payment,
-        flag=_redacted(str(item.get("flag") or "Needs review")),
-        agent_note=_redacted(str(item.get("note") or "")),
+        flag=redacted(str(item.get("flag") or "Needs review")),
+        agent_note=redacted(str(item.get("note") or "")),
     )
 
 
@@ -122,46 +106,155 @@ def _state(row: dict) -> str:
     return "CLAIMED" if (row["payload"] or {}).get("claimed_by") else "OFFERED"
 
 
-def real_task(row: dict) -> HumanTask:
-    """A run_tasks human row as the reviewer portal's HumanTask; records are the mismatches it shows."""
-    payload = row["payload"] or {}
+def _indexed_records(payload: dict) -> list[tuple[int, RedactedRecord]]:
+    """The records a task shows, as the org's own reviewers see them, each with its position in `show`."""
     shown = payload.get("show") if isinstance(payload.get("show"), list) else []
-    records = [_record(item, i) for i, item in enumerate(shown) if isinstance(item, dict)]
-    title = str(payload.get("title") or "Review the result")
+    return [(i, _record(item, i)) for i, item in enumerate(shown) if isinstance(item, dict)]
+
+
+def _records(payload: dict) -> list[RedactedRecord]:
+    return [record for _, record in _indexed_records(payload)]
+
+
+def _pay(payload: dict, via: str | None) -> tuple[int, str]:
+    """(pay in minor units, pay terms) of the task as this reviewer sees it. A network copy shows the pay its
+    network claim recorded, or before a claim the pay such a claim would record."""
+    if via == "network":
+        claimed = live_work.pay_minor(payload) if payload.get("claimed_via") == "network" else 0
+        return claimed or review_routing.network_pay_minor(payload), NETWORK_PAY_TERMS
+    if via == "team":
+        return 0, TEAM_PAY_TERMS
+    return 0, DEMO_PAY_TERMS
+
+
+def _unnamed[M: Model](side: M, org_name: str | None) -> M:
+    """`side` with the org's name read as "the customer" in each of its texts."""
+    texts = {k: without_name(v, org_name) for k, v in side.model_dump().items() if isinstance(v, str)}
+    return side.model_copy(update=texts)
+
+
+def _free_id(base: str, taken: set[str]) -> str:
+    """`base`, or `base-2`, `base-3`... : the first that no other shown record has."""
+    candidate, n = base, 1
+    while candidate in taken:
+        n += 1
+        candidate = f"{base}-{n}"
+    return candidate
+
+
+def _network_records(payload: dict, org_name: str | None) -> list[RedactedRecord]:
+    """The records as a network reviewer sees them (`_network_record`). An id that names the org is replaced
+    by `record-<position in show>`, made unique against every other shown id; `_shown_ids` maps it back."""
+    indexed = _indexed_records(payload)
+    named = {i for i, record in indexed if without_name(record.id, org_name) != record.id}
+    taken = {record.id for i, record in indexed if i not in named}
+    records = []
+    for i, record in indexed:
+        record_id = record.id
+        if i in named:
+            record_id = _free_id(f"record-{i + 1}", taken)
+            taken.add(record_id)
+        records.append(_network_record(record, record_id, org_name))
+    return records
+
+
+def _network_record(record: RedactedRecord, record_id: str, org_name: str | None) -> RedactedRecord:
+    """A record as a network reviewer sees it, under `record_id`: the org's name and contact details scrubbed
+    from its notes, and the org's name from its references."""
+    return record.model_copy(
+        update={
+            "id": record_id,
+            "order": _unnamed(record.order, org_name),
+            "payment": _unnamed(record.payment, org_name),
+            "flag": scrub(record.flag, org_name),
+            "agent_note": scrub(record.agent_note, org_name),
+        }
+    )
+
+
+def real_task(row: dict) -> HumanTask:
+    """A run_tasks human row as the reviewer portal's HumanTask; records are the items it shows. A live row's
+    `via` decides the copy: "team" is the org's own, unpaid; "network" has the org's name and contact details
+    scrubbed from every text and simulated pay. A demo row (no `via`) is the org's own copy, unpaid."""
+    payload = row["payload"] or {}
+    via = row.get("via")
+    network = via == "network"
+    org_name = row.get("org_name")
+
+    def text(value: str) -> str:
+        return scrub(value, org_name) if network else value
+
+    records = _network_records(payload, org_name) if network else _records(payload)
+    title = text(str(payload.get("title") or "Review the result"))
+    pay, terms = _pay(payload, via)
     posted_at = iso(row["created_at"])
+    deadline = str(payload.get("expires_at") or posted_at)
+    # Another org's run is not the network reviewer's to know: the copy has no run id, and its task id is the
+    # task's public id (`review_routing.address`), since the task's own id is built from the run id.
     return HumanTask(
-        id=row["id"],
+        id=review_routing.address(row),
         version=1,
-        run_id=row["run_id"],
-        pack_name=row["run_title"] or "Workflow Pack",
+        run_id="" if network else row["run_id"],
+        pack_name=text(row["run_title"] or "Workflow Pack"),
         title=title,
         mode="CORRECTION",
         skill="Exception review",
         state=_state(row),
-        pay=Money(amount_minor=0),
-        pay_terms="Simulated pay: reviewer payouts are not live yet"
-        if workspace.live()
-        else "Demo run: no reviewer pay",
+        pay=Money(amount_minor=pay),
+        pay_terms=terms,
         est_minutes=max(MINUTES_PER_RECORD, MINUTES_PER_RECORD * len(records)),
-        deadline=str(payload.get("expires_at") or posted_at),
+        deadline=without_name(deadline, org_name) if network else deadline,
         posted_at=posted_at,
         data_class="CONFIDENTIAL",
         regions=["US"],
         obligations=OBLIGATIONS,
-        instructions=str(payload.get("instructions") or ""),
+        instructions=text(str(payload.get("instructions") or "")),
         question=title,
         records=records,
         lease_minutes=LEASE_MINUTES,
         buyer="A New Machines customer",
         real_run=True,
         run_outcome=RUN_OUTCOMES.get(row["status"]),
+        via=via,
     )
+
+
+def id_map(shown_ids: list[str], real_ids: list[str]) -> dict[str, str]:
+    """Shown record id -> real record id, position by position. A shown id that stands for two different
+    real ids is left out, so a call on it is dropped rather than sent to the wrong record."""
+    mapping: dict[str, str] = {}
+    ambiguous: set[str] = set()
+    for shown, real in zip(shown_ids, real_ids, strict=True):
+        if mapping.setdefault(shown, real) != real:
+            ambiguous.add(shown)
+    return {shown: real for shown, real in mapping.items() if shown not in ambiguous}
+
+
+def _shown_ids(row: dict) -> dict[str, str]:
+    """The record ids the reviewer was shown -> the records' real ids (they differ only in a network copy)."""
+    real = [record.id for record in _records(row["payload"] or {})]
+    return id_map([record.id for record in real_task(row).records], real)
+
+
+def _offered_rows(actor: Actor) -> list[dict]:
+    """Rows to list as offers: in the live workspace only open, unclaimed tasks are read, so the list's limit
+    counts offers alone."""
+    if workspace.live():
+        return review_routing.visible_rows(actor.org_id, actor.user_id, offered=True)
+    return run_tasks.list_rows(actor.org_id, "human")
+
+
+def _human_row(actor: Actor, task_id: str) -> dict | None:
+    """The task as the actor may see it: by the routing rules in the live workspace, else the org's own."""
+    if workspace.live():
+        return review_routing.visible_row(actor.org_id, actor.user_id, task_id)
+    return run_tasks.get_row(actor.org_id, "human", task_id)
 
 
 @router.get("/human-tasks/eligible", operation_id="listEligibleHumanTasks", response_model=list[HumanTask])
 def list_eligible_human_tasks(actor: CurrentActor) -> list[HumanTask]:
     # Offers show sanitized metadata only; records arrive with the task itself (API.md section 3).
-    real = [real_task(row) for row in run_tasks.list_rows(actor.org_id, "human")]
+    real = [real_task(row) for row in _offered_rows(actor)]
     fixtures = [] if workspace.live() else list(get_store().tasks.values())
     offered = [t for t in real if t.state == "OFFERED"] + [t for t in fixtures if t.state == "OFFERED"]
     return [t.model_copy(update={"records": []}) for t in offered]
@@ -169,21 +262,48 @@ def list_eligible_human_tasks(actor: CurrentActor) -> list[HumanTask]:
 
 @router.get("/human-tasks/{task_id}", operation_id="getHumanTask", response_model=HumanTask)
 def get_human_task(task_id: str, actor: CurrentActor) -> HumanTask:
-    row = run_tasks.get_row(actor.org_id, "human", task_id)
+    row = _human_row(actor, task_id)
     return real_task(row) if row is not None else find_task(task_id)
 
 
 @router.get("/reviewer/earnings", operation_id="listEarnings", response_model=list[Earning])
 def list_earnings(actor: CurrentActor) -> list[Earning]:
-    """In the live workspace: the caller's decided tasks of the org's runs, simulated (no money moves)."""
+    """In the live workspace: the caller's decided tasks of the org's runs and the network reviews they did
+    for other orgs, simulated (no money moves)."""
     if workspace.live():
         return live_work.earnings(actor)
     return get_store().earnings
 
 
+NETWORK_LIVE_ONLY = "The reviewer network is part of the live workspace."
+
+
+def _network_live() -> None:
+    if not workspace.live():
+        raise ApiProblem(404, "NOT_FOUND", NETWORK_LIVE_ONLY)
+
+
+@router.get("/reviewer/profile", operation_id="getReviewerProfile", response_model=NetworkProfile)
+def get_reviewer_profile(actor: CurrentActor) -> NetworkProfile:
+    """The signed-in user's profile as a New Machines network reviewer; not enabled until they turn it on.
+    Live workspace only (404 in the demo)."""
+    _network_live()
+    return network_reviewers.profile(actor)
+
+
+@router.put("/reviewer/profile", operation_id="updateReviewerProfile", response_model=NetworkProfile)
+def update_reviewer_profile(body: NetworkProfileRequest, actor: CurrentActor) -> NetworkProfile:
+    """Turn "Review for the network" on or off and save the profile (name, languages, skills). Turning it off
+    returns the open tasks the user claimed through the network to the queue. Live workspace only."""
+    _network_live()
+    return network_reviewers.update(actor, body)
+
+
 @router.post("/human-tasks/{task_id}:claim", operation_id="claimHumanTask", response_model=HumanTask)
 def claim_human_task(task_id: str, actor: CurrentActor) -> HumanTask:
-    if run_tasks.get_row(actor.org_id, "human", task_id) is not None:
+    if _human_row(actor, task_id) is not None:
+        if workspace.live():
+            return real_task(review_routing.claim(actor.org_id, actor.user_id, task_id))
         return real_task(run_tasks.claim(actor.org_id, task_id, actor.user_id))
     with locked_store():
         task = find_task(task_id)
@@ -197,14 +317,19 @@ def _submit_real(row: dict, body: SubmitReviewRequest, actor: Actor) -> HumanTas
     """Record the review on the run task, then signal `human_result` to its workflow."""
     outcome = OUTCOMES[body.verdict]
     note = body.feedback_text[:MAX_TEXT]
-    shown = {record.id for record in real_task(row).records}
-    calls = [(rid, call) for rid, call in body.record_calls.items() if rid in shown][:MAX_RESOLUTIONS]
+    shown = _shown_ids(row)
+    calls = [(shown[rid], call) for rid, call in body.record_calls.items() if rid in shown][:MAX_RESOLUTIONS]
     resolutions = [
         {"order_id": record_id[:MAX_TEXT], "resolution": call[:MAX_TEXT], "note": ""}
         for record_id, call in calls
     ]
     result = {"outcome": outcome, "note": note, "resolutions": resolutions, "verdict": body.verdict}
-    updated = run_tasks.decide(actor.org_id, "human", row["id"], outcome, actor.user_id, result)
+    if workspace.live():
+        updated = review_routing.decide(
+            actor.org_id, actor.user_id, review_routing.address(row), outcome, result
+        )
+    else:
+        updated = run_tasks.decide(actor.org_id, "human", row["id"], outcome, actor.user_id, result)
     stored = updated["result"] or {}  # a repeated submit re-signals the decision first recorded
     run_tasks.signal(
         temporal_client.signal_human,
@@ -219,7 +344,7 @@ def _submit_real(row: dict, body: SubmitReviewRequest, actor: Actor) -> HumanTas
 
 @router.post("/human-tasks/{task_id}:submit", operation_id="submitHumanTask", response_model=HumanTask)
 def submit_human_task(task_id: str, body: SubmitReviewRequest, actor: CurrentActor) -> HumanTask:
-    row = run_tasks.get_row(actor.org_id, "human", task_id)
+    row = _human_row(actor, task_id)
     if row is not None:
         return _submit_real(row, body, actor)
     with locked_store():

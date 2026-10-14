@@ -5,6 +5,7 @@ from pydantic import Field
 from app.models.common import Model, Opt, RequestModel
 from app.models.org import McpToken
 from app.models.work import ReviewVerdict
+from app.models.workforce import DEFAULT_REVIEWER_POOL, ReviewerPool
 
 
 class SuggestRequest(RequestModel):
@@ -13,14 +14,14 @@ class SuggestRequest(RequestModel):
 
 class InstallRequest(RequestModel):
     cap_minor: int = Field(gt=0)
-    reviewer_pool: bool
+    reviewer_pool: ReviewerPool = DEFAULT_REVIEWER_POOL
     pack_slug: str
 
 
 class Installation(Model):
     pack_slug: str
     cap_minor: int
-    reviewer_pool: bool
+    reviewer_pool: ReviewerPool
     summary: str
 
 

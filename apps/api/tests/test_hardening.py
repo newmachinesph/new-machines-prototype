@@ -82,7 +82,7 @@ def test_unknown_ids_on_actions_are_404_problem(client, method, path):
         (f"{OTHER_ORG}/invitations", {"email": "ana@example.com", "role": "Member"}),
         (
             f"{OTHER_ORG}/agent-installations",
-            {"packSlug": "chargeback-evidence", "capMinor": 2000, "reviewerPool": False},
+            {"packSlug": "chargeback-evidence", "capMinor": 2000, "reviewerPool": "team"},
         ),
     ],
 )
