@@ -6,7 +6,8 @@ import {
   listAttentionOptions,
   listConnectionsOptions,
 } from "@/lib/api/gen/@tanstack/react-query.gen";
-import type { Connection } from "@/lib/api/gen/types.gen";
+import type { Connection as ApiConnection } from "@/lib/api/gen/types.gen";
+import type { Connection } from "@/lib/types";
 import { orgScoped, useMe } from "./me";
 
 /** `{ path: { org_id } }` for the signed-in user's org, and whether it is known yet. */
@@ -26,7 +27,11 @@ export function useAttention() {
   return orgScoped(me, useQuery({ ...listAttentionOptions(path), refetchInterval: 10_000, enabled: ready }));
 }
 
-export const useConnections = () => useQuery(listConnectionsOptions());
+/** The API may leave `revoked` out (it defaults to `[]` on the wire); every card can count on the list. */
+export const withRevoked = (rows: ApiConnection[]): Connection[] =>
+  rows.map((c) => ({ ...c, revoked: c.revoked ?? [] }));
+
+export const useConnections = () => useQuery({ ...listConnectionsOptions(), select: withRevoked });
 
 /** Apps a run can use: connected, or connected to sandbox data. */
 export const isUsable = (c: Connection) => c.status === "connected" || c.status === "sandbox";

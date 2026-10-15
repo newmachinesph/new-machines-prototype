@@ -6,6 +6,7 @@ from app import settings
 
 EXPECTED_TABLES = {
     "definition_versions",
+    "definition_owners",
     "runs",
     "receipt_entries",
     "run_tasks",

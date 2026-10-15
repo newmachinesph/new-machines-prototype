@@ -3,6 +3,7 @@
 Every function here needs Postgres. The runs router only calls them when the runtime is on.
 """
 
+import copy
 import json
 import logging
 import re
@@ -23,7 +24,7 @@ from app.models.common import money_text
 from app.models.ops import ConnectorEntry
 from app.models.requests import StartRunRequest
 from app.models.runs import PinnedVersion, Receipt, ReceiptItem, Run, RunSummary
-from app.runtime import gateway, projection, receipt
+from app.runtime import gateway, projection, receipt, routes
 from app.store import iso
 from app.worker.activities import event_key, record_events
 
@@ -46,11 +47,15 @@ DATE_PATTERN = r"^\d{4}-\d{2}-\d{2}$"  # how an input schema spells a YYYY-MM-DD
 
 
 def has_pack(slug: str) -> bool:
-    """True when the runtime is on and the registry has a pack definition with this slug."""
+    """True when the runtime is on and the registry has a platform pack definition with this slug. An org's
+    own pack is not one the demo can start, so its key is unknown here and its input schema stays private."""
     if not settings.runtime_enabled():
         return False
     with db.connect() as conn:
-        return registry.latest(conn, "pack", slug) is not None
+        return (
+            registry.latest(conn, "pack", slug) is not None
+            and registry.owner_of(conn, "pack", slug).kind == "platform"
+        )
 
 
 def _invalid(detail: str) -> ApiProblem:
@@ -150,14 +155,21 @@ def _field_issues(pack_slug: str, error: InputError) -> list[ProblemIssue]:
     instance = error.instance if isinstance(error.instance, dict) else None
     fields: list[tuple[str, str]] = []
     if instance is not None and error.validator == "required":
-        fields = [(f, f"{f} is required.") for f in error.validator_value if f not in instance]
+        fields = [
+            (f, f"{_field_title(error.schema, f)} is required.")
+            for f in error.validator_value
+            if f not in instance
+        ]
     elif instance is not None and error.validator == "additionalProperties":
         known = set(error.schema.get("properties") or {})
         patterns = [re.compile(p) for p in error.schema.get("patternProperties") or {}]
         unknown = [k for k in instance if k not in known and not any(p.search(k) for p in patterns)]
         fields = [(k, f"{k} is not a field this pack takes.") for k in unknown]
     if not fields:
-        return [ProblemIssue(kind="input", key=pack_slug, path=path, message=error.message)]
+        # A field's schema may say in plain words what it takes; that replaces the validator's wording.
+        plain = error.schema.get("errorMessage") if isinstance(error.schema, dict) else None
+        message = plain if isinstance(plain, str) and plain else error.message
+        return [ProblemIssue(kind="input", key=pack_slug, path=path, message=message)]
     return [ProblemIssue(kind="input", key=pack_slug, path=_join(path, f), message=m) for f, m in fields]
 
 
@@ -171,10 +183,45 @@ def _input_issues(pack_slug: str, errors: list[InputError]) -> list[ProblemIssue
     return sorted(seen.values(), key=lambda i: (i.path, i.message))[:MAX_INPUT_ISSUES]
 
 
+def _with_defaults(inp: dict, schema: dict | None) -> dict:
+    """A copy of `inp` with each top-level field it leaves out set to a copy of the schema's `default`, if
+    any (a run's input never shares an object with the schema)."""
+    props = (schema or {}).get("properties")
+    if not isinstance(inp, dict) or not isinstance(props, dict):
+        return inp
+    missing = {
+        k: copy.deepcopy(p["default"])
+        for k, p in props.items()
+        if k not in inp and isinstance(p, dict) and "default" in p
+    }
+    return {**inp, **missing}
+
+
+def _field_title(schema: dict | None, path: str) -> str:
+    """The `title` the schema gives the field at `path` ("a/b" for nested objects), else the path itself."""
+    node: object = schema
+    for part in path.split("/"):
+        props = node.get("properties") if isinstance(node, dict) else None
+        node = props.get(part) if isinstance(props, dict) else None
+    title = node.get("title") if isinstance(node, dict) else None
+    return title if isinstance(title, str) and title else path
+
+
+def invalid_input(schema: dict | None, issues: list[ProblemIssue]) -> ApiProblem:
+    """422 INVALID_INPUT listing `issues`; the detail names the first issue's field by its title, unless its
+    message already starts with it ("Sheet ID is required.")."""
+    first = issues[0]
+    title = _field_title(schema, first.path) if first.path else ""
+    where = f"{title}: " if title and not first.message.startswith(f"{title} ") else ""
+    return ApiProblem(422, "INVALID_INPUT", f"The input is not valid. {where}{first.message}", errors=issues)
+
+
 def check_input(pack_slug: str, value: str | dict, schema: dict | None) -> dict:
-    """The run input: an object as given, or free text parsed the way the schema asks (`parse_run_input`). It
-    must match the pack's input schema; 422 INVALID_INPUT lists each field error otherwise."""
+    """The run input: an object as given, or free text parsed the way the schema asks (`parse_run_input`),
+    with the schema's top-level defaults for fields it leaves out. It must match the pack's input schema;
+    422 INVALID_INPUT lists each field error otherwise."""
     inp = parse_run_input(value, schema=schema) if isinstance(value, str) else value
+    inp = _with_defaults(inp, schema)
     if len(json.dumps(inp)) > MAX_INPUT_BYTES:
         raise _invalid("The input is too large.")
     if not schema:
@@ -182,9 +229,7 @@ def check_input(pack_slug: str, value: str | dict, schema: dict | None) -> dict:
     issues = _input_issues(pack_slug, list(Draft202012Validator(schema).iter_errors(inp)))
     if not issues:
         return inp
-    first = issues[0]
-    where = f"{first.path}: " if first.path else ""
-    raise ApiProblem(422, "INVALID_INPUT", f"The input is not valid. {where}{first.message}", errors=issues)
+    raise invalid_input(schema, issues)
 
 
 def ops_connector_policy(snapshot: dict, catalog: list[ConnectorEntry]) -> tuple[dict, list[str]]:
@@ -217,10 +262,34 @@ def _connector_policy(conn, snapshot: dict, catalog: list[ConnectorEntry] | None
     return ops_state.snapshot_policy(conn, keys)
 
 
-def _insert_run(body: StartRunRequest, actor: Actor, catalog: list[ConnectorEntry] | None, inp: dict) -> dict:
+def _org_routing(conn, snapshot: dict, org_id: str) -> dict:
+    """The live workspace (no fixture catalog) marks its runs: each tool call follows the org's connection for
+    its app, and the route mode and Composio account each connector has now are pinned for the run
+    (`routes.route_changed`)."""
+    keys = list(((snapshot.get("defs") or {}).get("connector") or {}).keys())
+    return {"routing": routes.ORG_ROUTING, **routes.pinned_routes(conn, org_id, keys)}
+
+
+def _insert_run(
+    body: StartRunRequest,
+    actor: Actor,
+    catalog: list[ConnectorEntry] | None,
+    inp: dict,
+    sandbox_test: bool = False,
+) -> dict:
     """Pin the snapshot, insert the runs row and its `run.started` receipt entry; commit. Returns the row
-    values the workflow needs: {run_id, snapshot, projection}."""
+    values the workflow needs: {run_id, snapshot, projection}. A sandbox test is never routed through the
+    org's connections: its tool calls answer from the platform's sandbox connectors, whatever the org has
+    connected, so nothing real is reached or billed to an app."""
     with db.connect() as conn:
+        if catalog is None and not sandbox_test:
+            # An org-routed run holds its installation (shared) while it pins the pack: a rename of the pack
+            # in flight (which locks the row to update the grants) either waits for this start and counts
+            # it, or lands first, and this start then pins the new name.
+            conn.execute(
+                "SELECT 1 FROM installations WHERE org_id = %s AND pack_slug = %s FOR SHARE",
+                (actor.org_id, body.pack_slug),
+            )
         try:
             snapshot = build_snapshot(conn, body.pack_slug, actor.org_id, {}, set())
         except LookupError as exc:
@@ -236,10 +305,16 @@ def _insert_run(body: StartRunRequest, actor: Actor, catalog: list[ConnectorEntr
             "overrides": overrides,
             "disabled": disabled,
             "budget_minor": body.budget_minor,
+            **({} if catalog is not None or sandbox_test else _org_routing(conn, snapshot, actor.org_id)),
+            # A sandbox test pins its mode: the worker answers its calls from sandbox data whatever its own
+            # NM_CONNECTOR_MODE (`gateway.driver_of`).
+            **({"connector_mode": settings.SANDBOX_MODE} if sandbox_test else {}),
         }
         number = conn.execute("SELECT nextval('run_number') AS n").fetchone()["n"]
         run_id = f"run_{number}"
         initial = projection.initial_projection(run_id, snapshot, inp, STARTED_BY, body.budget_minor)
+        if sandbox_test:
+            initial = {**initial, "sandboxTest": True}
         conn.execute(
             "INSERT INTO runs (id, org_id, pack_slug, status, snapshot, projection, input) "
             "VALUES (%s, %s, %s, 'RUNNING', %s, %s, %s)",
@@ -251,6 +326,8 @@ def _insert_run(body: StartRunRequest, actor: Actor, catalog: list[ConnectorEntr
             "budget_minor": body.budget_minor,
             "started_by": actor.user_id,
         }
+        if sandbox_test:
+            started["sandbox_test"] = True
         record_events(conn, run_id, [(event_key(None, 0, "run.started", 0), "run.started", None, started)])
         conn.commit()
     return {"run_id": run_id, "snapshot": snapshot, "projection": initial}
@@ -274,16 +351,22 @@ def _stop_unstarted(run_id: str) -> None:
 
 
 def start_real_run(
-    body: StartRunRequest, actor: Actor, catalog: list[ConnectorEntry] | None, inp: dict | None = None
+    body: StartRunRequest,
+    actor: Actor,
+    catalog: list[ConnectorEntry] | None,
+    inp: dict | None = None,
+    *,
+    sandbox_test: bool = False,
 ) -> Run:
     """Insert the run, then start PackRunner (workflow id = run id). 503 when Temporal is unreachable.
     `inp` is the input already checked (`check_input`); without it the body's input is checked here.
-    `catalog` is the fixture Ops connector catalog; None pins the persisted ops settings (live)."""
+    `catalog` is the fixture Ops connector catalog; None pins the persisted ops settings (live).
+    `sandbox_test` marks a Studio test run (projection `sandboxTest`, receipt `sandbox_test`)."""
     if inp is None:
         with db.connect() as conn:
             schema = input_schema(conn, body.pack_slug)
         inp = check_input(body.pack_slug, body.input, schema)
-    created = _insert_run(body, actor, catalog, inp)
+    created = _insert_run(body, actor, catalog, inp, sandbox_test)
     run_id = created["run_id"]
     try:
         temporal_client.start_run(run_id, created["snapshot"], inp)
@@ -353,7 +436,8 @@ def _summary(type_: str, node_id: str | None, data: dict) -> str:
     policy = data.get("policy") or {}
     match type_:
         case "run.started":
-            return f"Run started with {len(data.get('versions') or [])} pinned definitions."
+            what = "Sandbox test" if data.get("sandbox_test") else "Run"
+            return f"{what} started with {len(data.get('versions') or [])} pinned definitions."
         case "node.started":
             return f"{node} started."
         case "node.waiting":

@@ -86,9 +86,11 @@ _STOP_WORDS = frozenset(
 
 @dataclass(frozen=True)
 class Definitions:
-    """The latest version of every definition, by kind and key."""
+    """The latest version of every definition one org may see, by kind and key. `team` holds the (kind, key)
+    of the org's own definitions."""
 
     by_kind: dict[str, dict[str, registry.Version]]
+    team: frozenset[tuple[str, str]] = frozenset()
 
     def bodies(self, kind: str) -> dict[str, dict]:
         return {key: v.body for key, v in self.by_kind.get(kind, {}).items()}
@@ -102,14 +104,19 @@ class Definitions:
     def packs(self) -> list[registry.Version]:
         return [v for _, v in sorted(self.by_kind.get("pack", {}).items())]
 
+    def is_team(self, kind: str, key: str) -> bool:
+        return (kind, key) in self.team
 
-def definitions() -> Definitions:
+
+def definitions(org_id: str | None = None) -> Definitions:
+    """What `org_id` may see: the platform's definitions and the org's own (None: the platform's only)."""
     with db.connect() as conn:
-        versions = registry.latest_all(conn)
+        versions = registry.latest_visible(conn, org_id)
+        team = registry.team_keys(conn, org_id) if org_id else set()
     by_kind: dict[str, dict[str, registry.Version]] = {}
     for v in versions:
         by_kind.setdefault(v.kind, {})[v.key] = v
-    return Definitions(by_kind)
+    return Definitions(by_kind, frozenset(team))
 
 
 def slug_of(version: registry.Version) -> str:
@@ -161,6 +168,7 @@ def pack_of(
     per-run cap from its hire, and `reviewer_pool` its reviewer pool)."""
     body = version.body
     connectors = defs.bodies("connector")
+    team = defs.is_team("pack", version.key)
     return Pack(
         slug=slug_of(version),
         name=str(body.get("name") or version.key),
@@ -174,7 +182,7 @@ def pack_of(
         human_review=str(body.get("human_review") or ""),
         estimate=_estimate(contract_of(defs, body)),
         installed=installed,
-        certified=True,
+        certified=not team,
         risk_class=body.get("risk_class")
         if body.get("risk_class") in ("low", "medium", "high")
         else "medium",
@@ -185,6 +193,7 @@ def pack_of(
         input_schema=input_schema(defs, body) if detail else None,
         per_run_cap=Money(amount_minor=cap_minor) if installed and cap_minor is not None else None,
         reviewer_pool=reviewer_pool if installed else None,
+        built_by_team=True if team else None,
     )
 
 
@@ -226,8 +235,8 @@ def _listings() -> dict[str, PackListing]:
 
 
 def list_packs(org_id: str) -> list[Pack]:
-    defs, hired, listings = definitions(), installed_slugs(org_id), _listings()
-    sandboxed = SandboxForecast()
+    defs, hired, listings = definitions(org_id), installed_slugs(org_id), _listings()
+    sandboxed = SandboxForecast.for_org(org_id)
     return [
         pack_of(defs, v, slug_of(v) in hired, sandboxed, cap_minor=hired.get(slug_of(v)))
         for v in defs.packs()
@@ -245,12 +254,14 @@ def _find(defs: Definitions, org_id: str, slug: str) -> tuple[registry.Version, 
 
 
 def get_pack(org_id: str, slug: str) -> Pack:
-    defs = definitions()
+    defs = definitions(org_id)
     version, hired = _find(defs, org_id, slug)
     hire = installation(org_id, slug_of(version)) if hired else None
     cap = hire["cap_minor"] if hire else None
     pool = hire["reviewer_pool"] if hire else None
-    return pack_of(defs, version, hired, SandboxForecast(), detail=True, cap_minor=cap, reviewer_pool=pool)
+    return pack_of(
+        defs, version, hired, SandboxForecast.for_org(org_id), detail=True, cap_minor=cap, reviewer_pool=pool
+    )
 
 
 # --- suggest --------------------------------------------------------------------------------------------
@@ -281,7 +292,7 @@ def _pack_words(defs: Definitions, body: dict) -> set[str]:
 def suggest(org_id: str, text: str) -> Suggestion:
     """The listed pack definition whose name, outcome, description and industries share the most words with
     `text`. A keyword match over real definitions, so not simulated."""
-    defs, hired, listings = definitions(), installed_slugs(org_id), _listings()
+    defs, hired, listings = definitions(org_id), installed_slugs(org_id), _listings()
     asked = _words(text)
     scored = [
         (len(asked & _pack_words(defs, v.body)), slug_of(v), v)
@@ -293,7 +304,8 @@ def suggest(org_id: str, text: str) -> Suggestion:
         return Suggestion(
             steps=["Describe the result you want, the apps involved and how often."], simulated=False
         )
-    pack = pack_of(defs, best[2], best[1] in hired, SandboxForecast(), cap_minor=hired.get(best[1]))
+    sandboxed = SandboxForecast.for_org(org_id)
+    pack = pack_of(defs, best[2], best[1] in hired, sandboxed, cap_minor=hired.get(best[1]))
     steps = [
         f"Read the data it needs from {', '.join(c.app for c in pack.connectors)}.",
         pack.outcome,
@@ -324,7 +336,7 @@ def install(actor: Actor, body: InstallRequest) -> Installation:
     A first hire pins the latest version; saving settings keeps the pin (updates need their own approval).
     Saving the pool as `team` returns the open tasks of the org's runs of this pack that network reviewers
     claimed to the queue, so only the team holds them. Never touches the demo store."""
-    defs = definitions()
+    defs = definitions(actor.org_id)
     latest, _ = _find(defs, actor.org_id, body.pack_slug)
     slug = slug_of(latest)
     pool = body.reviewer_pool
@@ -335,6 +347,10 @@ def install(actor: Actor, body: InstallRequest) -> Installation:
         org = conn.execute(
             "SELECT allow_network FROM orgs WHERE id = %s FOR NO KEY UPDATE", (actor.org_id,)
         ).fetchone()
+        # Under the registry lock the pack is read again: a save in flight lands before or after this hire,
+        # never between the read above and the pin, so a first hire never pins a version just replaced.
+        registry.lock(conn)
+        latest = registry.latest(conn, "pack", latest.key) or latest
         version = _pinned_version(conn, latest, actor.org_id, slug)
         conn.execute(
             "INSERT INTO installations (org_id, pack_slug, pack_version, cap_minor, reviewer_pool, "
@@ -342,9 +358,9 @@ def install(actor: Actor, body: InstallRequest) -> Installation:
             "cap_minor = EXCLUDED.cap_minor, reviewer_pool = EXCLUDED.reviewer_pool",
             (actor.org_id, slug, version.version, body.cap_minor, pool, actor.user_id),
         )
-        live_connections.grant_pack(
-            conn, defs.bodies("connector"), actor.org_id, version.body, defs.bodies("contract")
-        )
+        contract = registry.latest(conn, "contract", str(version.body.get("contract") or ""))
+        contracts = {**defs.bodies("contract"), **({contract.key: contract.body} if contract else {})}
+        live_connections.grant_pack(conn, defs.bodies("connector"), actor.org_id, version.body, contracts)
         if pool == "team":
             run_tasks.release_claims(conn, org_id=actor.org_id, pack_slug=slug, via="network")
         conn.commit()

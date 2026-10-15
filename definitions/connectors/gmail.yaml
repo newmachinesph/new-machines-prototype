@@ -6,11 +6,13 @@ toolkit: gmail
 tools:
   - id: list_threads
     slug: GMAIL_FETCH_EMAILS
+    version: "20261010_00"
     action_class: read
     capability: mail.read
     description: List recent emails in the inbox that match a search query, with sender, subject, date and text.
     input_schema:
       type: object
+      additionalProperties: false
       properties:
         query:
           type: string
@@ -23,11 +25,13 @@ tools:
 
   - id: create_draft
     slug: GMAIL_CREATE_EMAIL_DRAFT
+    version: "20261010_00"
     action_class: write
     capability: mail.write
     description: Save an email as a draft for a person to review and send. Nothing is sent.
     input_schema:
       type: object
+      additionalProperties: false
       required: [recipient_email, subject, body]
       properties:
         recipient_email:

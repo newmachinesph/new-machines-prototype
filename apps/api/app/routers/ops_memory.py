@@ -5,6 +5,7 @@ from app.auth import CurrentOps, OpsActor, OpsWriter
 from app.defs import registry
 from app.errors import ApiProblem
 from app.models.ops import AddMemoryItemRequest, MemorySpace, MemorySpaceItem, ReasonRequest
+from app.routers.ops_definitions import require_platform
 from app.routers.ops_params import PathId
 from app.routers.ops_runtime import RUNTIME_RESPONSES, require_runtime
 from app.routing import ApiRouter
@@ -18,6 +19,8 @@ SUMMARY_TEXT_MAX = 80
 
 
 def require_space(conn, space: str) -> None:
+    """404 unless `space` is a platform memory space definition; an org's own space is never opened here."""
+    require_platform(conn, "memory_space", space)
     if registry.latest(conn, "memory_space", space) is None:
         raise ApiProblem(404, "NOT_FOUND", f"No memory space {space}.")
 
@@ -43,14 +46,14 @@ def _audit_live(conn, actor: OpsActor, action: str, item_id: str, reason: str, s
     responses=RUNTIME_RESPONSES,
 )
 def ops_list_memory_spaces(_: CurrentOps) -> list[MemorySpace]:
-    """Every memory space definition with its item count."""
+    """Every platform memory space definition with its item count. An org's own spaces are not listed."""
     require_runtime()
     with db.connect() as conn:
         counts = {
             r["space"]: r["n"]
             for r in conn.execute("SELECT space, count(*) AS n FROM memory_items GROUP BY space").fetchall()
         }
-        spaces = [v for v in registry.latest_all(conn) if v.kind == "memory_space"]
+        spaces = [v for v in registry.latest_platform(conn) if v.kind == "memory_space"]
     return [
         MemorySpace(
             key=v.key,
@@ -106,12 +109,20 @@ def ops_add_memory_item(space: PathId, body: AddMemoryItemRequest, actor: OpsWri
     responses=RUNTIME_RESPONSES,
 )
 def ops_delete_memory_item(item_id: PathId, body: ReasonRequest, actor: OpsWriter) -> None:
-    """Remove one item from its space."""
+    """Remove one item from its space. An item in an org's own space is 404, worded like an unknown item so
+    the space's key is never shown."""
     require_runtime()
+    missing = ApiProblem(404, "NOT_FOUND", f"No memory item {item_id}.")
     with db.connect() as conn:
         row = conn.execute("SELECT space, text FROM memory_items WHERE id = %s", (item_id,)).fetchone()
-        if row is None or not memory.delete_item(conn, item_id):
-            raise ApiProblem(404, "NOT_FOUND", f"No memory item {item_id}.")
+        if row is None:
+            raise missing
+        try:
+            require_platform(conn, "memory_space", row["space"])
+        except ApiProblem:
+            raise missing from None
+        if not memory.delete_item(conn, item_id):
+            raise missing
         summary = f"Removed from {row['space']}: {_clip(row['text'])}"
         live = _audit_live(conn, actor, "memory.delete", item_id, body.reason, summary)
         conn.commit()

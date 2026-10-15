@@ -17,7 +17,7 @@ import { Tooltip as BaseTooltip } from "@base-ui/react/tooltip";
 import { Check, ChevronsUpDown, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
-import type { ComponentProps, ReactElement, ReactNode } from "react";
+import { useCallback, type ComponentProps, type ReactElement, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import { Button } from "./ui";
 
@@ -85,9 +85,11 @@ function ToastRegion() {
 }
 
 export function useToast() {
-  const manager = Toast.useToastManager();
-  return (title: string, description?: string, tone: ToastTone = "done") =>
-    manager.add({ title, description, type: tone });
+  const { add } = Toast.useToastManager();
+  return useCallback(
+    (title: string, description?: string, tone: ToastTone = "done") => add({ title, description, type: tone }),
+    [add],
+  );
 }
 
 /* ── Tooltip ── */
@@ -150,8 +152,17 @@ export function MenuLink({ href, children, className }: { href: string; children
   );
 }
 
+const MENU_LABEL = "px-2.5 pt-1 pb-1.5 text-xs text-muted";
+
 export function MenuLabel({ children }: { children: ReactNode }) {
-  return <div className="px-2.5 pt-1 pb-1.5 text-xs text-muted">{children}</div>;
+  return <div className={MENU_LABEL}>{children}</div>;
+}
+
+/** A named set of items: role "group", labelled by its MenuGroupLabel, so assistive technology reads the heading. */
+export const MenuGroup = BaseMenu.Group;
+
+export function MenuGroupLabel({ children }: { children: ReactNode }) {
+  return <BaseMenu.GroupLabel className={MENU_LABEL}>{children}</BaseMenu.GroupLabel>;
 }
 
 export function MenuSeparator() {
@@ -169,6 +180,7 @@ export function Select<V extends string>({
   id,
   describedBy,
   invalid,
+  disabled,
 }: {
   value: V;
   onValueChange: (v: V) => void;
@@ -179,16 +191,23 @@ export function Select<V extends string>({
   id?: string;
   describedBy?: string;
   invalid?: boolean;
+  /** A disabled fieldset reaches the trigger but not Base UI's own handling: pass this too for a read-only form. */
+  disabled?: boolean;
 }) {
   return (
-    <BaseSelect.Root items={items} value={value} onValueChange={(v) => v != null && onValueChange(v as V)}>
+    <BaseSelect.Root
+      items={items}
+      value={value}
+      disabled={disabled}
+      onValueChange={(v) => v != null && onValueChange(v as V)}
+    >
       <BaseSelect.Trigger
         id={id}
         aria-label={label}
         aria-describedby={describedBy}
         aria-invalid={invalid || undefined}
         className={cn(
-          "flex h-9 min-w-40 items-center justify-between gap-2 rounded-md border border-rule bg-paper px-3 text-sm text-ink hover:border-grey-300 data-[popup-open]:border-grey-500",
+          "flex h-9 min-w-40 items-center justify-between gap-2 rounded-md border border-rule bg-paper px-3 text-sm text-ink hover:border-grey-300 disabled:cursor-default disabled:opacity-60 data-[popup-open]:border-grey-500",
           className,
         )}
       >
@@ -224,15 +243,18 @@ export function Segmented<V extends string>({
   onValueChange,
   options,
   label,
+  disabled,
 }: {
   value: V;
   onValueChange: (v: V) => void;
   options: { value: V; label: ReactNode; count?: number }[];
   label: string;
+  disabled?: boolean;
 }) {
   return (
     <ToggleGroup
       aria-label={label}
+      disabled={disabled}
       value={[value]}
       onValueChange={(vals) => vals[0] && onValueChange(vals[0] as V)}
       className="flex shrink-0 rounded-md border border-rule bg-paper p-0.5"
@@ -318,6 +340,7 @@ export function Checkbox({
   children,
   describedBy,
   invalid,
+  disabled,
 }: {
   checked: boolean;
   onCheckedChange: (v: boolean) => void;
@@ -325,15 +348,18 @@ export function Checkbox({
   /** Ids of help or error text for this box. */
   describedBy?: string;
   invalid?: boolean;
+  /** The box is a span, so a disabled fieldset does not reach it: pass this explicitly. */
+  disabled?: boolean;
 }) {
   return (
-    <label className="flex cursor-pointer items-start gap-3 text-sm">
+    <label className={cn("flex items-start gap-3 text-sm", disabled ? "cursor-default" : "cursor-pointer")}>
       <BaseCheckbox.Root
         checked={checked}
         onCheckedChange={(v) => onCheckedChange(Boolean(v))}
+        disabled={disabled}
         aria-describedby={describedBy}
         aria-invalid={invalid || undefined}
-        className="mt-0.5 grid size-4 shrink-0 place-items-center rounded-[4px] border border-grey-300 bg-paper data-[checked]:border-ink data-[checked]:bg-ink"
+        className="mt-0.5 grid size-4 shrink-0 place-items-center rounded-[4px] border border-grey-300 bg-paper data-[checked]:border-ink data-[checked]:bg-ink data-[disabled]:opacity-60"
       >
         <BaseCheckbox.Indicator>
           <Check className="size-3 text-paper" strokeWidth={3} aria-hidden />

@@ -6,15 +6,19 @@ toolkit: googlesheets
 tools:
   - id: append_rows
     slug: GOOGLESHEETS_SPREADSHEETS_VALUES_APPEND
+    version: "20261001_00"
     action_class: write
     capability: sheets.write
     description: Append rows after the last row of a table in a spreadsheet.
     input_schema:
       type: object
+      additionalProperties: false
       required: [spreadsheetId, range, valueInputOption, values]
       properties:
         spreadsheetId:
           type: string
+          minLength: 30
+          pattern: ^[a-zA-Z0-9_-]+$
           description: The spreadsheet id from its URL.
         range:
           type: string

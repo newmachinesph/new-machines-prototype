@@ -1,0 +1,6 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Agent input",
+  "description": "What a team's agent is given: the inputs its pack step names, by name.",
+  "type": "object"
+}

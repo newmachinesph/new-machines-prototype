@@ -73,6 +73,20 @@ def test_each_definition_is_one_connector_with_its_settings_and_todays_usage(usa
     assert all(e.last_health_check is None for e in entries.values())
 
 
+def test_tenants_connected_counts_only_connections_a_run_could_reach(usage):
+    """A row the start gate would refuse (`routes.route_of`: a Composio row without its account, a status
+    that does not match its mode) is not a connected tenant, whatever its status column says."""
+    add_org(usage, "org_cane", "Cane")
+    usage.execute(
+        "INSERT INTO connections (org_id, app, status, mode, connected_by, account_id) VALUES "
+        "('org_cane', 'shopify', 'connected', 'composio', 'u', NULL), "
+        "('org_cane', 'stripe', 'connected', 'sandbox', 'u', NULL)"
+    )
+    usage.commit()
+    entries = {e.id: e for e in ops_live.list_connectors(usage, NOW)}
+    assert (entries["shopify"].tenants_connected, entries["stripe"].tenants_connected) == (2, 1)
+
+
 def test_the_day_runs_from_midnight_to_midnight_utc(usage):
     # At NOW the call at 00:00 counts and the one at 23:59 yesterday does not (4 calls, 1 failed). A day
     # earlier, the day is the 11th: only the 23:59 call, and none of the 12th's.

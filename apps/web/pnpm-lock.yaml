@@ -26,6 +26,9 @@ importers:
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
+      elkjs:
+        specifier: 0.12.0
+        version: 0.12.0
       firebase:
         specifier: 13.0.0
         version: 13.0.0
@@ -53,6 +56,9 @@ importers:
       tailwind-merge:
         specifier: ^3.7.0
         version: 3.7.0
+      use-sync-external-store:
+        specifier: 1.7.0
+        version: 1.7.0(react@19.3.0)
       zod:
         specifier: 4.6.5
         version: 4.6.5
@@ -2424,6 +2430,9 @@ packages:
 
   electron-to-chromium@1.5.452:
     resolution: {integrity: sha512-cVvk1YBSj6571VmV6hdJTqj94Y79xSu8cj6Y9t6ae4Y4431z8/7EJFvu3rVp90xhfuv9BpPKUmaLfTo4+FOGBg==}
+
+  elkjs@0.12.0:
+    resolution: {integrity: sha512-YZcKynxVxYoKIOEpywEPwCFdg+BTbxQRNf3pbwdDCvc8O3kQD8bmIwSxKU1eOTVc4Xo+VG9Te+575mlfvOrhEQ==}
 
   emoji-regex@8.0.0:
     resolution: {integrity: sha512-MSjYzcWNOA0ewAHpz0MxpYFvwg6yjy1NG3xteoqz644VCo/RPgnr1/GGt+ic3iJTzQ8Eu3TdM14SawnVUmGE6A==}
@@ -6232,6 +6241,8 @@ snapshots:
       gopd: 1.2.0
 
   electron-to-chromium@1.5.452: {}
+
+  elkjs@0.12.0: {}
 
   emoji-regex@8.0.0: {}
 

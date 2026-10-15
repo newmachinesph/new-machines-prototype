@@ -62,7 +62,8 @@ export const zAgent = z.object({
     tools: z.array(z.string()),
     modelProfile: z.enum(['reasoning', 'fast']).optional(),
     usedBy: z.array(zAgentPackRef),
-    source: z.enum(['definition', 'sample'])
+    source: z.enum(['definition', 'sample']),
+    builtByTeam: z.boolean().optional()
 });
 
 /**
@@ -154,6 +155,25 @@ export const zAuditEntry = z.object({
 });
 
 /**
+ * BuilderIssue
+ *
+ * One problem in a draft. `step` names the step it is about, when it is about one.
+ */
+export const zBuilderIssue = z.object({
+    path: z.string(),
+    message: z.string(),
+    step: z.string().optional()
+});
+
+/**
+ * BuilderCheck
+ */
+export const zBuilderCheck = z.object({
+    ok: z.boolean(),
+    issues: z.array(zBuilderIssue)
+});
+
+/**
  * ChainStep
  */
 export const zChainStep = z.object({
@@ -176,6 +196,15 @@ export const zChainStep = z.object({
         z.literal('PASS')
     ]),
     note: z.string()
+});
+
+/**
+ * ConnectRequest
+ *
+ * How to connect an app: `live` signs in to the org's own account; `sandbox` serves sandbox data.
+ */
+export const zConnectRequest = z.object({
+    mode: z.enum(['live', 'sandbox']).optional().default('sandbox')
 });
 
 /**
@@ -260,6 +289,46 @@ export const zCreateTokenRequest = z.object({
         'runs:start',
         'approvals:list'
     ])).min(1)
+});
+
+/**
+ * DecisionDefault
+ */
+export const zDecisionDefault = z.object({
+    route: z.string().regex(/^[a-z][a-z0-9_]{0,39}$/),
+    verdict: z.enum([
+        'APPROVED',
+        'HUMAN_REVIEW',
+        'BLOCKED',
+        'REJECTED'
+    ]).optional().default('HUMAN_REVIEW'),
+    explanation: z.string().min(1).max(400)
+});
+
+/**
+ * DecisionRule
+ *
+ * `when` is CEL over the run state; the first rule that is true picks the route.
+ */
+export const zDecisionRule = z.object({
+    when: z.string().min(1).max(2000),
+    route: z.string().regex(/^[a-z][a-z0-9_]{0,39}$/),
+    verdict: z.enum([
+        'APPROVED',
+        'HUMAN_REVIEW',
+        'BLOCKED',
+        'REJECTED'
+    ]).optional().default('APPROVED'),
+    explanation: z.string().min(1).max(400)
+});
+
+/**
+ * DecisionRules
+ */
+export const zDecisionRules = z.object({
+    question: z.string().min(1).max(200),
+    rules: z.array(zDecisionRule).max(20).optional(),
+    default: zDecisionDefault
 });
 
 /**
@@ -462,27 +531,6 @@ export const zGrant = z.object({
 });
 
 /**
- * Connection
- */
-export const zConnection = z.object({
-    app: z.string(),
-    account: z.string(),
-    status: z.enum([
-        'connected',
-        'not_connected',
-        'sandbox',
-        'needs_reauth'
-    ]),
-    provider: z.enum(['Composio', 'Mock']),
-    oauthScopes: z.array(z.string()),
-    grants: z.array(zGrant),
-    lastUsed: z.string().optional(),
-    health: z.string().optional(),
-    key: z.string().optional(),
-    mode: z.enum(['sandbox', 'composio']).optional()
-});
-
-/**
  * Guardrail
  */
 export const zGuardrail = z.object({
@@ -553,6 +601,15 @@ export const zHourPoint = z.object({
 });
 
 /**
+ * ImportWorkflowRequest
+ *
+ * A workflow.yaml, such as one exported from a pack.
+ */
+export const zImportWorkflowRequest = z.object({
+    yaml: z.string().min(1).max(200000)
+});
+
+/**
  * IncidentUpdate
  */
 export const zIncidentUpdate = z.object({
@@ -581,6 +638,22 @@ export const zIncident = z.object({
     resolvedAt: z.string().optional(),
     services: z.array(z.string()),
     updates: z.array(zIncidentUpdate)
+});
+
+/**
+ * InputField
+ *
+ * One field of the run's start form.
+ */
+export const zInputField = z.object({
+    name: z.string().regex(/^[a-z][a-z0-9_]{0,39}$/),
+    label: z.string().min(1).max(80),
+    type: z.enum([
+        'text',
+        'date',
+        'number'
+    ]).optional().default('text'),
+    required: z.boolean().optional().default(true)
 });
 
 /**
@@ -1032,6 +1105,61 @@ export const zPackHistoryEntry = z.object({
 });
 
 /**
+ * PaletteAgent
+ */
+export const zPaletteAgent = z.object({
+    key: z.string(),
+    name: z.string(),
+    summary: z.string(),
+    builtByTeam: z.boolean().optional(),
+    modelProfile: z.string().optional(),
+    outputSchemaRef: z.string(),
+    outputSchema: z.record(z.string(), z.unknown()).optional()
+});
+
+/**
+ * PaletteSchema
+ */
+export const zPaletteSchema = z.object({
+    key: z.string(),
+    title: z.string(),
+    body: z.record(z.string(), z.unknown())
+});
+
+/**
+ * PaletteSpace
+ */
+export const zPaletteSpace = z.object({
+    key: z.string(),
+    name: z.string()
+});
+
+/**
+ * PaletteTool
+ */
+export const zPaletteTool = z.object({
+    ref: z.string(),
+    app: z.string(),
+    name: z.string(),
+    description: z.string(),
+    actionClass: z.string(),
+    capability: z.string(),
+    inputSchema: z.record(z.string(), z.unknown())
+});
+
+/**
+ * Palette
+ *
+ * What a pack's steps can use, from the registry: agents, app tools, memory and result shapes.
+ */
+export const zPalette = z.object({
+    agents: z.array(zPaletteAgent),
+    tools: z.array(zPaletteTool),
+    spaces: z.array(zPaletteSpace),
+    schemas: z.array(zPaletteSchema)
+});
+
+/**
  * PassportResult
  */
 export const zPassportResult = z.object({
@@ -1350,6 +1478,69 @@ export const zReviewerNetworkRequest = z.object({
 });
 
 /**
+ * RevokedGrant
+ *
+ * A grant a person revoked on a connection (`DELETE /v1/grants`): recomputing the connection's grants
+ * never brings it back until it is allowed again (`POST /v1/grants`).
+ */
+export const zRevokedGrant = z.object({
+    install: z.string(),
+    capability: z.string()
+});
+
+/**
+ * ConnectStarted
+ *
+ * A connection just made or started. `redirect_url` (live only) is the app's sign-in page, which returns
+ * to the web's Connections page with `?connected=<key>`.
+ */
+export const zConnectStarted = z.object({
+    app: z.string(),
+    account: z.string(),
+    status: z.enum([
+        'connected',
+        'not_connected',
+        'sandbox',
+        'needs_reauth',
+        'pending'
+    ]),
+    provider: z.enum(['Composio', 'Mock']),
+    oauthScopes: z.array(z.string()),
+    grants: z.array(zGrant),
+    revoked: z.array(zRevokedGrant).optional().default([]),
+    lastUsed: z.string().optional(),
+    health: z.string().optional(),
+    key: z.string().optional(),
+    mode: z.enum(['sandbox', 'composio']).optional(),
+    notice: z.literal('sign_in_not_removed').optional(),
+    redirectUrl: z.string().optional()
+});
+
+/**
+ * Connection
+ */
+export const zConnection = z.object({
+    app: z.string(),
+    account: z.string(),
+    status: z.enum([
+        'connected',
+        'not_connected',
+        'sandbox',
+        'needs_reauth',
+        'pending'
+    ]),
+    provider: z.enum(['Composio', 'Mock']),
+    oauthScopes: z.array(z.string()),
+    grants: z.array(zGrant),
+    revoked: z.array(zRevokedGrant).optional().default([]),
+    lastUsed: z.string().optional(),
+    health: z.string().optional(),
+    key: z.string().optional(),
+    mode: z.enum(['sandbox', 'composio']).optional(),
+    notice: z.literal('sign_in_not_removed').optional()
+});
+
+/**
  * RunEdge
  */
 export const zRunEdge = z.object({
@@ -1384,6 +1575,17 @@ export const zRuntimeStatus = z.object({
         'not_embedded'
     ]),
     definitionsApplied: z.int()
+});
+
+/**
+ * SandboxRunRequest
+ *
+ * The run input (checked against the pack's input schema) and an optional budget; the pack's maximum
+ * when omitted.
+ */
+export const zSandboxRunRequest = z.object({
+    input: z.record(z.string(), z.unknown()).optional(),
+    budgetMinor: z.int().optional()
 });
 
 /**
@@ -1458,6 +1660,39 @@ export const zSetPlanRequest = z.object({
 export const zSetSpendCapRequest = z.object({
     monthlyCapMinor: z.int().gte(0).lte(10000000),
     reason: z.string().min(1).max(500)
+});
+
+/**
+ * SkillDraft
+ */
+export const zSkillDraft = z.object({
+    title: z.string().min(1).max(80).regex(/^[^\r\n]+$/),
+    text: z.string().min(1).max(8000)
+});
+
+/**
+ * AgentDraft
+ *
+ * An agent as the Studio edits it. Tools are app tools that only read.
+ */
+export const zAgentDraft = z.object({
+    name: z.string().min(1).max(80).regex(/^[^\r\n]+$/),
+    summary: z.string().min(1).max(280).regex(/^[^\r\n]+$/),
+    instructions: z.string().min(1).max(12000),
+    modelProfile: z.enum(['reasoning', 'fast']).optional().default('reasoning'),
+    skills: z.array(zSkillDraft).max(10).optional(),
+    tools: z.array(z.string().regex(/^[a-z][a-z0-9_-]*\.[a-z][a-z0-9_-]*$/)).max(12).optional(),
+    maxTurns: z.int().gte(1).lte(20).optional().default(6)
+});
+
+/**
+ * SaveAgentRequest
+ *
+ * `base_version` is the version the edit started from; 409 VERSION_CONFLICT when someone saved since.
+ */
+export const zSaveAgentRequest = z.object({
+    draft: zAgentDraft,
+    baseVersion: z.int().optional()
 });
 
 /**
@@ -1564,7 +1799,8 @@ export const zRunSummary = z.object({
     spent: zSpent,
     stages: zStages,
     summary: z.string(),
-    hasDetail: z.boolean().optional().default(false)
+    hasDetail: z.boolean().optional().default(false),
+    sandboxTest: z.boolean().optional()
 });
 
 /**
@@ -1582,6 +1818,118 @@ export const zStartRunRequest = z.object({
     ]),
     budgetMinor: z.int().gt(0).lte(100000),
     note: z.string().max(500).optional()
+});
+
+/**
+ * StepDraft
+ *
+ * One workflow node. `config` is the node's config as the runtime reads it (strings starting with "="
+ * are CEL); `routes` maps each outcome to the next step. A decision keeps its rules in `rules`.
+ */
+export const zStepDraft = z.object({
+    id: z.string().regex(/^[a-z][a-z0-9_]{0,39}$/),
+    type: z.enum([
+        'trigger',
+        'memory',
+        'connector',
+        'agent',
+        'decision',
+        'human_workforce',
+        'approval',
+        'verification',
+        'end'
+    ]),
+    config: z.record(z.string(), z.unknown()).optional(),
+    routes: z.record(z.string(), z.string()).optional(),
+    rules: zDecisionRules.optional()
+});
+
+/**
+ * ImportedWorkflow
+ *
+ * The steps read from a workflow.yaml, and what could not be read.
+ */
+export const zImportedWorkflow = z.object({
+    entryStep: z.string(),
+    steps: z.array(zStepDraft),
+    issues: z.array(zBuilderIssue)
+});
+
+/**
+ * PackDraft
+ *
+ * A Workflow Pack as the Studio edits it: what the marketplace shows, the start form, the budget and
+ * the steps.
+ */
+export const zPackDraft = z.object({
+    name: z.string().min(1).max(80),
+    outcome: z.string().min(1).max(280),
+    description: z.string().min(1).max(2000),
+    humanReview: z.string().min(1).max(400),
+    function: z.string().min(1).max(40).optional().default('finance-ops'),
+    industries: z.array(z.string()).min(1).max(5).optional(),
+    inputFields: z.array(zInputField).max(10).optional(),
+    budgetMinor: z.int().gte(100).lte(100000).optional().default(1500),
+    humanBudgetMinor: z.int().gte(0).lte(100000).optional().default(0),
+    entryStep: z.string().regex(/^[a-z][a-z0-9_]{0,39}$/),
+    steps: z.array(zStepDraft).min(2).max(60)
+});
+
+/**
+ * SavePackRequest
+ */
+export const zSavePackRequest = z.object({
+    draft: zPackDraft,
+    baseVersion: z.int().optional()
+});
+
+/**
+ * StudioAgent
+ */
+export const zStudioAgent = z.object({
+    key: z.string(),
+    version: z.int(),
+    publishedAt: z.string(),
+    publishedBy: z.string(),
+    draft: zAgentDraft
+});
+
+/**
+ * StudioAgentSummary
+ */
+export const zStudioAgentSummary = z.object({
+    key: z.string(),
+    name: z.string(),
+    summary: z.string(),
+    modelProfile: z.string(),
+    version: z.int(),
+    publishedAt: z.string(),
+    usedBy: z.array(z.string())
+});
+
+/**
+ * StudioPack
+ */
+export const zStudioPack = z.object({
+    key: z.string(),
+    version: z.int(),
+    publishedAt: z.string(),
+    publishedBy: z.string(),
+    draft: zPackDraft,
+    added: z.boolean()
+});
+
+/**
+ * StudioPackSummary
+ */
+export const zStudioPackSummary = z.object({
+    key: z.string(),
+    name: z.string(),
+    outcome: z.string(),
+    version: z.int(),
+    publishedAt: z.string(),
+    steps: z.int(),
+    added: z.boolean()
 });
 
 /**
@@ -1705,8 +2053,10 @@ export const zTenantConnection = z.object({
         'connected',
         'not_connected',
         'sandbox',
-        'needs_reauth'
-    ])
+        'needs_reauth',
+        'pending'
+    ]),
+    mode: z.enum(['sandbox', 'composio']).optional()
 });
 
 /**
@@ -1855,7 +2205,8 @@ export const zRun = z.object({
     timeline: z.array(zTimelineEvent),
     attention: zAttention.optional(),
     deliverable: zDeliverable.optional(),
-    recovered: z.string().optional()
+    recovered: z.string().optional(),
+    sandboxTest: z.boolean().optional()
 });
 
 /**
@@ -1931,7 +2282,8 @@ export const zPack = z.object({
         'team',
         'network',
         'team_then_network'
-    ]).optional()
+    ]).optional(),
+    builtByTeam: z.boolean().optional()
 });
 
 /**
@@ -2068,10 +2420,13 @@ export const zValidateDefinitionRequest = z.object({
 
 /**
  * ValidateDefinitionResult
+ *
+ * `warnings`, when present, says how many definitions teams built the edit would break (never which).
  */
 export const zValidateDefinitionResult = z.object({
     ok: z.boolean(),
-    errors: z.array(zDefinitionIssue)
+    errors: z.array(zDefinitionIssue),
+    warnings: z.array(z.string()).optional()
 });
 
 /**
@@ -2092,7 +2447,8 @@ export const zVersionMeta = z.object({
  * One definition at one version. `yaml` is the main file as exported (JSON for a schema); `files` holds
  * the Markdown files of an agent by path relative to its folder. `body` is the same main file parsed, so a
  * client can read fields without a YAML parser. `refs` are the definitions this one refers to and
- * `used_by` those that refer to it, both computed from the latest versions.
+ * `used_by` those that refer to it, both computed from the latest versions. `warnings` is set on a publish
+ * that breaks definitions teams built in their Studio: a count only, never their keys.
  */
 export const zDefinitionDetail = z.object({
     summary: zDefinitionSummary,
@@ -2101,7 +2457,15 @@ export const zDefinitionDetail = z.object({
     body: z.record(z.string(), z.unknown()),
     files: z.record(z.string(), z.string()),
     refs: z.array(zDefinitionRef),
-    usedBy: z.array(zDefinitionRef)
+    usedBy: z.array(zDefinitionRef),
+    warnings: z.array(z.string()).optional()
+});
+
+/**
+ * WorkflowYaml
+ */
+export const zWorkflowYaml = z.object({
+    yaml: z.string()
 });
 
 /**
@@ -2309,6 +2673,8 @@ export const zRetractMemoryResponse = zMemoryItem;
  */
 export const zListConnectionsResponse = z.array(zConnection);
 
+export const zConnectConnectionBody = zConnectRequest;
+
 export const zConnectConnectionPath = z.object({
     app_name: z.string()
 });
@@ -2316,7 +2682,16 @@ export const zConnectConnectionPath = z.object({
 /**
  * Successful Response
  */
-export const zConnectConnectionResponse = zConnection;
+export const zConnectConnectionResponse = zConnectStarted;
+
+export const zSyncConnectionPath = z.object({
+    app_name: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zSyncConnectionResponse = zConnection;
 
 export const zDisconnectConnectionPath = z.object({
     app_name: z.string()
@@ -2337,6 +2712,17 @@ export const zRevokeGrantQuery = z.object({
  * Successful Response
  */
 export const zRevokeGrantResponse = z.void();
+
+export const zAllowGrantQuery = z.object({
+    app: z.string(),
+    install: z.string(),
+    capability: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zAllowGrantResponse = zConnection;
 
 /**
  * Successful Response
@@ -2487,6 +2873,162 @@ export const zSetReviewerNetworkPath = z.object({
  * Successful Response
  */
 export const zSetReviewerNetworkResponse = zOrgReviewers;
+
+export const zGetStudioPalettePath = z.object({
+    org_id: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zGetStudioPaletteResponse = zPalette;
+
+export const zListStudioAgentsPath = z.object({
+    org_id: z.string()
+});
+
+/**
+ * Response Liststudioagents
+ *
+ * Successful Response
+ */
+export const zListStudioAgentsResponse = z.array(zStudioAgentSummary);
+
+export const zCreateStudioAgentBody = zAgentDraft;
+
+export const zCreateStudioAgentPath = z.object({
+    org_id: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zCreateStudioAgentResponse = zStudioAgent;
+
+export const zValidateStudioAgentBody = zAgentDraft;
+
+export const zValidateStudioAgentPath = z.object({
+    org_id: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zValidateStudioAgentResponse = zBuilderCheck;
+
+export const zGetStudioAgentPath = z.object({
+    org_id: z.string(),
+    key: z.string().max(100).regex(/^[a-z0-9][a-z0-9-]*$/)
+});
+
+/**
+ * Successful Response
+ */
+export const zGetStudioAgentResponse = zStudioAgent;
+
+export const zSaveStudioAgentBody = zSaveAgentRequest;
+
+export const zSaveStudioAgentPath = z.object({
+    org_id: z.string(),
+    key: z.string().max(100).regex(/^[a-z0-9][a-z0-9-]*$/)
+});
+
+/**
+ * Successful Response
+ */
+export const zSaveStudioAgentResponse = zStudioAgent;
+
+export const zListStudioPacksPath = z.object({
+    org_id: z.string()
+});
+
+/**
+ * Response Liststudiopacks
+ *
+ * Successful Response
+ */
+export const zListStudioPacksResponse = z.array(zStudioPackSummary);
+
+export const zCreateStudioPackBody = zPackDraft;
+
+export const zCreateStudioPackPath = z.object({
+    org_id: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zCreateStudioPackResponse = zStudioPack;
+
+export const zValidateStudioPackBody = zPackDraft;
+
+export const zValidateStudioPackPath = z.object({
+    org_id: z.string()
+});
+
+export const zValidateStudioPackQuery = z.object({
+    key: z.string().max(100).regex(/^[a-z0-9][a-z0-9-]*$/).nullish()
+});
+
+/**
+ * Successful Response
+ */
+export const zValidateStudioPackResponse = zBuilderCheck;
+
+export const zImportStudioWorkflowBody = zImportWorkflowRequest;
+
+export const zImportStudioWorkflowPath = z.object({
+    org_id: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zImportStudioWorkflowResponse = zImportedWorkflow;
+
+export const zTestStudioPackBody = zSandboxRunRequest;
+
+export const zTestStudioPackPath = z.object({
+    org_id: z.string(),
+    key: z.string().max(100).regex(/^[a-z0-9][a-z0-9-]*$/)
+});
+
+/**
+ * Successful Response
+ */
+export const zTestStudioPackResponse = zRun;
+
+export const zGetStudioPackWorkflowPath = z.object({
+    org_id: z.string(),
+    key: z.string().max(100).regex(/^[a-z0-9][a-z0-9-]*$/)
+});
+
+/**
+ * Successful Response
+ */
+export const zGetStudioPackWorkflowResponse = zWorkflowYaml;
+
+export const zGetStudioPackPath = z.object({
+    org_id: z.string(),
+    key: z.string().max(100).regex(/^[a-z0-9][a-z0-9-]*$/)
+});
+
+/**
+ * Successful Response
+ */
+export const zGetStudioPackResponse = zStudioPack;
+
+export const zSaveStudioPackBody = zSavePackRequest;
+
+export const zSaveStudioPackPath = z.object({
+    org_id: z.string(),
+    key: z.string().max(100).regex(/^[a-z0-9][a-z0-9-]*$/)
+});
+
+/**
+ * Successful Response
+ */
+export const zSaveStudioPackResponse = zStudioPack;
 
 export const zOpsListPacksQuery = z.object({
     status: z.enum([

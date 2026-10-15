@@ -412,6 +412,8 @@ class PackRunner:
     async def _task(self, node: dict, attempt: int) -> tuple[Any, str]:
         node_id = node["id"]
         opened = await self._act(PackActivities.open_task, self._node_call(node_id, attempt))
+        if "route" in opened:  # not opened (an approval of a call no longer granted): the node already ended
+            return opened.get("output"), opened["route"]
         task_id, kind = opened["task_id"], opened["kind"]
         self._waiting = {"task_id": task_id, "kind": kind, "node_id": node_id}
         self._status = "WAITING"

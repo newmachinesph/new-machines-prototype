@@ -123,6 +123,20 @@ def test_with_the_switch_off_the_network_is_never_offered_a_task(ana, nina, db):
     assert nina.post(f"/v1/human-tasks/{_pid(db, 'ht_2')}:claim").status_code == 404
 
 
+def test_a_sandbox_tests_tasks_stay_with_the_team_whatever_the_packs_pool(ana, nina, db):
+    """A Studio "Test in sandbox" run of a pack the org added with a network pool is the builder's own test:
+    its review task is never offered to the network, now or after the team-then-network delay."""
+    _task(db, ana.org_id, "network")
+    _task(db, ana.org_id, "team_then_network", age=OLD, task_id="ht_2", pack=OTHER_PACK)
+    db.execute("""UPDATE runs SET projection = projection || '{"sandboxTest": true}'""")
+    db.commit()
+    assert sorted(ids(ana)) == ["ht_1", "ht_2"] and ids(nina) == []
+    for task_id in ("ht_1", "ht_2"):
+        assert nina.get(f"/v1/human-tasks/{_pid(db, task_id)}").status_code == 404
+        assert nina.post(f"/v1/human-tasks/{_pid(db, task_id)}:claim").status_code == 404
+    assert ana.get("/v1/human-tasks/ht_1").json()["id"] == "ht_1"
+
+
 def test_a_run_without_a_hire_row_counts_as_team(ana, nina, db):
     allow_network(db, ana.org_id, True)
     add_run(db, ana.org_id, "run_ht_1")

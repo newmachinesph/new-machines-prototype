@@ -48,6 +48,8 @@ export function useInstallPack() {
         qc.invalidateQueries({ queryKey: listWorkflowPacksQueryKey() }),
         // Every cached pack detail, whatever its slug.
         qc.invalidateQueries({ predicate: byOperation("getWorkflowPack") }),
+        // The Studio's pack list says which of the org's own packs are added to the workspace.
+        qc.invalidateQueries({ predicate: byOperation("listStudioPacks") }),
         // A hire changes which apps the org needs, and the overview's checklist.
         qc.invalidateQueries({ queryKey: listConnectionsQueryKey() }),
       ]),

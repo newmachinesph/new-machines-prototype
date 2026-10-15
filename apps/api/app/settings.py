@@ -57,8 +57,19 @@ def workspace_mode() -> str:
     return os.environ.get("NM_WORKSPACE") or "demo"
 
 
+SANDBOX_MODE = "sandbox"  # the connector mode whose tool calls answer from sandbox data
+
+
 def connector_mode() -> str:
-    return os.environ.get("NM_CONNECTOR_MODE", "sandbox")
+    return os.environ.get("NM_CONNECTOR_MODE", SANDBOX_MODE)
+
+
+def web_origin() -> str:
+    """The customer web app's origin, where app sign-in links return: NM_WEB_ORIGIN, else the first
+    ALLOWED_ORIGINS entry (the API's CORS list), else the local web dev server. No trailing slash."""
+    given = [os.environ.get("NM_WEB_ORIGIN") or ""] + (os.environ.get("ALLOWED_ORIGINS") or "").split(",")
+    origins = [o.strip().rstrip("/") for o in given]
+    return next((o for o in origins if o), "http://localhost:3100")
 
 
 def defs_dir() -> Path:
@@ -79,6 +90,12 @@ def model_api_key() -> str | None:
 def demo_user_uid() -> str | None:
     """The demo user's Firebase uid; Composio connections are owned by this user id."""
     return os.environ.get("DEMO_USER_UID") or None
+
+
+def composio_api_key() -> str | None:
+    """Composio project key: real app connections in the live workspace (and the demo's live connector
+    mode)."""
+    return os.environ.get("COMPOSIO_API_KEY") or None
 
 
 def defs_auto_apply() -> bool:

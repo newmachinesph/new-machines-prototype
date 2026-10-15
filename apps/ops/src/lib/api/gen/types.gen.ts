@@ -106,6 +106,46 @@ export type Agent = {
      * Source
      */
     source: 'definition' | 'sample';
+    /**
+     * Builtbyteam
+     */
+    builtByTeam?: boolean;
+};
+
+/**
+ * AgentDraft
+ *
+ * An agent as the Studio edits it. Tools are app tools that only read.
+ */
+export type AgentDraft = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Summary
+     */
+    summary: string;
+    /**
+     * Instructions
+     */
+    instructions: string;
+    /**
+     * Modelprofile
+     */
+    modelProfile?: 'reasoning' | 'fast';
+    /**
+     * Skills
+     */
+    skills?: Array<SkillDraft>;
+    /**
+     * Tools
+     */
+    tools?: Array<string>;
+    /**
+     * Maxturns
+     */
+    maxTurns?: number;
 };
 
 /**
@@ -366,6 +406,40 @@ export type BillingSummary = {
 };
 
 /**
+ * BuilderCheck
+ */
+export type BuilderCheck = {
+    /**
+     * Ok
+     */
+    ok: boolean;
+    /**
+     * Issues
+     */
+    issues: Array<BuilderIssue>;
+};
+
+/**
+ * BuilderIssue
+ *
+ * One problem in a draft. `step` names the step it is about, when it is about one.
+ */
+export type BuilderIssue = {
+    /**
+     * Path
+     */
+    path: string;
+    /**
+     * Message
+     */
+    message: string;
+    /**
+     * Step
+     */
+    step?: string;
+};
+
+/**
  * ChainStep
  */
 export type ChainStep = {
@@ -384,9 +458,24 @@ export type ChainStep = {
 };
 
 /**
- * Connection
+ * ConnectRequest
+ *
+ * How to connect an app: `live` signs in to the org's own account; `sandbox` serves sandbox data.
  */
-export type Connection = {
+export type ConnectRequest = {
+    /**
+     * Mode
+     */
+    mode?: 'live' | 'sandbox';
+};
+
+/**
+ * ConnectStarted
+ *
+ * A connection just made or started. `redirect_url` (live only) is the app's sign-in page, which returns
+ * to the web's Connections page with `?connected=<key>`.
+ */
+export type ConnectStarted = {
     /**
      * App
      */
@@ -398,7 +487,7 @@ export type Connection = {
     /**
      * Status
      */
-    status: 'connected' | 'not_connected' | 'sandbox' | 'needs_reauth';
+    status: 'connected' | 'not_connected' | 'sandbox' | 'needs_reauth' | 'pending';
     /**
      * Provider
      */
@@ -411,6 +500,10 @@ export type Connection = {
      * Grants
      */
     grants: Array<Grant>;
+    /**
+     * Revoked
+     */
+    revoked?: Array<RevokedGrant>;
     /**
      * Lastused
      */
@@ -427,6 +520,68 @@ export type Connection = {
      * Mode
      */
     mode?: 'sandbox' | 'composio';
+    /**
+     * Notice
+     */
+    notice?: 'sign_in_not_removed';
+    /**
+     * Redirecturl
+     */
+    redirectUrl?: string;
+};
+
+/**
+ * Connection
+ */
+export type Connection = {
+    /**
+     * App
+     */
+    app: string;
+    /**
+     * Account
+     */
+    account: string;
+    /**
+     * Status
+     */
+    status: 'connected' | 'not_connected' | 'sandbox' | 'needs_reauth' | 'pending';
+    /**
+     * Provider
+     */
+    provider: 'Composio' | 'Mock';
+    /**
+     * Oauthscopes
+     */
+    oauthScopes: Array<string>;
+    /**
+     * Grants
+     */
+    grants: Array<Grant>;
+    /**
+     * Revoked
+     */
+    revoked?: Array<RevokedGrant>;
+    /**
+     * Lastused
+     */
+    lastUsed?: string;
+    /**
+     * Health
+     */
+    health?: string;
+    /**
+     * Key
+     */
+    key?: string;
+    /**
+     * Mode
+     */
+    mode?: 'sandbox' | 'composio';
+    /**
+     * Notice
+     */
+    notice?: 'sign_in_not_removed';
 };
 
 /**
@@ -638,6 +793,24 @@ export type CreatedToken = {
 };
 
 /**
+ * DecisionDefault
+ */
+export type DecisionDefault = {
+    /**
+     * Route
+     */
+    route: string;
+    /**
+     * Verdict
+     */
+    verdict?: 'APPROVED' | 'HUMAN_REVIEW' | 'BLOCKED' | 'REJECTED';
+    /**
+     * Explanation
+     */
+    explanation: string;
+};
+
+/**
  * DecisionRecord
  */
 export type DecisionRecord = {
@@ -682,6 +855,45 @@ export type DecisionRecord = {
 };
 
 /**
+ * DecisionRule
+ *
+ * `when` is CEL over the run state; the first rule that is true picks the route.
+ */
+export type DecisionRule = {
+    /**
+     * When
+     */
+    when: string;
+    /**
+     * Route
+     */
+    route: string;
+    /**
+     * Verdict
+     */
+    verdict?: 'APPROVED' | 'HUMAN_REVIEW' | 'BLOCKED' | 'REJECTED';
+    /**
+     * Explanation
+     */
+    explanation: string;
+};
+
+/**
+ * DecisionRules
+ */
+export type DecisionRules = {
+    /**
+     * Question
+     */
+    question: string;
+    /**
+     * Rules
+     */
+    rules?: Array<DecisionRule>;
+    default: DecisionDefault;
+};
+
+/**
  * DeclareIncidentRequest
  */
 export type DeclareIncidentRequest = {
@@ -709,7 +921,8 @@ export type DeclareIncidentRequest = {
  * One definition at one version. `yaml` is the main file as exported (JSON for a schema); `files` holds
  * the Markdown files of an agent by path relative to its folder. `body` is the same main file parsed, so a
  * client can read fields without a YAML parser. `refs` are the definitions this one refers to and
- * `used_by` those that refer to it, both computed from the latest versions.
+ * `used_by` those that refer to it, both computed from the latest versions. `warnings` is set on a publish
+ * that breaks definitions teams built in their Studio: a count only, never their keys.
  */
 export type DefinitionDetail = {
     summary: DefinitionSummary;
@@ -741,6 +954,10 @@ export type DefinitionDetail = {
      * Usedby
      */
     usedBy: Array<DefinitionRef>;
+    /**
+     * Warnings
+     */
+    warnings?: Array<string>;
 };
 
 /**
@@ -1225,6 +1442,38 @@ export type HumanTask = {
 };
 
 /**
+ * ImportWorkflowRequest
+ *
+ * A workflow.yaml, such as one exported from a pack.
+ */
+export type ImportWorkflowRequest = {
+    /**
+     * Yaml
+     */
+    yaml: string;
+};
+
+/**
+ * ImportedWorkflow
+ *
+ * The steps read from a workflow.yaml, and what could not be read.
+ */
+export type ImportedWorkflow = {
+    /**
+     * Entrystep
+     */
+    entryStep: string;
+    /**
+     * Steps
+     */
+    steps: Array<StepDraft>;
+    /**
+     * Issues
+     */
+    issues: Array<BuilderIssue>;
+};
+
+/**
  * Incident
  */
 export type Incident = {
@@ -1278,6 +1527,30 @@ export type IncidentUpdate = {
      * Text
      */
     text: string;
+};
+
+/**
+ * InputField
+ *
+ * One field of the run's start form.
+ */
+export type InputField = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Label
+     */
+    label: string;
+    /**
+     * Type
+     */
+    type?: 'text' | 'date' | 'number';
+    /**
+     * Required
+     */
+    required?: boolean;
 };
 
 /**
@@ -2116,6 +2389,10 @@ export type Pack = {
      * Reviewerpool
      */
     reviewerPool?: 'team' | 'network' | 'team_then_network';
+    /**
+     * Builtbyteam
+     */
+    builtByTeam?: boolean;
 };
 
 /**
@@ -2166,6 +2443,59 @@ export type PackCount = {
      * Runs
      */
     runs: number;
+};
+
+/**
+ * PackDraft
+ *
+ * A Workflow Pack as the Studio edits it: what the marketplace shows, the start form, the budget and
+ * the steps.
+ */
+export type PackDraft = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Outcome
+     */
+    outcome: string;
+    /**
+     * Description
+     */
+    description: string;
+    /**
+     * Humanreview
+     */
+    humanReview: string;
+    /**
+     * Function
+     */
+    function?: string;
+    /**
+     * Industries
+     */
+    industries?: Array<string>;
+    /**
+     * Inputfields
+     */
+    inputFields?: Array<InputField>;
+    /**
+     * Budgetminor
+     */
+    budgetMinor?: number;
+    /**
+     * Humanbudgetminor
+     */
+    humanBudgetMinor?: number;
+    /**
+     * Entrystep
+     */
+    entryStep: string;
+    /**
+     * Steps
+     */
+    steps: Array<StepDraft>;
 };
 
 /**
@@ -2358,6 +2688,136 @@ export type PackListingDetail = {
      * History
      */
     history: Array<PackHistoryEntry>;
+};
+
+/**
+ * Palette
+ *
+ * What a pack's steps can use, from the registry: agents, app tools, memory and result shapes.
+ */
+export type Palette = {
+    /**
+     * Agents
+     */
+    agents: Array<PaletteAgent>;
+    /**
+     * Tools
+     */
+    tools: Array<PaletteTool>;
+    /**
+     * Spaces
+     */
+    spaces: Array<PaletteSpace>;
+    /**
+     * Schemas
+     */
+    schemas: Array<PaletteSchema>;
+};
+
+/**
+ * PaletteAgent
+ */
+export type PaletteAgent = {
+    /**
+     * Key
+     */
+    key: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Summary
+     */
+    summary: string;
+    /**
+     * Builtbyteam
+     */
+    builtByTeam?: boolean;
+    /**
+     * Modelprofile
+     */
+    modelProfile?: string;
+    /**
+     * Outputschemaref
+     */
+    outputSchemaRef: string;
+    /**
+     * Outputschema
+     */
+    outputSchema?: {
+        [key: string]: unknown;
+    };
+};
+
+/**
+ * PaletteSchema
+ */
+export type PaletteSchema = {
+    /**
+     * Key
+     */
+    key: string;
+    /**
+     * Title
+     */
+    title: string;
+    /**
+     * Body
+     */
+    body: {
+        [key: string]: unknown;
+    };
+};
+
+/**
+ * PaletteSpace
+ */
+export type PaletteSpace = {
+    /**
+     * Key
+     */
+    key: string;
+    /**
+     * Name
+     */
+    name: string;
+};
+
+/**
+ * PaletteTool
+ */
+export type PaletteTool = {
+    /**
+     * Ref
+     */
+    ref: string;
+    /**
+     * App
+     */
+    app: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Description
+     */
+    description: string;
+    /**
+     * Actionclass
+     */
+    actionClass: string;
+    /**
+     * Capability
+     */
+    capability: string;
+    /**
+     * Inputschema
+     */
+    inputSchema: {
+        [key: string]: unknown;
+    };
 };
 
 /**
@@ -2772,6 +3232,23 @@ export type ReviewerNetworkRequest = {
 };
 
 /**
+ * RevokedGrant
+ *
+ * A grant a person revoked on a connection (`DELETE /v1/grants`): recomputing the connection's grants
+ * never brings it back until it is allowed again (`POST /v1/grants`).
+ */
+export type RevokedGrant = {
+    /**
+     * Install
+     */
+    install: string;
+    /**
+     * Capability
+     */
+    capability: string;
+};
+
+/**
  * Run
  */
 export type Run = {
@@ -2848,6 +3325,10 @@ export type Run = {
      * Recovered
      */
     recovered?: string;
+    /**
+     * Sandboxtest
+     */
+    sandboxTest?: boolean;
 };
 
 /**
@@ -2992,6 +3473,10 @@ export type RunSummary = {
      * Hasdetail
      */
     hasDetail?: boolean;
+    /**
+     * Sandboxtest
+     */
+    sandboxTest?: boolean;
 };
 
 /**
@@ -3024,6 +3509,49 @@ export type RuntimeStatus = {
      * Definitionsapplied
      */
     definitionsApplied: number;
+};
+
+/**
+ * SandboxRunRequest
+ *
+ * The run input (checked against the pack's input schema) and an optional budget; the pack's maximum
+ * when omitted.
+ */
+export type SandboxRunRequest = {
+    /**
+     * Input
+     */
+    input?: {
+        [key: string]: unknown;
+    };
+    /**
+     * Budgetminor
+     */
+    budgetMinor?: number;
+};
+
+/**
+ * SaveAgentRequest
+ *
+ * `base_version` is the version the edit started from; 409 VERSION_CONFLICT when someone saved since.
+ */
+export type SaveAgentRequest = {
+    draft: AgentDraft;
+    /**
+     * Baseversion
+     */
+    baseVersion?: number;
+};
+
+/**
+ * SavePackRequest
+ */
+export type SavePackRequest = {
+    draft: PackDraft;
+    /**
+     * Baseversion
+     */
+    baseVersion?: number;
 };
 
 /**
@@ -3128,6 +3656,20 @@ export type SetSpendCapRequest = {
 };
 
 /**
+ * SkillDraft
+ */
+export type SkillDraft = {
+    /**
+     * Title
+     */
+    title: string;
+    /**
+     * Text
+     */
+    text: string;
+};
+
+/**
  * Spent
  */
 export type Spent = {
@@ -3206,6 +3748,157 @@ export type StartRunRequest = {
      * Note
      */
     note?: string;
+};
+
+/**
+ * StepDraft
+ *
+ * One workflow node. `config` is the node's config as the runtime reads it (strings starting with "="
+ * are CEL); `routes` maps each outcome to the next step. A decision keeps its rules in `rules`.
+ */
+export type StepDraft = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Type
+     */
+    type: 'trigger' | 'memory' | 'connector' | 'agent' | 'decision' | 'human_workforce' | 'approval' | 'verification' | 'end';
+    /**
+     * Config
+     */
+    config?: {
+        [key: string]: unknown;
+    };
+    /**
+     * Routes
+     */
+    routes?: {
+        [key: string]: string;
+    };
+    /**
+     * Rules
+     */
+    rules?: DecisionRules;
+};
+
+/**
+ * StudioAgent
+ */
+export type StudioAgent = {
+    /**
+     * Key
+     */
+    key: string;
+    /**
+     * Version
+     */
+    version: number;
+    /**
+     * Publishedat
+     */
+    publishedAt: string;
+    /**
+     * Publishedby
+     */
+    publishedBy: string;
+    draft: AgentDraft;
+};
+
+/**
+ * StudioAgentSummary
+ */
+export type StudioAgentSummary = {
+    /**
+     * Key
+     */
+    key: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Summary
+     */
+    summary: string;
+    /**
+     * Modelprofile
+     */
+    modelProfile: string;
+    /**
+     * Version
+     */
+    version: number;
+    /**
+     * Publishedat
+     */
+    publishedAt: string;
+    /**
+     * Usedby
+     */
+    usedBy: Array<string>;
+};
+
+/**
+ * StudioPack
+ */
+export type StudioPack = {
+    /**
+     * Key
+     */
+    key: string;
+    /**
+     * Version
+     */
+    version: number;
+    /**
+     * Publishedat
+     */
+    publishedAt: string;
+    /**
+     * Publishedby
+     */
+    publishedBy: string;
+    draft: PackDraft;
+    /**
+     * Added
+     */
+    added: boolean;
+};
+
+/**
+ * StudioPackSummary
+ */
+export type StudioPackSummary = {
+    /**
+     * Key
+     */
+    key: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Outcome
+     */
+    outcome: string;
+    /**
+     * Version
+     */
+    version: number;
+    /**
+     * Publishedat
+     */
+    publishedAt: string;
+    /**
+     * Steps
+     */
+    steps: number;
+    /**
+     * Added
+     */
+    added: boolean;
 };
 
 /**
@@ -3380,7 +4073,11 @@ export type TenantConnection = {
     /**
      * Status
      */
-    status: 'connected' | 'not_connected' | 'sandbox' | 'needs_reauth';
+    status: 'connected' | 'not_connected' | 'sandbox' | 'needs_reauth' | 'pending';
+    /**
+     * Mode
+     */
+    mode?: 'sandbox' | 'composio';
 };
 
 /**
@@ -3697,6 +4394,8 @@ export type ValidateDefinitionRequest = {
 
 /**
  * ValidateDefinitionResult
+ *
+ * `warnings`, when present, says how many definitions teams built the edit would break (never which).
  */
 export type ValidateDefinitionResult = {
     /**
@@ -3707,6 +4406,10 @@ export type ValidateDefinitionResult = {
      * Errors
      */
     errors: Array<DefinitionIssue>;
+    /**
+     * Warnings
+     */
+    warnings?: Array<string>;
 };
 
 /**
@@ -3737,6 +4440,16 @@ export type VersionMeta = {
      * Publishedat
      */
     publishedAt: string;
+};
+
+/**
+ * WorkflowYaml
+ */
+export type WorkflowYaml = {
+    /**
+     * Yaml
+     */
+    yaml: string;
 };
 
 export type ListWorkflowPacksData = {
@@ -4851,7 +5564,7 @@ export type ListConnectionsResponses = {
 export type ListConnectionsResponse = ListConnectionsResponses[keyof ListConnectionsResponses];
 
 export type ConnectConnectionData = {
-    body?: never;
+    body?: ConnectRequest;
     path: {
         /**
          * App Name
@@ -4876,13 +5589,17 @@ export type ConnectConnectionErrors = {
      */
     404: Problem;
     /**
-     * Conflict
+     * Conflict (CONFLICT, LIVE_CONNECT_UNAVAILABLE, NO_LIVE_TOOLKIT).
      */
     409: Problem;
     /**
      * Invalid request
      */
     422: Problem;
+    /**
+     * The connection service did not answer (CONNECTION_SERVICE_UNAVAILABLE).
+     */
+    503: Problem;
 };
 
 export type ConnectConnectionError = ConnectConnectionErrors[keyof ConnectConnectionErrors];
@@ -4891,10 +5608,60 @@ export type ConnectConnectionResponses = {
     /**
      * Successful Response
      */
-    200: Connection;
+    200: ConnectStarted;
 };
 
 export type ConnectConnectionResponse = ConnectConnectionResponses[keyof ConnectConnectionResponses];
+
+export type SyncConnectionData = {
+    body?: never;
+    path: {
+        /**
+         * App Name
+         */
+        app_name: string;
+    };
+    query?: never;
+    url: '/v1/connections/{app_name}:sync';
+};
+
+export type SyncConnectionErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict (CONFLICT, LIVE_CONNECT_UNAVAILABLE).
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+    /**
+     * The connection service did not answer (CONNECTION_SERVICE_UNAVAILABLE).
+     */
+    503: Problem;
+};
+
+export type SyncConnectionError = SyncConnectionErrors[keyof SyncConnectionErrors];
+
+export type SyncConnectionResponses = {
+    /**
+     * Successful Response
+     */
+    200: Connection;
+};
+
+export type SyncConnectionResponse = SyncConnectionResponses[keyof SyncConnectionResponses];
 
 export type DisconnectConnectionData = {
     body?: never;
@@ -4995,6 +5762,60 @@ export type RevokeGrantResponses = {
 };
 
 export type RevokeGrantResponse = RevokeGrantResponses[keyof RevokeGrantResponses];
+
+export type AllowGrantData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * App
+         */
+        app: string;
+        /**
+         * Install
+         */
+        install: string;
+        /**
+         * Capability
+         */
+        capability: string;
+    };
+    url: '/v1/grants';
+};
+
+export type AllowGrantErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict (CONFLICT).
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type AllowGrantError = AllowGrantErrors[keyof AllowGrantErrors];
+
+export type AllowGrantResponses = {
+    /**
+     * Successful Response
+     */
+    200: Connection;
+};
+
+export type AllowGrantResponse = AllowGrantResponses[keyof AllowGrantResponses];
 
 export type GetMeData = {
     body?: never;
@@ -5728,6 +6549,689 @@ export type SetReviewerNetworkResponses = {
 };
 
 export type SetReviewerNetworkResponse = SetReviewerNetworkResponses[keyof SetReviewerNetworkResponses];
+
+export type GetStudioPaletteData = {
+    body?: never;
+    path: {
+        /**
+         * Org Id
+         */
+        org_id: string;
+    };
+    query?: never;
+    url: '/v1/organizations/{org_id}/studio/palette';
+};
+
+export type GetStudioPaletteErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type GetStudioPaletteError = GetStudioPaletteErrors[keyof GetStudioPaletteErrors];
+
+export type GetStudioPaletteResponses = {
+    /**
+     * Successful Response
+     */
+    200: Palette;
+};
+
+export type GetStudioPaletteResponse = GetStudioPaletteResponses[keyof GetStudioPaletteResponses];
+
+export type ListStudioAgentsData = {
+    body?: never;
+    path: {
+        /**
+         * Org Id
+         */
+        org_id: string;
+    };
+    query?: never;
+    url: '/v1/organizations/{org_id}/studio/agents';
+};
+
+export type ListStudioAgentsErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type ListStudioAgentsError = ListStudioAgentsErrors[keyof ListStudioAgentsErrors];
+
+export type ListStudioAgentsResponses = {
+    /**
+     * Response Liststudioagents
+     *
+     * Successful Response
+     */
+    200: Array<StudioAgentSummary>;
+};
+
+export type ListStudioAgentsResponse = ListStudioAgentsResponses[keyof ListStudioAgentsResponses];
+
+export type CreateStudioAgentData = {
+    body: AgentDraft;
+    path: {
+        /**
+         * Org Id
+         */
+        org_id: string;
+    };
+    query?: never;
+    url: '/v1/organizations/{org_id}/studio/agents';
+};
+
+export type CreateStudioAgentErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict (KEY_TAKEN).
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type CreateStudioAgentError = CreateStudioAgentErrors[keyof CreateStudioAgentErrors];
+
+export type CreateStudioAgentResponses = {
+    /**
+     * Successful Response
+     */
+    201: StudioAgent;
+};
+
+export type CreateStudioAgentResponse = CreateStudioAgentResponses[keyof CreateStudioAgentResponses];
+
+export type ValidateStudioAgentData = {
+    body: AgentDraft;
+    path: {
+        /**
+         * Org Id
+         */
+        org_id: string;
+    };
+    query?: never;
+    url: '/v1/organizations/{org_id}/studio/agents:validate';
+};
+
+export type ValidateStudioAgentErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type ValidateStudioAgentError = ValidateStudioAgentErrors[keyof ValidateStudioAgentErrors];
+
+export type ValidateStudioAgentResponses = {
+    /**
+     * Successful Response
+     */
+    200: BuilderCheck;
+};
+
+export type ValidateStudioAgentResponse = ValidateStudioAgentResponses[keyof ValidateStudioAgentResponses];
+
+export type GetStudioAgentData = {
+    body?: never;
+    path: {
+        /**
+         * Org Id
+         */
+        org_id: string;
+        /**
+         * Key
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/v1/organizations/{org_id}/studio/agents/{key}';
+};
+
+export type GetStudioAgentErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type GetStudioAgentError = GetStudioAgentErrors[keyof GetStudioAgentErrors];
+
+export type GetStudioAgentResponses = {
+    /**
+     * Successful Response
+     */
+    200: StudioAgent;
+};
+
+export type GetStudioAgentResponse = GetStudioAgentResponses[keyof GetStudioAgentResponses];
+
+export type SaveStudioAgentData = {
+    body: SaveAgentRequest;
+    path: {
+        /**
+         * Org Id
+         */
+        org_id: string;
+        /**
+         * Key
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/v1/organizations/{org_id}/studio/agents/{key}';
+};
+
+export type SaveStudioAgentErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict (VERSION_CONFLICT, KEY_TAKEN).
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type SaveStudioAgentError = SaveStudioAgentErrors[keyof SaveStudioAgentErrors];
+
+export type SaveStudioAgentResponses = {
+    /**
+     * Successful Response
+     */
+    200: StudioAgent;
+};
+
+export type SaveStudioAgentResponse = SaveStudioAgentResponses[keyof SaveStudioAgentResponses];
+
+export type ListStudioPacksData = {
+    body?: never;
+    path: {
+        /**
+         * Org Id
+         */
+        org_id: string;
+    };
+    query?: never;
+    url: '/v1/organizations/{org_id}/studio/packs';
+};
+
+export type ListStudioPacksErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type ListStudioPacksError = ListStudioPacksErrors[keyof ListStudioPacksErrors];
+
+export type ListStudioPacksResponses = {
+    /**
+     * Response Liststudiopacks
+     *
+     * Successful Response
+     */
+    200: Array<StudioPackSummary>;
+};
+
+export type ListStudioPacksResponse = ListStudioPacksResponses[keyof ListStudioPacksResponses];
+
+export type CreateStudioPackData = {
+    body: PackDraft;
+    path: {
+        /**
+         * Org Id
+         */
+        org_id: string;
+    };
+    query?: never;
+    url: '/v1/organizations/{org_id}/studio/packs';
+};
+
+export type CreateStudioPackErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict (KEY_TAKEN).
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type CreateStudioPackError = CreateStudioPackErrors[keyof CreateStudioPackErrors];
+
+export type CreateStudioPackResponses = {
+    /**
+     * Successful Response
+     */
+    201: StudioPack;
+};
+
+export type CreateStudioPackResponse = CreateStudioPackResponses[keyof CreateStudioPackResponses];
+
+export type ValidateStudioPackData = {
+    body: PackDraft;
+    path: {
+        /**
+         * Org Id
+         */
+        org_id: string;
+    };
+    query?: {
+        /**
+         * Key
+         *
+         * The org's own pack the draft edits, so its current name is not counted against it.
+         */
+        key?: string | null;
+    };
+    url: '/v1/organizations/{org_id}/studio/packs:validate';
+};
+
+export type ValidateStudioPackErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type ValidateStudioPackError = ValidateStudioPackErrors[keyof ValidateStudioPackErrors];
+
+export type ValidateStudioPackResponses = {
+    /**
+     * Successful Response
+     */
+    200: BuilderCheck;
+};
+
+export type ValidateStudioPackResponse = ValidateStudioPackResponses[keyof ValidateStudioPackResponses];
+
+export type ImportStudioWorkflowData = {
+    body: ImportWorkflowRequest;
+    path: {
+        /**
+         * Org Id
+         */
+        org_id: string;
+    };
+    query?: never;
+    url: '/v1/organizations/{org_id}/studio/workflow:import';
+};
+
+export type ImportStudioWorkflowErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type ImportStudioWorkflowError = ImportStudioWorkflowErrors[keyof ImportStudioWorkflowErrors];
+
+export type ImportStudioWorkflowResponses = {
+    /**
+     * Successful Response
+     */
+    200: ImportedWorkflow;
+};
+
+export type ImportStudioWorkflowResponse = ImportStudioWorkflowResponses[keyof ImportStudioWorkflowResponses];
+
+export type TestStudioPackData = {
+    body: SandboxRunRequest;
+    path: {
+        /**
+         * Org Id
+         */
+        org_id: string;
+        /**
+         * Key
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/v1/organizations/{org_id}/studio/packs/{key}:test';
+};
+
+export type TestStudioPackErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict (PLATFORM_PAUSED, SANDBOX_UNAVAILABLE, SPEND_CAP, PACK_UNAVAILABLE).
+     */
+    409: Problem;
+    /**
+     * Invalid request (INVALID_INPUT, BUDGET_REQUIRED, BUDGET_TOO_HIGH).
+     */
+    422: Problem;
+    /**
+     * The workflow engine is unavailable (RUNTIME_UNAVAILABLE).
+     */
+    503: Problem;
+};
+
+export type TestStudioPackError = TestStudioPackErrors[keyof TestStudioPackErrors];
+
+export type TestStudioPackResponses = {
+    /**
+     * Successful Response
+     */
+    202: Run;
+};
+
+export type TestStudioPackResponse = TestStudioPackResponses[keyof TestStudioPackResponses];
+
+export type GetStudioPackWorkflowData = {
+    body?: never;
+    path: {
+        /**
+         * Org Id
+         */
+        org_id: string;
+        /**
+         * Key
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/v1/organizations/{org_id}/studio/packs/{key}/workflow';
+};
+
+export type GetStudioPackWorkflowErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type GetStudioPackWorkflowError = GetStudioPackWorkflowErrors[keyof GetStudioPackWorkflowErrors];
+
+export type GetStudioPackWorkflowResponses = {
+    /**
+     * Successful Response
+     */
+    200: WorkflowYaml;
+};
+
+export type GetStudioPackWorkflowResponse = GetStudioPackWorkflowResponses[keyof GetStudioPackWorkflowResponses];
+
+export type GetStudioPackData = {
+    body?: never;
+    path: {
+        /**
+         * Org Id
+         */
+        org_id: string;
+        /**
+         * Key
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/v1/organizations/{org_id}/studio/packs/{key}';
+};
+
+export type GetStudioPackErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type GetStudioPackError = GetStudioPackErrors[keyof GetStudioPackErrors];
+
+export type GetStudioPackResponses = {
+    /**
+     * Successful Response
+     */
+    200: StudioPack;
+};
+
+export type GetStudioPackResponse = GetStudioPackResponses[keyof GetStudioPackResponses];
+
+export type SaveStudioPackData = {
+    body: SavePackRequest;
+    path: {
+        /**
+         * Org Id
+         */
+        org_id: string;
+        /**
+         * Key
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/v1/organizations/{org_id}/studio/packs/{key}';
+};
+
+export type SaveStudioPackErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict (VERSION_CONFLICT, KEY_TAKEN, RUNS_IN_PROGRESS).
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type SaveStudioPackError = SaveStudioPackErrors[keyof SaveStudioPackErrors];
+
+export type SaveStudioPackResponses = {
+    /**
+     * Successful Response
+     */
+    200: StudioPack;
+};
+
+export type SaveStudioPackResponse = SaveStudioPackResponses[keyof SaveStudioPackResponses];
 
 export type OpsListPacksData = {
     body?: never;

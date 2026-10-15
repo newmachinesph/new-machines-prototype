@@ -13,9 +13,11 @@ from app import settings
 from app.defs.loader import load_bundle
 from app.defs.model import Bundle
 from app.defs.validate import validate_bundle
+from app.runtime import cel as runtime_cel
 
 SLUG = "order-payment-reconciliation"
 CEL = celpy.Environment()
+SANDBOX_SHEET = "sandbox-reconciliation-sheet-00000001"  # the input schema's default spreadsheet_id
 
 
 @pytest.fixture(scope="module")
@@ -35,7 +37,7 @@ def cel(expr: str, state: dict):
 
 def sample_state(match_output: dict | None = None, *, orders: dict | None = None) -> dict:
     return {
-        "input": {"since": "2026-10-06", "until": "2026-10-12"},
+        "input": {"since": "2026-10-06", "until": "2026-10-12", "spreadsheet_id": SANDBOX_SHEET},
         "memory": [],
         "nodes": {
             "orders": {"output": orders if orders is not None else sandbox("shopify", "list_orders")},
@@ -234,17 +236,70 @@ def test_every_node_expression_evaluates(bundle, with_review):
             cel(expr, state)  # raises when a path or function is wrong
 
 
+def _connector_nodes(bundle) -> list[tuple[str, dict]]:
+    return [
+        (wf.key, node)
+        for wf in bundle.of("workflow")
+        for node in wf.body["nodes"]
+        if node["type"] == "connector"
+    ]
+
+
+def test_every_pack_calls_connectors(bundle):
+    packs = {key for key, _ in _connector_nodes(bundle)}
+    assert {SLUG, "refund-triage", "overdue-invoice-follow-up"} <= packs
+
+
+COMPOSIO_FIXTURES = Path(__file__).parent / "fixtures" / "composio"
+
+
+def _sandbox_sheet(bundle) -> str:
+    """The spreadsheet id a reconciliation run gets when its input names none (the input schema default)."""
+    return bundle.get("schema", f"{SLUG}/input").body["properties"]["spreadsheet_id"]["default"]
+
+
 def test_connector_args_are_valid_for_the_real_tools(bundle):
-    wf = {n["id"]: n for n in bundle.get("workflow", SLUG).body["nodes"]}
+    """Every pack's connector node resolves to arguments its tool's input_schema accepts, as the gateway
+    checks them before any driver runs (so a CEL timestamp must already be an ISO string), and that the
+    tool's recorded Composio schema accepts too."""
     state = sample_state()
+    state["input"] = {"since": "2026-10-06", "until": "2026-10-12", "spreadsheet_id": _sandbox_sheet(bundle)}
     state["nodes"]["report"] = {"output": report_output()}
-    for node_id in ("orders", "payments", "write"):
-        cfg = wf[node_id]["config"]
+    state["item"] = {"to": "ana@example.com", "subject": "Your refund", "body": "We refunded order #1007."}
+    for pack, node in _connector_nodes(bundle):
+        cfg = node["config"]
         conn, _, tool_id = cfg["tool"].partition(".")
         tool = next(t for t in bundle.get("connector", conn).body["tools"] if t["id"] == tool_id)
-        known = set(tool["input_schema"]["properties"])
-        assert set(cfg["args"]) <= known, (node_id, set(cfg["args"]) - known)
-        assert set(tool["input_schema"].get("required", [])) <= set(cfg["args"]), node_id
+        args = runtime_cel.resolve(cfg.get("args") or {}, state)
+        errors = [e.message for e in Draft202012Validator(tool["input_schema"]).iter_errors(args)]
+        assert errors == [], (pack, node["id"], errors)
+        recorded = json.loads((COMPOSIO_FIXTURES / f"{tool['slug']}.json").read_text(encoding="utf-8"))
+        theirs = recorded["input_parameters"]
+        errors = [e.message for e in Draft202012Validator(theirs).iter_errors(args)]
+        assert errors == [], (pack, node["id"], "Composio", errors)
+
+
+def test_the_reconciliation_writes_to_the_sheet_its_run_names(bundle):
+    write = next(n for k, n in _connector_nodes(bundle) if k == SLUG and n["id"] == "write")
+    assert write["config"]["args"]["spreadsheetId"] == "=input.spreadsheet_id"
+    schema = bundle.get("schema", f"{SLUG}/input").body
+    sheets = bundle.get("connector", "googlesheets").body["tools"][0]["input_schema"]["properties"]
+    ours = schema["properties"]["spreadsheet_id"]
+    assert "spreadsheet_id" in schema["required"]
+    assert (ours["minLength"], ours["pattern"]) == (30, sheets["spreadsheetId"]["pattern"])
+    assert sheets["spreadsheetId"]["minLength"] == 30
+    validator = Draft202012Validator(schema)
+    base = {"since": "2026-10-06", "until": "2026-10-12"}
+    assert not list(validator.iter_errors({**base, "spreadsheet_id": _sandbox_sheet(bundle)}))
+    assert list(validator.iter_errors({**base, "spreadsheet_id": "demo-reconciliation-sheet"}))
+    assert list(validator.iter_errors({**base, "spreadsheet_id": "has spaces " * 4}))
+
+
+def test_refund_triage_sends_its_order_window_start_as_an_iso_timestamp(bundle):
+    node = next(n for k, n in _connector_nodes(bundle) if k == "refund-triage" and n["id"] == "orders")
+    args = runtime_cel.resolve(node["config"]["args"], {"input": {"until": "2026-10-12"}})
+    assert args["created_at_min"] == "2026-08-13T00:00:00Z"
+    assert args["created_at_max"] == "2026-10-12T23:59:59Z"
 
 
 def test_schemas_accept_sample_outputs(bundle):
@@ -252,7 +307,7 @@ def test_schemas_accept_sample_outputs(bundle):
         schema = bundle.get("schema", f"{SLUG}/{schema_key}").body
         Draft202012Validator(schema).validate(value)
 
-    check("input", {"since": "2026-10-06", "until": "2026-10-12"})
+    check("input", {"since": "2026-10-06", "until": "2026-10-12", "spreadsheet_id": _sandbox_sheet(bundle)})
     check("match", match_output([mismatch("#1007", "missing_payment", -6750)]))
     check("match", match_output([]))
     check("report", report_output())

@@ -1,0 +1,87 @@
+{
+  "input_parameters": {
+    "properties": {
+      "includeValuesInResponse": {
+        "type": "boolean"
+      },
+      "insertDataOption": {
+        "enum": [
+          "OVERWRITE",
+          "INSERT_ROWS"
+        ],
+        "type": "string"
+      },
+      "majorDimension": {
+        "enum": [
+          "ROWS",
+          "COLUMNS"
+        ],
+        "type": "string"
+      },
+      "range": {
+        "type": "string"
+      },
+      "responseDateTimeRenderOption": {
+        "enum": [
+          "SERIAL_NUMBER",
+          "FORMATTED_STRING"
+        ],
+        "type": "string"
+      },
+      "responseValueRenderOption": {
+        "enum": [
+          "FORMATTED_VALUE",
+          "UNFORMATTED_VALUE",
+          "FORMULA"
+        ],
+        "type": "string"
+      },
+      "spreadsheetId": {
+        "minLength": 30,
+        "pattern": "^[a-zA-Z0-9_-]+$",
+        "type": "string"
+      },
+      "valueInputOption": {
+        "enum": [
+          "RAW",
+          "USER_ENTERED"
+        ],
+        "type": "string"
+      },
+      "values": {
+        "items": {
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "type": "array"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "spreadsheetId",
+      "range",
+      "valueInputOption",
+      "values"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLESHEETS_SPREADSHEETS_VALUES_APPEND",
+  "version": "20261001_00"
+}

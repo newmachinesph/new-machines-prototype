@@ -39,6 +39,8 @@ class Agent(SampleAgent):
     model_profile: Literal["reasoning", "fast"] | Opt = None
     used_by: list[AgentPackRef]
     source: Literal["definition", "sample"]
+    # Live workspace: an agent the caller's org built in the Studio. Only that org sees it.
+    built_by_team: bool | Opt = None
 
 
 class PassportResult(Model):
@@ -99,6 +101,9 @@ class Pack(Model):
     per_run_cap: Money | Opt = None
     # Live workspace, hired packs only: who reviews the hire's tasks.
     reviewer_pool: ReviewerPool | Opt = None
+    # Live workspace: a pack the caller's org built in the Studio ("Built by your team"). Only that org sees
+    # it, and it is not certified by New Machines.
+    built_by_team: bool | Opt = None
 
 
 class Suggestion(Model):

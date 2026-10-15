@@ -1,12 +1,12 @@
 /** Where sign-in lands when there is no safe `next`. */
 export const DEFAULT_AFTER_SIGN_IN = "/app";
 
-const SIGNED_IN_AREAS = ["/app", "/work"];
+const SIGNED_IN_AREAS = ["/app", "/work", "/studio"];
 
 /**
  * The `next` path after sign-in, or null when it is unsafe. Safe means a same-origin path (one leading `/`,
- * not `//` or `/\`, no scheme, no backslash or control character) inside a signed-in area (`/app` or `/work`),
- * so a crafted link can't send anyone to another site.
+ * not `//` or `/\`, no scheme, no backslash or control character) inside a signed-in area (`/app`, `/work` or
+ * `/studio`), so a crafted link can't send anyone to another site.
  */
 export function safeNext(raw: string | null | undefined): string | null {
   if (!raw || !raw.startsWith("/") || raw.startsWith("//") || raw.startsWith("/\\")) return null;

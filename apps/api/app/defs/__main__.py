@@ -47,7 +47,7 @@ def _cmd_apply(args) -> int:
 def _cmd_export(args) -> int:
     out = Path(args.out)
     with db.connect() as conn:
-        latest = registry.latest_all(conn)
+        latest = registry.latest_platform(conn)  # an org's own definitions never go into the files
     count = 0
     for v in latest:
         for rel, text in registry.export_files(v).items():

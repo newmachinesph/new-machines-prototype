@@ -214,6 +214,8 @@ class RunSummary(Model):
     stages: Stages
     summary: str
     has_detail: bool = False
+    # A test run started from the Studio ("Test in sandbox"): sandbox data, the pack need not be added.
+    sandbox_test: bool | Opt = None
 
 
 class Run(Model):
@@ -240,6 +242,8 @@ class Run(Model):
     attention: Attention | Opt = None
     deliverable: Deliverable | Opt = None
     recovered: str | Opt = None
+    # A test run started from the Studio ("Test in sandbox"): sandbox data, the pack need not be added.
+    sandbox_test: bool | Opt = None
 
     def summary_row(self) -> RunSummary:
         return RunSummary(
@@ -254,6 +258,7 @@ class Run(Model):
             stages=self.stages,
             summary=self.summary,
             has_detail=True,
+            sandbox_test=self.sandbox_test,
         )
 
 

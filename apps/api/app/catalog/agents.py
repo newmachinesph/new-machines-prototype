@@ -6,7 +6,7 @@ from collections.abc import Iterable
 from pathlib import PurePosixPath
 from typing import NamedTuple
 
-from app.defs.current import latest_bodies, latest_with_files
+from app.defs.current import latest_bodies, latest_with_files, team_keys
 from app.models.catalog import Agent, AgentPackRef, AgentSkill, SampleAgent
 
 MODEL_PROFILES = ("reasoning", "fast")
@@ -71,7 +71,9 @@ def sample_aliases(samples: list[SampleAgent]) -> dict[str, str]:
     return {s.id: keys[_fold(s.name)] for s in samples if _fold(s.name) in keys and s.id not in keys.values()}
 
 
-def definition_agent(key: str, body: dict, files: dict[str, str], packs: Iterable[PackUse]) -> Agent:
+def definition_agent(
+    key: str, body: dict, files: dict[str, str], packs: Iterable[PackUse], *, team: bool = False
+) -> Agent:
     runtime = body.get("runtime") if isinstance(body.get("runtime"), dict) else {}
     processing = body.get("data_processing") if isinstance(body.get("data_processing"), dict) else {}
     profile = runtime.get("model_profile")
@@ -86,12 +88,13 @@ def definition_agent(key: str, body: dict, files: dict[str, str], packs: Iterabl
         summary=str(body.get("summary") or ""),
         capabilities=_strings(body.get("capabilities")),
         regions=_strings(processing.get("supported_regions")),
-        certified=True,
+        certified=not team,
         skills=[AgentSkill(key=PurePosixPath(p).stem, title=skill_title(p, files.get(p))) for p in skills],
         tools=_strings(runtime.get("tools")),
         model_profile=profile if profile in MODEL_PROFILES else None,
         used_by=_used_by(key, packs),
         source="definition",
+        built_by_team=True if team else None,
     )
 
 
@@ -101,26 +104,32 @@ def sample_agent(agent: SampleAgent, packs: Iterable[PackUse]) -> Agent:
     )
 
 
-def definition_pack_uses() -> list[PackUse]:
-    """Every pack definition, for the live workspace (whose marketplace is the pack definitions)."""
+def definition_pack_uses(org_id: str | None = None) -> list[PackUse]:
+    """Every pack definition `org_id` may see, for the live workspace (whose marketplace is the pack
+    definitions)."""
     return [
         PackUse(
             slug=str(body.get("slug") or key),
             name=str(body.get("name") or key),
             agents=_strings(body.get("agents")),
         )
-        for key, body in sorted(latest_bodies("pack").items())
+        for key, body in sorted(latest_bodies("pack", org_id).items())
     ]
 
 
 def catalog(
-    packs: list[PackUse], samples: list[SampleAgent], aliases: dict[str, str] | None = None
+    packs: list[PackUse],
+    samples: list[SampleAgent],
+    aliases: dict[str, str] | None = None,
+    org_id: str | None = None,
 ) -> list[Agent]:
     """Definition agents by key, then `samples` (pass none in the live workspace) except those folded into a
-    definition agent by `aliases`. `packs` should already name definition keys in place of aliases."""
+    definition agent by `aliases`. `packs` should already name definition keys in place of aliases. With
+    `org_id` (live workspace) the org's own agents are included, marked built by its team."""
+    team = team_keys(org_id)
     defined = [
-        definition_agent(key, body, files, packs)
-        for key, (body, files) in sorted(latest_with_files("agent").items())
+        definition_agent(key, body, files, packs, team=("agent", key) in team)
+        for key, (body, files) in sorted(latest_with_files("agent", org_id).items())
     ]
     hidden = {a.id for a in defined} | set(aliases or {})
     return defined + [sample_agent(a, packs) for a in samples if a.id not in hidden]

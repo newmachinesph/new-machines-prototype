@@ -106,3 +106,20 @@ describe("AgentList", () => {
     expect(screen.getByText("1件のパックで使用")).toBeInTheDocument();
   });
 });
+
+describe("AgentList team agents", () => {
+  beforeEach(() => {
+    state.result = ok([
+      agent({ id: "org-a1--helper", name: "Invoice helper", publisher: "Harbor Cafe", builtByTeam: true }),
+      agent({ id: "writer-agent", name: "Writer Agent" }),
+    ]);
+  });
+
+  it("labels an agent the org built", () => {
+    renderWithIntl(<AgentList />);
+    const team = screen.getByRole("link", { name: /Invoice helper/ });
+    expect(within(team).getByText("Built by your team")).toBeInTheDocument();
+    const writer = screen.getByRole("link", { name: /Writer Agent/ });
+    expect(within(writer).queryByText("Built by your team")).toBeNull();
+  });
+});

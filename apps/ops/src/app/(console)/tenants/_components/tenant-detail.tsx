@@ -7,20 +7,14 @@ import { Skeleton } from "@/components/skeleton";
 import { Stat } from "@/components/stat";
 import { Callout, Id, KeyValues, PageHeader, Pill, RunStatusPill, Section, SimTag } from "@/components/ui";
 import { ApiError } from "@/lib/api/errors";
-import type { AuditEntry, Member, OpsRun, TenantConnection, TenantDetail } from "@/lib/api/gen/types.gen";
+import type { AuditEntry, Member, OpsRun, TenantDetail } from "@/lib/api/gen/types.gen";
 import { ago, count, date, money, pct } from "@/lib/format";
 import { useTenant, useTenantAudit } from "@/lib/queries/tenants";
 import { CapUsage } from "./cap-usage";
 import { HealthPill, PlanPill, StatusPill } from "./pills";
 import { TenantActions } from "./tenant-actions";
+import { TenantConnectors } from "./tenant-connectors";
 import { UsageChart } from "./usage-chart";
-
-const CONNECTION: Record<TenantConnection["status"], { tone: "ink" | "quiet" | "human" | "machine"; label: string }> = {
-  connected: { tone: "ink", label: "Connected" },
-  not_connected: { tone: "quiet", label: "Not connected" },
-  sandbox: { tone: "machine", label: "Sandbox" },
-  needs_reauth: { tone: "human", label: "Needs sign-in again" },
-};
 
 const memberColumns: Column<Member>[] = [
   {
@@ -186,20 +180,7 @@ function Body({ t }: { t: TenantDetail }) {
             </ul>
           )}
         </Section>
-        <Section title="Connectors">
-          {t.connectorsList.length === 0 ? (
-            <p className="px-5 py-8 text-sm text-muted">No connectors set up.</p>
-          ) : (
-            <ul className="divide-y divide-rule">
-              {t.connectorsList.map((c) => (
-                <li key={c.app} className="flex items-center justify-between gap-3 px-5 py-2.5 text-sm">
-                  <span className="font-medium">{c.app}</span>
-                  <Pill tone={CONNECTION[c.status].tone}>{CONNECTION[c.status].label}</Pill>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Section>
+        <TenantConnectors connections={t.connectorsList} />
         <Section
           title="Recent runs"
           aside={

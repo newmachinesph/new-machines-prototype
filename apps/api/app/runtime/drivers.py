@@ -56,18 +56,24 @@ class SandboxDriver:
 
 
 class ComposioDriver:
-    """Executes a connector tool's allowlisted Composio slug for the demo user (DEMO_USER_UID)."""
+    """Executes a connector tool's allowlisted Composio slug for one Composio user: the org's own (live
+    workspace, with the connected account its connection row holds) or the demo user (DEMO_USER_UID)."""
 
-    def __init__(self, client: Any = None, user_id: str | None = None) -> None:
+    def __init__(self, client: Any = None, user_id: str | None = None, account_id: str | None = None) -> None:
         self._client = client
         self._user_id = user_id
+        self._account_id = account_id
+
+    @property
+    def account_id(self) -> str | None:
+        return self._account_id
 
     @property
     def client(self) -> Any:
         if self._client is None:
             from composio import Composio  # reads COMPOSIO_API_KEY from the environment
 
-            self._client = Composio()
+            self._client = Composio(allow_tracking=False)  # no SDK telemetry (call names, error text)
         return self._client
 
     @property
@@ -88,6 +94,7 @@ class ComposioDriver:
         if not slug or slug.upper().startswith(META_TOOL_PREFIX):
             return ToolResult(ok=False, data=None, mocked=False, error=f"tool {slug!r} is not allowlisted")
         version = tool.get("version")
+        account = {"connected_account_id": self._account_id} if self._account_id else {}
         try:
             response = self.client.tools.execute(
                 slug,
@@ -96,6 +103,7 @@ class ComposioDriver:
                 version=version,
                 # Connector definitions may not pin a toolkit version; then the latest one runs.
                 dangerously_skip_version_check=None if version else True,
+                **account,
             )
         except Exception as exc:  # the SDK raises for transport/auth errors; report them as a failed call
             log.warning("composio %s.%s failed: %s", connector, tool.get("id"), type(exc).__name__)
@@ -111,6 +119,37 @@ class ComposioDriver:
                 error=f"ToolError: {safe_message(response.get('error'))}",
             )
         return ToolResult(ok=True, data=response.get("data"), mocked=False)
+
+
+NOT_CONNECTED = "NotConnected"  # error type: a live-workspace app with no usable connection
+ROUTE_CHANGED = "RouteChanged"  # error type: the app's route is not the one pinned when the run started
+
+
+class UnconnectedDriver:
+    """A live-workspace app with no usable connection (not connected, pending, or needing sign-in again):
+    nothing runs, and the call fails with a plain reason. A real run never falls back to sandbox data."""
+
+    def execute(self, connector: str, tool: dict, args: dict) -> ToolResult:
+        error = f"{NOT_CONNECTED}: {connector} is not connected"
+        return ToolResult(ok=False, data=None, mocked=False, error=error)
+
+
+class RouteChangedDriver:
+    """A live-workspace app reconnected another way (sandbox data, a real account, or another account) since
+    the run started: nothing runs, so a run never mixes sandbox and real data or two accounts. `app` is the
+    app's display name."""
+
+    def __init__(self, app: str) -> None:
+        self._app = app
+
+    def execute(self, connector: str, tool: dict, args: dict) -> ToolResult:
+        error = f"{ROUTE_CHANGED}: {self._app}'s connection changed during this run"
+        return ToolResult(ok=False, data=None, mocked=False, error=error)
+
+
+def is_route_changed(result: ToolResult | None) -> bool:
+    """Whether a call failed because its app's route is not the one pinned when the run started."""
+    return result is not None and not result.ok and str(result.error or "").startswith(f"{ROUTE_CHANGED}:")
 
 
 def driver_for(connector_def: dict, mode: str) -> SandboxDriver | ComposioDriver:

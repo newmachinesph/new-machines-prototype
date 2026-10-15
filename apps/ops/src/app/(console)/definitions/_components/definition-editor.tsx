@@ -21,7 +21,8 @@ export type DefinitionDraft = { yaml: string; files: Record<string, string> };
 /** The text an edit started from and the latest version at that moment (0: the definition is new). */
 type Base = { draft: DefinitionDraft; latest: number };
 
-type Check = { ok: true } | { issues: ApiIssue[] } | { failed: string } | null;
+/** `warnings`: the API's count of definitions teams built that the edit would break (never which ones). */
+type Check = { ok: true; warnings: string[] } | { issues: ApiIssue[] } | { failed: string } | null;
 
 const MAIN = "(main)";
 const TEXTAREA =
@@ -113,7 +114,7 @@ export function DefinitionEditor({
     let next: Check;
     try {
       const answer = await validate.mutateAsync({ path, body: { yaml: sent.yaml, files: sent.files } });
-      next = answer.ok ? { ok: true } : { issues: answer.errors };
+      next = answer.ok ? { ok: true, warnings: answer.warnings ?? [] } : { issues: answer.errors };
     } catch (e) {
       next = { failed: errorText(e) };
     }
@@ -136,8 +137,13 @@ export function DefinitionEditor({
       setPublishing(false);
     }
     // The published text, as the API stores it, is where the next edit starts.
-    restart({ draft: { yaml: detail.yaml, files: detail.files }, latest: detail.summary.version });
-    toast(isNew ? `${KIND_LABEL[kind]} ${defKey} created` : `${name} published as v${detail.summary.version}`);
+    const next: Base = { draft: { yaml: detail.yaml, files: detail.files }, latest: detail.summary.version };
+    restart(next);
+    const warnings = detail.warnings ?? [];
+    // A warning about teams' definitions stays on screen for the published text, not only in the toast.
+    if (warnings.length) setResult({ for: next.draft, check: { ok: true, warnings } });
+    const done = isNew ? `${KIND_LABEL[kind]} ${defKey} created` : `${name} published as v${detail.summary.version}`;
+    toast([done, ...warnings].join(". "));
     onPublished?.(detail);
     focusPageHeading();
   };
@@ -284,10 +290,18 @@ function CheckResult({ check }: { check: Check }) {
   if (!check) return null;
   if ("ok" in check) {
     return (
-      <p className="flex items-center gap-2 text-sm">
-        <Pill tone="ink">Valid</Pill>
-        No problems found. Ready to publish.
-      </p>
+      <div className="space-y-3">
+        <p className="flex items-center gap-2 text-sm">
+          <Pill tone="ink">Valid</Pill>
+          No problems found. Ready to publish.
+        </p>
+        {check.warnings.length ? (
+          // The live region around this result announces it; the API names a count, never a team's definition.
+          <Callout tone="warn" title="Teams' definitions are affected" announce={false}>
+            {check.warnings.join(" ")}
+          </Callout>
+        ) : null}
+      </div>
     );
   }
   if ("failed" in check) {

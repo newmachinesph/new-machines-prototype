@@ -46,7 +46,12 @@ NETWORK_DELAY = timedelta(minutes=30)
 NETWORK_PAY_PER_RECORD_MINOR = 150  # simulated pay per record shown; no money moves
 LIST_LIMIT = 100
 
-_POOL = "COALESCE(i.reviewer_pool, 'team')"
+# The pool a run's tasks are offered to: the one the org added the pack with, or the team when the org has
+# not added it. A Studio sandbox test (`projection.sandboxTest`) is the builder's own test of an unreleased
+# pack, so its tasks stay with the team whatever pool the pack was added with.
+_POOL = (
+    "CASE WHEN (r.projection->>'sandboxTest')::boolean THEN 'team' ELSE COALESCE(i.reviewer_pool, 'team') END"
+)
 _SELECT = (
     "SELECT t.id, t.public_id, t.run_id, t.node_id, t.kind, t.status, t.payload, t.result, t.created_at, "
     "t.decided_by, t.decided_at, r.projection->>'title' AS run_title, "

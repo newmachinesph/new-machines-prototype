@@ -6,7 +6,7 @@ import Link from "next/link";
 import { parseAsString, useQueryState } from "nuqs";
 import { QueryState } from "@/components/query-state";
 import { Skeleton } from "@/components/skeleton";
-import { ActorGlyph, Id, SimTag } from "@/components/ui";
+import { ActorGlyph, Id, Pill, SimTag } from "@/components/ui";
 import { useAgents } from "@/lib/queries/catalog";
 import type { Agent } from "@/lib/types";
 
@@ -76,7 +76,13 @@ function AgentCard({ agent: a }: { agent: Agent }) {
             {t("publisherVersion", { publisher: a.publisher, version: a.version })}
           </div>
         </div>
-        {a.source === "sample" ? <SimTag className="shrink-0">{t("sample")}</SimTag> : null}
+        {a.builtByTeam ? (
+          <span className="shrink-0">
+            <Pill tone="machine">{t("team")}</Pill>
+          </span>
+        ) : a.source === "sample" ? (
+          <SimTag className="shrink-0">{t("sample")}</SimTag>
+        ) : null}
       </div>
       <p className="mt-3 text-sm leading-relaxed text-grey-700">{a.summary}</p>
       {a.capabilities.length ? (

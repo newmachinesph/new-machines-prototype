@@ -1,4 +1,5 @@
 import os
+from urllib.parse import urlparse
 
 # The API verifies sign-in unless AUTH_MODE=dev is set explicitly; the suite runs in dev mode by default
 # (set before app.main is imported, since importing it builds the app).
@@ -16,7 +17,8 @@ from app.defs.loader import load_bundle  # noqa: E402
 from app.main import create_app  # noqa: E402
 from app.store import reset_store  # noqa: E402
 
-TEST_DB_NAME = "nm_test"
+# The database named by NM_TEST_DATABASE_URL (`nm_test` by default), so parallel runs can each use their own.
+TEST_DB_NAME = urlparse(settings.test_database_url()).path.lstrip("/") or "nm_test"
 
 
 @pytest.fixture

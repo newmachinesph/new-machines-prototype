@@ -6,14 +6,17 @@ toolkit: stripe
 tools:
   - id: list_charges
     slug: STRIPE_LIST_CHARGES
+    version: "20261007_00"
     action_class: read
     capability: payments.read
     description: List card charges created in a time range, with amount, currency, status and refunds.
     input_schema:
       type: object
+      additionalProperties: false
       properties:
         created:
           type: object
+          additionalProperties: false
           description: Creation time filter. Keys gt, gte, lt, lte hold Unix timestamps in seconds.
           properties:
             gt: {type: integer}
@@ -28,11 +31,13 @@ tools:
 
   - id: list_invoices
     slug: STRIPE_LIST_INVOICES
+    version: "20261007_00"
     action_class: read
     capability: invoices.read
     description: List invoices with their number, customer email, amount due, currency, due date and status.
     input_schema:
       type: object
+      additionalProperties: false
       properties:
         status:
           type: string

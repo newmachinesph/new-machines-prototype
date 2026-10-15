@@ -230,9 +230,9 @@ def test_the_detail_lists_the_orgs_own_members_packs_connections_runs_and_spend(
     ]
     assert d["installedPacks"] == [PACK]
     assert d["connectorsList"] == [
-        {"app": "googlesheets", "status": "sandbox"},
-        {"app": "shopify", "status": "sandbox"},
-        {"app": "stripe", "status": "sandbox"},
+        {"app": "googlesheets", "status": "sandbox", "mode": "sandbox"},
+        {"app": "shopify", "status": "sandbox", "mode": "sandbox"},
+        {"app": "stripe", "status": "sandbox", "mode": "sandbox"},
     ]
     runs = d["recentRuns"]
     assert [r["id"] for r in runs] == [busy, "run_recent", "run_old"]
@@ -251,6 +251,64 @@ def test_the_detail_lists_the_orgs_own_members_packs_connections_runs_and_spend(
     assert (other["installedPacks"], other["connectorsList"], other["recentRuns"]) == ([], [], [])
     assert [m["email"] for m in other["membersList"]] == ["ben@example.com"]
     assert all(p["amountMinor"] == 0 for p in other["usageByDay"])
+
+
+def test_the_detail_says_which_connections_reach_a_real_account(live, ben, db):
+    for app, status in (("gmail", "pending"), ("stripe", "connected")):
+        db.execute(
+            "INSERT INTO connections (org_id, app, status, mode, connected_by, account_id) "
+            "VALUES (%s, %s, %s, 'composio', 'uid_ben', 'ca_1')",
+            (ben.org_id, app, status),
+        )
+    db.commit()
+    assert _tenant(live, ben.org_id)["connectorsList"] == [
+        {"app": "gmail", "status": "pending", "mode": "composio"},
+        {"app": "stripe", "status": "connected", "mode": "composio"},
+    ]
+
+
+def test_a_real_connection_without_its_account_needs_signing_in_again(live, ben, db):
+    """A connected Composio row without its account id reaches nothing (`routes.route_of`), so the console
+    shows it as the web does, needing sign-in, and does not count it as a connector."""
+    db.execute(
+        "INSERT INTO connections (org_id, app, status, mode, connected_by) "
+        "VALUES (%s, 'stripe', 'connected', 'composio', 'uid_ben')",
+        (ben.org_id,),
+    )
+    db.commit()
+    assert _tenant(live, ben.org_id)["connectorsList"] == [
+        {"app": "stripe", "status": "needs_reauth", "mode": "composio"}
+    ]
+    assert _by_id(live)[ben.org_id]["connectors"] == 0
+
+
+def test_only_connections_a_run_could_reach_count_as_connectors(live, ben, db):
+    for app, status, mode, account in (
+        ("gmail", "connected", "composio", "ca_1"),  # reachable: the org's own account
+        ("googlesheets", "sandbox", "sandbox", None),  # reachable: sandbox data
+        ("shopify", "connected", "composio", None),  # no account: a run would reach nothing
+        ("slack", "connected", "sandbox", None),  # status and mode disagree
+        ("stripe", "pending", "composio", "ca_1"),  # still signing in
+    ):
+        db.execute(
+            "INSERT INTO connections (org_id, app, status, mode, connected_by, account_id) "
+            "VALUES (%s, %s, %s, %s, 'uid_ben', %s)",
+            (ben.org_id, app, status, mode, account),
+        )
+    db.commit()
+    assert _by_id(live)[ben.org_id]["connectors"] == 2
+    assert _tenant(live, ben.org_id)["connectors"] == 2
+
+
+def test_a_disconnected_row_has_no_mode(live, ben, db):
+    """A row left behind by a disconnect still names the app, but how it was reached no longer applies."""
+    db.execute(
+        "INSERT INTO connections (org_id, app, status, mode, connected_by) "
+        "VALUES (%s, 'gmail', 'not_connected', 'composio', 'uid_ben')",
+        (ben.org_id,),
+    )
+    db.commit()
+    assert _tenant(live, ben.org_id)["connectorsList"] == [{"app": "gmail", "status": "not_connected"}]
 
 
 def test_an_unknown_tenant_is_not_found(live):

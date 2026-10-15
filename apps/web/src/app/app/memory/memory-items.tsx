@@ -259,6 +259,11 @@ function MemoryColumns({ rows }: { rows: Row[] }) {
   return (
     <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-2">
       <div className="space-y-6 xl:sticky xl:top-20">
+        {candidates.length ? null : (
+          <Section title={t("candidate.title")}>
+            <p className="px-5 py-6 text-sm text-muted">{t("noCandidates")}</p>
+          </Section>
+        )}
         {candidates.map((m) => (
           <MemoryCandidate
             key={m.id}

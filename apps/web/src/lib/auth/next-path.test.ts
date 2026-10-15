@@ -2,7 +2,15 @@ import { describe, expect, it } from "vitest";
 import { safeNext, signInHref } from "./next-path";
 
 describe("safeNext", () => {
-  it.each(["/app", "/app/runs/run_1042?x=1", "/work", "/work/tasks/ht_011", "/app?tab=all"])("accepts %s", (path) => {
+  it.each([
+    "/app",
+    "/app/runs/run_1042?x=1",
+    "/work",
+    "/work/tasks/ht_011",
+    "/app?tab=all",
+    "/studio",
+    "/studio/packs/acme--invoices",
+  ])("accepts %s", (path) => {
     expect(safeNext(path)).toBe(path);
   });
 
@@ -15,6 +23,7 @@ describe("safeNext", () => {
     "/app\\..\\evil",
     "/app/\tx",
     "/application",
+    "/studios",
     "/",
     "/settings",
     "app",

@@ -1,0 +1,90 @@
+{
+  "input_parameters": {
+    "properties": {
+      "attachment": {
+        "anyOf": [
+          {
+            "properties": {
+              "mimetype": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "s3key": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "mimetype",
+              "s3key"
+            ],
+            "type": "object"
+          },
+          {
+            "items": {
+              "properties": {
+                "mimetype": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "s3key": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name",
+                "mimetype",
+                "s3key"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          }
+        ]
+      },
+      "bcc": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "body": {
+        "type": "string"
+      },
+      "cc": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "extra_recipients": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "is_html": {
+        "type": "boolean"
+      },
+      "recipient_email": {
+        "type": "string"
+      },
+      "subject": {
+        "type": "string"
+      },
+      "thread_id": {
+        "type": "string"
+      },
+      "user_id": {
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "slug": "GMAIL_CREATE_EMAIL_DRAFT",
+  "version": "20261010_00"
+}

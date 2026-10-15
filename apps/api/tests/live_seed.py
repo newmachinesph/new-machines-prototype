@@ -18,10 +18,14 @@ def add_org(db, org_id: str, name: str, **cols) -> None:
 
 
 def connect(db, org_id: str, app: str, status: str) -> None:
+    """A connection row in the state `status`: sandbox data when sandbox, else the org's own Composio account,
+    which a `connected` row has (so a run could reach it, `routes.route_of`)."""
+    mode = "sandbox" if status == "sandbox" else "composio"
+    account = f"ca_{org_id}" if status == "connected" else None
     db.execute(
-        "INSERT INTO connections (org_id, app, status, mode, connected_by) "
-        "VALUES (%s, %s, %s, 'sandbox', 'u')",
-        (org_id, app, status),
+        "INSERT INTO connections (org_id, app, status, mode, connected_by, account_id) "
+        "VALUES (%s, %s, %s, %s, 'u', %s)",
+        (org_id, app, status, mode, account),
     )
 
 

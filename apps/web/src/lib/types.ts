@@ -3,7 +3,6 @@ export type {
   Agent,
   Approval,
   AttentionItem,
-  Connection,
   DecisionRecord,
   Deliverable,
   Earning,
@@ -17,6 +16,7 @@ export type {
   Pack,
   Policy,
   RedactedRecord,
+  RevokedGrant,
   Run,
   RunEdge,
   RunNode,
@@ -26,7 +26,21 @@ export type {
   TrustPassport,
   Usage,
 } from "./api/gen/types.gen";
-import type { HumanTask, Pack, Run, RunNode, SubmitReviewRequest } from "./api/gen/types.gen";
+import type {
+  Connection as ApiConnection,
+  HumanTask,
+  Pack,
+  RevokedGrant,
+  Run,
+  RunNode,
+  SubmitReviewRequest,
+} from "./api/gen/types.gen";
+
+/**
+ * An app connection as the UI reads it: the API may leave `revoked` out (it defaults to `[]` on the wire), and
+ * `useConnections` fills it in, so every card can count on the list.
+ */
+export type Connection = ApiConnection & { revoked: RevokedGrant[] };
 
 /** Who did a piece of work. Drives colour + glyph everywhere. */
 export type Actor = "machine" | "human" | "policy" | "system" | "buyer";

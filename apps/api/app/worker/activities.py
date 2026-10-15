@@ -19,7 +19,7 @@ from temporalio import activity
 from temporalio.exceptions import ApplicationError
 
 from app import db, settings
-from app.runtime import agent, cel, decisions, gateway, memory, projection, providers, receipt
+from app.runtime import agent, cel, decisions, drivers, gateway, memory, projection, providers, receipt
 from app.runtime.drivers import ToolResult, safe_message
 from app.runtime.providers import ModelProvider, ToolSpec
 
@@ -36,6 +36,7 @@ _FAILED_STATUS = {"rejected": "REJECTED", "denied": "REJECTED", "timeout": "TIME
 
 SEALED = "receipt.sealed"
 RUN_SEALED = "RunSealed"  # error type: the run's receipt is sealed, so nothing more may happen in it
+RESULT_LOST = "ResultLost"  # error type: a recorded side-effecting call's kept result is missing
 FINAL_STATUS = {"run.completed": "COMPLETED", "run.failed": "FAILED"}  # final event -> sealed status
 
 Event = tuple[str, dict]  # (type, data); node id and key come from the activity's call
@@ -149,7 +150,12 @@ def _refuse_after_seal(conn, run_id: str, keys: list[str]) -> None:
         "SELECT count(*) AS n FROM receipt_entries WHERE run_id = %s AND event_key = ANY(%s)", (run_id, keys)
     ).fetchone()["n"]
     if known < len(set(keys)):
-        raise _fatal(RUN_SEALED, f"run {run_id} is already finished; its receipt is sealed")
+        raise _sealed(run_id)
+
+
+def _sealed(run_id: str) -> ApplicationError:
+    """The non-retryable error for any attempt to add to a sealed run."""
+    return _fatal(RUN_SEALED, f"run {run_id} is already finished; its receipt is sealed")
 
 
 def record_events(conn, run_id: str, events: list[tuple[str, str, str | None, dict]]) -> int:
@@ -182,6 +188,8 @@ def record_events(conn, run_id: str, events: list[tuple[str, str, str | None, di
         sealed = {"entry_count": last["n"], "versions": row["versions"] or [], "status": status}
         receipt.append(conn, run_id, key, SEALED, node_id, sealed)
         added += 1
+        # The run is over: nothing of it may retry a call any more, so the results kept for retries go now.
+        conn.execute("DELETE FROM tool_results WHERE run_id = %s", (run_id,))
     if added:
         projection.save(conn, run_id, current, current["status"])
     return added
@@ -209,9 +217,10 @@ def _keyed(call, events: list[Event]) -> list[tuple[str, str, str | None, dict]]
 def _commit(call, events: list[Event], write: Callable[[Any], None] | None = None) -> None:
     """Record `events` for the call's node and run `write(conn)` in the same transaction."""
     with db.connect() as conn:
+        # First: it takes the run's row lock, so this commit and the seal cannot interleave.
+        record_events(conn, call.run_id, _keyed(call, events))
         if write is not None:
             write(conn)
-        record_events(conn, call.run_id, _keyed(call, events))
         conn.commit()
 
 
@@ -382,33 +391,81 @@ def _memory(call: NodeCall, node: dict) -> Step:
     return Step({"text": text}, route, [("node.completed", {"route": route, "summary": summary})], write)
 
 
-def _recorded_tool_call(run_id: str, key: str, call_id: str) -> tuple[dict, Any] | None:
-    """(the tool.call entry's data, the call's kept result or None) when a call with this event key and id
-    already committed; None when it has not."""
+@dataclass(frozen=True)
+class RecordedCall:
+    """What a tool call finds before it reaches the gateway, in one query."""
+
+    sealed: bool = False  # the run's receipt is sealed
+    entry: dict | None = None  # the step's tool.call entry, when the call already committed
+    kept: Any = None  # the call's kept result in tool_results
+    has_kept: bool = False  # a tool_results row exists (tells a kept JSON null from no row)
+
+
+def _recorded_tool_call(run_id: str, key: str, call_id: str) -> RecordedCall:
+    """Whether the run is sealed, and the tool.call entry with this event key and id plus its kept result
+    when the call already committed."""
     with db.connect() as conn:
         row = conn.execute(
-            "SELECT e.data, r.result FROM receipt_entries e "
-            "LEFT JOIN tool_results r ON r.run_id = e.run_id AND r.event_key = e.event_key "
-            "WHERE e.run_id = %s AND e.event_key = %s AND e.type = 'tool.call' AND e.data->>'id' = %s",
-            (run_id, key, call_id),
+            "SELECT EXISTS (SELECT 1 FROM receipt_entries WHERE run_id = %s AND type = %s) AS sealed, "
+            "e.data, r.result, r.event_key IS NOT NULL AS has_kept FROM (SELECT 1) AS one "
+            "LEFT JOIN receipt_entries e ON e.run_id = %s AND e.event_key = %s AND e.type = 'tool.call' "
+            "AND e.data->>'id' = %s "
+            "LEFT JOIN tool_results r ON r.run_id = e.run_id AND r.event_key = e.event_key",
+            (run_id, SEALED, run_id, key, call_id),
         ).fetchone()
-    return (row["data"], row["result"]) if row else None
+    return RecordedCall(row["sealed"], row["data"], row["result"], row["has_kept"])
 
 
 def _keep_result(run_id: str, key: str, result: Any) -> Callable[[Any], None]:
-    """A `write(conn)` that keeps a permitted call's result in `tool_results`, so it lands in the same
-    transaction as the call's tool.call entry: both exist or neither does. The table exists only for retry
-    idempotency (the sealed receipt never holds connector data) and its rows can be pruned once the run
-    reaches a terminal status. No API reads it."""
+    """A `write(conn)` that keeps a permitted side-effecting call's result in `tool_results`, so it lands in
+    the same transaction as the call's tool.call entry: both exist or neither does. The table exists only for
+    retry idempotency (the sealed receipt never holds connector data) and its rows are deleted when the run's
+    receipt is sealed (`record_events`). No API reads it."""
 
     def write(conn) -> None:
         conn.execute(
-            "INSERT INTO tool_results (run_id, event_key, result) VALUES (%s, %s, %s) "
+            "INSERT INTO tool_results (run_id, event_key, result) SELECT %s, %s, %s "
+            "WHERE NOT EXISTS (SELECT 1 FROM receipt_entries WHERE run_id = %s AND type = %s) "
             "ON CONFLICT (run_id, event_key) DO NOTHING",
-            (run_id, key, Jsonb(result)),
+            (run_id, key, Jsonb(result), run_id, SEALED),
         )
 
     return write
+
+
+READ = "read"  # the action class of a call with no side effects
+
+
+def _keeps_result(entry: dict) -> bool:
+    """Only a call with side effects keeps its result for a retry; a retried read reads again. A call whose
+    action class is unknown is kept, since it may have side effects."""
+    return entry.get("action_class") != READ
+
+
+READ_AGAIN = "ReadAgain"  # error type: a recorded read could not be read again
+
+
+def _read_again(call, ref: str, args: dict, approved: bool) -> Any:
+    """The data of a read whose tool.call entry is already recorded. The receipt keeps its first entry, so
+    nothing is recorded that contradicts it. A read the policy no longer permits (a revoked grant, a disabled
+    connector) or whose app was reconnected another way since the run started (RouteChanged: never sandbox
+    data in place of real data, the reverse, or another account's data) fails for good; any other failure
+    raises a retryable error and Temporal tries again."""
+    decision, result = gateway.call_tool(
+        snapshot=call.snapshot, tool_ref=ref, args=args, approved=approved, mode=settings.connector_mode()
+    )
+    if decision.verdict != gateway.PERMIT:
+        codes = ", ".join(decision.reason_codes)
+        raise _fatal(READ_AGAIN, f"the repeated read of {ref} is not permitted any more: {codes}")
+    if result is None:
+        raise ApplicationError(f"the repeated read of {ref} did not run", type=READ_AGAIN)
+    if drivers.is_route_changed(result):
+        raise _fatal(drivers.ROUTE_CHANGED, str(result.error))
+    if not result.ok:
+        raise ApplicationError(
+            f"the repeated read of {ref} did not succeed: {safe_message(result.error)}", type=READ_AGAIN
+        )
+    return result.data
 
 
 @dataclass
@@ -431,23 +488,62 @@ def _tool_outcome(entry: dict, data: Any) -> ToolOutcome:
     return ToolOutcome(("tool.call", entry), None, data)
 
 
-def _tool_call(call: NodeCall | ItemCall, ref: str, args: dict, call_id: str, approved: bool) -> ToolOutcome:
+def _tool_result_block(call_id: str, entry: dict, data: Any) -> dict:
+    """The model's tool_result block for a tool.call entry and the call's data."""
+    policy = entry["policy"]
+    permitted = policy["verdict"] == gateway.PERMIT
+    if not permitted:
+        content = "Not permitted: " + ", ".join(policy["reason_codes"])
+    elif not entry["ok"]:
+        content = f"Error: {entry.get('error', 'the tool call failed')}"
+    else:
+        content = json.dumps(data, ensure_ascii=False)
+    return {
+        "type": "tool_result",
+        "tool_use_id": call_id,
+        "content": content,
+        "is_error": not (permitted and entry["ok"]),
+    }
+
+
+def _recorded_outcome(call, prior: RecordedCall, ref: str, args: dict, approved: bool) -> ToolOutcome:
+    """The outcome of a call whose tool.call entry already committed, rebuilt without calling the connector
+    again. Only a permitted, successful read reads again, since reads keep no result."""
+    entry = prior.entry
+    if prior.has_kept or entry["policy"]["verdict"] != gateway.PERMIT or not entry["ok"]:
+        return _tool_outcome(entry, prior.kept)
+    if prior.sealed:  # its kept result went with the seal; nothing may run any more
+        raise _sealed(call.run_id)
+    if entry.get("action_class") == READ:
+        return _tool_outcome(entry, _read_again(call, ref, args, approved))
+    raise _fatal(RESULT_LOST, f"the result of tool call {entry['id']} was not kept; it will not be repeated")
+
+
+def _tool_call(
+    call: NodeCall | ItemCall | ToolUse, ref: str, args: dict, call_id: str, approved: bool
+) -> ToolOutcome:
     """One gateway call. `approved` is the node's approval (`state.approvals[node_id]`), which covers it.
 
     At most once per step: when an activity is retried after its commit landed (its result was lost), the
     tool.call entry is already recorded under this step's key, so the outcome is rebuilt from it and from the
     result kept in `tool_results`, and the connector is not called again (a live retry would otherwise repeat
-    a real side effect). The caller commits `write` with the events."""
+    a real side effect). Only side-effecting calls keep their result in `tool_results`; a retried read reads
+    again (`_read_again`). A sealed run calls no connector: the call is refused with RunSealed before the
+    gateway (the commit would refuse its entry anyway, but only after the call had run). This is best-effort
+    against sealers outside the workflow (the API seals a run whose start failed): a seal that lands between
+    this check and the gateway call cannot stop the call. The caller commits `write` with the events."""
     key = event_key(call.node_id, call.attempt, "tool.call", call.step)  # its key in _keyed: first tool.call
-    recorded = _recorded_tool_call(call.run_id, key, call_id)
-    if recorded is not None:
-        return _tool_outcome(*recorded)
+    prior = _recorded_tool_call(call.run_id, key, call_id)
+    if prior.entry is not None:
+        return _recorded_outcome(call, prior, ref, args, approved)
+    if prior.sealed:
+        raise _sealed(call.run_id)
     decision, result = gateway.call_tool(
         snapshot=call.snapshot, tool_ref=ref, args=args, approved=approved, mode=settings.connector_mode()
     )
     data = result.data if result is not None else None
     outcome = _tool_outcome(_tool_event(call.snapshot, ref, call_id, decision, result), data)
-    if outcome.failed is not None:
+    if outcome.failed is not None or not _keeps_result(outcome.event[1]):
         return outcome
     return replace(outcome, write=_keep_result(call.run_id, key, outcome.data))
 
@@ -578,6 +674,45 @@ def _task_payload(call: NodeCall, node: dict, kind: str) -> dict:
     authorization = gateway.contract_of(call.snapshot).get("authorization") or {}
     payload["policy_ref"] = authorization.get("policy_ref") or gateway.DEFAULT_POLICY_REF
     return payload
+
+
+_REFUSALS = {
+    gateway.GRANT_REVOKED: "the {app} connection no longer grants this pack the access the step needs",
+    gateway.NOT_CONNECTED: "{app} is not connected",
+    gateway.ROUTE_CHANGED: "the {app} connection changed during this run",
+}
+
+
+def _refused_approval(call: NodeCall, node: dict) -> tuple[str, str] | None:
+    """(reason code, explanation) when the approval at `node` must not be asked because the call it approves
+    could not run (`gateway.approval_refusal`); None otherwise."""
+    target = (node.get("routes") or {}).get("granted")
+    tool_ref = (_node(call.snapshot, target).get("config") or {}).get("tool") if target else None
+    code = gateway.approval_refusal(call.snapshot, tool_ref) if tool_ref else None
+    if code is None:
+        return None
+    found = gateway.find_tool(call.snapshot, tool_ref)
+    app = (found[1].get("app") if found else None) or tool_ref.partition(".")[0]
+    why = _REFUSALS[code].format(app=app)
+    return code, f"The approval was not asked for: {why} ({code})."
+
+
+def _recorded_opening(call: NodeCall) -> dict[str, dict]:
+    """What an earlier attempt of this step's `open_task` committed, by event type: `node.failed` (the
+    approval was refused) and `approval` (it was opened). A retry follows the receipt, not a new forecast."""
+    keys = [event_key(call.node_id, call.attempt, t, call.step) for t in ("node.failed", "approval")]
+    with db.connect() as conn:
+        rows = conn.execute(
+            "SELECT type, data FROM receipt_entries WHERE run_id = %s AND event_key = ANY(%s)",
+            (call.run_id, keys),
+        ).fetchall()
+    return {r["type"]: r["data"] or {} for r in rows}
+
+
+def _refused(kind: str, explanation: str) -> dict:
+    """open_task's result for an approval it did not open: the workflow follows `denied` without waiting."""
+    output = {"explanation": explanation}
+    return {"task_id": None, "kind": kind, "timeout_s": 0, "route": "denied", "output": output}
 
 
 def _clean_resolutions(items: list) -> list[dict]:
@@ -762,9 +897,13 @@ class PackActivities:
 
     @activity.defn
     def tool_call(self, call: ToolUse) -> dict:
-        """One agent tool call through the gateway (never pre-approved). Returns a tool_result block."""
+        """One agent tool call through the gateway (never pre-approved). Returns a tool_result block.
+        At most once per step, like a connector node (`_tool_call`): a retry after the commit landed
+        rebuilds the block from the recorded entry and the kept result, and does not call the connector
+        again."""
         name = str(call.block.get("name", ""))
         ref = agent.tool_ref(name)
+        call_id = str(call.block.get("id") or "")
         if name not in call.offered or name == providers.SUBMIT_TOOL:
             policy_ref = (gateway.contract_of(call.snapshot).get("authorization") or {}).get("policy_ref")
             decision = gateway.PolicyDecision(
@@ -772,30 +911,12 @@ class PackActivities:
                 reason_codes=["TOOL_NOT_OFFERED"],
                 ref=policy_ref or gateway.DEFAULT_POLICY_REF,
             )
-            result = None
-        else:
-            decision, result = gateway.call_tool(
-                snapshot=call.snapshot,
-                tool_ref=ref,
-                args=call.block.get("input") or {},
-                approved=False,
-                mode=settings.connector_mode(),
-            )
-        data = _tool_event(call.snapshot, ref, str(call.block.get("id", "")), decision, result)
-        _commit(call, [("tool.call", data)])
-        if result is None:
-            content = "Not permitted: " + ", ".join(decision.reason_codes)
-        elif not result.ok:
-            content = f"Error: {data.get('error', 'the tool call failed')}"
-        else:
-            content = json.dumps(result.data, ensure_ascii=False)
-        ok = bool(result and result.ok)
-        return {
-            "type": "tool_result",
-            "tool_use_id": call.block.get("id"),
-            "content": content,
-            "is_error": not ok,
-        }
+            entry = _tool_event(call.snapshot, ref, call_id, decision, None)
+            _commit(call, [("tool.call", entry)])
+            return _tool_result_block(call_id, entry, None)
+        outcome = _tool_call(call, ref, call.block.get("input") or {}, call_id, approved=False)
+        _commit(call, [outcome.event], outcome.write)
+        return _tool_result_block(call_id, outcome.event[1], outcome.data)
 
     @activity.defn
     def finish_node(self, call: AgentResult) -> dict:
@@ -817,11 +938,25 @@ class PackActivities:
 
     @activity.defn
     def open_task(self, call: NodeCall) -> dict:
-        """Create the human task or approval row and mark the node as waiting."""
+        """Create the human task or approval row and mark the node as waiting. An approval for a call that
+        could not run (its app not connected, reconnected another way, or no longer granting the pack the
+        access) is not opened: the node fails on its `denied` route at once, with the reason code, and the
+        result carries `route` and `output` for the workflow to follow without waiting. A retry keeps what
+        the receipt already holds for this step, whatever the connection says now."""
         with _config_errors():
             node = _node(call.snapshot, call.node_id)
             kind = "human" if node["type"] == "human_workforce" else "approval"
-            payload = _task_payload(call, node, kind)
+        recorded = _recorded_opening(call) if kind == "approval" else {}
+        if "node.failed" in recorded:
+            return _refused(kind, str(recorded["node.failed"].get("error") or ""))
+        with _config_errors():
+            refused = _refused_approval(call, node) if kind == "approval" and not recorded else None
+            payload = _task_payload(call, node, kind) if refused is None else {}
+        if refused is not None:
+            code, explanation = refused
+            failed = {"status": "BLOCKED", "route": "denied", "error": explanation, "reason_codes": [code]}
+            _commit(call, [("node.started", {}), ("node.failed", failed)])
+            return _refused(kind, explanation)
         task_id = f"{'ht' if kind == 'human' else 'apr'}_{call.run_id}_{call.node_id}_{call.attempt}"
         status = "open" if kind == "human" else "pending"
         if kind == "human":
