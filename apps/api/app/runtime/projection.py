@@ -255,7 +255,8 @@ def _on_node_completed(p: dict, event: dict, data: dict) -> None:
         passed = data.get("route", "pass") == "pass"
         p["stages"]["executed"] = "done"
         p["stages"]["verified"] = "done" if passed else "failed"
-    if node["type"] not in ("trigger", "end"):
+    # A review's decision has its own line (`_on_human_task`) with the reviewer's note: no second one.
+    if node["type"] not in ("trigger", "end", "human_workforce"):
         _say(p, event, node["actor"], node["label"], data.get("summary") or f"Finished: {node['label']}")
 
 
@@ -390,6 +391,15 @@ def _on_model_usage(p: dict, event: dict, data: dict) -> None:
         node["cost"] = _money(node.get("cost", _money(0))["amountMinor"] + cost)
 
 
+# A review's verdict as the run's timeline names the decision (the reviewer portal's words).
+VERDICT_TITLES = {
+    "APPROVED": "Approved the result",
+    "REVISION_REQUIRED": "Sent back with corrections",
+    "REJECTED": "Rejected the result",
+    "ESCALATED": "Escalated the result",
+}
+
+
 def _on_human_task(p: dict, event: dict, data: dict) -> None:
     node = _node(p, event["node_id"])
     task_id = data.get("task_id")
@@ -410,7 +420,10 @@ def _on_human_task(p: dict, event: dict, data: dict) -> None:
         return
     p.pop("attention", None)
     _set_run_status(p, "RUNNING")
-    _add_money(p["spent"], "human", int(data.get("cost_minor") or 0))
+    cost = int(data.get("cost_minor") or 0)
+    _add_money(p["spent"], "human", cost)
+    if node is not None and cost:
+        node["cost"] = _money(node.get("cost", _money(0))["amountMinor"] + cost)
     titles = {
         "resolved": "Resolved the task",
         "rejected": "Rejected the task",
@@ -422,7 +435,7 @@ def _on_human_task(p: dict, event: dict, data: dict) -> None:
         event,
         "human" if status != "timeout" else "system",
         data.get("decided_by") or "Reviewer",
-        titles.get(status, f"Task {status}"),
+        VERDICT_TITLES.get(data.get("verdict") or "") or titles.get(status, f"Task {status}"),
         detail=data.get("note") or None,
         ref=task_id,
         tone="ok" if status == "resolved" else "blocked",

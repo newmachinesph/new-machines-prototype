@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
 import type { PendingInvitation } from "@/lib/api/gen/types.gen";
 import { useErrorText } from "@/lib/api/use-error-text";
 import { Button, Callout } from "@/components/ui";
@@ -12,6 +13,7 @@ function InvitationNotice({ invitation }: { invitation: PendingInvitation }) {
   const t = useTranslations("overview.invitation");
   const tn = useTranslations("nav");
   const errorText = useErrorText();
+  const router = useRouter();
   const accept = useAcceptInvitation();
   const decline = useDeclineInvitation();
   const busy = accept.isPending || decline.isPending;
@@ -26,7 +28,19 @@ function InvitationNotice({ invitation }: { invitation: PendingInvitation }) {
           <Button variant="secondary" className="h-8" disabled={busy} onClick={() => decline.mutate(vars)}>
             {t("decline")}
           </Button>
-          <Button className="h-8" disabled={busy} onClick={() => accept.mutate(vars)}>
+          <Button
+            className="h-8"
+            disabled={busy}
+            // A reviewer's work is in the reviewer portal, not the business workspace. The notice is gone
+            // before the mutation settles (accepting resets /v1/me), so wait on the promise, not a callback.
+            // A failure shows through `accept.error`.
+            onClick={() =>
+              void accept.mutateAsync(vars).then(
+                () => invitation.role === "reviewer" && router.push("/work"),
+                () => undefined,
+              )
+            }
+          >
             {t("accept")}
           </Button>
         </div>

@@ -1432,7 +1432,8 @@ export const zHumanTask = z.object({
     buyer: z.string(),
     realRun: z.boolean().optional(),
     runOutcome: z.enum(['CONTINUES', 'STOPS']).optional(),
-    via: z.enum(['team', 'network']).optional()
+    via: z.enum(['team', 'network']).optional(),
+    details: z.array(zDigestRow).optional()
 });
 
 /**

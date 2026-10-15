@@ -80,7 +80,9 @@ export function TaskWorkspace({ task, buyer }: { task: HumanTask; buyer: string 
   const root = useRef<HTMLDivElement>(null);
   const claimAgainButton = useRef<HTMLButtonElement>(null);
   const tWork = useTranslations("work");
-  const interactive = task.records.length > 0;
+  // A demo fixture without records is for looking only; a real run's task is always reviewable, with or
+  // without records to call (a pack's review step may show none: then the verdict and feedback are the review).
+  const interactive = realRun || task.records.length > 0;
   const holding = phase === "claimed" || phase === "expired";
   // A live task comes through the reviewer's own team (unpaid) or the network (simulated pay, another org's
   // run: its id is not the reviewer's to know, so the API sends it empty). A demo task has no `via`.
@@ -438,7 +440,8 @@ function Workspace({
   const t = useTranslations("task");
   const [calls, setCalls] = useState<Record<string, Call | undefined>>({});
   const [notes, setNotes] = useState<Record<string, string>>({});
-  const [verdict, setVerdict] = useState<ReviewVerdict>("REVISION_REQUIRED");
+  // With records to correct, a correction is the likely answer; with none, approving is.
+  const [verdict, setVerdict] = useState<ReviewVerdict>(task.records.length > 0 ? "REVISION_REQUIRED" : "APPROVED");
   const [feedback, setFeedback] = useState("");
   const complete = task.records.every((r) => calls[r.id]) && feedback.trim().length >= 10;
 
@@ -460,6 +463,18 @@ function Workspace({
     <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
       <div className="space-y-4">
         <p className="max-w-[78ch] text-sm leading-relaxed text-grey-700">{task.instructions}</p>
+        {task.details?.length ? (
+          <Section title={t("details.title")}>
+            <div className="px-5 py-2">
+              <KeyValues
+                rows={task.details.map((d) => ({
+                  label: d.label,
+                  value: <span className="whitespace-pre-wrap">{d.value}</span>,
+                }))}
+              />
+            </div>
+          </Section>
+        ) : null}
         {task.records.map((r, i) => (
           <RecordCard
             key={r.id}
@@ -505,7 +520,9 @@ function Workspace({
           {expired ? (
             <p className="mt-2 text-xs text-blocked">{t("feedback.expired")}</p>
           ) : !complete ? (
-            <p className="mt-2 text-xs text-muted">{t("feedback.incomplete")}</p>
+            <p className="mt-2 text-xs text-muted">
+              {t(task.records.length > 0 ? "feedback.incomplete" : "feedback.incompleteNoRecords")}
+            </p>
           ) : null}
         </div>
       </Section>

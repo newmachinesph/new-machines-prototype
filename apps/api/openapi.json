@@ -12654,6 +12654,13 @@
               "network"
             ],
             "title": "Via"
+          },
+          "details": {
+            "items": {
+              "$ref": "#/components/schemas/DigestRow"
+            },
+            "type": "array",
+            "title": "Details"
           }
         },
         "type": "object",

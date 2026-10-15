@@ -46,6 +46,8 @@ vi.mock("@/lib/queries/catalog", () => ({
   useTaxonomy: () => ok({ functions: [], industries: [] }),
 }));
 
+vi.mock("@/lib/queries/me", () => ({ useMe: () => ({ data: { role: "owner" } }), useIsLive: () => true }));
+
 describe("PackGrid team packs", () => {
   it("labels a team pack and offers a Built by your team view", async () => {
     renderWithIntl(<PackGrid />);

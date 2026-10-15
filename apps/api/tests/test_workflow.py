@@ -464,6 +464,70 @@ def test_a_decision_the_api_recorded_wins_over_the_timer(runtime_env):
     _assert_sealed(conn, run_id, snapshot, "COMPLETED")
 
 
+def _network_review(conn, decided: bool) -> tuple[str, dict]:
+    """Run the pack to its review and claim it through the network. Then either record a REVISION_REQUIRED
+    review as the API does and signal it, or let the 24 h timer fire. Returns the run id and the human task's
+    closing event."""
+    run_id, snapshot = _new_run(conn)
+
+    async def scenario(env):
+        handle = await _start(env.client, run_id, snapshot)
+        review = await _waiting(handle, "review")
+        marks = {"claimed_by": "uid_stranger", "claimed_via": "network", "pay": 300}
+        task = review["task_id"]
+        conn.execute("UPDATE run_tasks SET payload = payload || %s WHERE id = %s", (Jsonb(marks), task))
+        conn.commit()
+        if not decided:
+            return await handle.result()  # the time-skipping server jumps past the task timeout
+        result = {
+            "outcome": "resolved",
+            "note": "Fix #1004.",
+            "resolutions": [],
+            "verdict": "REVISION_REQUIRED",
+        }
+        conn.execute(
+            "UPDATE run_tasks SET status = 'resolved', result = %s, decided_by = 'uid_stranger', "
+            "decided_at = now() WHERE id = %s",
+            (Jsonb(result), task),
+        )
+        conn.commit()
+        await handle.signal(PackRunner.human_result, args=[task, "resolved", "Fix #1004."])
+        approval = await _waiting(handle, "approve_write")
+        await handle.signal(PackRunner.approval, args=[approval["task_id"], "granted", "buyer@demo"])
+        return await handle.result()
+
+    asyncio.run(_drive(None, scenario))
+    entries = _entries(conn, run_id)
+    [closed] = [e for e in entries if e["type"] == "human.task" and e["data"]["status"] != "open"]
+    return run_id, closed
+
+
+def test_a_network_review_reaches_the_buyer_s_timeline_anonymous_with_its_verdict_and_pay(runtime_env):
+    conn = runtime_env
+    run_id, closed = _network_review(conn, decided=True)
+    assert "uid_stranger" not in json.dumps(closed["data"])
+    assert closed["data"]["decided_by"] == "Network reviewer" and closed["data"]["cost_minor"] == 300
+    p = _run_row(conn, run_id)["projection"]
+    assert "uid_stranger" not in json.dumps(p["timeline"])
+    resolved = [
+        t for t in p["timeline"] if t.get("ref") == closed["data"]["task_id"] and t["actor"] == "human"
+    ]
+    assert [(t["who"], t["title"]) for t in resolved] == [("Network reviewer", "Sent back with corrections")]
+    # The reviewer's note is on that line only, not repeated as the review step finishing.
+    assert [t for t in p["timeline"] if "Fix #1004." in json.dumps(t)] == [resolved[0]]
+    assert _nodes(p)["review"]["output"] == "Fix #1004."  # the step still carries it
+    assert p["spent"]["human"]["amountMinor"] == 300  # the run's reviewer pay, counted once
+    assert _nodes(p)["review"]["cost"]["amountMinor"] == 300
+
+
+def test_a_network_claim_that_times_out_costs_the_buyer_nothing(runtime_env):
+    conn = runtime_env
+    run_id, closed = _network_review(conn, decided=False)
+    assert closed["data"]["status"] == "timeout" and "cost_minor" not in closed["data"]
+    assert "decided_by" not in closed["data"]
+    assert _run_row(conn, run_id)["projection"]["spent"]["human"]["amountMinor"] == 0
+
+
 def test_config_errors_reach_the_receipt_sanitized():
     with pytest.raises(ApplicationError) as caught, activities._config_errors():
         raise ValueError("bad value from https://backend.example.com/v3/x?api_key=secret " + "a" * 600)

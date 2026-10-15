@@ -122,6 +122,19 @@ def test_cors_caches_preflight_and_refuses_other_origins(client):
     assert "access-control-allow-origin" not in simple.headers
 
 
+def test_cors_allows_every_method_the_api_serves(client):
+    """A browser preflights PUT and PATCH: a method missing from CORS fails in the browser only."""
+    served = {m.upper() for ops in create_app().openapi()["paths"].values() for m in ops if m != "parameters"}
+    assert "PUT" in served
+    for method in sorted(served):
+        ok = client.options(
+            "/v1/approvals",
+            headers={"Origin": "http://localhost:3100", "Access-Control-Request-Method": method},
+        )
+        assert ok.status_code == 200, method
+        assert method in ok.headers["access-control-allow-methods"], method
+
+
 def test_allowed_origins_are_trimmed_and_lose_trailing_slashes(monkeypatch):
     monkeypatch.setenv("ALLOWED_ORIGINS", " https://app.example.com/ , http://localhost:3100,")
     client = TestClient(create_app())

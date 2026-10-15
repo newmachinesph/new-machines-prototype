@@ -18,6 +18,7 @@ from app.redaction import scrub
 from app.runtime import routes
 from app.runtime.memory import READABLE_BY_ORG, SHARED_SOURCES
 from app.store import iso
+from app.worker.activities import pay_minor  # one reading of a task's pay: earnings and the run's cost
 
 MEMORY_LIMIT = 200
 EARNINGS_LIMIT = 100
@@ -198,17 +199,6 @@ def retract_memory(actor: Actor, item_id: str) -> MemoryItem:
 
 
 # --- earnings -------------------------------------------------------------------------------------------
-
-
-def pay_minor(payload: dict) -> int:
-    """The task's pay: `pay` in minor units, or a Money object; 0 without one."""
-    pay = payload.get("pay")
-    if isinstance(pay, dict):
-        pay = pay.get("amountMinor", pay.get("amount_minor"))
-    try:
-        return max(int(pay or 0), 0)
-    except TypeError, ValueError:
-        return 0
 
 
 def earnings(actor: Actor) -> list[Earning]:

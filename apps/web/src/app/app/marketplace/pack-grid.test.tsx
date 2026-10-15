@@ -50,9 +50,17 @@ vi.mock("@/lib/queries/catalog", () => ({
   useTaxonomy: () => ok({ functions: [], industries: [retail, health] }),
 }));
 
+const me = vi.hoisted(() => ({ role: "owner", workspace: "demo" }));
+vi.mock("@/lib/queries/me", () => ({
+  useMe: () => ok(me),
+  useIsLive: () => me.workspace === "live",
+}));
+
 describe("PackGrid industry filter", () => {
   beforeEach(() => {
     url.initial = {};
+    me.role = "owner";
+    me.workspace = "demo";
   });
 
   it("shows every pack under All industries by default", () => {
@@ -106,5 +114,21 @@ describe("PackGrid industry filter", () => {
   it("labels the chips in Japanese", () => {
     renderWithIntl(<PackGrid />, { locale: "ja" });
     expect(screen.getByRole("button", { name: /すべての業界/ })).toBeInTheDocument();
+  });
+
+  it("points owners and admins of a live workspace to the Developer Studio to build a pack", () => {
+    const build = () => screen.queryByRole("link", { name: "Build a pack" });
+    me.workspace = "live";
+    const { unmount } = renderWithIntl(<PackGrid />);
+    expect(build()).toHaveAttribute("href", "/studio/packs/new");
+    unmount();
+    me.role = "member"; // members only read in the Studio
+    const second = renderWithIntl(<PackGrid />);
+    expect(build()).toBeNull();
+    second.unmount();
+    me.role = "owner";
+    me.workspace = "demo"; // the demo has no Studio
+    renderWithIntl(<PackGrid />);
+    expect(build()).toBeNull();
   });
 });
