@@ -87,8 +87,14 @@ describe("YamlDialog", () => {
     expect(store.getState().nodes.map((n) => n.id)).toEqual(["start", "recall"]);
     expect(screen.getByText("Step 3 cannot be read as a step.")).toBeInTheDocument();
     expect(onImported).toHaveBeenCalledWith(issues);
+    // Undo takes the imported steps off the canvas, and what could not be read about them goes with them.
     act(() => store.getState().undo());
     expect(store.getState().nodes).toHaveLength(OVERDUE.steps.length);
+    expect(screen.queryByText("Step 3 cannot be read as a step.")).toBeNull();
+    // An edit after the undo makes the history as long as it was, without the imported steps: the list stays down.
+    act(() => store.getState().replaceGraph(OVERDUE.steps));
+    expect(store.getState().history.past).toHaveLength(1);
+    expect(screen.queryByText("Step 3 cannot be read as a step.")).toBeNull();
   });
 
   it("keeps the canvas when the import has no start step, and says so with the issues", async () => {

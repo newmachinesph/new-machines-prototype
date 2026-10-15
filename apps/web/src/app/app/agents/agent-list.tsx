@@ -77,9 +77,9 @@ function AgentCard({ agent: a }: { agent: Agent }) {
           </div>
         </div>
         {a.builtByTeam ? (
-          <span className="shrink-0">
-            <Pill tone="machine">{t("team")}</Pill>
-          </span>
+          <Pill tone="machine" className="shrink-0">
+            {t("team")}
+          </Pill>
         ) : a.source === "sample" ? (
           <SimTag className="shrink-0">{t("sample")}</SimTag>
         ) : null}

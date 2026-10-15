@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
 import { Modal, ModalClose } from "@/components/base";
 import { Button, ButtonLink, Callout, SimTag } from "@/components/ui";
-import { type ApiError, toApiError } from "@/lib/api/errors";
+import { type ApiError, type ApiIssue, toApiError } from "@/lib/api/errors";
 import type { InputField } from "@/lib/api/gen/types.gen";
 import { useErrorText } from "@/lib/api/use-error-text";
 import { useOrgId } from "@/lib/queries/me";
@@ -13,6 +13,8 @@ import { useTestStudioPack } from "@/lib/queries/studio";
 import { FIELD_CLASS } from "./cel-field";
 
 const CENTS = 100;
+/** The most the API takes for a test run's budget (`budget_minor` ≤ 100,000), in the dollars the field uses. */
+const MAX_BUDGET = 100_000 / CENTS;
 
 /** Why the API refused to start the test: our words for the codes it documents, its own for the rest. */
 type Refusal = { text: string; issues?: string[]; usage?: boolean };
@@ -42,6 +44,7 @@ export function TestDialog({
   const [budget, setBudget] = useState("");
   const [refusal, setRefusal] = useState<Refusal | null>(null);
   const budgetId = useId();
+  const hintId = useId();
   const ready = !!packKey && !dirty;
   // A refusal belongs to the attempt it answered: opening the dialog again starts clean.
   const show = (o: boolean) => {
@@ -56,8 +59,21 @@ export function TestDialog({
       case "BUDGET_TOO_HIGH":
         // The API's detail names the exact limit.
         return { text: `${t("budgetTooHigh")} ${err.detail}` };
-      case "INVALID_INPUT":
-        return { text: err.detail, issues: err.issues.map((i) => i.message) };
+      case "INVALID_INPUT": {
+        // The API's detail repeats the first field error, so the list alone shows each error once. The API names
+        // the field only in that detail: each error here is named as the form labels it, unless it already is.
+        if (!err.issues.length) return { text: err.detail };
+        const named = (i: ApiIssue) => {
+          const label = inputFields.find((f) => f.name === i.path)?.label;
+          if (!label) return i.message;
+          // Already named ("As of must be…", "As of: must be…", in any case): not named twice.
+          const head = i.message.slice(0, label.length);
+          const next = i.message.charAt(label.length);
+          const isNamed = head.toLowerCase() === label.toLowerCase() && (next === " " || next === ":");
+          return isNamed ? i.message : `${label}: ${i.message}`;
+        };
+        return { text: t("invalidInput", { n: err.issues.length }), issues: err.issues.map(named) };
+      }
       case "SANDBOX_UNAVAILABLE":
         return { text: t("sandboxUnavailable") };
       case "SPEND_CAP":
@@ -90,12 +106,16 @@ export function TestDialog({
 
   return (
     <div className="flex items-center gap-2">
-      {ready ? null : <span className="text-xs text-muted">{packKey ? t("saveChangesFirst") : t("saveFirst")}</span>}
+      {ready ? null : (
+        <span id={hintId} className="text-xs text-muted">
+          {packKey ? t("saveChangesFirst") : t("saveFirst")}
+        </span>
+      )}
       <Modal
         open={open}
         onOpenChange={show}
         trigger={
-          <Button variant="secondary" disabled={!ready}>
+          <Button variant="secondary" disabled={!ready} aria-describedby={ready ? undefined : hintId}>
             {t("open")}
           </Button>
         }
@@ -133,6 +153,7 @@ export function TestDialog({
               id={budgetId}
               type="number"
               min={1}
+              max={MAX_BUDGET}
               step={0.01}
               aria-describedby={`${budgetId}-help`}
               className={`${FIELD_CLASS} h-10 max-w-40`}

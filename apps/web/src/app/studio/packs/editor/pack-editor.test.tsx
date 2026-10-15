@@ -382,7 +382,7 @@ describe("PackEditor", () => {
     const pickers = screen.getAllByRole("button", { name: /^Fields to insert into/ });
     expect(pickers.length).toBeGreaterThan(0);
     for (const picker of pickers) expect(picker).toBeDisabled();
-    expect(screen.queryByRole("button", { name: "Remove step" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Remove step" })).toBeDisabled();
     fireEvent.keyDown(screen.getByRole("group", { name: "Workflow canvas" }), { key: "Delete" });
     expect(screen.getByLabelText("Step name")).toHaveValue("review");
   });
@@ -397,7 +397,8 @@ describe("PackEditor", () => {
     await userEvent.click(screen.getByRole("button", { name: "Import" }));
     fireEvent.change(screen.getByLabelText("Paste a workflow.yaml"), { target: { value: "nodes: []" } });
     await userEvent.click(screen.getByRole("button", { name: "Replace the canvas" }));
-    const issue = { path: "nodes[2]", message: "Step 3 cannot be read as a step.", step: "recall" };
+    // An unreadable step has no step name to attach to: the API locates it by its path only.
+    const issue = { path: "nodes[2]", message: "Step 3 cannot be read as a step." };
     act(() =>
       mocks.importer.mutate.mock.calls[0][1].onSuccess({
         entryStep: "start",
@@ -407,11 +408,15 @@ describe("PackEditor", () => {
     );
     expect(mocks.toast).toHaveBeenCalledWith("Steps imported", "2 steps are on the canvas.");
     await userEvent.keyboard("{Escape}");
-    // Under the canvas, attached to its step, and not passed off as a full check of the draft.
+    // Under the canvas, and not passed off as a full check of the draft.
     expect(screen.getByText("From the server")).toBeInTheDocument();
     expect(screen.queryByText("Checked by the server")).toBeNull();
-    await userEvent.click(screen.getByRole("button", { name: /Step 3 cannot be read as a step/ }));
+    // Like any problem the server reports without a step, it opens the pack details.
+    await userEvent.click(screen.getAllByRole("button", { name: /^recall/ })[0]);
     expect(screen.getByLabelText("Step name")).toHaveValue("recall");
+    await userEvent.click(screen.getByRole("button", { name: /Step 3 cannot be read as a step/ }));
+    expect(screen.queryByLabelText("Step name")).toBeNull();
+    expect(screen.getByLabelText("Name")).toBeInTheDocument();
     // The import is one undoable step.
     await userEvent.click(screen.getByRole("button", { name: "Undo" }));
     expect(screen.queryByText("Step 3 cannot be read as a step.")).toBeNull();

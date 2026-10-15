@@ -1,4 +1,4 @@
-import { act, fireEvent, screen } from "@testing-library/react";
+import { act, fireEvent, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "@/lib/api/errors";
@@ -10,7 +10,10 @@ vi.mock("next/navigation", () => ({ useRouter: () => ({ push: mocks.push, replac
 vi.mock("@/lib/queries/me", () => ({ useOrgId: () => "org_a1" }));
 vi.mock("@/lib/queries/studio", () => ({ useTestStudioPack: () => mocks.test }));
 
-const FIELDS = [{ name: "as_of", label: "As of", type: "date" as const, required: true }];
+const FIELDS = [
+  { name: "as_of", label: "As of", type: "date" as const, required: true },
+  { name: "amount", label: "Amount", type: "number" as const, required: false },
+];
 
 /** Opens the dialog on the saved Overdue pack, fills the start form and starts the run; returns the mutate handlers. */
 async function started() {
@@ -29,14 +32,22 @@ describe("TestDialog", () => {
 
   it("waits until the changes are saved, because the sandbox runs the saved version", () => {
     renderWithIntl(<TestDialog packKey="org-a1--overdue" dirty inputFields={FIELDS} />);
-    expect(screen.getByRole("button", { name: "Test in sandbox" })).toBeDisabled();
-    expect(screen.getByText("Save your changes to test them.")).toBeInTheDocument();
+    const button = screen.getByRole("button", { name: "Test in sandbox" });
+    expect(button).toBeDisabled();
+    // The reason is read with the button, not only seen beside it.
+    expect(button).toHaveAccessibleDescription("Save your changes to test them.");
   });
 
   it("waits until a new pack is saved", () => {
     renderWithIntl(<TestDialog dirty inputFields={FIELDS} />);
-    expect(screen.getByRole("button", { name: "Test in sandbox" })).toBeDisabled();
-    expect(screen.getByText("Save the pack to test it.")).toBeInTheDocument();
+    const button = screen.getByRole("button", { name: "Test in sandbox" });
+    expect(button).toBeDisabled();
+    expect(button).toHaveAccessibleDescription("Save the pack to test it.");
+  });
+
+  it("describes a ready button by nothing but its name", () => {
+    renderWithIntl(<TestDialog packKey="org-a1--overdue" dirty={false} inputFields={FIELDS} />);
+    expect(screen.getByRole("button", { name: "Test in sandbox" })).not.toHaveAttribute("aria-describedby");
   });
 
   it("starts a sandbox test run with the start form's values and opens it", async () => {
@@ -61,6 +72,12 @@ describe("TestDialog", () => {
     expect(mocks.test.mutate.mock.calls[0][0].body).toEqual({ input: {}, budgetMinor: 1250 });
   });
 
+  it("caps the budget field at the API's maximum of 100,000 cents", async () => {
+    renderWithIntl(<TestDialog packKey="org-a1--overdue" dirty={false} inputFields={[]} />);
+    await userEvent.click(screen.getByRole("button", { name: "Test in sandbox" }));
+    expect(screen.getByLabelText("Most this test may spend (USD)")).toHaveAttribute("max", "1000");
+  });
+
   it("explains each way the API can refuse a test run, in the dialog", async () => {
     const [, handlers] = await started();
     const refusal = (status: number, code: string, detail: string, issues?: unknown[]) =>
@@ -71,11 +88,22 @@ describe("TestDialog", () => {
     refusal(422, "BUDGET_TOO_HIGH", "The budget can be at most $15 for this pack.");
     expect(screen.getByRole("alert")).toHaveTextContent(/above the pack's maximum/);
     expect(screen.getByRole("alert")).toHaveTextContent("The budget can be at most $15 for this pack.");
-    refusal(422, "INVALID_INPUT", "The input is not valid. As of: must be a date.", [
+    // The API's detail repeats the first field error; the list names each field once, in the form's own words.
+    refusal(422, "INVALID_INPUT", "The input is not valid. As of must be a date.", [
       { kind: "input", key: "", path: "as_of", message: "As of must be a date." },
+      { kind: "input", key: "", path: "amount", message: "must be a number." },
     ]);
-    expect(screen.getByRole("alert")).toHaveTextContent("The input is not valid. As of: must be a date.");
-    expect(screen.getByRole("alert")).toHaveTextContent("As of must be a date.");
+    expect(screen.getByRole("alert")).toHaveTextContent(/The start form has problems/);
+    expect(screen.getByRole("alert")).not.toHaveTextContent("The input is not valid.");
+    expect(within(screen.getByRole("alert")).getAllByText(/must be a date/)).toHaveLength(1);
+    expect(within(screen.getByRole("alert")).getByText("Amount: must be a number.")).toBeInTheDocument();
+    // A message that names its field with a colon, or in another case, is not named again.
+    refusal(422, "INVALID_INPUT", "The input is not valid. As of: must be a date.", [
+      { kind: "input", key: "", path: "as_of", message: "As of: must be a date." },
+      { kind: "input", key: "", path: "amount", message: "amount must be positive." },
+    ]);
+    expect(within(screen.getByRole("alert")).getByText("As of: must be a date.")).toBeInTheDocument();
+    expect(within(screen.getByRole("alert")).getByText("amount must be positive.")).toBeInTheDocument();
     refusal(409, "SANDBOX_UNAVAILABLE", "Test runs need the platform's sandbox connectors.");
     expect(screen.getByRole("alert")).toHaveTextContent(/sandbox connectors/);
     refusal(409, "SPEND_CAP", "The monthly spend cap is reached.");
