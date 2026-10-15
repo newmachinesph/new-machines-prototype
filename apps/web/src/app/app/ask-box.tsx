@@ -110,21 +110,25 @@ export function AskBox() {
         ) : null}
       </div>
       {!suggest.data ? (
-        <div className="flex [scrollbar-width:none] gap-2 overflow-x-auto border-t border-rule px-4 py-2.5">
-          {SUGGESTIONS.map(({ key, query }) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => {
-                setQ(t(`suggestions.${key}`));
-                setChipQuery(query);
-                submit(query);
-              }}
-              className="shrink-0 rounded-full border border-rule bg-stage px-3 py-1 text-[13px] text-grey-700 hover:border-grey-300 hover:text-ink"
-            >
-              {t(`suggestions.${key}`)}
-            </button>
-          ))}
+        // The chips wrap from sm up. On a phone they scroll sideways, with a fade at the edge and room past
+        // the last chip so the fade never covers it.
+        <div className="relative border-t border-rule after:pointer-events-none after:absolute after:inset-y-0 after:right-0 after:w-10 after:rounded-br-[12px] after:bg-linear-to-l after:from-paper after:to-transparent sm:after:hidden">
+          <div className="flex [scrollbar-width:none] gap-2 overflow-x-auto px-4 py-2.5 pr-10 sm:flex-wrap sm:pr-4">
+            {SUGGESTIONS.map(({ key, query }) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => {
+                  setQ(t(`suggestions.${key}`));
+                  setChipQuery(query);
+                  submit(query);
+                }}
+                className="inline-flex min-h-9 shrink-0 items-center rounded-full border border-rule bg-stage px-3 text-[13px] whitespace-nowrap text-grey-700 hover:border-grey-300 hover:text-ink"
+              >
+                {t(`suggestions.${key}`)}
+              </button>
+            ))}
+          </div>
         </div>
       ) : null}
     </section>

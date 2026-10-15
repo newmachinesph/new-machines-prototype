@@ -11,10 +11,13 @@ import { useErrorText } from "@/lib/api/use-error-text";
 import { useOrgId } from "@/lib/queries/me";
 import { useTestStudioPack } from "@/lib/queries/studio";
 import { FIELD_CLASS } from "./cel-field";
+import { DEFAULT_BUDGET_MINOR } from "./details-form";
 
 const CENTS = 100;
 /** The most the API takes for a test run's budget (`budget_minor` ≤ 100,000), in the dollars the field uses. */
 const MAX_BUDGET = 100_000 / CENTS;
+/** Cents as the dollars the field takes: whole dollars stay whole ("15"), cents show as such ("12.5"). */
+const dollarsOf = (minor: number) => String(Math.round(minor) / CENTS);
 
 /** Why the API refused to start the test: our words for the codes it documents, its own for the rest. */
 type Refusal = { text: string; issues?: string[]; usage?: boolean };
@@ -28,10 +31,13 @@ export function TestDialog({
   packKey,
   dirty,
   inputFields,
+  budgetMinor,
 }: {
   packKey?: string;
   dirty: boolean;
   inputFields: InputField[];
+  /** The pack's own agent budget in cents, which the test uses unless one is given here. */
+  budgetMinor?: number;
 }) {
   const t = useTranslations("studioTest");
   const tc = useTranslations("common");
@@ -46,6 +52,7 @@ export function TestDialog({
   const budgetId = useId();
   const hintId = useId();
   const ready = !!packKey && !dirty;
+  const packBudget = dollarsOf(budgetMinor ?? DEFAULT_BUDGET_MINOR);
   // A refusal belongs to the attempt it answered: opening the dialog again starts clean.
   const show = (o: boolean) => {
     if (o) setRefusal(null);
@@ -133,6 +140,7 @@ export function TestDialog({
             submit();
           }}
         >
+          {inputFields.length ? <p className="text-xs text-muted">{t("inputHelp")}</p> : null}
           {inputFields.map((f) => (
             <label key={f.name} className="block text-sm font-medium">
               {f.label}
@@ -157,11 +165,12 @@ export function TestDialog({
               step={0.01}
               aria-describedby={`${budgetId}-help`}
               className={`${FIELD_CLASS} h-10 max-w-40`}
+              placeholder={packBudget}
               value={budget}
               onChange={(e) => setBudget(e.target.value)}
             />
             <p id={`${budgetId}-help`} className="mt-1 text-xs text-muted">
-              {t("budgetHelp")}
+              {t("budgetHelp", { amount: packBudget })}
             </p>
           </div>
           {refusal ? (

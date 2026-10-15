@@ -19,6 +19,13 @@ describe("AskBox suggestion chips", () => {
     suggestion.data = undefined;
   });
 
+  it("offers all five starters as buttons, each a comfortable tap target", () => {
+    renderWithIntl(<AskBox />);
+    const chips = screen.getAllByRole("button");
+    expect(chips).toHaveLength(5);
+    for (const chip of chips) expect(chip).toHaveClass("min-h-9");
+  });
+
   it("sends the same English query from a chip and from the button, in Japanese", async () => {
     renderWithIntl(<AskBox />, { locale: "ja" });
     await userEvent.click(screen.getByRole("button", { name: "先週の注文をStripeの入金と突き合わせる" }));

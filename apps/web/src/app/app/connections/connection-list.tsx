@@ -69,6 +69,44 @@ export function ConnectDialog({ app, trigger }: { app?: string; trigger: React.R
 
 type Grant = Connection["grants"][number];
 
+const RESOURCES = [
+  "orders",
+  "payment",
+  "shipments",
+  "invoice",
+  "inventory",
+  "pages",
+  "charges",
+  "sheets",
+  "drive_file",
+  "message",
+  "refund",
+] as const;
+const ACTIONS = ["refund", "issue", "create", "create_draft", "propose"] as const;
+const isIn = <T extends string>(list: readonly T[], value: string): value is T =>
+  (list as readonly string[]).includes(value);
+
+/**
+ * A capability id in words: "orders.read" is "Read orders", "sheets.write" is "Write sheets", and a known
+ * action reads as "{Action} {resource}" ("payment.refund" is "Refund payment"). Resources and actions come from
+ * messages in both languages; an id with an unknown part shows as the raw id.
+ */
+function useCapabilityLabel() {
+  const t = useTranslations("connections.capability");
+  return (capability: string) => {
+    const dot = capability.lastIndexOf(".");
+    if (dot === -1) return capability;
+    const resourceKey = capability.slice(0, dot).replace(/[.-]+/g, "_");
+    const action = capability.slice(dot + 1);
+    // An id the messages don't know shows as it is, never as a half-translated phrase.
+    if (!isIn(RESOURCES, resourceKey)) return capability;
+    const resource = t(`resources.${resourceKey}`);
+    if (action === "read" || action === "write") return t(action, { resource });
+    if (!isIn(ACTIONS, action)) return capability;
+    return t("other", { action: t(`actions.${action}`), resource });
+  };
+}
+
 /** The app's simulation label: none until it is connected, then Simulated when it serves sandbox data. */
 const isSimulated = (c: Connection) => c.status !== "not_connected" && (c.provider === "Mock" || c.mode === "sandbox");
 
@@ -88,7 +126,7 @@ function NoConnections() {
     <div className="panel">
       <EmptyState
         action={
-          <ButtonLink href="/app/marketplace" variant="secondary" className="h-8">
+          <ButtonLink href="/app/marketplace" variant="secondary" className="h-10 sm:h-8">
             {t("browseMarketplace")}
           </ButtonLink>
         }
@@ -103,6 +141,7 @@ function ConnectionCards({ conns }: { conns: Connection[] }) {
   const t = useTranslations("connections");
   const tc = useTranslations("common");
   const { ago } = useFormat();
+  const capabilityLabel = useCapabilityLabel();
   const errorText = useErrorText();
   const disconnectConnection = useDisconnect();
   const revokeGrant = useRevokeGrant();
@@ -157,7 +196,7 @@ function ConnectionCards({ conns }: { conns: Connection[] }) {
   // The "Allow again" control leaves with its revoked entry once the answer lands. The revocation is forgotten
   // either way; the grant itself comes back only when a pack the workspace added still uses the capability.
   const allow = (app: string, grant: RevokedGrant, index: number) => {
-    const words = { install: grant.install, capability: grant.capability, app };
+    const words = { install: grant.install, capability: capabilityLabel(grant.capability), app };
     allowGrant.mutate(
       { query: { app, install: grant.install, capability: grant.capability } },
       {
@@ -211,7 +250,7 @@ function ConnectionCards({ conns }: { conns: Connection[] }) {
                   <ConnectDialog
                     app={c.app}
                     trigger={
-                      <Button variant="secondary" className="h-8" data-connect={c.app}>
+                      <Button variant="secondary" className="h-10 sm:h-8" data-connect={c.app}>
                         {t("connectApp", { app: c.app })}
                       </Button>
                     }
@@ -226,15 +265,15 @@ function ConnectionCards({ conns }: { conns: Connection[] }) {
                   {/* Cancelling disconnects the real account, so it is for an owner or admin. Its own attribute,
                       so a focus move meant for the connected card's Disconnect never lands here. */}
                   {canManageReal ? (
-                    <button
-                      type="button"
+                    <Button
+                      variant="ghost"
+                      className="h-10 sm:h-8"
                       data-cancel={c.app}
                       aria-label={t("cancelConnectingFor", { app: c.app })}
-                      className="link text-xs text-muted"
                       onClick={() => disconnect(c.app)}
                     >
                       {t("cancelConnecting")}
-                    </button>
+                    </Button>
                   ) : (
                     askAdmin
                   )}
@@ -266,7 +305,7 @@ function ConnectionCards({ conns }: { conns: Connection[] }) {
                     ) : null}
                     <span>{c.provider === "Mock" ? t("viaMock") : t("viaComposio")}</span>
                   </div>
-                  <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1">
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
                     {c.key && c.mode === "sandbox" && canManageReal ? (
                       <RealAccountButton
                         conn={c}
@@ -291,9 +330,9 @@ function ConnectionCards({ conns }: { conns: Connection[] }) {
                       <Confirm
                         danger
                         trigger={
-                          <button type="button" data-disconnect={c.app} className="link text-xs text-blocked">
+                          <Button variant="danger" className="h-10 sm:h-8" data-disconnect={c.app}>
                             {t("disconnectApp", { app: c.app })}
-                          </button>
+                          </Button>
                         }
                         title={t("disconnectTitle", { app: c.app })}
                         description={t("disconnectDescription", { app: c.app })}
@@ -315,7 +354,7 @@ function ConnectionCards({ conns }: { conns: Connection[] }) {
                         >
                           <div className="min-w-0">
                             <div>{g.install}</div>
-                            <Id className="text-[11px]">{g.capability}</Id>
+                            <div className="text-xs text-muted">{capabilityLabel(g.capability)}</div>
                           </div>
                           <div className="flex shrink-0 items-center gap-3">
                             {g.access === "read" ? (
@@ -327,15 +366,16 @@ function ConnectionCards({ conns }: { conns: Connection[] }) {
                             )}
                             {g.access !== "denied" && canManageReal ? (
                               <Confirm
+                                danger
                                 trigger={
-                                  <button type="button" data-revoke={c.app} className="link text-xs text-muted">
+                                  <Button variant="danger" className="h-10 sm:h-8" data-revoke={c.app}>
                                     {t("revoke")}
-                                  </button>
+                                  </Button>
                                 }
                                 title={t("revokeTitle")}
                                 description={t("revokeDescription", {
                                   install: g.install,
-                                  capability: g.capability,
+                                  capability: capabilityLabel(g.capability),
                                   app: c.app,
                                 })}
                                 confirmLabel={t("revokeConfirm")}
@@ -355,25 +395,25 @@ function ConnectionCards({ conns }: { conns: Connection[] }) {
                         >
                           <div className="min-w-0">
                             <div>{g.install}</div>
-                            <Id className="text-[11px]">{g.capability}</Id>
+                            <div className="text-xs text-muted">{capabilityLabel(g.capability)}</div>
                           </div>
                           <div className="flex shrink-0 items-center gap-3">
                             <Pill tone="quiet">{t("revokedPill")}</Pill>
                             {canManageReal ? (
-                              <button
-                                type="button"
+                              <Button
+                                variant="secondary"
+                                className="h-10 sm:h-8"
                                 data-allow={c.app}
                                 aria-label={t("allowAgainFor", {
                                   install: g.install,
-                                  capability: g.capability,
+                                  capability: capabilityLabel(g.capability),
                                   app: c.app,
                                 })}
-                                className="link text-xs text-muted"
                                 disabled={allowGrant.isPending}
                                 onClick={() => allow(c.app, g, i)}
                               >
                                 {t("allowAgain")}
-                              </button>
+                              </Button>
                             ) : null}
                           </div>
                         </li>

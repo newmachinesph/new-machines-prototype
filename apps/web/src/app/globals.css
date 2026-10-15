@@ -28,6 +28,16 @@
   }
 }
 
+/* Fields take the same focus ring as buttons and links. Outside the layers, so a field's own outline-none (kept
+   for the quiet pointer-focus look) does not win over keyboard focus. A field inside a bordered box (bg-transparent)
+   is marked by its box instead. */
+input:where(:not(.bg-transparent, [type="checkbox"], [type="radio"], [type="range"], [type="file"])):focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--color-machine);
+  outline-offset: 2px;
+}
+
 @layer components {
   .panel {
     background: var(--color-paper);
@@ -125,6 +135,17 @@
   max-height: 11px;
 }
 
+/* Workflow editor: the whole graph is fitted into view, so nothing fades at the sides; a fade would cut the
+   labels on the outermost edges. On touch, the zoom controls are finger-sized. */
+.nm-editor .react-flow__renderer {
+  mask-image: none;
+}
+@media (pointer: coarse) {
+  .nm-editor .react-flow__controls-button {
+    width: 40px;
+    height: 40px;
+  }
+}
 /* Workflow editor: outcome handles are visible and can be dragged from. The run canvas keeps them hidden. */
 .nm-editor .react-flow__handle {
   opacity: 1;

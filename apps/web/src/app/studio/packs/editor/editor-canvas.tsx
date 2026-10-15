@@ -15,7 +15,7 @@ import {
 } from "@xyflow/react";
 import { Workflow } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useMemo, type DragEvent, type KeyboardEvent } from "react";
+import { useCallback, useEffect, useMemo, useState, type DragEvent, type KeyboardEvent } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { useToast } from "@/components/base";
 import { RoutedEdge } from "@/components/routed-edge";
@@ -33,9 +33,10 @@ export const STEP_MIME = "application/x-nm-step";
 
 const nodeTypes = { step: StepNodeView };
 const edgeTypes = { routed: RoutedEdge };
-// As on the run canvas: steps are placed by their vertical centre, and the view opens at most at 1:1.
+// As on the run canvas: steps are placed by their vertical centre, and the view opens at most at 1:1. The padding
+// keeps the outermost steps and the labels on their edges clear of the pane's sides.
 const NODE_ORIGIN: [number, number] = [0, 0.5];
-const FIT_OPTIONS = { padding: 0.14, maxZoom: 1 };
+const FIT_OPTIONS = { padding: 0.18, maxZoom: 1 };
 const DEFAULT_EDGE = { markerEnd: { type: MarkerType.ArrowClosed, width: 14, height: 14, color: "#c5c5cb" } };
 
 const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
@@ -68,9 +69,11 @@ function useAutoLayout() {
   const api = useEditorApi();
   const request = useEditor((s) => s.layoutRequest.n);
   const { fitView } = useReactFlow();
+  // Counts layouts put on the canvas. The view is fitted in an effect of the render that placed the steps, so
+  // React Flow has their new places when it measures the whole; a frame callback could run before that render.
+  const [placed, setPlaced] = useState(0);
   useEffect(() => {
     let live = true;
-    let frame: number | undefined;
     // `restores` stamps the request: an undo or redo while ELK works swaps the graph, and the store drops the result.
     const { nodes, edges, restores } = api.getState();
     const input = layoutInput(nodes, edges);
@@ -78,16 +81,18 @@ function useAutoLayout() {
       (layout) => {
         if (!live) return;
         api.getState().applyLayout(layout, restores);
-        frame = requestAnimationFrame(() => void fitView(FIT_OPTIONS));
+        setPlaced((n) => n + 1);
       },
       // The steps keep their places; the editor still works.
       () => undefined,
     );
     return () => {
       live = false;
-      if (frame !== undefined) cancelAnimationFrame(frame);
     };
-  }, [request, api, fitView]);
+  }, [request, api]);
+  useEffect(() => {
+    if (placed) void fitView(FIT_OPTIONS);
+  }, [placed, fitView]);
 }
 
 /** The connection a drag described, whichever end it started from. */

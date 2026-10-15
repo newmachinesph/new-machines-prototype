@@ -171,6 +171,58 @@ describe("TaskWorkspace submit flow", () => {
   it("shows a neutral view for an unknown state", () => {
     renderWithIntl(<TaskWorkspace task={{ ...task, state: "CANCELLED" }} buyer={task.buyer} />);
     expect(screen.getByText("This task is no longer available")).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Your review" })).toBeNull();
+  });
+});
+
+describe("TaskWorkspace review summary", () => {
+  it("records the verdict, feedback and calls submitted in this session", async () => {
+    const user = userEvent.setup();
+    renderWithIntl(<TaskWorkspace task={{ ...task, realRun: true }} buyer={task.buyer} />);
+    await user.click(screen.getByRole("button", { name: "Claim this task" }));
+    await user.click(screen.getByRole("radio", { name: "Real mismatch" }));
+    await user.type(screen.getByRole("textbox", { name: "Feedback for the agent" }), "The digits are swapped.");
+    await user.click(screen.getByRole("button", { name: "Submit review" }));
+    const summary = screen.getByRole("heading", { name: "Your review" }).closest("section")!;
+    expect(summary).toHaveTextContent("Verdict");
+    expect(summary).toHaveTextContent("Send back with corrections");
+    expect(summary).toHaveTextContent("The digits are swapped.");
+    expect(summary).toHaveTextContent("Order HP-1: Real mismatch");
+    expect(summary).toHaveTextContent("Submitted");
+    expect(screen.getByRole("link", { name: "See earnings" })).toHaveAttribute("href", "/work/earnings");
+    expect(screen.queryByText(/are listed on Earnings/)).toBeNull();
+  });
+
+  it("stamps the submission with the workspace clock and names the zone, and skips empty rows", async () => {
+    const user = userEvent.setup();
+    renderWithIntl(<TaskWorkspace task={{ ...task, realRun: true, records: [] }} buyer={task.buyer} />);
+    await user.click(screen.getByRole("button", { name: "Claim this task" }));
+    await user.type(screen.getByRole("textbox", { name: "Feedback for the agent" }), "The digits are swapped.");
+    await user.click(screen.getByRole("button", { name: "Submit review" }));
+    const summary = screen.getByRole("heading", { name: "Your review" }).closest("section")!;
+    expect(summary).toHaveTextContent("Oct 13, 12:40 AM GMT+8"); // the demo's pinned Oct 12, 16:40 UTC
+    expect(summary).not.toHaveTextContent("Your calls"); // no records, so no blank row
+  });
+
+  it("points a reloaded finished task at Earnings for the verdict", () => {
+    renderWithIntl(
+      <TaskWorkspace
+        task={{ ...task, realRun: true, state: "SUBMITTED", runOutcome: "CONTINUES" }}
+        buyer={task.buyer}
+      />,
+    );
+    const summary = screen.getByRole("heading", { name: "Your review" }).closest("section")!;
+    expect(summary).toHaveTextContent("What you reviewed");
+    expect(summary).toHaveTextContent("Real mismatches?");
+    expect(summary).toHaveTextContent("Your verdict and when you submitted are listed on Earnings.");
+    expect(summary).not.toHaveTextContent("Feedback");
+    expect(screen.getByRole("link", { name: "See earnings" })).toHaveAttribute("href", "/work/earnings");
+  });
+
+  it("shows the summary in Japanese", () => {
+    renderWithIntl(<TaskWorkspace task={{ ...task, state: "ACCEPTED" }} buyer={task.buyer} />, { locale: "ja" });
+    expect(screen.getByRole("heading", { name: "あなたのレビュー" })).toBeInTheDocument();
+    expect(screen.getByText("判定と提出日時は「報酬」ページに表示されます。")).toBeInTheDocument();
   });
 });
 

@@ -5,7 +5,7 @@ import { getMeOptions } from "@/lib/api/gen/@tanstack/react-query.gen";
 import type { Me } from "@/lib/api/gen/types.gen";
 
 /** The signed-in user and the workspace they act in. Read once per session; sign-out clears the cache. */
-export const useMe = () => useQuery({ ...getMeOptions(), staleTime: Infinity });
+export const useMe = (enabled = true) => useQuery({ ...getMeOptions(), staleTime: Infinity, enabled });
 
 /** The signed-in user's org id; undefined until /v1/me has answered. */
 export const useOrgId = () => useMe().data?.orgId;

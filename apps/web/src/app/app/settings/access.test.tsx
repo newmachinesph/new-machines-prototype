@@ -5,7 +5,7 @@ import { renderWithIntl } from "@/test/intl";
 import { MembersSection, TokensSection, maskedToken } from "./access";
 
 const ok = <T,>(data: T) => ({ isPending: false, isError: false, data });
-const data = vi.hoisted(() => ({ demo: false, tokens: [] as unknown[] }));
+const data = vi.hoisted(() => ({ demo: false, tokens: [] as unknown[], members: [] as unknown[] }));
 const mutations = vi.hoisted(() => ({ create: vi.fn(), invite: vi.fn() }));
 const toast = vi.hoisted(() => vi.fn());
 
@@ -15,7 +15,7 @@ vi.mock("@/components/base", async (importOriginal) => ({
 }));
 vi.mock("@/lib/queries/me", () => ({ useIsDemo: () => data.demo, useOrgId: () => "org_new" }));
 vi.mock("@/lib/queries/workspace", () => ({
-  useMembers: () => ok([]),
+  useMembers: () => ok(data.members),
   useInvite: () => ({ mutate: mutations.invite, isPending: false }),
   useTokens: () => ok(data.tokens),
   useCreateToken: () => ({ mutate: mutations.create, isPending: false }),
@@ -98,6 +98,21 @@ describe("TokensSection", () => {
 });
 
 describe("MembersSection", () => {
+  beforeEach(() => {
+    data.members = [];
+  });
+
+  it("lists a member by email, without the API's sign-in status word", () => {
+    data.members = [
+      { name: "Ana Reyes", email: "ana@example.com", role: "Owner", via: "Signed in" },
+      { name: "sam@example.com", email: "sam@example.com", role: "Member", via: "Invite link", pending: true },
+    ];
+    renderWithIntl(<MembersSection />);
+    expect(screen.getByText("ana@example.com")).toBeInTheDocument();
+    expect(screen.queryByText(/signs in with|Signed in/)).not.toBeInTheDocument();
+    expect(screen.getByText("Invite sent, not accepted yet")).toBeInTheDocument();
+  });
+
   it("invites into the signed-in user's org", async () => {
     renderWithIntl(<MembersSection />);
     await userEvent.click(screen.getByRole("button", { name: "Invite" }));

@@ -68,7 +68,7 @@ export function MembersSection() {
           open={open}
           onOpenChange={setOpen}
           trigger={
-            <Button variant="secondary" className="h-8">
+            <Button variant="secondary" className="h-10 sm:h-8">
               {t("invite")}
             </Button>
           }
@@ -124,9 +124,8 @@ export function MembersSection() {
               <li key={m.email} className="flex items-center justify-between gap-3 px-5 py-3 text-sm">
                 <div className="min-w-0">
                   <div className="truncate font-medium">{m.name}</div>
-                  <div className="text-xs text-muted">
-                    {m.pending ? t("pendingNote") : t("signsInWith", { email: m.email, via: m.via })}
-                  </div>
+                  {/* The API's `via` is a status word ("Signed in"), not a sign-in method, so only the email shows. */}
+                  <div className="truncate text-xs text-muted">{m.pending ? t("pendingNote") : m.email}</div>
                 </div>
                 {m.pending ? <Pill tone="quiet">{t("invited")}</Pill> : <span className="text-grey-700">{m.role}</span>}
               </li>
@@ -251,7 +250,7 @@ export function TokensSection() {
           open={open}
           onOpenChange={openChange}
           trigger={
-            <Button variant="secondary" className="h-8">
+            <Button variant="secondary" className="h-10 sm:h-8">
               {t("create")}
             </Button>
           }

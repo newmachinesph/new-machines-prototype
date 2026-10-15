@@ -34,12 +34,14 @@ const ok = (data: unknown) => ({ isPending: false, isError: false, data });
 
 const recon = { slug: "order-payment-reconciliation", name: "Order & Payment Reconciliation" };
 const invoices = { slug: "overdue-invoice-follow-up", name: "Overdue Invoice Follow-up" };
+/** The card whose name links to the agent page. */
+const card = (name: string) => screen.getByRole("link", { name }).closest("li")!;
 
 describe("AgentList", () => {
   beforeEach(() => {
     state.result = ok([
       agent({ id: "finance-agent", name: "Finance Agent", capabilities: ["finance.reconcile"], usedBy: [recon] }),
-      agent({ id: "retail-agent", name: "Retail Agent", capabilities: ["retail.orders"] }),
+      agent({ id: "retail-agent", name: "Retail Agent", capabilities: ["retail.orders", "team.assist"] }),
       agent({
         id: "agent_finance",
         name: "Invoice Agent",
@@ -50,35 +52,63 @@ describe("AgentList", () => {
     ]);
   });
 
-  it("lists each agent with publisher, summary, capabilities and pack count, linked to its page", () => {
+  it("lists each agent with publisher, summary and capabilities, linked to its page", () => {
     renderWithIntl(<AgentList />);
-    const finance = screen.getByRole("link", { name: /Finance Agent/ });
-    expect(finance).toHaveAttribute("href", "/app/agents/finance-agent");
+    expect(screen.getByRole("link", { name: "Finance Agent" })).toHaveAttribute("href", "/app/agents/finance-agent");
+    const finance = card("Finance Agent");
     expect(within(finance).getByText("New Machines Labs, version 1.0.0")).toBeInTheDocument();
     expect(within(finance).getByText("Finance Agent summary")).toBeInTheDocument();
-    expect(within(finance).getByText("finance.reconcile")).toBeInTheDocument();
-    expect(within(finance).getByText("Used in 1 pack")).toBeInTheDocument();
-    expect(
-      within(screen.getByRole("link", { name: /Retail Agent/ })).getByText("Not in a pack yet"),
-    ).toBeInTheDocument();
-    expect(
-      within(screen.getByRole("link", { name: /Invoice Agent/ })).getByText("Used in 2 packs"),
-    ).toBeInTheDocument();
+  });
+
+  it("shows capabilities as plain labels, never as ids", () => {
+    renderWithIntl(<AgentList />);
+    expect(within(card("Finance Agent")).getByText("Payment reconciliation")).toBeInTheDocument();
+    expect(screen.queryByText("finance.reconcile")).toBeNull();
+    // An id with no published label still reads as words.
+    expect(within(card("Retail Agent")).getByText("Team assist")).toBeInTheDocument();
+    expect(screen.queryByText("team.assist")).toBeNull();
+  });
+
+  it("names and links the packs that use each agent", () => {
+    renderWithIntl(<AgentList />);
+    const finance = card("Finance Agent");
+    expect(within(finance).getByText(/Used in 1 pack:/)).toBeInTheDocument();
+    expect(within(finance).getByRole("link", { name: "Order & Payment Reconciliation" })).toHaveAttribute(
+      "href",
+      "/app/marketplace/order-payment-reconciliation",
+    );
+    expect(within(card("Retail Agent")).getByText("Not in a pack yet")).toBeInTheDocument();
+    const invoice = card("Invoice Agent");
+    expect(within(invoice).getByText(/Used in 2 packs:/)).toBeInTheDocument();
+    expect(within(invoice).getByRole("link", { name: "Overdue Invoice Follow-up" })).toHaveAttribute(
+      "href",
+      "/app/marketplace/overdue-invoice-follow-up",
+    );
+    // The card's own link is not wrapped around the pack links.
+    expect(within(invoice).getAllByRole("link")).toHaveLength(3);
   });
 
   it("tags sample agents only", () => {
     renderWithIntl(<AgentList />);
-    expect(within(screen.getByRole("link", { name: /Invoice Agent/ })).getByText("Sample")).toBeInTheDocument();
-    expect(within(screen.getByRole("link", { name: /Finance Agent/ })).queryByText("Sample")).not.toBeInTheDocument();
+    expect(within(card("Invoice Agent")).getByText("Sample")).toBeInTheDocument();
+    expect(within(card("Finance Agent")).queryByText("Sample")).not.toBeInTheDocument();
   });
 
-  it("filters by name, publisher, summary or capability, and clears the search", async () => {
+  it("filters by a capability's id or by the label shown for it", async () => {
     const user = userEvent.setup();
     renderWithIntl(<AgentList />);
-    await user.type(screen.getByRole("searchbox"), "retail.orders");
+    await user.type(screen.getByRole("searchbox"), "retail.ord");
     expect(screen.getByText("Retail Agent")).toBeInTheDocument();
     expect(screen.queryByText("Finance Agent")).not.toBeInTheDocument();
     await user.clear(screen.getByRole("searchbox"));
+    await user.type(screen.getByRole("searchbox"), "payment rec");
+    expect(screen.getByText("Finance Agent")).toBeInTheDocument();
+    expect(screen.queryByText("Retail Agent")).not.toBeInTheDocument();
+  });
+
+  it("filters by name, publisher or summary, and clears the search", async () => {
+    const user = userEvent.setup();
+    renderWithIntl(<AgentList />);
     await user.type(screen.getByRole("searchbox"), "sample labs");
     expect(screen.getByText("Invoice Agent")).toBeInTheDocument();
     expect(screen.queryByText("Retail Agent")).not.toBeInTheDocument();
@@ -103,7 +133,19 @@ describe("AgentList", () => {
   it("is translated into Japanese", () => {
     renderWithIntl(<AgentList />, { locale: "ja" });
     expect(screen.getByRole("searchbox", { name: "エージェントを検索" })).toBeInTheDocument();
-    expect(screen.getByText("1件のパックで使用")).toBeInTheDocument();
+    expect(screen.getByText(/1件のパックで使用：/)).toBeInTheDocument();
+    expect(screen.getByText("入金の照合")).toBeInTheDocument();
+    // An id with no label stays the id, not half-English words; the pack list has no stray space after the colon.
+    expect(screen.getByText("team.assist")).toBeInTheDocument();
+    expect(screen.queryByText("Team assist")).toBeNull();
+    expect(card("Finance Agent").textContent).toMatch(/1件のパックで使用：Order & Payment Reconciliation/);
+  });
+
+  it("joins the packs with the language's own list format, each a link", () => {
+    renderWithIntl(<AgentList />);
+    const used = card("Invoice Agent");
+    expect(used.textContent).toMatch(/Used in 2 packs: Order & Payment Reconciliation and Overdue Invoice Follow-up/);
+    expect(within(used).getAllByRole("link", { name: /Order|Overdue/ })).toHaveLength(2);
   });
 });
 
@@ -117,9 +159,7 @@ describe("AgentList team agents", () => {
 
   it("labels an agent the org built", () => {
     renderWithIntl(<AgentList />);
-    const team = screen.getByRole("link", { name: /Invoice helper/ });
-    expect(within(team).getByText("Built by your team")).toBeInTheDocument();
-    const writer = screen.getByRole("link", { name: /Writer Agent/ });
-    expect(within(writer).queryByText("Built by your team")).toBeNull();
+    expect(within(card("Invoice helper")).getByText("Built by your team")).toBeInTheDocument();
+    expect(within(card("Writer Agent")).queryByText("Built by your team")).toBeNull();
   });
 });

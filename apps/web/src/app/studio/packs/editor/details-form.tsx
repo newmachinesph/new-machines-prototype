@@ -24,7 +24,7 @@ type FieldType = NonNullable<InputField["type"]>;
 const FIELD_TYPES: readonly FieldType[] = ["text", "date", "number"];
 const CENTS = 100;
 // The API's defaults (apps/api/app/models/studio.py PackDraft), shown when a loaded draft leaves a budget out.
-const DEFAULT_BUDGET_MINOR = 1500;
+export const DEFAULT_BUDGET_MINOR = 1500;
 const DEFAULT_HUMAN_BUDGET_MINOR = 0;
 
 const toMinor = (dollars: string) => {

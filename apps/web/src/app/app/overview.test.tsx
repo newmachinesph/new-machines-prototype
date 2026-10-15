@@ -70,9 +70,14 @@ describe("Overview in a new workspace", () => {
 
   it("shows the getting-started steps, none ticked, each linking to its page", () => {
     renderWithIntl(<Overview />);
-    const steps = within(checklist()).getAllByRole("link");
+    const steps = within(within(checklist()).getByRole("list")).getAllByRole("link");
     expect(steps.map((s) => s.getAttribute("href"))).toEqual(["/app/marketplace", "/app/connections", "/app/runs/new"]);
     expect(within(checklist()).queryByLabelText("Done")).not.toBeInTheDocument();
+  });
+
+  it("offers the reviewer portal beside the steps, for someone who came to review tasks", () => {
+    renderWithIntl(<Overview />);
+    expect(within(checklist()).getByRole("link", { name: "Go to reviewer portal" })).toHaveAttribute("href", "/work");
   });
 
   it("ticks adding once a pack is added, and connecting once its apps are connected", () => {
@@ -102,12 +107,52 @@ describe("Overview in a new workspace", () => {
     expect(
       screen.getByText("Nothing needs you right now. Approvals and review tasks show up here."),
     ).toBeInTheDocument();
+    // Nothing waiting is one quiet line: no count of zero beside the heading.
+    expect(screen.getByRole("heading", { name: "Needs you" }).closest("section")).not.toHaveTextContent("0");
     expect(screen.getByText("No packs added yet. Add a pack to put agents to work.")).toBeInTheDocument();
     expect(screen.getByText("No runs yet. Add a pack first, then start a run.")).toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: "Browse the marketplace" })[0]).toHaveAttribute(
       "href",
       "/app/marketplace",
     );
+  });
+
+  it("counts what needs you beside the heading once there is something", () => {
+    data.attention = [
+      { href: "/app/approvals", title: "Approve the email", detail: "One email", actor: "buyer", when: RUN.startedAt },
+    ];
+    renderWithIntl(<Overview />);
+    expect(screen.getByRole("heading", { name: "Needs you" }).closest("div")).toHaveTextContent("Needs you1");
+  });
+
+  it("dates an added pack by its last run on this page, never by its version", () => {
+    data.packs = [{ ...RECON, installed: true }];
+    data.runs = [RUN, { ...RUN, id: "run_2000", startedAt: "2026-10-10T16:00:00Z" }];
+    const { unmount } = renderWithIntl(<Overview />);
+    const packs = () => screen.getByRole("heading", { name: "Your packs" }).closest("section")!;
+    expect(within(packs()).getByText("Last run 40 min ago")).toBeInTheDocument(); // the newest run, not the oldest
+    expect(within(packs()).queryByText(/1\.0\.0/)).not.toBeInTheDocument();
+    unmount();
+    data.runs = [];
+    renderWithIntl(<Overview />);
+    expect(within(packs()).getByText("No runs yet")).toBeInTheDocument();
+  });
+
+  it("names the pack once per run row, and keeps status and cost on every row", () => {
+    data.packs = [{ ...RECON, installed: true }];
+    data.runs = [
+      { ...RUN, summary: "Checking 12 orders" },
+      { ...RUN, id: "run_2002", title: RECON.name, status: "COMPLETED" },
+    ];
+    renderWithIntl(<Overview />);
+    const titled = screen.getByRole("link", { name: /Reconcile Oct 6-12/ });
+    expect(within(titled).getByText(RECON.name)).toBeInTheDocument(); // the pack, under a run called something else
+    const sameName = screen.getByRole("link", { name: /Completed/ });
+    expect(within(sameName).getAllByText(RECON.name)).toHaveLength(1);
+    expect(within(sameName).queryByText(/run_2002/)).not.toBeInTheDocument();
+    // Status and cost are in the row at every width (the pill twice: one for narrow screens, one for the column).
+    expect(within(titled).getAllByText("Running")).toHaveLength(2);
+    expect(within(titled).getByText("$0.10")).toBeInTheDocument();
   });
 
   it("reads the budget from the org and its ledger, with no plan fee on a trial", () => {

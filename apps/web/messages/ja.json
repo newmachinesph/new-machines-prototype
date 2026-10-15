@@ -64,6 +64,13 @@
     "current": "現在",
     "reviewerPortal": "レビュアーポータル",
     "businessWorkspace": "ビジネスワークスペース",
+    "switchTo": "切り替え先",
+    "groups": {
+      "work": "業務",
+      "setup": "セットアップ",
+      "account": "アカウント",
+      "other": "その他のエリア"
+    },
     "signOut": "サインアウト",
     "signOutFailed": "サインアウトを完了できませんでした",
     "tryAgain": "もう一度お試しください。",
@@ -81,7 +88,7 @@
       "title": "何でも検索",
       "placeholder": "ページ、実行、パック、タスクを検索",
       "empty": "一致するものがありません。run_1047 のような実行IDか、パック名をお試しください。",
-      "goToPage": "ページへ移動",
+      "runHint": "{status}・{when}",
       "approval": "承認",
       "hired": "追加済み",
       "toMove": "で移動",
@@ -113,6 +120,7 @@
     "studioAgents": "エージェント",
     "studioPacks": "ワークフローパック",
     "crumbNew": "新規",
+    "crumbTask": "タスク",
     "developerStudio": "デベロッパースタジオ"
   },
   "status": {
@@ -161,6 +169,7 @@
       "threeRecords": "記録は3つに分かれています。評価者は推奨するだけで、許可はポリシーが決め、最終的な承認は担当者または承認フローが行います。",
       "evaluatorTitle": "評価者の推奨",
       "rules": "ルール",
+      "aiModel": "AIモデル",
       "chainVerdict": "：{verdict}",
       "verdict": {
         "APPROVED": "承認",
@@ -182,7 +191,7 @@
       },
       "decision": "判定",
       "signOffTitle": "承認する人",
-      "waitingOn": "<link>{id}</link> のレビュアー待ちです。",
+      "waitingOn": "レビュアー待ちです。<link>レビュータスクを開く</link>",
       "grantedBy": "{by}。",
       "notRequired": "不要です。",
       "reviewerTask": "レビュータスク",
@@ -215,10 +224,10 @@
     "canvas": {
       "nodeType": {
         "trigger": "トリガー",
-        "connector": "コネクタ",
+        "connector": "アプリ操作",
         "parallel": "並列",
         "join": "合流",
-        "agent": "エージェント",
+        "agent": "AIエージェント",
         "decision": "判定",
         "human_workforce": "人間の作業者",
         "approval": "承認",
@@ -251,7 +260,7 @@
         "done": "完了",
         "failed": "失敗"
       },
-      "outcomeTooltip": "4つの印が順に並びます。実行済み、検証済み、受け入れ済み、精算対象です。1つが済んでも、他は未了のことがあります。",
+      "outcomeTooltip": "実行が今どの段階にあるかを示します。順に、実行済み、検証済み、受け入れ済み、精算対象です。この実行に不要な段階は表示しません。",
       "outcome": "成果",
       "run": "実行",
       "status": "ステータス",
@@ -265,7 +274,8 @@
       "soFar": "ここまで{duration}",
       "noMatch": "一致する実行がありません。",
       "clearFilters": "絞り込みを解除",
-      "footer": "成果の印は順に、実行済み、検証済み、受け入れ済み、精算対象です。1つが済んでも、他は未了のことがあります。費用はシミュレーションです。"
+      "footerOutcome": "成果は実行が今どの段階にあるかを示します。順に、実行済み、検証済み、受け入れ済み、精算対象です。",
+      "footer": "費用はシミュレーションです。"
     },
     "view": {
       "recovered": "ワーカーの再起動後に復旧しました",
@@ -276,6 +286,12 @@
       "canvasHelp": "ステップまたはタイムラインのイベントを選ぶと、実行者、費用、関連する記録を確認できます。ドラッグするとワークフローの続きが見られます。",
       "timeline": "タイムライン",
       "pacificTime": "時刻は太平洋時間です",
+      "localTime": "時刻はお使いのタイムゾーン（{zone}）です",
+      "legendAgent": "AIエージェント",
+      "legendApp": "アプリ操作",
+      "jumpTo": "移動先",
+      "hideSystem": "システムのステップを隠す",
+      "showTechnical": "技術的な詳細を表示",
       "selectedStep": "選択中のステップ",
       "cost": "費用",
       "agentsAndModels": "エージェントとモデル",
@@ -325,8 +341,7 @@
       "requested": "依頼内容",
       "input": "入力",
       "contract": "契約",
-      "contractValue": "<mono>{ref}</mono>：すべての注文を入金と突き合わせ、例外は人が確認し、合計は1セント単位まで検証します。",
-      "contractOutcome": "<mono>{ref}</mono>：{outcome}",
+      "contractValue": "すべての注文を入金と突き合わせ、例外は人が確認し、合計は1セント単位まで検証します。",
       "requestedBy": "依頼者",
       "whoDid": "誰が何を担当したか",
       "permitted": "許可された操作と、New Machinesの外で変わったこと",
@@ -359,6 +374,75 @@
       "basisPendingAcceptance": "あなたの受け入れを待っています。",
       "basisAcceptanceNotGiven": "あなたの受け入れは得られませんでした。",
       "basisReviewerPay": "人が行ったレビューに対して、レビュアー報酬が発生しています。"
+    },
+    "technical": {
+      "title": "技術的な詳細",
+      "expand": "{title}を表示",
+      "collapse": "{title}を隠す",
+      "runId": "実行ID",
+      "workflow": "ワークフローのバージョン",
+      "contract": "契約のバージョン",
+      "policyRef": "ポリシー",
+      "decisionId": "判定の記録",
+      "evaluatorCodes": "評価者のコード",
+      "policyCodes": "ポリシーのコード",
+      "capability": "権限",
+      "callId": "呼び出し"
+    },
+    "who": {
+      "you": "あなた",
+      "member": "ワークスペースのメンバー",
+      "reviewer": "レビュアー"
+    },
+    "codes": {
+      "aiModel": "AIモデル",
+      "createdTask": "レビュータスクを作成しました",
+      "pinnedVersions": "この実行のパックとポリシーのバージョンを固定しました",
+      "waitingApproval": "承認待ち",
+      "reason": "理由：{reason}",
+      "subtitle": {
+        "reasoning": "時間をかけて段階的に考えます",
+        "fast": "素早く軽めに考えます",
+        "read": "読み取りのみ",
+        "write": "変更できます"
+      },
+      "map": {
+        "ACTION_CLASS_PERMITTED": "許可：この種類の操作はポリシーで認められています",
+        "ACTION_CLASS_DENIED": "不許可：この種類の操作はポリシーで認められていません",
+        "APPROVAL_GRANTED": "あなたの承認後に許可",
+        "APPROVAL_REQUIRED": "先にあなたの承認が必要です",
+        "CAPABILITY_NOT_IN_CONTRACT": "不許可：パックの契約にこの操作は含まれていません",
+        "CONNECTOR_DISABLED": "不許可：アプリの接続が解除されています",
+        "NOT_CONNECTED": "不許可：アプリが接続されていません",
+        "GRANT_REVOKED": "不許可：アプリへのアクセスが取り消されています",
+        "ROUTE_CHANGED": "不許可：実行中にアプリが別の方法で再接続されました",
+        "UNKNOWN_TOOL": "不許可：New Machinesが知らないツールです",
+        "TOOL_NOT_OFFERED": "不許可：エージェントはこのツールを使えません",
+        "RULES_EVALUATED": "パックのルールで判定",
+        "PAYMENT_ACTION": "お金が動くため、人の承認が必要です",
+        "MONEY_MOVEMENT_BY_AGENT": "エージェントがお金を動かすため、人の承認が必要です",
+        "MISMATCHES_FOUND": "注文と入金が一致しないものがあります",
+        "ALL_MATCHED": "すべての注文が入金と一致しました",
+        "DATA_MISSING": "一部のデータがありませんでした",
+        "NO_REQUESTS": "処理する依頼はありません",
+        "CASES_PROPOSED": "判断が必要な案件を提案しました",
+        "NOTHING_OVERDUE": "期限切れのものはありません",
+        "REMINDERS_PLANNED": "リマインダーを予定しました",
+        "REFERENCE_MISMATCH": "参照番号が一致しません",
+        "AMOUNT_DELTA": "金額が異なります",
+        "PAYOUT_NOT_FOUND": "入金が見つかりません",
+        "WITHIN_RETURN_WINDOW": "返品期間内です",
+        "DAMAGE_DESCRIBED": "破損の説明があります",
+        "APPROVED": "承認",
+        "HUMAN_REVIEW": "担当者の確認が必要",
+        "REJECTED": "却下",
+        "REVISION_REQUIRED": "修正が必要",
+        "ESCALATED": "エスカレーション済み",
+        "BLOCKED": "停止",
+        "ERROR": "エラー",
+        "TIMED_OUT": "時間切れ",
+        "PASS": "合格"
+      }
     }
   },
   "errors": {
@@ -368,9 +452,10 @@
     "pageCouldNotLoad": "このページを読み込めませんでした",
     "notFound": {
       "title": "このアドレスには何もありません",
-      "body": "実行、パック、タスクのIDが違うか、リンクが途中で切れている可能性があります。",
+      "body": "リンクが途中で切れているか、古くなっている可能性があります。アドレスを確認して、もう一度お試しください。",
       "overview": "概要へ移動",
-      "allRuns": "すべての実行を見る"
+      "allRuns": "すべての実行を見る",
+      "signIn": "サインイン"
     },
     "signIn": {
       "mismatch": "メールアドレスとパスワードが一致しません。確認してもう一度お試しください。",
@@ -392,9 +477,14 @@
     },
     "recordLink": "各ステップと担当者を見る",
     "signInTitle": "デモワークスペースにサインイン",
-    "signInHelp": "お渡ししたログイン情報か、Googleアカウントをご利用ください。",
-    "footerNote": "検索エンジンには登録されていません。ここにある顧客、注文、レビュアーは架空で、実際のお金は動きません。",
-    "footerBuilt": "<cup>AI Builder Cup</cup> のために制作。2026年12月。",
+    "signInTitleNext": "{page}に進むには、サインインしてください",
+    "continueTo": {
+      "app": "ビジネスワークスペース",
+      "work": "レビュアーポータル",
+      "studio": "Studio"
+    },
+    "signInHelp": "お送りしたデモ用ログイン情報か、Googleアカウントをご利用ください。",
+    "footerNote": "ここにある顧客、注文、レビュアーは架空で、実際のお金は動きません。",
     "signIn": {
       "mockNote": "サインインはシミュレーションです。認証情報は確認されません。",
       "signingIn": "サインイン中…",
@@ -403,8 +493,13 @@
       "email": "メールアドレス",
       "emailPlaceholder": "you@company.com",
       "password": "パスワード",
+      "passwordHint": "デモ用ログイン情報と一緒にお送りしています。",
+      "passwordSuffix": "パスワード",
+      "show": "表示",
+      "hide": "非表示",
       "submit": "サインイン",
-      "joinNote": "Harbor & Pine Supply Co. に有料メンバーとして参加します。レビュアーもここからサインインし、ワークスペースメニューからレビュアーポータルに切り替えます。"
+      "joinNoteMember": "Googleアカウントでサインインすると、Harbor & Pine Supply Co. にメンバーとして参加します。",
+      "joinNoteReviewer": "レビュアーの方は、サインイン後にメニューからレビュアーポータルを開いてください。"
     },
     "record": {
       "title": "Harbor & Pine の昨日の照合",
@@ -427,7 +522,8 @@
     "needsYou": "対応が必要",
     "hiredPacks": "追加済みのパック",
     "findMore": "他のパックを探す",
-    "packMeta": "{version}、30日間で{n, plural, other {#回}}実行",
+    "lastRun": "最終実行：{when}",
+    "noRunsYet": "まだ実行はありません",
     "runs": "実行",
     "viewAll": "すべて表示",
     "outcomeMarks": "成果の印：実行済み、検証済み、受け入れ済み、精算対象",
@@ -470,7 +566,9 @@
       "run": {
         "title": "実行を開始する",
         "detail": "対象のデータを選び、必要な承認をして、記録を確認します。"
-      }
+      },
+      "reviewerPrompt": "レビューのためにお越しですか？",
+      "reviewerLink": "レビュアーポータルへ移動"
     },
     "invitation": {
       "title": "{org}から{role}として参加するよう招待されています",
@@ -483,7 +581,9 @@
     "title": "承認",
     "lede": "ポリシー上あなたの承認が必要なときは、1つの具体的な操作を承認します。内容が少しでも変わると承認は無効になり、あらためて確認します。",
     "earlier": "過去の承認",
+    "openRun": "実行を開く",
     "pastLine": "{status}、{when}",
+    "runLabel": "{title}（{when}）",
     "past": {
       "PENDING": "待機中",
       "GRANTED": "あなたが承認",
@@ -571,8 +671,33 @@
     "writesWithApproval": "承認があれば書き込み可",
     "revoke": "取り消す",
     "revokeTitle": "このアクセスを取り消しますか？",
-    "revokeDescription": "{install}は、{app}の{capability}を使えなくなります。このページから、あらためて許可できます。",
+    "revokeDescription": "{install}は、{app}の「{capability}」を使えなくなります。このページから、あらためて許可できます。",
     "revokeConfirm": "アクセスを取り消す",
+    "capability": {
+      "read": "{resource}の読み取り",
+      "write": "{resource}への書き込み",
+      "other": "{resource}の{action}",
+      "resources": {
+        "orders": "注文",
+        "payment": "支払い",
+        "shipments": "出荷",
+        "invoice": "請求書",
+        "inventory": "在庫",
+        "pages": "ページ",
+        "charges": "請求",
+        "sheets": "スプレッドシート",
+        "drive_file": "ドライブのファイル",
+        "message": "メッセージ",
+        "refund": "返金"
+      },
+      "actions": {
+        "refund": "返金",
+        "issue": "発行",
+        "create": "作成",
+        "create_draft": "下書き作成",
+        "propose": "提案"
+      }
+    },
     "noPack": "この接続を使っているパックはありません。",
     "disconnectedToastBodyLive": "もう一度接続するまで、このアプリが必要な実行は開始できません。",
     "empty": "まだアプリはありません。パックを追加すると、必要なアプリがここに表示され、接続できるようになります。",
@@ -600,14 +725,14 @@
     "signInNotRemoved": "{app}の接続はここで解除しましたが、接続サービス側のサインインはまだ削除できていません。次に{app}を接続するときに削除されます。",
     "revokedPill": "取り消し済み",
     "allowAgain": "再度許可",
-    "allowAgainFor": "{install}に{app}の{capability}を再度許可",
+    "allowAgainFor": "{install}に{app}の「{capability}」を再度許可",
     "allowedToast": "アクセスを再度許可しました",
-    "allowedToastBody": "{install}は{app}の{capability}を再び使えます。",
+    "allowedToastBody": "{install}は{app}の「{capability}」を再び使えます。",
     "allowFailed": "アクセスを再度許可できませんでした",
     "allowedDeniedToast": "再度許可しましたが、ポリシーで拒否されています",
-    "allowedDeniedToastBody": "{install}への{app}の{capability}は再度許可しましたが、ポリシーが呼び出しを拒否します。通すにはポリシーを変更してください。",
+    "allowedDeniedToastBody": "{install}への{app}の「{capability}」は再度許可しましたが、ポリシーが呼び出しを拒否します。通すにはポリシーを変更してください。",
     "nothingAllowedToast": "追加なし",
-    "nothingAllowedToastBody": "{install}は{app}の{capability}をもう使っていないため、何も追加されませんでした。取り消しの記録は削除されました。",
+    "nothingAllowedToastBody": "{install}は{app}の「{capability}」をもう使っていないため、何も追加されませんでした。取り消しの記録は削除されました。",
     "simulatedToast": "{app}はシミュレーションデータを使います",
     "simulatedToastBody": "サインイン中にシミュレーションデータへ切り替えられました。実際のアカウントには何も届きません。",
     "badSignInLink": "アプリのサインインリンクが安全なウェブアドレスではなかったため、このページにとどまりました。",
@@ -637,7 +762,6 @@
       "inUse": "使用中",
       "rejected": "却下",
       "edited": "承認前にあなたが編集しました。",
-      "from": "提案元：{source}",
       "appliesTo": "適用先：{name}",
       "conflict": "使用中のメモリと矛盾しています",
       "conflictNote": "新しいメモリを承認すると、<mono>{id}</mono>は週末の注文向けに修正済みとして扱われます。",
@@ -653,15 +777,14 @@
       "rejectedTitle": "却下しました。エージェントは使用しません。",
       "rejectedBody": "履歴には残ります。"
     },
+    "source": {
+      "seed": "ワークスペースの初期設定",
+      "console": "New Machinesが追加",
+      "run": "実行 {n} から",
+      "other": "{source}から"
+    },
     "row": {
-      "scope": {
-        "Organization": "組織",
-        "Department": "部門",
-        "Agent installation": "導入したエージェント",
-        "User": "ユーザー",
-        "Task": "タスク"
-      },
-      "scopeLine": "{scope}：{name}",
+      "appliesTo": "適用先：{name}",
       "usedIn": "{n, plural, other {#回の実行で使用}}",
       "state": {
         "CANDIDATE": "提案中",
@@ -686,7 +809,9 @@
       "hired": "追加済み",
       "intro": "Workflow Packsは、エージェント、必要なレビュアー、成果を裏付ける検証をひとまとめにしたものです。追加する前に、サンプルデータで試せます。",
       "filterLabel": "パックを絞り込む",
-      "industryLabel": "業界で絞り込む",
+      "viewsLabel": "表示",
+      "functionLabel": "業務",
+      "industryLabel": "業界",
       "allIndustries": "すべての業界",
       "buildOwn": "ここにないパックが必要なときは、デベロッパースタジオで自分で作れます。",
       "buildOwnCta": "パックを作る",
@@ -699,7 +824,11 @@
       "notCertified": "未認証",
       "team": "チームが作成",
       "reviewerWhenNeeded": "必要に応じてレビュアー",
-      "perRun": "1回の実行あたり{min}～{max}"
+      "perRun": "1回の実行あたり{price}",
+      "perRunUnset": "価格未設定"
+    },
+    "price": {
+      "range": "{min}～{max}"
     },
     "trial": {
       "title": "サンドボックスで試す",
@@ -707,7 +836,7 @@
       "intro": "合成データでパックを実行します。実際の接続は使われず、書き込みはサンドボックスの外に出る前に止められます。",
       "running": "実行中…",
       "again": "もう一度試す",
-      "start": "無料で試す",
+      "start": "サンプルデータで試す",
       "finished": "試用は4.6秒で完了しました。料金はかかりません。",
       "script": {
         "recon": {
@@ -730,7 +859,8 @@
     "pack": {
       "seeRuns": "このパックの実行を見る",
       "packSettings": "パックの設定",
-      "reviewHire": "確認して追加",
+      "add": "ワークスペースに追加",
+      "tryFirst": "サンプルデータでの試用を見る",
       "publisherVersion": "{publisher}、バージョン{version}",
       "hired": "追加済み",
       "notCertified": "未認証",
@@ -742,11 +872,11 @@
       "outOf": "{value}/{total}",
       "limitations": "既知の制限",
       "retested": "再テストのきっかけ",
-      "refreshing": "このパックの評価レポートを更新しています。",
       "uncertifiedNote": "未認証です。提供元の主張は、New Machinesではまだ検証していません。まずサンドボックスで試してください。",
       "costs": "費用",
       "agentsTools": "エージェントとツール",
-      "perRun": "1回の実行あたり{min}～{max}",
+      "perRun": "1回の実行あたり{price}",
+      "perRunUnset": "価格未設定",
       "upTo": "1回の実行あたり最大{amount}",
       "noneByDefault": "既定ではなし",
       "basis": "課金の基準",
@@ -764,6 +894,11 @@
         "low": "低",
         "medium": "中",
         "high": "高"
+      },
+      "riskNote": {
+        "low": "主にデータの読み取りです。書き込みは、事前に承認した場所に限られます。",
+        "medium": "書き込みや送信ができますが、あなたの承認が必要です。例外は人が確認します。",
+        "high": "お金や顧客への判断に関わります。すべての操作を人が確認します。"
       },
       "publisherSees": "提供元に見えるもの",
       "publisherSeesValue": "品質の集計値だけです。あなたのデータや実行は見えません。"
@@ -792,7 +927,6 @@
         "network": "New Machines のレビュアーネットワーク",
         "networkNote": "ネットワークのレビュアーには、ワークスペース名、メールアドレス、電話番号を伏せた写しが表示されます。報酬は模擬です。ネットワークを許可している間、自分のチームにはこれらのタスクが表示されません。誰も受けないタスクは、期限切れになるまで待ちます。"
       },
-      "poolOff": "ネットワークがオフの間はチームのみ",
       "networkOff": "このワークスペースではレビュアーネットワークがオフのため、オーナーまたは管理者が許可するまで、すべてのタスクをチームがレビューします。",
       "networkOffLink": "レビュアーを開く",
       "saveSettings": "パックの設定を保存",
@@ -801,12 +935,10 @@
       "settingsLede": "1回の実行あたりの上限額と、このパックのタスクをレビューする人を変更します。",
       "summary": "概要",
       "pack": "パック",
-      "version": "バージョン",
       "pinned": "固定。更新にはあなたの承認が必要です。",
       "perRunLabel": "1回の実行あたり",
-      "perRunValue": "{min}～{max}とレビュアー報酬",
-      "cap": "上限",
-      "capPerRun": "1回の実行あたり{amount}",
+      "perRunValue": "{price}とレビュアー報酬。{cap}を超える前に実行を止めて確認します",
+      "perRunUnset": "エージェントの価格は未設定、ほかにレビュアー報酬。{cap}を超える前に実行を止めて確認します",
       "region": "データの地域",
       "agree": "このパックの業務契約と支払条件に同意します。",
       "readContract": "契約を読む",
@@ -831,9 +963,29 @@
       "showAll": "すべてのエージェントを表示",
       "empty": "利用できるエージェントはまだありません。",
       "publisherVersion": "{publisher}、バージョン{version}",
-      "usedIn": "{n, plural, =0 {まだパックで使われていません} other {#件のパックで使用}}",
+      "usedIn": "{n, plural, =0 {まだパックで使われていません} other {#件のパックで使用：}}",
       "sample": "サンプル",
       "team": "チームが作成"
+    },
+    "capability": {
+      "finance_collections": "請求書の督促",
+      "finance_reconcile": "入金の照合",
+      "operations_report": "業務レポート",
+      "customer_refunds": "顧客への返金",
+      "retail_orders": "小売の注文",
+      "communications_draft": "メッセージの下書き",
+      "orders_read": "注文の読み取り",
+      "inventory_read": "在庫の読み取り",
+      "refund_propose": "返金の提案",
+      "invoice_read": "請求書の読み取り",
+      "payment_read": "支払いの読み取り",
+      "message_create_draft": "メッセージの下書き",
+      "report_compose": "レポートの作成",
+      "drive_file_create": "Driveにファイルを作成",
+      "shipments_read": "出荷の読み取り",
+      "dispute_draft": "チャージバック証拠の下書き",
+      "catalog_read": "カタログの読み取り",
+      "catalog_draft": "カタログ文の下書き"
     },
     "detail": {
       "allAgents": "すべてのエージェント",
@@ -843,6 +995,8 @@
       "sampleNote": "デモ用ワークスペースのサンプルエージェントです。スキルとツールは公開されていません。",
       "capabilities": "機能",
       "capabilitiesNote": "エージェントが要求する操作です。操作はその都度、ポリシーに照らして確認されます。",
+      "technical": "技術的な詳細",
+      "capabilityIds": "機能ID",
       "skills": "スキル",
       "noSkills": "スキルは登録されていません。",
       "tools": "呼び出せるツール",
@@ -905,10 +1059,18 @@
   "settings": {
     "title": "設定",
     "lede": "このワークスペースを使える人、すべての実行が従うルール、接続したAIツールのアクセスを管理します。",
+    "onThisPage": "このページの内容",
     "policies": {
       "title": "ポリシー",
       "aside": "すべての操作で確認されます",
       "updated": "更新：{when}",
+      "version": "バージョン{n}",
+      "names": {
+        "tool_actions": "ツールの操作",
+        "human_review": "人によるレビュー",
+        "spend_cap": "支出上限",
+        "region": "データの地域"
+      },
       "note": "ブロックされた操作を強制的に通すボタンはありません。許可するには、ここでポリシーを変更します。変更は記録されます。"
     },
     "workspace": {
@@ -917,6 +1079,12 @@
       "cap": "月間上限",
       "capValue": "{amount}（シミュレーション）",
       "region": "データの地域",
+      "regionValue": "{place}（{code}）",
+      "places": {
+        "asia-south1": "ムンバイ",
+        "asia-northeast1": "東京",
+        "us-central1": "米国アイオワ"
+      },
       "reviewerLocations": "レビュアーの所在地",
       "reviewerLocationsValue": "米国、フィリピン"
     },
@@ -942,7 +1110,6 @@
       "sentToastBody": "{address}は、招待を受け入れると{role}として参加できます。このデモではシミュレーションです。",
       "sendFailed": "招待を送信できませんでした",
       "pendingNote": "招待済み（未承諾）",
-      "signsInWith": "{email}、サインイン方法：{via}",
       "invited": "招待済み",
       "rolesLower": {
         "Member": "メンバー",
@@ -951,7 +1118,7 @@
       "sentToastBodyLive": "{address}は、次にそのメールアドレスでサインインすると{role}として参加します。"
     },
     "tokens": {
-      "title": "AIツール用のアクセス（MCP）",
+      "title": "AIツール用のアクセス",
       "create": "トークンを作成",
       "createTitle": "AIツール用のトークンを作成",
       "createDescription": "トークンは30日間有効です。ここでの選択にかかわらず、承認や却下は一切できません。",
@@ -964,7 +1131,7 @@
         "runs:start": "追加済みのパックの実行を開始する",
         "approvals:list": "承認待ちの項目を見る"
       },
-      "lede": "AIツールが、パックの一覧表示、実行の開始、待機中の項目の確認をできるようにします。トークンで承認や却下をすることはできません。",
+      "lede": "AIアシスタントが、パックの一覧表示、実行の開始、待機中の項目の確認をできるようにします。トークンはMCP接続に対応したアシスタントで使え、承認や却下をすることはできません。",
       "createdToast": "トークンを作成しました",
       "createdToastBody": "今すぐコピーしてください。表示されるのは一度だけです。",
       "createFailed": "トークンを作成できませんでした",
@@ -1011,6 +1178,8 @@
     "removeLabel": "{name} を外す",
     "removeTitle": "{name} をレビュアーから外しますか?",
     "removeDescription": "チームのレビュータスクが表示されなくなり、受けていたタスクはキューに戻ります。レビュアーとして参加した人は、このワークスペースからも外れます。",
+    "removeSelfTitle": "ご自身をレビュアーから外しますか?",
+    "removeSelfDescription": "チームのレビュータスクが表示されなくなり、受けていたタスクはキューに戻ります。ワークスペースでのあなたの役割は変わりません。",
     "removeConfirm": "レビュアーから外す",
     "removed": "レビュアーから外しました",
     "removeFailed": "レビュアーを外せませんでした",
@@ -1031,7 +1200,7 @@
   },
   "usage": {
     "title": "利用状況と請求",
-    "lede": "すべての料金は、記録された実行ステップから発生し、2回計上されます。1回はあなたのアカウント、もう1回は資金の行き先です。このデモでは、お金は動きません。",
+    "lede": "すべての料金は記録された実行ステップから発生するため、どの作業の分かをたどれます。このデモでは、お金は動きません。",
     "simulated": "シミュレーションの請求",
     "spent": "{month}の利用額",
     "ofCap": "月間上限{cap}の{pct}%",
@@ -1041,7 +1210,8 @@
     "reviewerPay": "今月のレビュアー報酬",
     "reviewerPayNote": "{n, plural, =0 {まだレビュアーへの支払いはありません。} other {#件の支払い。}}",
     "ledger": "元帳",
-    "ledgerNote": "各記録は貸借が一致します。借方と貸方は同額です",
+    "ledgerNote": "記録を開くと、お金の行き先が見られます",
+    "viewRun": "実行を見る",
     "account": "勘定科目",
     "debit": "借方",
     "credit": "貸方",
@@ -1051,13 +1221,14 @@
       "PENDING": "保留中",
       "HELD": "確保中"
     },
+    "planTitle": "プランと支払い",
     "plan": "プラン",
     "planValue": "{plan}、月額{price}（シミュレーション）",
     "includes": "含まれるもの",
     "includesValue": "パックは無制限、メンバー5人、30日間の実行履歴",
     "payment": "支払い方法",
     "paymentValue": "なし。このデモ用ワークスペースがカードに課金することはありません。",
-    "ledeLive": "すべての料金は、記録された実行ステップから発生し、2回計上されます。1回はあなたのアカウント、もう1回は資金の行き先です。請求はシミュレーションで、お金は動きません。",
+    "ledeLive": "すべての料金は記録された実行ステップから発生するため、どの作業の分かをたどれます。請求はシミュレーションで、お金は動きません。",
     "heldNoteMany": "進行中の{n}件の実行のために保留しています。それぞれ実行の完了時に解放されます。",
     "heldNone": "現在、保留中の金額はありません。",
     "agentsToolsNoteNoPlan": "実行ステップごとに計量します。レビュアー報酬は別に計上します。",
@@ -1097,7 +1268,7 @@
     "yourWork": "あなたの作業",
     "openOffers": "受付中の依頼",
     "worth": "報酬合計",
-    "notYetPaid": "未払い",
+    "owed": "未払いの報酬",
     "acceptedSubmissions": "受け入れ済みの提出",
     "seeEarnings": "報酬を見る",
     "how": {
@@ -1112,11 +1283,16 @@
       "owed": "未払いの報酬",
       "paid": "支払い済み",
       "tasks": "タスク",
+      "columns": {
+        "task": "タスク",
+        "verdict": "判定",
+        "payment": "支払い"
+      },
       "failedCheck": "あなたのレビュー後、この実行は独立した検証に失敗しました。報酬には影響しません。",
       "status": {
         "OWED": "未払い",
         "ELIGIBLE": "支払い可能",
-        "PAID_SIMULATED": "支払い済み（模擬）",
+        "PAID_SIMULATED": "支払い済み",
         "IN_REVIEW": "確認中"
       },
       "verdict": {
@@ -1129,6 +1305,7 @@
       "seeTasks": "受付中のタスクを見る"
     },
     "empty": "現在、受付中のレビュータスクはありません。実行で人の確認が必要になると、ここに表示されます。",
+    "emptyNetwork": "現在、受付中のレビュータスクはありません。ネットワークでのレビューをオンにすると、他の New Machines の顧客のレビュータスクを受けられます。",
     "simulatedPayLive": "報酬は模擬です",
     "teamUnpaid": "チームのレビュー、無報酬",
     "network": "ネットワーク",
@@ -1141,10 +1318,12 @@
       "formDescription": "顧客にプロフィールが表示されることはありません。New Machines が適したタスクを紹介するために使います。",
       "name": "名前",
       "languages": "言語",
-      "languagesHint": "例: English, Tagalog",
+      "languagesHint": "カンマ区切りで入力します。例: English, Tagalog",
       "skills": "スキル",
-      "skillsHint": "例: Reconciliation, Refunds",
-      "save": "保存してネットワークでレビューする",
+      "skillsHint": "カンマ区切りで入力します。例: Reconciliation, Refunds, Exception review",
+      "save": "プロフィールを保存",
+      "saveAndStart": "保存してレビューを始める",
+      "saved": "プロフィールを保存しました",
       "on": "ネットワークでレビューしています",
       "off": "ネットワークでのレビューをやめました",
       "failed": "レビュアープロフィールを更新できませんでした",
@@ -1284,6 +1463,16 @@
       "team": "チームのレビューは無報酬です。",
       "network": "このレビューの模擬報酬: {pay}。お金は動きません。"
     },
+    "summary": {
+      "title": "あなたのレビュー",
+      "task": "確認した内容",
+      "verdict": "判定",
+      "feedback": "フィードバック",
+      "records": "レコードごとの判断",
+      "recordCall": "注文 {id}: {call}",
+      "submitted": "提出日時",
+      "onEarnings": "判定と提出日時は「報酬」ページに表示されます。"
+    },
     "simulatedPayLive": "模擬報酬",
     "teamUnpaid": "チームのレビュー、無報酬"
   },
@@ -1296,8 +1485,12 @@
     "packsTitle": "ワークフローパック",
     "newAgent": "新しいエージェント",
     "newPack": "新しいパック",
-    "agentCount": "{n, plural, other {エージェント # 件}}",
-    "packCount": "{n, plural, other {パック # 件}}",
+    "allAgents": "{n, plural, other {エージェント # 件をすべて見る}}",
+    "allPacks": "{n, plural, other {パック # 件をすべて見る}}",
+    "version": "v{n}",
+    "nextAgent": "まずエージェントを作り、次にそれをパックに入れます。",
+    "nextPack": "エージェントができました。次はパックに入れましょう。",
+    "nextAdd": "パックをワークスペースに追加すると実行できます。",
     "noAgents": "まだエージェントはありません。エージェントはアプリからデータを読み取り、パックのステップの作業を準備します。",
     "noPacks": "まだパックはありません。パックはワークフローです。ステップ、レビューと承認を行う人、成果物を定めます。",
     "liveOnlyTitle": "スタジオはライブワークスペースでのみ使えます",
@@ -1326,8 +1519,8 @@
     "model": "モデル",
     "reasoning": "推論モデル",
     "fast": "高速モデル",
-    "maxTurns": "ステップごとの最大ターン数",
-    "maxTurnsHelp": "回答する前にツールを呼び出せる回数です（1〜20）。",
+    "maxTurns": "ステップごとのツール呼び出し回数の上限",
+    "maxTurnsHelp": "回答する前にツールを使える回数です（1〜20）。通常は {n} です。",
     "tools": "読み取るアプリ",
     "toolsHelp": "エージェントは読み取りのみ行います。アプリのデータを変更するステップは、承認の後にパックに置きます。",
     "toolsMax": "ツールは最大 {n} 個までです。",
@@ -1412,7 +1605,7 @@
   "studioFields": {
     "nothingSelected": "設定を変更するには、キャンバスまたはステップ一覧でステップを選んでください。",
     "stepName": "ステップ名",
-    "stepNameHelp": "他のステップは、このステップの結果を nodes.ステップ名.output として読み取ります。",
+    "stepNameHelp": "英小文字・数字・アンダースコアを使います（例: ledger_check）。他のステップはこの名前でこのステップの結果を読み取ります。",
     "rename": {
       "badId": "英小文字・数字・アンダースコアを使い、英小文字で始めてください（40 文字以内）。",
       "taken": "その名前は別のステップで使われています。"
@@ -1516,6 +1709,7 @@
     },
     "outcomes": "各結果の進む先",
     "goesTo": "{outcome} の進む先",
+    "stepTarget": "ステップ{n}：{kind}（{id}）",
     "nowhere": "未接続",
     "duplicate": "ステップを複製",
     "remove": "ステップを削除"
@@ -1544,7 +1738,7 @@
     "blocked": "レコードを削除するツールや送金するツールは、パックで使えません。",
     "noMatch": "一致するものがありません。別の語句を試してください。",
     "listLabel": "読む順のステップ",
-    "addAfter": "{step} の後にステップを追加",
+    "addAfter": "ステップ {n} の後にステップを追加",
     "addAfterOutcome": "結果 {outcome} の後",
     "unlinked": "後に続いていたステップの接続が外れました",
     "cut": {
@@ -1590,8 +1784,8 @@
     "inWorkspace": "ワークスペース",
     "added": "ワークスペースに追加済み",
     "notAdded": "未追加",
-    "versionHead": "バージョン",
-    "version": "バージョン {n}"
+    "addToWorkspace": "ワークスペースに追加",
+    "versionHead": "バージョン"
   },
   "studioEditor": {
     "untitled": "無題のパック",
@@ -1600,14 +1794,15 @@
     "unsaved": "未保存の変更があります",
     "undo": "元に戻す",
     "redo": "やり直す",
-    "validate": "サーバーで確認",
+    "validate": "問題を確認",
     "save": "パックを保存",
+    "noChanges": "保存する変更はありません。",
     "saved": "パックを保存しました",
     "savedVersion": "バージョン {n} を保存しました。マーケットプレイスの「チームが作成」に表示されます。",
     "notSaved": "パックを保存できませんでした",
     "notChecked": "パックは確認されませんでした",
-    "fixFirst": "まずキャンバスの下の問題を修正してください。このままではサーバーがパックを受け付けません。",
-    "seeProblems": "キャンバスの下の問題を確認してください。",
+    "fixFirst": "まずステップの下の問題を修正してください。このままではサーバーがパックを受け付けません。",
+    "seeProblems": "ステップの下の問題を確認してください。",
     "conflictTitle": "新しいバージョンが保存されています",
     "conflictBody": "最新はバージョン {n} です。読み込むと、ここでの未保存の変更は置き換わります。",
     "conflictSaved": "このバージョンを開いた後に、別の人が新しいバージョンを保存しました。読み込むと、ここでの未保存の変更は置き換わります。",
@@ -1622,6 +1817,7 @@
     "panels": "サイドパネル",
     "stepsPanel": "ステップ",
     "addPanel": "追加",
+    "smallScreen": "大きな画面のほうが編集しやすいため、ここではキャンバスを表示していません。一覧でステップを選んで設定を変更し、「各結果の進む先」でステップをつないでください。",
     "stepSettings": "ステップの設定",
     "packDetails": "パックの詳細",
     "showDetails": "パックの詳細",
@@ -1692,7 +1888,7 @@
     "title": "workflow.yaml",
     "lede": "パックのステップをワークフロー定義ファイルとして表します。プラットフォームのパックと同じ形式です。",
     "export": "エクスポート",
-    "import": "インポート",
+    "import": "インポートして置き換え",
     "exportLabel": "保存済みの workflow.yaml",
     "exportFailed": "workflow.yaml を読み込めませんでした",
     "savedOnly": "これは保存済みのバージョンです。最新の変更を含めるには保存してください。",
@@ -1701,13 +1897,14 @@
     "copied": "コピーしました",
     "copyFailed": "コピーできませんでした。テキストを選択してコピーしてください。",
     "importLabel": "workflow.yaml を貼り付け",
-    "importNote": "キャンバス上のステップが置き換わります。元に戻すことができます。",
-    "importButton": "キャンバスを置き換える",
+    "importWarnTitle": "インポートすると現在の下書きが置き換わります",
+    "importWarn": "この下書きのすべてのステップが、ファイルのステップに置き換わります。「元に戻す」で元のステップに戻せます。",
+    "importButton": "このファイルで下書きを置き換える",
     "imported": "ステップをインポートしました",
-    "importedBody": "{n, plural, other {# 個のステップ}}がキャンバスにあります。",
+    "importedBody": "{n, plural, other {# 個のステップ}}がエディターにあります。",
     "importFailed": "YAML をインポートできませんでした",
     "importIssues": "{n, plural, other {# 個のステップを読み取れませんでした}}",
-    "noStartTitle": "キャンバスは変更されませんでした",
+    "noStartTitle": "何も変更されていません",
     "noStart": "ファイルに開始ステップがないため、何もインポートしませんでした。"
   },
   "studioTest": {
@@ -1717,8 +1914,9 @@
     "sandbox": "サンドボックスのデータ",
     "saveFirst": "テストするにはパックを保存してください。",
     "saveChangesFirst": "テストするには変更を保存してください。",
+    "inputHelp": "パックの開始フォームです。実際に実行を開始する人と同じように入力してください。実行はこれを入力として読み取ります。",
     "budget": "このテストで使える上限（USD）",
-    "budgetHelp": "任意です。空欄の場合はパックの予算が適用されます。",
+    "budgetHelp": "任意です。空欄の場合はパックの予算 {amount} USD が適用されます。",
     "start": "テスト実行を開始",
     "failed": "テスト実行を開始できませんでした",
     "budgetRequired": "このテストの予算を入力してください。パック自体には上限が設定されていません。",

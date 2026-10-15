@@ -1,7 +1,25 @@
+import type { IntlLocale } from "@/lib/format";
 import type { Run } from "@/lib/types";
 
 /** The pack whose deliverable page keeps its written copy; every other pack's page is built from the run. */
 export const RECONCILIATION_PACK = "order-payment-reconciliation";
+
+/** An amount the API wrote as "-70.40 USD" (major units, then the currency's code). */
+const MONEY_TEXT = /^(-?\d+(?:\.\d+)?) ([A-Z]{3})$/;
+/** The currencies the product handles; any other three capitals ("PDF", "CSV") are not money. */
+const CURRENCIES = new Set(["USD", "EUR", "GBP", "JPY", "PHP", "INR", "SGD", "AUD", "CAD"]);
+
+/**
+ * A deliverable value as the interface writes money ("−$70.40"), when the API sent one in its "70.40 USD"
+ * form; any other value as sent. A negative amount takes a minus sign, like the rest of the interface.
+ */
+export function moneyText(value: string, locale: IntlLocale): string {
+  const m = value.match(MONEY_TEXT);
+  if (!m || !CURRENCIES.has(m[2])) return value;
+  const amount = Number(m[1]);
+  const formatted = new Intl.NumberFormat(locale, { style: "currency", currency: m[2] }).format(Math.abs(amount));
+  return amount < 0 ? `−${formatted}` : formatted;
+}
 
 export type ToolUse = {
   app: string;

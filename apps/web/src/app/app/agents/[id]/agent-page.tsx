@@ -12,6 +12,7 @@ import { ApiError } from "@/lib/api/errors";
 import { useAgent } from "@/lib/queries/catalog";
 import { useFormat } from "@/lib/use-format";
 import type { Agent } from "@/lib/types";
+import { useCapabilityLabel } from "../capability-label";
 
 export function AgentPage({ id }: { id: string }) {
   const agent = useAgent(id);
@@ -26,6 +27,7 @@ export function AgentPage({ id }: { id: string }) {
 function AgentDetail({ agent: a }: { agent: Agent }) {
   const t = useTranslations("agents.detail");
   const { list } = useFormat();
+  const label = useCapabilityLabel();
   const muted = (text: string) => <span className="text-muted">{text}</span>;
 
   return (
@@ -45,14 +47,28 @@ function AgentDetail({ agent: a }: { agent: Agent }) {
         <div className="space-y-6">
           <Section title={t("capabilities")}>
             <div className="px-5 py-4">
-              <div className="flex flex-wrap gap-1.5">
+              <ul className="flex flex-wrap gap-1.5">
                 {a.capabilities.map((c) => (
-                  <Id key={c} className="rounded bg-grey-100 px-1.5 py-0.5 text-[11px]">
-                    {c}
-                  </Id>
+                  <li key={c} className="rounded bg-grey-100 px-2 py-1 text-sm text-grey-700">
+                    {label(c)}
+                  </li>
                 ))}
-              </div>
+              </ul>
               <p className="mt-2 text-sm text-muted">{t("capabilitiesNote")}</p>
+              {/* The ids a policy or a definition file names; of no use in the main view. */}
+              {a.capabilities.length ? (
+                <details className="mt-3 text-sm">
+                  <summary className="cursor-pointer text-muted hover:text-ink">{t("technical")}</summary>
+                  <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1">
+                    <dt className="text-muted">{t("capabilityIds")}</dt>
+                    <dd className="flex flex-wrap gap-x-3 gap-y-1">
+                      {a.capabilities.map((c) => (
+                        <Id key={c}>{c}</Id>
+                      ))}
+                    </dd>
+                  </dl>
+                </details>
+              ) : null}
             </div>
           </Section>
 

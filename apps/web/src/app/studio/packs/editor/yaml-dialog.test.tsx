@@ -67,9 +67,11 @@ describe("YamlDialog", () => {
     const alert = await screen.findByRole("alert");
     expect(alert).toHaveTextContent("The workflow.yaml could not be loaded");
     expect(alert).toHaveTextContent("The registry is restarting.");
-    // The other tab still works.
-    await userEvent.click(screen.getByRole("button", { name: "Import" }));
+    // The other tab still works, and says what an import does before anything is pasted.
+    await userEvent.click(screen.getByRole("button", { name: "Import and replace" }));
     expect(screen.getByLabelText("Paste a workflow.yaml")).toBeInTheDocument();
+    expect(screen.getByText("Importing replaces the current draft")).toBeInTheDocument();
+    expect(screen.getByText(/Undo brings the old ones back/)).toBeInTheDocument();
   });
 
   it("imports a workflow.yaml onto the canvas, as a step that can be undone, and lists what it could not read", async () => {
@@ -79,7 +81,7 @@ describe("YamlDialog", () => {
     fireEvent.change(await screen.findByLabelText("Paste a workflow.yaml"), {
       target: { value: "nodes: [{id: start}]" },
     });
-    await userEvent.click(screen.getByRole("button", { name: "Replace the canvas" }));
+    await userEvent.click(screen.getByRole("button", { name: "Replace the draft with this file" }));
     const [vars, handlers] = mocks.importer.mutate.mock.calls[0];
     expect(vars).toEqual({ path: { org_id: "org_a1" }, body: { yaml: "nodes: [{id: start}]" } });
     const issues = [{ path: "nodes[2]", message: "Step 3 cannot be read as a step." }];
@@ -103,7 +105,7 @@ describe("YamlDialog", () => {
     const before = store.getState().nodes;
     await userEvent.click(screen.getByRole("button", { name: "workflow.yaml" }));
     fireEvent.change(await screen.findByLabelText("Paste a workflow.yaml"), { target: { value: "nodes: [{}]" } });
-    await userEvent.click(screen.getByRole("button", { name: "Replace the canvas" }));
+    await userEvent.click(screen.getByRole("button", { name: "Replace the draft with this file" }));
     const issues = [{ path: "nodes[0]", message: "Step 1 cannot be read as a step." }];
     // The unreadable step was the start: what came back has no trigger.
     act(() =>
@@ -114,7 +116,7 @@ describe("YamlDialog", () => {
     expect(onImported).not.toHaveBeenCalled();
     expect(mocks.toast).not.toHaveBeenCalledWith("Steps imported", expect.anything());
     const notice = screen.getByRole("status");
-    expect(notice).toHaveTextContent("The canvas was not changed");
+    expect(notice).toHaveTextContent("Nothing was changed");
     expect(notice).toHaveTextContent("The file has no start step, so nothing was imported.");
     expect(notice).toHaveTextContent("Step 1 cannot be read as a step.");
     // Nothing readable at all says the same.
@@ -122,7 +124,7 @@ describe("YamlDialog", () => {
     expect(store.getState().nodes).toBe(before);
     expect(screen.getByRole("status")).toHaveTextContent("The file has no start step, so nothing was imported.");
     // The next attempt starts clean: a failure then is not shown beside the old notice.
-    await userEvent.click(screen.getByRole("button", { name: "Replace the canvas" }));
+    await userEvent.click(screen.getByRole("button", { name: "Replace the draft with this file" }));
     act(() => mocks.importer.mutate.mock.calls[1][1].onError(new Error("offline")));
     expect(screen.queryByText("The file has no start step, so nothing was imported.")).toBeNull();
   });
@@ -149,7 +151,7 @@ describe("YamlDialog", () => {
     renderDialog("org-a1--overdue", { readOnly: true });
     await userEvent.click(screen.getByRole("button", { name: "workflow.yaml" }));
     expect(await screen.findByLabelText("The saved workflow.yaml")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Import" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Import and replace" })).toBeNull();
     expect(screen.queryByLabelText("Paste a workflow.yaml")).toBeNull();
   });
 });

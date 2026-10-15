@@ -116,7 +116,11 @@ export function YamlDialog({
   );
 
   const importTab = (
-    <div className="space-y-2">
+    <div className="space-y-3">
+      {/* Said before the paste, not under it: an import is the one action here that is not harmless. */}
+      <Callout tone="warn" title={t("importWarnTitle")} announce={false}>
+        {t("importWarn")}
+      </Callout>
       <label className="block text-sm font-medium">
         {t("importLabel")}
         <textarea
@@ -125,7 +129,6 @@ export function YamlDialog({
           className="mt-1.5 h-60 w-full rounded-md border border-grey-300 p-3 font-mono text-[12px] outline-none focus:border-ink"
         />
       </label>
-      <p className="text-xs text-muted">{t("importNote")}</p>
       {noStart || issues.length ? (
         <Callout tone="warn" title={noStart ? t("noStartTitle") : t("importIssues", { n: issues.length })}>
           {noStart ? <p>{t("noStart")}</p> : null}

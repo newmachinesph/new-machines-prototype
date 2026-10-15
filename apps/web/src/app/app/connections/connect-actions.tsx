@@ -79,13 +79,13 @@ export function ConnectChoices({
   return (
     <div className="flex flex-wrap items-center gap-2">
       {realAllowed ? (
-        <Button className="h-8" data-connect={c.app} disabled={busy} onClick={() => real.start(c, onOutcome)}>
+        <Button className="h-10 sm:h-8" data-connect={c.app} disabled={busy} onClick={() => real.start(c, onOutcome)}>
           {t("connectApp", { app: c.app })}
         </Button>
       ) : null}
       <Button
         variant="secondary"
-        className={`h-8 ${SIM_BUTTON}`}
+        className={`h-10 sm:h-8 ${SIM_BUTTON}`}
         data-connect-sim={c.app}
         aria-label={t("useSimulatedFor", { app: c.app })}
         disabled={busy}
@@ -137,7 +137,7 @@ export function FinishConnecting({
     );
   return (
     <Button
-      className="h-8"
+      className="h-10 sm:h-8"
       data-finish={c.app}
       aria-label={t("finishConnectingFor", { app: c.app })}
       disabled={sync.isPending || real.isPending}
@@ -149,7 +149,7 @@ export function FinishConnecting({
 }
 
 /**
- * A link-style action that signs in to the app's real account (switch from simulated data, or sign in again).
+ * A secondary action that signs in to the app's real account (switch from simulated data, or sign in again).
  * With `confirm`, it asks first and the dialog's confirm button repeats `label`.
  */
 export function RealAccountButton({
@@ -168,16 +168,16 @@ export function RealAccountButton({
   const real = useConnectReal();
   const go = () => real.start(c, onOutcome);
   const button = (
-    <button
-      type="button"
+    <Button
+      variant="secondary"
+      className="h-10 sm:h-8"
       data-real={c.app}
       aria-label={ariaLabel}
-      className="link text-xs"
       disabled={real.isPending}
       onClick={confirm ? undefined : go}
     >
       {label}
-    </button>
+    </Button>
   );
   return confirm ? (
     <Confirm

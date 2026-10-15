@@ -17,14 +17,20 @@ import type {
   ListWorkflowPacksResponse,
   ListWorkflowRunsResponse,
   ListEligibleHumanTasksResponse,
+  RunSummary,
 } from "@/lib/api/gen/types.gen";
+import { useIsDemo } from "@/lib/queries/me";
+import { useFormat } from "@/lib/use-format";
 import { PackIcon } from "./pack-icon";
 
 // Pages show their sidebar icon plain; records (runs, packs, approvals, tasks) sit in a ring.
 type Entry = {
   id: string;
   label: string;
-  hint: string;
+  /** What tells this row from its neighbours: a run's status and age, a pack's category, a task's id. */
+  hint?: string;
+  /** The hint is an id, set in monospace. */
+  mono?: boolean;
   href: string;
   keywords: string;
   pack?: string;
@@ -33,7 +39,7 @@ type Entry = {
 };
 // The id is the stable key; the label is translated at build time.
 type Group = { id: string; label: string; items: Entry[] };
-type PaletteKey = "goToPage" | "approval" | "hired" | `groups.${"pages" | "runs" | "needsYou" | "packs" | "tasks"}`;
+type PaletteKey = "approval" | "hired" | `groups.${"pages" | "runs" | "needsYou" | "packs" | "tasks"}`;
 type Translate = (key: PaletteKey) => string;
 
 export type PageEntry = { href: string; label: string; icon: LucideIcon };
@@ -49,15 +55,16 @@ function buildGroups(
   pages: PageEntry[],
   { runs = [], approvals = [], packs = [], tasks = [] }: Records,
   t: Translate,
+  runHint: (run: RunSummary) => string,
 ): Group[] {
   return [
     {
+      // The group's name already says these are pages; each row needs no hint of its own.
       id: "pages",
       label: t("groups.pages"),
       items: pages.map((p) => ({
         id: p.href,
         label: p.label,
-        hint: t("goToPage"),
         href: p.href,
         keywords: p.href,
         icon: p.icon,
@@ -71,7 +78,8 @@ function buildGroups(
         .map((r) => ({
           id: r.id,
           label: r.title,
-          hint: r.id,
+          // Runs of one pack share a title; their status and age tell them apart. The id still matches a search.
+          hint: runHint(r),
           href: `/app/runs/${r.id}`,
           keywords: `${r.id} ${packs.find((p) => p.slug === r.packSlug)?.name ?? ""} ${r.summary}`,
           pack: r.packSlug,
@@ -111,6 +119,7 @@ function buildGroups(
         id: task.id,
         label: task.title,
         hint: task.id,
+        mono: true,
         href: `/work/tasks/${task.id}`,
         keywords: `${task.id} ${task.packName} ${task.skill}`,
         icon: Inbox,
@@ -142,6 +151,9 @@ const isTyping = (t: EventTarget | null) =>
 
 export function CommandPalette({ pages }: { pages: PageEntry[] }) {
   const t = useTranslations("nav.palette");
+  const status = useTranslations("status");
+  const { ago } = useFormat();
+  const demo = useIsDemo();
   const open = useUi((s) => s.paletteOpen);
   const onOpenChange = useUi((s) => s.setPaletteOpen);
   useEffect(() => {
@@ -167,6 +179,7 @@ export function CommandPalette({ pages }: { pages: PageEntry[] }) {
     pages,
     { runs: runs.data, approvals: approvals.data, packs: packs.data, tasks: tasks.data },
     t,
+    (r) => t("runHint", { status: status(r.status), when: ago(r.startedAt) }),
   );
   const close = () => onOpenChange(false);
 
@@ -210,11 +223,11 @@ export function CommandPalette({ pages }: { pages: PageEntry[] }) {
                       >
                         <EntryIcon entry={e} />
                         <span className="min-w-0 flex-1 truncate">{e.label}</span>
-                        <span
-                          className={cn("shrink-0 text-muted", e.hint === e.id ? "font-mono text-[11px]" : "text-xs")}
-                        >
-                          {e.hint}
-                        </span>
+                        {e.hint ? (
+                          <span className={cn("shrink-0 text-muted", e.mono ? "font-mono text-[11px]" : "text-xs")}>
+                            {e.hint}
+                          </span>
+                        ) : null}
                         <CornerDownLeft
                           className="size-3.5 shrink-0 text-grey-500 opacity-0 group-data-[highlighted]:opacity-100"
                           aria-hidden
@@ -232,8 +245,9 @@ export function CommandPalette({ pages }: { pages: PageEntry[] }) {
               <span>
                 <kbd className="font-sans">Enter</kbd> {t("toOpen")}
               </span>
+              {/* The demo's search is bounded by its seed; a live workspace's search covers its own records. */}
               <span role="status" className="ml-auto">
-                {loading ? t("loading") : t("demoOnly")}
+                {loading ? t("loading") : demo ? t("demoOnly") : null}
               </span>
             </div>
           </Autocomplete.Root>

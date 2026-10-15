@@ -25,6 +25,9 @@ const GENERIC = [
   { actor: "policy", key: "generic.inert" },
 ] as const satisfies readonly Line[];
 
+/** The anchor the pack header's "Try on sample data" link jumps to. */
+export const TRIAL_ID = "sandbox-trial";
+
 export function SandboxTrial({ pack }: { pack: Pack }) {
   const t = useTranslations("marketplace.trial");
   const script = pack.slug === "order-payment-reconciliation" ? RECON_SCRIPT : GENERIC;
@@ -39,27 +42,29 @@ export function SandboxTrial({ pack }: { pack: Pack }) {
   const done = step >= script.length;
 
   return (
-    <Section title={t("title")} aside={<Pill tone="quiet">{t("badge")}</Pill>}>
-      <div className="px-5 py-4">
-        <p className="text-sm text-grey-700">{t("intro")}</p>
-        {step >= 0 ? (
-          <ol className="mt-4 space-y-2" aria-live="polite">
-            {script.slice(0, Math.max(0, step)).map((l, i) => (
-              <li key={i} className="flex items-start gap-2.5 text-sm">
-                <ActorGlyph actor={l.actor} className="mt-1 size-2.5" />
-                <span>{t(`script.${l.key}`)}</span>
-              </li>
-            ))}
-            {!done ? <li className="live-dot pl-5 text-sm text-muted">{t("running")}</li> : null}
-          </ol>
-        ) : null}
-        <div className="mt-4 flex items-center gap-3">
-          <Button variant={done ? "secondary" : "primary"} onClick={() => setStep(0)} disabled={step >= 0 && !done}>
-            {done ? t("again") : step >= 0 ? t("running") : t("start")}
-          </Button>
-          {done ? <span className="text-sm text-muted">{t("finished")}</span> : null}
+    <div id={TRIAL_ID} className="scroll-mt-24 lg:scroll-mt-20">
+      <Section title={t("title")} aside={<Pill tone="quiet">{t("badge")}</Pill>}>
+        <div className="px-5 py-4">
+          <p className="text-sm text-grey-700">{t("intro")}</p>
+          {step >= 0 ? (
+            <ol className="mt-4 space-y-2" aria-live="polite">
+              {script.slice(0, Math.max(0, step)).map((l, i) => (
+                <li key={i} className="flex items-start gap-2.5 text-sm">
+                  <ActorGlyph actor={l.actor} className="mt-1 size-2.5" />
+                  <span>{t(`script.${l.key}`)}</span>
+                </li>
+              ))}
+              {!done ? <li className="live-dot pl-5 text-sm text-muted">{t("running")}</li> : null}
+            </ol>
+          ) : null}
+          <div className="mt-4 flex items-center gap-3">
+            <Button variant={done ? "secondary" : "primary"} onClick={() => setStep(0)} disabled={step >= 0 && !done}>
+              {done ? t("again") : step >= 0 ? t("running") : t("start")}
+            </Button>
+            {done ? <span className="text-sm text-muted">{t("finished")}</span> : null}
+          </div>
         </div>
-      </div>
-    </Section>
+      </Section>
+    </div>
   );
 }

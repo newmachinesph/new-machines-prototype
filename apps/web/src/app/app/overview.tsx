@@ -45,6 +45,15 @@ export function gettingStartedSteps(packs: Pack[], conns: Connection[], runs: Ru
   ];
 }
 
+/** When a pack last started a run, from the runs the page already lists; undefined when it never has. */
+export function lastRunOf(slug: string, runs: RunSummary[]): string | undefined {
+  return runs
+    .filter((r) => r.packSlug === slug)
+    .map((r) => r.startedAt)
+    .sort()
+    .at(-1);
+}
+
 function Card({ title, aside, children }: { title: string; aside?: React.ReactNode; children: React.ReactNode }) {
   return (
     <section>
@@ -89,6 +98,12 @@ function GettingStarted() {
           </li>
         ))}
       </ol>
+      <p className="border-t border-rule bg-stage/60 px-4 py-2.5 text-xs text-muted">
+        {t("reviewerPrompt")}{" "}
+        <Link href="/work" className="link">
+          {t("reviewerLink")}
+        </Link>
+      </p>
     </Card>
   );
 }
@@ -200,11 +215,15 @@ export function Overview() {
             </QueryState>
           </Card>
 
-          <Card title={t("needsYou")} aside={<span className="text-xs text-muted">{attention.data?.length}</span>}>
+          <Card
+            title={t("needsYou")}
+            aside={attention.data?.length ? <span className="text-xs text-muted">{attention.data.length}</span> : null}
+          >
             <QueryState query={attention} skeleton={<Skeleton className="h-40 rounded-none" />}>
               {(items) =>
                 items.length === 0 ? (
-                  <EmptyState>{t("nothingNeedsYou")}</EmptyState>
+                  // Nothing waiting is the usual state: one quiet line, not an empty box.
+                  <p className="px-4 py-3 text-[13px] leading-relaxed text-muted">{t("nothingNeedsYou")}</p>
                 ) : (
                   <ul className="divide-y divide-rule">
                     {items.map((item) => (
@@ -224,6 +243,101 @@ export function Overview() {
               }
             </QueryState>
           </Card>
+        </div>
+
+        <div className="space-y-6">
+          <Card
+            title={t("runs")}
+            aside={
+              <Link href="/app/runs" className="text-xs text-muted hover:text-ink">
+                {t("viewAll")}
+              </Link>
+            }
+          >
+            <QueryState query={runs} skeleton={<Skeleton className="h-96 rounded-none" />}>
+              {(rows) => (
+                <QueryState query={packs} skeleton={<Skeleton className="h-96 rounded-none" />}>
+                  {(allPacks) =>
+                    rows.length === 0 ? (
+                      <NoRuns packs={allPacks} />
+                    ) : (
+                      <ul className="divide-y divide-rule">
+                        {rows.map((r) => {
+                          // The pack is named once: under the title only when the run is called something else.
+                          const packName = allPacks.find((p) => p.slug === r.packSlug)?.name;
+                          const sub = packName && packName !== r.title ? packName : undefined;
+                          const when = ago(r.startedAt);
+                          const body = (
+                            <>
+                              <PackIcon slug={r.packSlug} />
+                              <div className="min-w-0">
+                                <div className="line-clamp-2 text-sm font-medium break-words">{r.title}</div>
+                                {/* Below md the summary column is gone, so the time and status sit under the title. */}
+                                <div className="truncate text-[13px] text-muted">
+                                  <span className="hidden md:inline">{sub}</span>
+                                  <span className="md:hidden">{[sub, when].filter(Boolean).join(" · ")}</span>
+                                </div>
+                                <div className="mt-1.5 lg:hidden">
+                                  <RunStatusPill status={r.status} />
+                                </div>
+                              </div>
+                              <div className="hidden min-w-0 md:block">
+                                <div className="line-clamp-2 text-[13px] break-words">{r.summary}</div>
+                                <div className="text-[13px] text-muted">{when}</div>
+                              </div>
+                              <div className="hidden justify-self-start lg:block">
+                                <RunStatusPill status={r.status} />
+                              </div>
+                              <div className="hidden 2xl:block">
+                                <OutcomeRail compact stages={r.stages} />
+                              </div>
+                              <span className="tnum text-right text-sm">
+                                {money(sumMoney(r.spent.ai, r.spent.human, r.spent.tools))}
+                              </span>
+                              <ChevronRight className="size-4 text-grey-300" aria-hidden />
+                            </>
+                          );
+                          // The status column is as wide as its widest pill, so the title and summary share the rest.
+                          const cls =
+                            "grid grid-cols-[36px_minmax(0,1fr)_auto_16px] items-center gap-x-3 px-4 py-3.5 sm:gap-x-4 md:grid-cols-[36px_minmax(0,1.2fr)_minmax(0,1fr)_auto_16px] lg:grid-cols-[36px_minmax(0,1.2fr)_minmax(0,1fr)_auto_64px_16px] 2xl:grid-cols-[36px_minmax(0,1.2fr)_minmax(0,1fr)_auto_96px_64px_16px]";
+                          return (
+                            <li key={r.id}>
+                              {r.hasDetail ? (
+                                <Link href={`/app/runs/${r.id}`} className={`${cls} hover:bg-grey-50/70`}>
+                                  {body}
+                                </Link>
+                              ) : (
+                                <div className={cls}>{body}</div>
+                              )}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )
+                  }
+                </QueryState>
+              )}
+            </QueryState>
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-1 border-t border-rule bg-stage/60 px-4 py-2.5 text-xs text-muted">
+              <span className="flex items-center gap-1.5">
+                <ActorGlyph actor="machine" className="size-2.5" />
+                <ActorLabel actor="machine" />
+              </span>
+              <span className="flex items-center gap-1.5">
+                <ActorGlyph actor="human" className="size-2.5" />
+                <ActorLabel actor="human" />
+              </span>
+              <span className="flex items-center gap-1.5">
+                <ActorGlyph actor="policy" className="size-2.5" />
+                <ActorLabel actor="policy" />
+              </span>
+              <span className="flex items-center gap-1.5">
+                <ActorGlyph actor="buyer" className="size-2.5" />
+                <ActorLabel actor="buyer" />
+              </span>
+              <span className="hidden 2xl:inline">{t("outcomeMarks")}</span>
+            </div>
+          </Card>
 
           <Card
             title={t("hiredPacks")}
@@ -239,22 +353,28 @@ export function Overview() {
                   <ul className="divide-y divide-rule">
                     {list
                       .filter((p) => p.installed)
-                      .map((p) => (
-                        <li key={p.slug}>
-                          <Link
-                            href={`/app/marketplace/${p.slug}`}
-                            className="flex items-center gap-3 px-4 py-2.5 hover:bg-grey-50/70"
-                          >
-                            <PackIcon slug={p.slug} className="size-7" />
-                            <div className="min-w-0 flex-1">
-                              <div className="truncate text-sm">{p.name}</div>
-                              <div className="text-xs text-muted">
-                                {t("packMeta", { version: p.version, n: p.runs30d ?? 0 })}
+                      .map((p) => {
+                        // Read from the runs list on this page, so it agrees with the Runs card beside it.
+                        const last = runs.data && lastRunOf(p.slug, runs.data);
+                        return (
+                          <li key={p.slug}>
+                            <Link
+                              href={`/app/marketplace/${p.slug}`}
+                              className="flex items-center gap-3 px-4 py-2.5 hover:bg-grey-50/70"
+                            >
+                              <PackIcon slug={p.slug} className="size-7" />
+                              <div className="min-w-0 flex-1">
+                                <div className="truncate text-sm">{p.name}</div>
+                                {runs.data ? (
+                                  <div className="text-xs text-muted">
+                                    {last ? t("lastRun", { when: ago(last) }) : t("noRunsYet")}
+                                  </div>
+                                ) : null}
                               </div>
-                            </div>
-                          </Link>
-                        </li>
-                      ))}
+                            </Link>
+                          </li>
+                        );
+                      })}
                   </ul>
                 ) : (
                   <EmptyState
@@ -271,91 +391,6 @@ export function Overview() {
             </QueryState>
           </Card>
         </div>
-
-        <Card
-          title={t("runs")}
-          aside={
-            <Link href="/app/runs" className="text-xs text-muted hover:text-ink">
-              {t("viewAll")}
-            </Link>
-          }
-        >
-          <QueryState query={runs} skeleton={<Skeleton className="h-96 rounded-none" />}>
-            {(rows) => (
-              <QueryState query={packs} skeleton={<Skeleton className="h-96 rounded-none" />}>
-                {(allPacks) =>
-                  rows.length === 0 ? (
-                    <NoRuns packs={allPacks} />
-                  ) : (
-                    <ul className="divide-y divide-rule">
-                      {rows.map((r) => {
-                        const body = (
-                          <>
-                            <PackIcon slug={r.packSlug} />
-                            <div className="min-w-0">
-                              <div className="truncate text-sm font-medium">{r.title}</div>
-                              <div className="truncate text-[13px] text-muted">
-                                {allPacks.find((p) => p.slug === r.packSlug)?.name}
-                              </div>
-                            </div>
-                            <div className="hidden min-w-0 md:block">
-                              <div className="flex items-center gap-2 truncate text-[13px]">
-                                <span className="truncate">{r.summary}</span>
-                              </div>
-                              <div className="text-[13px] text-muted">{ago(r.startedAt)}</div>
-                            </div>
-                            <div className="hidden justify-self-start lg:block">
-                              <RunStatusPill status={r.status} />
-                            </div>
-                            <div className="hidden 2xl:block">
-                              <OutcomeRail compact stages={r.stages} />
-                            </div>
-                            <span className="tnum hidden w-16 text-right text-sm sm:block">
-                              {money(sumMoney(r.spent.ai, r.spent.human, r.spent.tools))}
-                            </span>
-                            <ChevronRight className="size-4 text-grey-300" aria-hidden />
-                          </>
-                        );
-                        const cls =
-                          "grid grid-cols-[36px_1fr_16px] items-center gap-x-4 px-4 py-3.5 sm:grid-cols-[36px_1fr_64px_16px] md:grid-cols-[36px_minmax(0,1fr)_minmax(0,1.1fr)_64px_16px] lg:grid-cols-[36px_minmax(0,1fr)_minmax(0,1.1fr)_190px_64px_16px] 2xl:grid-cols-[36px_minmax(0,1fr)_minmax(0,1.2fr)_190px_96px_64px_16px]";
-                        return (
-                          <li key={r.id}>
-                            {r.hasDetail ? (
-                              <Link href={`/app/runs/${r.id}`} className={`${cls} hover:bg-grey-50/70`}>
-                                {body}
-                              </Link>
-                            ) : (
-                              <div className={cls}>{body}</div>
-                            )}
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  )
-                }
-              </QueryState>
-            )}
-          </QueryState>
-          <div className="flex flex-wrap items-center gap-x-5 gap-y-1 border-t border-rule bg-stage/60 px-4 py-2.5 text-xs text-muted">
-            <span className="flex items-center gap-1.5">
-              <ActorGlyph actor="machine" className="size-2.5" />
-              <ActorLabel actor="machine" />
-            </span>
-            <span className="flex items-center gap-1.5">
-              <ActorGlyph actor="human" className="size-2.5" />
-              <ActorLabel actor="human" />
-            </span>
-            <span className="flex items-center gap-1.5">
-              <ActorGlyph actor="policy" className="size-2.5" />
-              <ActorLabel actor="policy" />
-            </span>
-            <span className="flex items-center gap-1.5">
-              <ActorGlyph actor="buyer" className="size-2.5" />
-              <ActorLabel actor="buyer" />
-            </span>
-            <span className="hidden 2xl:inline">{t("outcomeMarks")}</span>
-          </div>
-        </Card>
       </div>
     </div>
   );

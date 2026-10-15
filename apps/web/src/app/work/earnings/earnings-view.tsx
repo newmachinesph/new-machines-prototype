@@ -1,14 +1,17 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import Link from "next/link";
 import { QueryState } from "@/components/query-state";
 import { Skeleton } from "@/components/skeleton";
-import { Amount, ButtonLink, EmptyState, Id, PageHeader, Pill, Section, SimTag } from "@/components/ui";
-import { sumMoney, WORKER_TZ } from "@/lib/format";
+import { Amount, ButtonLink, EmptyState, PageHeader, Pill, Section, SimTag } from "@/components/ui";
+import { cn } from "@/lib/cn";
+import type { ReactNode } from "react";
+import { sumMoney } from "@/lib/format";
 import { useIsDemo } from "@/lib/queries/me";
 import { useEarnings } from "@/lib/queries/tasks";
-import { useFormat } from "@/lib/use-format";
 import type { Earning } from "@/lib/types";
+import { useWorkerDateTime } from "../worker-time";
 
 const STATUS_TONE: Record<Earning["status"], "human" | "machine" | "ink" | "quiet"> = {
   OWED: "human",
@@ -16,6 +19,21 @@ const STATUS_TONE: Record<Earning["status"], "human" | "machine" | "ink" | "quie
   PAID_SIMULATED: "ink",
   IN_REVIEW: "quiet",
 };
+
+// Task, verdict and payment. On a phone the three stack, each payment and verdict with its own label.
+const COLUMNS = "sm:grid-cols-[minmax(0,1fr)_11rem_12rem]";
+
+const ROW = "grid gap-x-6 gap-y-1.5 px-5 py-3.5 sm:items-center";
+
+/** The demo's earnings are fixtures with no task page behind them, so only a live row links to its task. */
+function RowShell({ taskId, linked, children }: { taskId: string; linked: boolean; children: ReactNode }) {
+  if (!linked) return <div className={cn(ROW, COLUMNS)}>{children}</div>;
+  return (
+    <Link href={`/work/tasks/${taskId}`} className={cn(ROW, COLUMNS, "hover:bg-grey-50/70")}>
+      {children}
+    </Link>
+  );
+}
 
 function EarningsSkeleton() {
   return (
@@ -30,15 +48,19 @@ export function EarningsView() {
   const t = useTranslations("work.earnings");
   const work = useTranslations("work");
   const nav = useTranslations("nav");
-  const { dateTime } = useFormat();
+  const dateTime = useWorkerDateTime();
   const demo = useIsDemo();
   const earnings = useEarnings();
   return (
     <>
       <PageHeader
         title={nav("earnings")}
-        lede={t(demo ? "lede" : "ledeLive")}
-        actions={<SimTag className="px-2 py-1 text-xs">{t(demo ? "simulated" : "simulatedLive")}</SimTag>}
+        lede={
+          <>
+            {t(demo ? "lede" : "ledeLive")}{" "}
+            <SimTag className="align-baseline">{t(demo ? "simulated" : "simulatedLive")}</SimTag>
+          </>
+        }
       />
       <QueryState query={earnings} skeleton={<EarningsSkeleton />}>
         {(rows) => {
@@ -60,7 +82,7 @@ export function EarningsView() {
                 {rows.length === 0 ? (
                   <EmptyState
                     action={
-                      <ButtonLink href="/work" variant="secondary" className="h-8">
+                      <ButtonLink href="/work" variant="secondary" className="h-10 sm:h-8">
                         {t("seeTasks")}
                       </ButtonLink>
                     }
@@ -68,34 +90,43 @@ export function EarningsView() {
                     {t("empty")}
                   </EmptyState>
                 ) : (
-                  <ul className="divide-y divide-rule">
-                    {rows.map((e) => (
-                      <li
-                        key={e.taskId}
-                        className="grid gap-2 px-5 py-3.5 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center sm:gap-6"
-                      >
-                        <div className="min-w-0">
-                          <div className="text-sm font-medium break-words">{e.title}</div>
-                          <div className="mt-0.5 flex flex-wrap gap-x-3 text-xs text-muted">
-                            <Id className="text-[11px]">{e.taskId}</Id>
-                            <span>{t(`verdict.${e.verdict}`)}</span>
-                            <span>{dateTime(e.at, WORKER_TZ)}</span>
-                          </div>
-                          {e.taskId === "ht_010" ? (
-                            <p className="mt-1 text-xs text-grey-700">{t("failedCheck")}</p>
-                          ) : null}
-                        </div>
-                        {e.via === "team" ? (
-                          <span className="text-sm text-muted sm:col-span-2 sm:text-right">{work("teamUnpaid")}</span>
-                        ) : (
-                          <>
-                            <Pill tone={STATUS_TONE[e.status]}>{t(`status.${e.status}`)}</Pill>
-                            <Amount value={e.amount} className="text-sm font-medium sm:w-16 sm:text-right" />
-                          </>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
+                  <>
+                    <div className={cn("label hidden gap-x-6 border-b border-rule px-5 py-2 sm:grid", COLUMNS)}>
+                      <span>{t("columns.task")}</span>
+                      <span>{t("columns.verdict")}</span>
+                      <span className="sm:text-right">{t("columns.payment")}</span>
+                    </div>
+                    <ul className="divide-y divide-rule">
+                      {rows.map((e) => (
+                        <li key={e.taskId}>
+                          <RowShell taskId={e.taskId} linked={!demo}>
+                            <div className="min-w-0">
+                              <div className="text-sm font-medium break-words">{e.title}</div>
+                              <div className="mt-0.5 text-xs text-muted">{dateTime(e.at)}</div>
+                              {e.taskId === "ht_010" ? (
+                                <p className="mt-1 text-xs text-grey-700">{t("failedCheck")}</p>
+                              ) : null}
+                            </div>
+                            <div className="text-sm text-grey-700">
+                              <span className="label sm:hidden">{t("columns.verdict")}: </span>
+                              {t(`verdict.${e.verdict}`)}
+                            </div>
+                            <div className="flex flex-wrap items-center gap-2 text-sm sm:justify-end">
+                              <span className="label sm:hidden">{t("columns.payment")}: </span>
+                              {e.via === "team" ? (
+                                <span className="text-muted">{work("teamUnpaid")}</span>
+                              ) : (
+                                <>
+                                  <Pill tone={STATUS_TONE[e.status]}>{t(`status.${e.status}`)}</Pill>
+                                  <Amount value={e.amount} className="font-medium sm:w-16 sm:text-right" />
+                                </>
+                              )}
+                            </div>
+                          </RowShell>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
                 )}
               </Section>
             </div>

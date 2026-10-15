@@ -9,7 +9,9 @@ import { cn } from "@/lib/cn";
 import { useErrorText } from "@/lib/api/use-error-text";
 import { utc, WORKER_TZ } from "@/lib/format";
 import { INTL_TAGS, resolveLocale } from "@/i18n/locales";
+import { useNow } from "@/lib/clock";
 import { useFormat } from "@/lib/use-format";
+import { useWorkerDateTime } from "../../worker-time";
 import { useIsDemo } from "@/lib/queries/me";
 import { useClaimTask, useSubmitReview } from "@/lib/queries/tasks";
 import type { HumanTask, RedactedRecord, ReviewVerdict } from "@/lib/types";
@@ -17,6 +19,8 @@ import type { HumanTask, RedactedRecord, ReviewVerdict } from "@/lib/types";
 type Phase = "offer" | "claimed" | "expired" | "validating" | "submitted" | "accepted" | "closed";
 type Call = "match" | "mismatch" | "pending";
 type Review = { verdict: ReviewVerdict; feedbackText: string; recordCalls: Record<string, Call> };
+/** A review submitted in this session, and when. The API's task carries no copy of it. */
+type Sent = { review: Review; at: string };
 
 const VERDICTS: ReviewVerdict[] = ["APPROVED", "REVISION_REQUIRED", "REJECTED", "ESCALATED"];
 /** On a real run, these verdicts stop the run instead of sending it on. */
@@ -60,6 +64,7 @@ function openingPhase(task: HumanTask): Phase {
 export function TaskWorkspace({ task, buyer }: { task: HumanTask; buyer: string }) {
   const t = useTranslations("task");
   const { money } = useFormat();
+  const now = useNow();
   const demo = useIsDemo();
   const errorText = useErrorText();
   const toast = useToast();
@@ -69,6 +74,7 @@ export function TaskWorkspace({ task, buyer }: { task: HumanTask; buyer: string 
   // A real run's task has no acceptance check: the verdict goes straight to the run, which goes on or stops.
   const realRun = Boolean(task.realRun);
   const [runOutcome, setRunOutcome] = useState<RunOutcome | undefined>(task.runOutcome ?? undefined);
+  const [sent, setSent] = useState<Sent | null>(null);
   // The API has no lease end, so only a claim made in this session gets a precise countdown.
   const [timed, setTimed] = useState(false);
   const [leaseEnd, setLeaseEnd] = useState(0);
@@ -90,6 +96,7 @@ export function TaskWorkspace({ task, buyer }: { task: HumanTask; buyer: string 
   const network = task.via === "network";
   const payNote = team ? t("payNote.team") : network ? t("payNote.network", { pay: money(task.pay) }) : null;
   const showRun = !network && Boolean(task.runId);
+  const acceptedView = phase === "accepted" || (phase === "submitted" && task.state === "ACCEPTED");
 
   useEffect(() => {
     // The check after a submit made in this session is simulated: the API only records SUBMITTED.
@@ -142,6 +149,7 @@ export function TaskWorkspace({ task, buyer }: { task: HumanTask; buyer: string 
       { path: { task_id: task.id }, body: review },
       {
         onSuccess: (updated) => {
+          setSent({ review, at: now });
           if (!realRun) return setPhase("validating");
           setRunOutcome(updated?.runOutcome ?? (STOPPING.includes(review.verdict) ? "STOPS" : "CONTINUES"));
           setPhase("submitted");
@@ -249,7 +257,7 @@ export function TaskWorkspace({ task, buyer }: { task: HumanTask; buyer: string 
           </Link>
         </Callout>
       ) : null}
-      {phase === "accepted" || (phase === "submitted" && task.state === "ACCEPTED") ? (
+      {acceptedView ? (
         <div className="space-y-4">
           <Callout
             tone="info"
@@ -288,7 +296,60 @@ export function TaskWorkspace({ task, buyer }: { task: HumanTask; buyer: string 
           ) : null}
         </div>
       ) : null}
+      {phase === "submitted" || phase === "accepted" ? (
+        // The accepted banner already offers Earnings (unless it is a team task, which it sends back to tasks).
+        <ReviewSummary task={task} sent={sent} linkEarnings={!acceptedView || team} />
+      ) : null}
     </div>
+  );
+}
+
+/**
+ * Read-only record of a finished review: the review itself when it was submitted in this session, otherwise
+ * what the task asked for and where the verdict and time are listed (Earnings), since the API's task has
+ * no copy of the review.
+ */
+function ReviewSummary({ task, sent, linkEarnings }: { task: HumanTask; sent: Sent | null; linkEarnings: boolean }) {
+  const t = useTranslations("task.summary");
+  const tTask = useTranslations("task");
+  const tWork = useTranslations("work");
+  const dateTime = useWorkerDateTime();
+  const rows = [{ label: t("task"), value: task.question }];
+  if (sent) {
+    const { review } = sent;
+    rows.push({ label: t("verdict"), value: tTask(`verdict.${review.verdict}.label`) });
+    rows.push({ label: t("feedback"), value: review.feedbackText });
+    if (task.records.length > 0)
+      rows.push({
+        label: t("records"),
+        value: task.records
+          .flatMap((r) => {
+            const call = review.recordCalls[r.id];
+            return call ? [t("recordCall", { id: r.order.ref, call: tTask(`record.calls.${call}`) })] : [];
+          })
+          .join("\n"),
+      });
+    rows.push({ label: t("submitted"), value: dateTime(sent.at) });
+  }
+  const shown = rows.filter((r) => r.value.trim());
+  return (
+    <Section
+      title={t("title")}
+      aside={
+        linkEarnings ? (
+          <Link className="link text-sm" href="/work/earnings">
+            {tWork("seeEarnings")}
+          </Link>
+        ) : null
+      }
+    >
+      <div className="px-5 py-2">
+        <KeyValues
+          rows={shown.map((r) => ({ label: r.label, value: <span className="whitespace-pre-wrap">{r.value}</span> }))}
+        />
+      </div>
+      {sent ? null : <p className="border-t border-rule px-5 py-3 text-sm text-muted">{t("onEarnings")}</p>}
+    </Section>
   );
 }
 

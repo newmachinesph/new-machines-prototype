@@ -53,7 +53,7 @@ function reconNodes(status: Record<string, NodeStatus>, o: NodeOverrides = {}): 
       id: "decide",
       type: "decision",
       label: "Can this be accepted?",
-      subtitle: "Rules, then Gemini",
+      subtitle: "Rules, then the AI model",
       actor: "machine",
       status: "COMPLETED",
       x: 720,
@@ -132,7 +132,7 @@ const POLICY_PAYMENT = {
 
 const decision1042: DecisionRecord = {
   question: "Can this reconciliation be accepted?",
-  evaluator: { kind: "gemini", label: "Rules, then Gemini", configVersion: "3" },
+  evaluator: { kind: "gemini", label: "Rules, then the AI model", configVersion: "3" },
   chain: [
     {
       kind: "rules",
@@ -158,7 +158,7 @@ const decision1042: DecisionRecord = {
 
 const decision1047: DecisionRecord = {
   question: "Can this reconciliation be accepted?",
-  evaluator: { kind: "gemini", label: "Rules, then Gemini", configVersion: "3" },
+  evaluator: { kind: "gemini", label: "Rules, then the AI model", configVersion: "3" },
   chain: [
     { kind: "rules", verdict: "HUMAN_REVIEW", note: "25 of 28 records inside tolerance. 3 failed checks." },
     {
@@ -302,7 +302,7 @@ export const RUN_1047: Run = {
       actor: "machine",
       who: "Decision step",
       title: "Sent 3 exceptions to human review",
-      detail: "Rules and Gemini agree. Reason codes: reference mismatch, amount delta, payout not found.",
+      detail: "Rules and the AI model agree. Reason codes: reference mismatch, amount delta, payout not found.",
       nodeId: "decide",
       ref: "dec_1047_1",
     },
@@ -511,7 +511,7 @@ export const RUN_1042: Run = {
       actor: "machine",
       who: "Decision step",
       title: "Approved",
-      detail: "Rules pass. Gemini approves.",
+      detail: "Rules pass. The AI model approves.",
       nodeId: "decide",
       tone: "ok",
     },
@@ -584,7 +584,7 @@ export const RUN_1042: Run = {
         by: "machine",
         who: "Google Sheets read",
       },
-      { id: "dec_1042_1", label: "Decision record, attempt 1", by: "machine", who: "Rules + Gemini" },
+      { id: "dec_1042_1", label: "Decision record, attempt 1", by: "machine", who: "Rules + the AI model" },
       { id: "poldec_101", label: "Policy decision: person required", by: "policy", who: "Policy engine" },
       { id: "sub_009_1", label: "Reviewer submission with corrections", by: "human", who: "Reviewer 204" },
       { id: "ver_1042", label: "Verification record, 9 criteria", by: "machine", who: "Independent check" },

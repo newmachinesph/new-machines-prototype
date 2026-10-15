@@ -20,7 +20,13 @@ const estimate = {
   aiMax: { amountMinor: 2, currency: "USD" },
   humanMax: { amountMinor: 0, currency: "USD" },
 };
-const pack = (slug: string, name: string, industries: string[], category = "Operations") => ({
+const pack = (
+  slug: string,
+  name: string,
+  industries: string[],
+  category = "Operations",
+  over: Record<string, unknown> = {},
+) => ({
   slug,
   name,
   outcome: `${name} outcome`,
@@ -33,15 +39,24 @@ const pack = (slug: string, name: string, industries: string[], category = "Oper
   connectors: [],
   estimate,
   industries,
+  ...over,
 });
+const mocked = (app: string) => ({ app, access: "read", mocked: true });
 const retail = { id: "retail", name: "Retail" };
 const health = { id: "healthcare", name: "Healthcare" };
 
 vi.mock("@/lib/queries/catalog", () => ({
   usePacks: () =>
     ok([
-      pack("recon", "Reconciliation", ["retail"]),
-      pack("claims", "Claims intake", ["healthcare"]),
+      pack("recon", "Reconciliation", ["retail"], "Operations", { connectors: [mocked("Shopify"), mocked("Stripe")] }),
+      pack("claims", "Claims intake", ["healthcare"], "Operations", {
+        connectors: [mocked("Gmail"), { app: "Google Sheets", access: "read" }],
+        estimate: {
+          ...estimate,
+          aiMin: { amountMinor: 0, currency: "USD" },
+          aiMax: { amountMinor: 0, currency: "USD" },
+        },
+      }),
       pack("misc", "Misc", []),
       pack("audit", "Retail audit", ["retail"], "Finance"),
     ]),
@@ -125,6 +140,34 @@ describe("PackGrid industry filter", () => {
     // Certified, not added, not the team's: the corner that would hold a badge is not there to take space.
     const card = screen.getByRole("link", { name: /Reconciliation/ });
     expect(within(card).queryByTestId("pack-badges")).toBeNull();
+  });
+
+  it("keeps the views, functions and industries in one filter bar", () => {
+    renderWithIntl(<PackGrid />);
+    const nav = screen.getByRole("navigation", { name: "Filter packs" });
+    expect(within(nav).getByRole("group", { name: "Show" })).toBeInTheDocument();
+    expect(within(nav).getByRole("group", { name: "Function" })).toBeInTheDocument();
+    const industry = within(nav).getByRole("group", { name: "Industry" });
+    expect(within(industry).getByRole("button", { name: /^Healthcare/ })).toHaveTextContent("1");
+    expect(within(industry).getByRole("button", { name: /^All industries/ })).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("says Sandbox mock once for a card whose apps are all mocks, and per app otherwise", () => {
+    renderWithIntl(<PackGrid />);
+    const recon = screen.getByRole("link", { name: /Reconciliation/ });
+    expect(within(recon).getAllByText("Sandbox mock")).toHaveLength(1);
+    expect(within(recon).getByText("Shopify")).toBeInTheDocument();
+    expect(within(recon).getByText("Stripe")).toBeInTheDocument();
+    const claims = screen.getByRole("link", { name: /Claims intake/ });
+    expect(within(claims).getByText("Gmail")).toContainElement(within(claims).getByText("Sandbox mock"));
+    expect(within(claims).getByText("Google Sheets")).not.toContainElement(within(claims).getByText("Sandbox mock"));
+  });
+
+  it("says a pack with a zero estimate has no price set, never $0.00–$0.00", () => {
+    renderWithIntl(<PackGrid />);
+    expect(within(screen.getByRole("link", { name: /Claims intake/ })).getByText("Price not set")).toBeInTheDocument();
+    expect(within(screen.getByRole("link", { name: /Misc/ })).getByText("$0.01–$0.02 per run")).toBeInTheDocument();
+    expect(screen.queryByText(/\$0\.00–\$0\.00/)).toBeNull();
   });
 
   it("labels the chips in Japanese", () => {

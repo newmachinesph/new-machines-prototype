@@ -1,18 +1,35 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import Link from "next/link";
 import { useState } from "react";
 import { QueryState } from "@/components/query-state";
 import { Skeleton } from "@/components/skeleton";
 import { ButtonLink, EmptyState, PageHeader, Section } from "@/components/ui";
+import { useRuns } from "@/lib/queries/runs";
 import { useApprovals } from "@/lib/queries/workspace";
 import { useFormat } from "@/lib/use-format";
+import type { Approval } from "@/lib/types";
 import { ApprovalCard } from "./approval-card";
+
+/** Past approvals in the order they came, grouped under the run they belong to. */
+function byRun(past: Approval[]) {
+  const groups = new Map<string, Approval[]>();
+  for (const a of past) groups.set(a.runId, [...(groups.get(a.runId) ?? []), a]);
+  return [...groups].map(([runId, items]) => ({ runId, items }));
+}
 
 export function ApprovalsView() {
   const t = useTranslations("approvals");
-  const { dateTime } = useFormat();
+  const { date, dateTime } = useFormat();
   const approvals = useApprovals();
+  // Titles only; no need to poll the whole list for them.
+  const runs = useRuns(true, false);
+  // Runs of one pack share a title, so each group also carries a date: the run's start, else its first approval.
+  const runLabel = (g: { runId: string; items: Approval[] }) => {
+    const run = runs.data?.find((r) => r.id === g.runId);
+    return t("runLabel", { title: run?.title ?? t("openRun"), when: date(run?.startedAt ?? g.items[0].requestedAt) });
+  };
   // A card you just decided stays on screen with its outcome instead of jumping to "Earlier".
   const [decided, setDecided] = useState<string[]>([]);
 
@@ -50,12 +67,21 @@ export function ApprovalsView() {
               {past.length ? (
                 <Section title={t("earlier")}>
                   <ul className="divide-y divide-rule">
-                    {past.map((a) => (
-                      <li key={a.id} className="flex flex-wrap items-center justify-between gap-2 px-5 py-3 text-sm">
-                        <span>{a.title}</span>
-                        <span className="text-muted">
-                          {t("pastLine", { status: t(`past.${a.status}`), when: dateTime(a.requestedAt) })}
-                        </span>
+                    {byRun(past).map((g) => (
+                      <li key={g.runId} className="px-5 py-3 text-sm">
+                        <Link href={`/app/runs/${g.runId}`} className="link inline-block py-1 font-medium">
+                          {runLabel(g)}
+                        </Link>
+                        <ul className="mt-1 space-y-1">
+                          {g.items.map((a) => (
+                            <li key={a.id} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-0.5">
+                              <span>{a.title}</span>
+                              <span className="text-muted">
+                                {t("pastLine", { status: t(`past.${a.status}`), when: dateTime(a.requestedAt) })}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
                       </li>
                     ))}
                   </ul>

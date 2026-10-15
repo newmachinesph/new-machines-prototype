@@ -60,13 +60,60 @@ describe("InstallReview agents", () => {
     expect(screen.getByRole("link", { name: "Finance Agent" })).toHaveAttribute("href", "/app/agents/finance-agent");
     // An agent the catalog does not know still links, by its id.
     expect(screen.getByRole("link", { name: "ops-agent" })).toHaveAttribute("href", "/app/agents/ops-agent");
-    expect(screen.getByText("finance.reconcile")).toBeInTheDocument();
+  });
+
+  it("lists the capabilities requested as plain labels", () => {
+    renderWithIntl(<InstallReview pack={pack} />);
+    expect(screen.getByText("Payment reconciliation")).toBeInTheDocument();
+    expect(screen.queryByText("finance.reconcile")).toBeNull();
+  });
+});
+
+describe("InstallReview spending cap", () => {
+  it("offers the caps as a radio group with the default checked", () => {
+    renderWithIntl(<InstallReview pack={pack} />);
+    const group = screen.getByRole("group", { name: "Spending cap per run" });
+    expect(within(group).getAllByRole("radio")).toHaveLength(3);
+    expect(within(group).getByRole("radio", { name: "$20.00" })).toBeChecked();
+    expect(group).toHaveAccessibleDescription(/A run stops and asks you/);
+  });
+
+  it("folds the chosen cap into the summary's price line and sends it", async () => {
+    renderWithIntl(<InstallReview pack={pack} />);
+    expect(
+      within(summary()).getByText("$0.60–$2.40 plus reviewer pay. A run stops and asks you above $20.00"),
+    ).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("radio", { name: "$50.00" }));
+    expect(screen.getByRole("radio", { name: "$50.00" })).toBeChecked();
+    expect(
+      within(summary()).getByText("$0.60–$2.40 plus reviewer pay. A run stops and asks you above $50.00"),
+    ).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("checkbox", { name: /agree/i }));
+    await userEvent.click(screen.getByRole("button", { name: /^Add / }));
+    expect(install).toHaveBeenCalledWith(body({ capMinor: 5000 }), expect.anything());
+  });
+
+  it("says a pack with no agent price is unset rather than $0.00–$0.00", () => {
+    const free = { ...pack, estimate: { aiMin: usd(0), aiMax: usd(0), humanMax: usd(750) } };
+    renderWithIntl(<InstallReview pack={free} />);
+    expect(
+      within(summary()).getByText("Agent price not set, plus reviewer pay. A run stops and asks you above $20.00"),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/\$0\.00–\$0\.00/)).toBeNull();
+  });
+
+  it("does not repeat the cap and reviewer choices as summary rows", () => {
+    renderWithIntl(<InstallReview pack={pack} />);
+    expect(within(summary()).queryByText("Cap")).toBeNull();
+    expect(within(summary()).queryByText("Human reviewers")).toBeNull();
+    expect(within(summary()).getByText("Pinned. Updates need your approval.")).toBeInTheDocument();
   });
 });
 
 describe("InstallReview adding a pack", () => {
   it("adds the pack to the signed-in user's org with the team first, then the network", async () => {
     renderWithIntl(<InstallReview pack={pack} />);
+    expect(screen.getByRole("radio", { name: /^Your team first, then the network/ })).toBeChecked();
     await userEvent.click(screen.getByRole("checkbox", { name: /agree/i }));
     await userEvent.click(screen.getByRole("button", { name: /^Add / }));
     expect(install).toHaveBeenCalledWith(body(), expect.anything());
@@ -84,7 +131,6 @@ describe("InstallReview adding a pack", () => {
     renderWithIntl(<InstallReview pack={pack} />);
     expect(screen.getAllByRole("radio")).toHaveLength(3 + 3); // three caps, three pools
     expect(screen.getByRole("radio", { name: /^The New Machines reviewer network/ })).toBeInTheDocument();
-    expect(within(summary()).getByText("Your team first, then the network")).toBeInTheDocument();
   });
 
   it("says the network is off when the workspace does not allow it", () => {
@@ -93,9 +139,6 @@ describe("InstallReview adding a pack", () => {
     renderWithIntl(<InstallReview pack={pack} />);
     expect(screen.getByText(/The reviewer network is off for your workspace/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Open Reviewers" })).toHaveAttribute("href", "/app/reviewers");
-    // The summary does not claim network routing that cannot happen.
-    expect(within(summary()).getByText("Your team only, while the network is off")).toBeInTheDocument();
-    expect(within(summary()).queryByText(/then the network/)).toBeNull();
   });
 
   it("says nothing about the network being off when the team reviews alone", async () => {
@@ -104,7 +147,7 @@ describe("InstallReview adding a pack", () => {
     renderWithIntl(<InstallReview pack={pack} />);
     await userEvent.click(screen.getByRole("radio", { name: /^Your team only/ }));
     expect(screen.queryByText(/The reviewer network is off/)).toBeNull();
-    expect(within(summary()).getByText("Your team only")).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: /^Your team only/ })).toBeChecked();
   });
 
   it("does not say the network is off in the demo", () => {
@@ -118,6 +161,7 @@ describe("InstallReview pack settings", () => {
   it("starts from the pack's cap and pool and saves without agreeing again", async () => {
     state.live = true;
     renderWithIntl(<InstallReview pack={hired} settings />);
+    expect(screen.getByRole("radio", { name: "$50.00" })).toBeChecked();
     expect(screen.getByRole("radio", { name: /^The New Machines reviewer network/ })).toBeChecked();
     expect(screen.queryByRole("checkbox", { name: /agree/i })).toBeNull();
     await userEvent.click(screen.getByRole("button", { name: "Save pack settings" }));
@@ -137,7 +181,6 @@ describe("InstallReview pack settings", () => {
     state.allowNetwork = false;
     renderWithIntl(<InstallReview pack={hired} settings />);
     expect(screen.getByText(/The reviewer network is off for your workspace/)).toBeInTheDocument();
-    expect(within(summary()).getByText("Your team only, while the network is off")).toBeInTheDocument();
   });
 
   it("asks for the agreement when not in settings mode, even for an added pack", () => {

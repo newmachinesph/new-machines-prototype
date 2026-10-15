@@ -341,10 +341,12 @@ export function Checkbox({
   describedBy,
   invalid,
   disabled,
+  className,
 }: {
   checked: boolean;
   onCheckedChange: (v: boolean) => void;
   children: ReactNode;
+  className?: string;
   /** Ids of help or error text for this box. */
   describedBy?: string;
   invalid?: boolean;
@@ -352,7 +354,7 @@ export function Checkbox({
   disabled?: boolean;
 }) {
   return (
-    <label className={cn("flex items-start gap-3 text-sm", disabled ? "cursor-default" : "cursor-pointer")}>
+    <label className={cn("flex items-start gap-3 text-sm", disabled ? "cursor-default" : "cursor-pointer", className)}>
       <BaseCheckbox.Root
         checked={checked}
         onCheckedChange={(v) => onCheckedChange(Boolean(v))}

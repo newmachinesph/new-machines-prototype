@@ -10,6 +10,8 @@ vi.mock("@/lib/queries/runs", () => ({
   useRun: () => ({ isPending: false, isError: false, data: query.run }),
 }));
 vi.mock("next/navigation", () => ({ notFound: vi.fn() }));
+const me = vi.hoisted(() => ({ userId: "pwGlMEou0WQsM6aQvlgggXtXa5C3" }));
+vi.mock("@/lib/queries/me", () => ({ useMe: () => ({ data: me }) }));
 
 const call = (id: string, action: string, actionClass: string) => ({
   id,
@@ -110,7 +112,9 @@ describe("EvidencePage", () => {
     expect(
       screen.getByText("Its writes ran on sandbox data, so nothing outside New Machines was changed."),
     ).toBeInTheDocument();
-    expect(screen.getByText(/: Every refund request matched to its order and payment/)).toBeInTheDocument();
+    expect(screen.getByText(/^Every refund request matched to its order and payment/)).toBeInTheDocument();
+    // The contract's version is a technical detail, not part of the sentence.
+    expect(screen.getByText("refund-triage@1").closest("details")).not.toBeNull();
     expect(
       screen.getByText(
         "Verified by the independent check. This pack does not ask for your acceptance. Reviewer pay is owed for the review a person did.",
@@ -146,7 +150,7 @@ describe("EvidencePage", () => {
         "Verified by the independent check and accepted by you. Reviewer pay was owed from the moment the submission was accepted.",
       ),
     ).toBeInTheDocument();
-    expect(screen.getByText(/every order matched to a payout/)).toBeInTheDocument();
+    expect(screen.getByText(/Every order matched to a payout/)).toBeInTheDocument();
   });
 
   it("keeps the reconciliation basis word for word in Japanese", () => {
@@ -271,6 +275,32 @@ describe("EvidencePage", () => {
       ).toBeInTheDocument();
     },
   );
+
+  it("names the viewer instead of their account id, writes codes as sentences and money the interface's way", () => {
+    const stranger = "Ab12Cd34Ef56Gh78Ij90Kl12Mn34";
+    query.run = {
+      ...drafts,
+      timeline: [
+        ...drafts.timeline,
+        {
+          at: "2026-10-15T02:31:10Z",
+          actor: "machine",
+          who: "Do the orders and payments match?",
+          title: "HUMAN_REVIEW: MISMATCHES_FOUND",
+        },
+        { at: "2026-10-15T02:33:26Z", actor: "buyer", who: me.userId, title: "Approved" },
+        { at: "2026-10-15T02:33:27Z", actor: "buyer", who: stranger, title: "Approved" },
+      ],
+      deliverable: { ...drafts.deliverable!, rows: [{ label: "Net difference", value: "-70.40 USD" }] },
+    };
+    renderWithIntl(<EvidencePage id={drafts.id} />);
+    expect(screen.getByText(/Needs a person: Some orders and payments do not match/)).toBeInTheDocument();
+    expect(screen.queryByText(/HUMAN_REVIEW/)).not.toBeInTheDocument();
+    expect(screen.queryByText(me.userId)).not.toBeInTheDocument();
+    expect(screen.queryByText(stranger)).not.toBeInTheDocument();
+    expect(screen.getByText("A member of your workspace")).toBeInTheDocument();
+    expect(screen.getByText("−$70.40")).toBeInTheDocument();
+  });
 
   it("says acceptance was not given on a pack's own basis too", () => {
     query.run = { ...drafts, stages: { ...drafts.stages, accepted: "failed" } };

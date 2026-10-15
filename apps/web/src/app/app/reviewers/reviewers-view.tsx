@@ -30,7 +30,7 @@ export function ReviewersView() {
     <QueryState query={query} skeleton={<Skeleton className="h-64" />}>
       {(data) => (
         <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
-          <TeamSection reviewers={data.reviewers} canManage={canManage} />
+          <TeamSection reviewers={data.reviewers} canManage={canManage} myEmail={me.data?.email} />
           <NetworkSection allow={data.allowNetwork} canManage={canManage} />
         </div>
       )}
@@ -74,7 +74,7 @@ function AddReviewer() {
       open={open}
       onOpenChange={setOpen}
       trigger={
-        <Button variant="secondary" className="h-8">
+        <Button variant="secondary" className="h-10 sm:h-8">
           {t("add")}
         </Button>
       }
@@ -118,7 +118,15 @@ function AddReviewer() {
   );
 }
 
-function TeamSection({ reviewers, canManage }: { reviewers: OrgReviewer[]; canManage: boolean }) {
+function TeamSection({
+  reviewers,
+  canManage,
+  myEmail,
+}: {
+  reviewers: OrgReviewer[];
+  canManage: boolean;
+  myEmail?: string;
+}) {
   const t = useTranslations("reviewers");
   const tn = useTranslations("nav");
   const toast = useToast();
@@ -126,6 +134,10 @@ function TeamSection({ reviewers, canManage }: { reviewers: OrgReviewer[]; canMa
   const orgId = useOrgId();
   const remove = useRemoveReviewer();
   const heading = useRef<HTMLHeadingElement>(null);
+  // Removing only clears the reviewer flag (an owner or admin keeps their role), so everyone can be removed.
+  // Wait for who "me" is, so the self wording never flashes in late.
+  const mine = myEmail?.toLowerCase();
+  const isMe = (r: OrgReviewer) => r.email.toLowerCase() === mine;
 
   const drop = (r: OrgReviewer) => {
     if (!orgId) return;
@@ -160,20 +172,16 @@ function TeamSection({ reviewers, canManage }: { reviewers: OrgReviewer[]; canMa
                 ) : (
                   <span className="text-grey-700">{tn(`roles.${r.role}`)}</span>
                 )}
-                {canManage ? (
+                {canManage && mine ? (
                   <Confirm
                     danger
                     trigger={
-                      <button
-                        type="button"
-                        className="link text-xs text-blocked"
-                        aria-label={t("removeLabel", { name: r.name })}
-                      >
+                      <Button variant="danger" className="h-10 sm:h-8" aria-label={t("removeLabel", { name: r.name })}>
                         {t("remove")}
-                      </button>
+                      </Button>
                     }
-                    title={t("removeTitle", { name: r.name })}
-                    description={t("removeDescription")}
+                    title={isMe(r) ? t("removeSelfTitle") : t("removeTitle", { name: r.name })}
+                    description={isMe(r) ? t("removeSelfDescription") : t("removeDescription")}
                     confirmLabel={t("removeConfirm")}
                     onConfirm={() => drop(r)}
                   />

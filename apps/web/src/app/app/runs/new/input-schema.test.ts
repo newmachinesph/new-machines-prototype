@@ -32,6 +32,30 @@ const RICH = {
   },
 };
 
+describe("a date field's description", () => {
+  const dated = (description: string, extra: Record<string, unknown> = {}) =>
+    inputFields({ type: "object", properties: { day: { type: "string", format: "date", description, ...extra } } })![0];
+
+  it("drops the (YYYY-MM-DD) hint, since the date input sets the format", () => {
+    expect(dated("First day to reconcile, inclusive (YYYY-MM-DD).").description).toBe(
+      "First day to reconcile, inclusive.",
+    );
+    expect(dated("The day to measure from (YYYY-MM-DD). Earlier days are overdue.").description).toBe(
+      "The day to measure from. Earlier days are overdue.",
+    );
+    expect(dated("(YYYY-MM-DD)").description).toBeUndefined();
+  });
+
+  it("keeps the hint on a text field, where the person types the date", () => {
+    const text = inputFields({
+      type: "object",
+      properties: { day: { type: "string", description: "A day (YYYY-MM-DD)." } },
+    })![0];
+    expect(text.kind).toBe("string");
+    expect(text.description).toBe("A day (YYYY-MM-DD).");
+  });
+});
+
 const messages = {
   required: (label: string) => `Enter ${label}.`,
   number: "number!",
