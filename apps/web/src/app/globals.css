@@ -125,6 +125,28 @@
   max-height: 11px;
 }
 
+/* Workflow editor: outcome handles are visible and can be dragged from. The run canvas keeps them hidden. */
+.nm-editor .react-flow__handle {
+  opacity: 1;
+  width: 10px;
+  height: 10px;
+  border: 1.5px solid var(--color-grey-500);
+  border-radius: 9999px;
+  background: var(--color-paper);
+}
+.nm-editor .react-flow__handle.failure {
+  border-color: var(--color-blocked);
+}
+.nm-editor .react-flow__handle:hover,
+.nm-editor .react-flow__handle.connectingto.valid {
+  border-color: var(--color-ink);
+  background: var(--color-ink);
+}
+.nm-editor .react-flow__handle.connectingto:not(.valid) {
+  border-color: var(--color-blocked);
+  background: var(--color-blocked-soft);
+}
+
 @keyframes nm-breathe {
   0%,
   100% {

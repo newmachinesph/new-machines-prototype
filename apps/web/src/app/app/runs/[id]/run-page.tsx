@@ -1,16 +1,19 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { QueryState } from "@/components/query-state";
 import { RunView } from "@/components/run-view";
 import { Skeleton } from "@/components/skeleton";
-import { PageHeader, RunStatusPill } from "@/components/ui";
+import { PageHeader, RunStatusPill, SimTag } from "@/components/ui";
 import { ApiError } from "@/lib/api/errors";
 import { usePackName } from "@/lib/queries/catalog";
 import { useRun } from "@/lib/queries/runs";
 
 export function RunPage({ id }: { id: string }) {
+  // The same label the run list gives a sandbox test, so the run reads the same wherever it is seen.
+  const t = useTranslations("run.list");
   const run = useRun(id);
   const packName = usePackName(run.data?.packSlug);
   if (run.error instanceof ApiError && run.error.status === 404) notFound();
@@ -25,6 +28,7 @@ export function RunPage({ id }: { id: string }) {
                 {packName ?? <Skeleton className="inline-block h-4 w-40 align-middle" />}
               </Link>
               <RunStatusPill status={r.status} />
+              {r.sandboxTest ? <SimTag>{t("sandboxTest")}</SimTag> : null}
             </div>
           </PageHeader>
           <RunView run={r} />

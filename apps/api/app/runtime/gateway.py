@@ -5,10 +5,26 @@ from dataclasses import dataclass
 
 from jsonschema import Draft202012Validator
 
-from app.runtime.drivers import META_TOOL_PREFIX, SandboxDriver, ToolResult, driver_for
+from app.runtime import routes
+from app.runtime.drivers import (
+    META_TOOL_PREFIX,
+    ComposioDriver,
+    RouteChangedDriver,
+    SandboxDriver,
+    ToolResult,
+    UnconnectedDriver,
+    driver_for,
+)
 
 PERMIT, DENY, REQUIRE_APPROVAL = "PERMIT", "DENY", "REQUIRE_APPROVAL"
 DEFAULT_POLICY_REF = "policy/default"
+# Reason codes of a live-workspace call that cannot run (`approval_refusal`; the call itself fails with
+# GRANT_REVOKED as its policy reason, or with the NotConnected / RouteChanged driver errors).
+GRANT_REVOKED = "GRANT_REVOKED"  # the org's connection does not grant the pack the tool's capability
+NOT_CONNECTED = "NOT_CONNECTED"  # the app has no usable connection
+ROUTE_CHANGED = "ROUTE_CHANGED"  # the app was reconnected another way since the run started
+
+Driver = SandboxDriver | ComposioDriver | UnconnectedDriver | RouteChangedDriver
 
 
 @dataclass
@@ -79,11 +95,87 @@ def find_tool(snapshot: dict, tool_ref: str) -> tuple[str, dict, dict] | None:
     return connector_key, body, tool
 
 
+def _org_routed(snapshot: dict) -> bool:
+    return snapshot.get("routing") == routes.ORG_ROUTING
+
+
+def _route_driver(snapshot: dict, connector_key: str, connector: dict, route: routes.Route) -> Driver:
+    """The driver a live-workspace run's route gives: nothing runs for an app with no usable connection, or
+    for one whose route is not the one pinned when the run started."""
+    if route.mode == "none":
+        return UnconnectedDriver()
+    if routes.route_changed(snapshot, connector_key, route):
+        return RouteChangedDriver(str(connector.get("app") or connector_key))
+    if route.mode == "composio":
+        return ComposioDriver(user_id=route.user_id, account_id=route.account_id)
+    return SandboxDriver()
+
+
+def _route(snapshot: dict, connector_key: str) -> routes.Route:
+    return routes.current_route(snapshot.get("org_id"), connector_key)
+
+
+def _mode_of(snapshot: dict, mode: str) -> str:
+    """The connector mode of an un-routed run: the one its snapshot pins (a Studio sandbox test pins
+    "sandbox", so it answers from sandbox data whatever the worker's own mode), else the worker's `mode`."""
+    return str(snapshot.get("connector_mode") or mode)
+
+
+def driver_of(snapshot: dict, connector_key: str, connector: dict, mode: str) -> Driver:
+    """The driver for one call. A live-workspace run (`routing: org`) follows the org's connection row for the
+    app now (`routes.current_route`); any other run keeps the connector mode its snapshot pins, else `mode`
+    (the worker's NM_CONNECTOR_MODE)."""
+    if not _org_routed(snapshot):
+        return driver_for(connector, _mode_of(snapshot, mode))
+    return _route_driver(snapshot, connector_key, connector, _route(snapshot, connector_key))
+
+
 def runs_simulated(snapshot: dict, tool_ref: str, mode: str) -> bool:
-    """Whether a call to `tool_ref` would run against sandbox data in connector `mode`. In "auto" this checks
-    the connection now, so it is a forecast: the call itself checks again."""
+    """Whether a call to `tool_ref` would run against sandbox data: by the org's connection for a live run,
+    else by the connector mode the snapshot pins (a sandbox test) or the worker's `mode` ("auto" checks the
+    connection now). A forecast: the call itself checks again."""
     found = find_tool(snapshot, tool_ref)
-    return found is not None and isinstance(driver_for(found[1], mode), SandboxDriver)
+    return found is not None and isinstance(driver_of(snapshot, found[0], found[1], mode), SandboxDriver)
+
+
+def _install_of(snapshot: dict) -> str | None:
+    """The name grants know the run's pack by (as `live_connections.pack_grants` writes it), or None when the
+    snapshot does not pin exactly one pack."""
+    packs = (snapshot.get("defs") or {}).get("pack") or {}
+    if len(packs) != 1:
+        return None
+    key, item = next(iter(packs.items()))
+    body = item.get("body") or {}
+    return str(body.get("name") or body.get("slug") or key)
+
+
+def _granted(snapshot: dict, route: routes.Route, tool: dict) -> bool:
+    """Whether the org's (usable) connection grants the run's pack this tool's capability (see `_refusal`)."""
+    install = _install_of(snapshot)
+    return install is not None and route.allows(install, str(tool.get("capability") or ""))
+
+
+def approval_refusal(snapshot: dict, tool_ref: str) -> str | None:
+    """The reason code a live-workspace call to `tool_ref` could not run for now, else None: the app has no
+    usable connection (NOT_CONNECTED), it was reconnected another way since the run started (ROUTE_CHANGED),
+    or its connection no longer grants the pack the tool's capability (GRANT_REVOKED). Approvals ask this
+    before they open, so nobody is asked to approve a call that will fail. A forecast: the call itself checks
+    again. Demo runs (no `routing` mark) and unknown tools are never refused here."""
+    found = find_tool(snapshot, tool_ref)
+    if found is None or not _org_routed(snapshot):
+        return None
+    connector_key, _, tool = found
+    return _refusal(snapshot, connector_key, route=_route(snapshot, connector_key), tool=tool)
+
+
+def _refusal(snapshot: dict, connector_key: str, *, route: routes.Route, tool: dict) -> str | None:
+    """Why a live-workspace call on `route` could not run, in one order for the forecast and the call:
+    NOT_CONNECTED, then ROUTE_CHANGED, then GRANT_REVOKED; None when it can run."""
+    if route.mode == "none":
+        return NOT_CONNECTED
+    if routes.route_changed(snapshot, connector_key, route):
+        return ROUTE_CHANGED
+    return None if _granted(snapshot, route, tool) else GRANT_REVOKED
 
 
 def _argument_errors(tool: dict, args: dict) -> list[str]:
@@ -94,7 +186,12 @@ def _argument_errors(tool: dict, args: dict) -> list[str]:
 def call_tool(
     *, snapshot: dict, tool_ref: str, args: dict, approved: bool, mode: str
 ) -> tuple[PolicyDecision, ToolResult | None]:
-    """Policy first; only a PERMIT reaches a driver. Returns (decision, result or None when not executed)."""
+    """Policy first; only a PERMIT reaches a driver. Returns (decision, result or None when not executed).
+
+    A live-workspace run reads the app's route once, after the Ops and contract policy: a usable connection
+    must grant the pack the tool's capability (else DENY GRANT_REVOKED, also for a call that would need
+    approval), and the same route picks the driver. An approval node asks `approval_refusal` before it
+    opens."""
     contract = contract_of(snapshot)
     found = find_tool(snapshot, tool_ref)
     if found is None:
@@ -109,6 +206,13 @@ def call_tool(
         disabled=set(snapshot.get("disabled") or []),
         approved=approved,
     )
+    if decision.verdict == DENY:
+        return decision, None
+    route = _route(snapshot, connector_key) if _org_routed(snapshot) else None
+    # A call that is not connected, or whose route changed, fails at its driver (NotConnected, RouteChanged)
+    # with the same precedence `approval_refusal` forecasts; only a revoked grant is a policy denial.
+    if route is not None and _refusal(snapshot, connector_key, route=route, tool=tool) == GRANT_REVOKED:
+        return PolicyDecision(verdict=DENY, reason_codes=[GRANT_REVOKED], ref=decision.ref), None
     if decision.verdict != PERMIT:
         return decision, None
     errors = _argument_errors(tool, args)
@@ -116,4 +220,8 @@ def call_tool(
         return decision, ToolResult(
             ok=False, data=None, mocked=False, error="invalid arguments: " + "; ".join(errors)
         )
-    return decision, driver_for(connector, mode).execute(connector_key, tool, args)
+    if route is None:
+        return decision, driver_for(connector, _mode_of(snapshot, mode)).execute(connector_key, tool, args)
+    return decision, _route_driver(snapshot, connector_key, connector, route).execute(
+        connector_key, tool, args
+    )

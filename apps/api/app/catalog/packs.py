@@ -1,10 +1,11 @@
 """A demo marketplace pack seen through its pack definition, when one exists for its slug."""
 
-from typing import Literal
+from typing import Literal, Self
 
 from app import settings
 from app.models.catalog import Pack, PackConnector
 from app.runtime.drivers import SandboxDriver, driver_for
+from app.runtime.routes import NONE, Route, org_routes
 
 Access = Literal["read", "write (approval)", "write"]
 
@@ -21,16 +22,28 @@ def connector_access(body: dict) -> Access:
 
 
 class SandboxForecast:
-    """Whether a connector's calls would run against sandbox data, as `gateway.runs_simulated` predicts it:
-    always in sandbox mode, never in live mode, and in auto mode when it is not connected. One instance
-    serves one request and checks each connector once, so a listing asks Composio at most once per
-    connector."""
+    """Whether a connector's calls would not reach a real account, for the marketplace's `mocked` label.
 
-    def __init__(self, mode: str | None = None) -> None:
+    In the live workspace (`for_org`) the org's own connection rows decide, as they decide for its runs
+    (`gateway.driver_of`): only an app connected to the org's own account is real; one connected to sandbox
+    data, or not connected yet, is labelled simulated. Otherwise the connector mode decides, as
+    `gateway.runs_simulated` predicts it: always in sandbox mode, never in live mode, and in auto mode when it
+    is not connected. One instance serves one request and checks each connector once, so a listing asks
+    Composio at most once per connector."""
+
+    def __init__(self, mode: str | None = None, by_app: dict[str, Route] | None = None) -> None:
         self.mode = mode or settings.connector_mode()
+        self._by_app = by_app
         self._seen: dict[str, bool] = {}
 
+    @classmethod
+    def for_org(cls, org_id: str) -> Self:
+        """The forecast of the org's own connections (live workspace)."""
+        return cls(by_app=org_routes(org_id))
+
     def __call__(self, key: str, body: dict) -> bool:
+        if self._by_app is not None:
+            return self._by_app.get(key, NONE).mode != "composio"
         if key not in self._seen:
             self._seen[key] = isinstance(driver_for(body, self.mode), SandboxDriver)
         return self._seen[key]

@@ -3,8 +3,8 @@
 import { queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { acceptInvitation, addOrgReviewer, approveApproval, claimHumanTask, connectConnection, createToken, declineApproval, declineInvitation, disconnectConnection, getAgent, getCatalogTaxonomy, getHumanTask, getMe, getOrganization, getReviewerProfile, getUsage, getWorkflowPack, getWorkflowRun, getWorkflowRunReceipt, installWorkflowPack, inviteMember, listAgents, listApprovals, listAttention, listConnections, listEarnings, listEligibleHumanTasks, listMembers, listMemory, listOrgReviewers, listPolicies, listTokens, listWorkflowPacks, listWorkflowRuns, opsAddConnector, opsAddMemoryItem, opsApprovePack, opsApproveReviewer, opsCertifyPack, opsCreatePack, opsCreateTenant, opsDeclareIncident, opsDeleteMemoryItem, opsDeprecatePack, opsDisableConnector, opsEnableConnector, opsExportDefinition, opsGetBilling, opsGetDefinition, opsGetHealth, opsGetMe, opsGetOverview, opsGetPack, opsGetRun, opsGetRuntimeStatus, opsGetTenant, opsHealthCheckConnector, opsListAudit, opsListAvailableToolkits, opsListConnectors, opsListDefinitions, opsListGuardrails, opsListMemoryItems, opsListMemorySpaces, opsListPacks, opsListReviewers, opsListRuns, opsListTeam, opsListTenants, opsPublishDefinition, opsReactivateTenant, opsReinstateReviewer, opsRejectPack, opsRepublishPack, opsSetConnectorDefaults, opsSetGuardrail, opsSetReviewerLevel, opsSetTenantPlan, opsSetTenantSpendCap, opsSubmitPack, opsSuspendReviewer, opsSuspendTenant, opsUpdateIncident, opsValidateDefinition, type Options, removeOrgReviewer, retractMemory, reviewMemoryCandidate, revokeGrant, revokeToken, setReviewerNetwork, startWorkflowRun, submitHumanTask, suggestWorkflowPack, updateReviewerProfile } from '../sdk.gen';
-import type { AcceptInvitationData, AcceptInvitationError, AcceptInvitationResponse, AddOrgReviewerData, AddOrgReviewerError, AddOrgReviewerResponse, ApproveApprovalData, ApproveApprovalError, ApproveApprovalResponse, ClaimHumanTaskData, ClaimHumanTaskError, ClaimHumanTaskResponse, ConnectConnectionData, ConnectConnectionError, ConnectConnectionResponse, CreateTokenData, CreateTokenError, CreateTokenResponse, DeclineApprovalData, DeclineApprovalError, DeclineApprovalResponse, DeclineInvitationData, DeclineInvitationError, DeclineInvitationResponse, DisconnectConnectionData, DisconnectConnectionError, DisconnectConnectionResponse, GetAgentData, GetAgentError, GetAgentResponse, GetCatalogTaxonomyData, GetCatalogTaxonomyError, GetCatalogTaxonomyResponse, GetHumanTaskData, GetHumanTaskError, GetHumanTaskResponse, GetMeData, GetMeError, GetMeResponse, GetOrganizationData, GetOrganizationError, GetOrganizationResponse, GetReviewerProfileData, GetReviewerProfileError, GetReviewerProfileResponse, GetUsageData, GetUsageError, GetUsageResponse, GetWorkflowPackData, GetWorkflowPackError, GetWorkflowPackResponse, GetWorkflowRunData, GetWorkflowRunError, GetWorkflowRunReceiptData, GetWorkflowRunReceiptError, GetWorkflowRunReceiptResponse, GetWorkflowRunResponse, InstallWorkflowPackData, InstallWorkflowPackError, InstallWorkflowPackResponse, InviteMemberData, InviteMemberError, InviteMemberResponse, ListAgentsData, ListAgentsError, ListAgentsResponse, ListApprovalsData, ListApprovalsError, ListApprovalsResponse, ListAttentionData, ListAttentionError, ListAttentionResponse, ListConnectionsData, ListConnectionsError, ListConnectionsResponse, ListEarningsData, ListEarningsError, ListEarningsResponse, ListEligibleHumanTasksData, ListEligibleHumanTasksError, ListEligibleHumanTasksResponse, ListMembersData, ListMembersError, ListMembersResponse, ListMemoryData, ListMemoryError, ListMemoryResponse, ListOrgReviewersData, ListOrgReviewersError, ListOrgReviewersResponse, ListPoliciesData, ListPoliciesError, ListPoliciesResponse, ListTokensData, ListTokensError, ListTokensResponse, ListWorkflowPacksData, ListWorkflowPacksError, ListWorkflowPacksResponse, ListWorkflowRunsData, ListWorkflowRunsError, ListWorkflowRunsResponse, OpsAddConnectorData, OpsAddConnectorError, OpsAddConnectorResponse, OpsAddMemoryItemData, OpsAddMemoryItemError, OpsAddMemoryItemResponse, OpsApprovePackData, OpsApprovePackError, OpsApprovePackResponse, OpsApproveReviewerData, OpsApproveReviewerError, OpsApproveReviewerResponse, OpsCertifyPackData, OpsCertifyPackError, OpsCertifyPackResponse, OpsCreatePackData, OpsCreatePackError, OpsCreatePackResponse, OpsCreateTenantData, OpsCreateTenantError, OpsCreateTenantResponse, OpsDeclareIncidentData, OpsDeclareIncidentError, OpsDeclareIncidentResponse, OpsDeleteMemoryItemData, OpsDeleteMemoryItemError, OpsDeleteMemoryItemResponse, OpsDeprecatePackData, OpsDeprecatePackError, OpsDeprecatePackResponse, OpsDisableConnectorData, OpsDisableConnectorError, OpsDisableConnectorResponse, OpsEnableConnectorData, OpsEnableConnectorError, OpsEnableConnectorResponse, OpsExportDefinitionData, OpsExportDefinitionError, OpsExportDefinitionResponse, OpsGetBillingData, OpsGetBillingError, OpsGetBillingResponse, OpsGetDefinitionData, OpsGetDefinitionError, OpsGetDefinitionResponse, OpsGetHealthData, OpsGetHealthError, OpsGetHealthResponse, OpsGetMeData, OpsGetMeError, OpsGetMeResponse, OpsGetOverviewData, OpsGetOverviewError, OpsGetOverviewResponse, OpsGetPackData, OpsGetPackError, OpsGetPackResponse, OpsGetRunData, OpsGetRunError, OpsGetRunResponse, OpsGetRuntimeStatusData, OpsGetRuntimeStatusError, OpsGetRuntimeStatusResponse, OpsGetTenantData, OpsGetTenantError, OpsGetTenantResponse, OpsHealthCheckConnectorData, OpsHealthCheckConnectorError, OpsHealthCheckConnectorResponse, OpsListAuditData, OpsListAuditError, OpsListAuditResponse, OpsListAvailableToolkitsData, OpsListAvailableToolkitsError, OpsListAvailableToolkitsResponse, OpsListConnectorsData, OpsListConnectorsError, OpsListConnectorsResponse, OpsListDefinitionsData, OpsListDefinitionsError, OpsListDefinitionsResponse, OpsListGuardrailsData, OpsListGuardrailsError, OpsListGuardrailsResponse, OpsListMemoryItemsData, OpsListMemoryItemsError, OpsListMemoryItemsResponse, OpsListMemorySpacesData, OpsListMemorySpacesError, OpsListMemorySpacesResponse, OpsListPacksData, OpsListPacksError, OpsListPacksResponse, OpsListReviewersData, OpsListReviewersError, OpsListReviewersResponse, OpsListRunsData, OpsListRunsError, OpsListRunsResponse, OpsListTeamData, OpsListTeamError, OpsListTeamResponse, OpsListTenantsData, OpsListTenantsError, OpsListTenantsResponse, OpsPublishDefinitionData, OpsPublishDefinitionError, OpsPublishDefinitionResponse, OpsReactivateTenantData, OpsReactivateTenantError, OpsReactivateTenantResponse, OpsReinstateReviewerData, OpsReinstateReviewerError, OpsReinstateReviewerResponse, OpsRejectPackData, OpsRejectPackError, OpsRejectPackResponse, OpsRepublishPackData, OpsRepublishPackError, OpsRepublishPackResponse, OpsSetConnectorDefaultsData, OpsSetConnectorDefaultsError, OpsSetConnectorDefaultsResponse, OpsSetGuardrailData, OpsSetGuardrailError, OpsSetGuardrailResponse, OpsSetReviewerLevelData, OpsSetReviewerLevelError, OpsSetReviewerLevelResponse, OpsSetTenantPlanData, OpsSetTenantPlanError, OpsSetTenantPlanResponse, OpsSetTenantSpendCapData, OpsSetTenantSpendCapError, OpsSetTenantSpendCapResponse, OpsSubmitPackData, OpsSubmitPackError, OpsSubmitPackResponse, OpsSuspendReviewerData, OpsSuspendReviewerError, OpsSuspendReviewerResponse, OpsSuspendTenantData, OpsSuspendTenantError, OpsSuspendTenantResponse, OpsUpdateIncidentData, OpsUpdateIncidentError, OpsUpdateIncidentResponse, OpsValidateDefinitionData, OpsValidateDefinitionError, OpsValidateDefinitionResponse, RemoveOrgReviewerData, RemoveOrgReviewerError, RemoveOrgReviewerResponse, RetractMemoryData, RetractMemoryError, RetractMemoryResponse, ReviewMemoryCandidateData, ReviewMemoryCandidateError, ReviewMemoryCandidateResponse, RevokeGrantData, RevokeGrantError, RevokeGrantResponse, RevokeTokenData, RevokeTokenError, RevokeTokenResponse, SetReviewerNetworkData, SetReviewerNetworkError, SetReviewerNetworkResponse, StartWorkflowRunData, StartWorkflowRunError, StartWorkflowRunResponse, SubmitHumanTaskData, SubmitHumanTaskError, SubmitHumanTaskResponse, SuggestWorkflowPackData, SuggestWorkflowPackError, SuggestWorkflowPackResponse, UpdateReviewerProfileData, UpdateReviewerProfileError, UpdateReviewerProfileResponse } from '../types.gen';
+import { acceptInvitation, addOrgReviewer, allowGrant, approveApproval, claimHumanTask, connectConnection, createStudioAgent, createStudioPack, createToken, declineApproval, declineInvitation, disconnectConnection, getAgent, getCatalogTaxonomy, getHumanTask, getMe, getOrganization, getReviewerProfile, getStudioAgent, getStudioPack, getStudioPackWorkflow, getStudioPalette, getUsage, getWorkflowPack, getWorkflowRun, getWorkflowRunReceipt, importStudioWorkflow, installWorkflowPack, inviteMember, listAgents, listApprovals, listAttention, listConnections, listEarnings, listEligibleHumanTasks, listMembers, listMemory, listOrgReviewers, listPolicies, listStudioAgents, listStudioPacks, listTokens, listWorkflowPacks, listWorkflowRuns, opsAddConnector, opsAddMemoryItem, opsApprovePack, opsApproveReviewer, opsCertifyPack, opsCreatePack, opsCreateTenant, opsDeclareIncident, opsDeleteMemoryItem, opsDeprecatePack, opsDisableConnector, opsEnableConnector, opsExportDefinition, opsGetBilling, opsGetDefinition, opsGetHealth, opsGetMe, opsGetOverview, opsGetPack, opsGetRun, opsGetRuntimeStatus, opsGetTenant, opsHealthCheckConnector, opsListAudit, opsListAvailableToolkits, opsListConnectors, opsListDefinitions, opsListGuardrails, opsListMemoryItems, opsListMemorySpaces, opsListPacks, opsListReviewers, opsListRuns, opsListTeam, opsListTenants, opsPublishDefinition, opsReactivateTenant, opsReinstateReviewer, opsRejectPack, opsRepublishPack, opsSetConnectorDefaults, opsSetGuardrail, opsSetReviewerLevel, opsSetTenantPlan, opsSetTenantSpendCap, opsSubmitPack, opsSuspendReviewer, opsSuspendTenant, opsUpdateIncident, opsValidateDefinition, type Options, removeOrgReviewer, retractMemory, reviewMemoryCandidate, revokeGrant, revokeToken, saveStudioAgent, saveStudioPack, setReviewerNetwork, startWorkflowRun, submitHumanTask, suggestWorkflowPack, syncConnection, testStudioPack, updateReviewerProfile, validateStudioAgent, validateStudioPack } from '../sdk.gen';
+import type { AcceptInvitationData, AcceptInvitationError, AcceptInvitationResponse, AddOrgReviewerData, AddOrgReviewerError, AddOrgReviewerResponse, AllowGrantData, AllowGrantError, AllowGrantResponse, ApproveApprovalData, ApproveApprovalError, ApproveApprovalResponse, ClaimHumanTaskData, ClaimHumanTaskError, ClaimHumanTaskResponse, ConnectConnectionData, ConnectConnectionError, ConnectConnectionResponse, CreateStudioAgentData, CreateStudioAgentError, CreateStudioAgentResponse, CreateStudioPackData, CreateStudioPackError, CreateStudioPackResponse, CreateTokenData, CreateTokenError, CreateTokenResponse, DeclineApprovalData, DeclineApprovalError, DeclineApprovalResponse, DeclineInvitationData, DeclineInvitationError, DeclineInvitationResponse, DisconnectConnectionData, DisconnectConnectionError, DisconnectConnectionResponse, GetAgentData, GetAgentError, GetAgentResponse, GetCatalogTaxonomyData, GetCatalogTaxonomyError, GetCatalogTaxonomyResponse, GetHumanTaskData, GetHumanTaskError, GetHumanTaskResponse, GetMeData, GetMeError, GetMeResponse, GetOrganizationData, GetOrganizationError, GetOrganizationResponse, GetReviewerProfileData, GetReviewerProfileError, GetReviewerProfileResponse, GetStudioAgentData, GetStudioAgentError, GetStudioAgentResponse, GetStudioPackData, GetStudioPackError, GetStudioPackResponse, GetStudioPackWorkflowData, GetStudioPackWorkflowError, GetStudioPackWorkflowResponse, GetStudioPaletteData, GetStudioPaletteError, GetStudioPaletteResponse, GetUsageData, GetUsageError, GetUsageResponse, GetWorkflowPackData, GetWorkflowPackError, GetWorkflowPackResponse, GetWorkflowRunData, GetWorkflowRunError, GetWorkflowRunReceiptData, GetWorkflowRunReceiptError, GetWorkflowRunReceiptResponse, GetWorkflowRunResponse, ImportStudioWorkflowData, ImportStudioWorkflowError, ImportStudioWorkflowResponse, InstallWorkflowPackData, InstallWorkflowPackError, InstallWorkflowPackResponse, InviteMemberData, InviteMemberError, InviteMemberResponse, ListAgentsData, ListAgentsError, ListAgentsResponse, ListApprovalsData, ListApprovalsError, ListApprovalsResponse, ListAttentionData, ListAttentionError, ListAttentionResponse, ListConnectionsData, ListConnectionsError, ListConnectionsResponse, ListEarningsData, ListEarningsError, ListEarningsResponse, ListEligibleHumanTasksData, ListEligibleHumanTasksError, ListEligibleHumanTasksResponse, ListMembersData, ListMembersError, ListMembersResponse, ListMemoryData, ListMemoryError, ListMemoryResponse, ListOrgReviewersData, ListOrgReviewersError, ListOrgReviewersResponse, ListPoliciesData, ListPoliciesError, ListPoliciesResponse, ListStudioAgentsData, ListStudioAgentsError, ListStudioAgentsResponse, ListStudioPacksData, ListStudioPacksError, ListStudioPacksResponse, ListTokensData, ListTokensError, ListTokensResponse, ListWorkflowPacksData, ListWorkflowPacksError, ListWorkflowPacksResponse, ListWorkflowRunsData, ListWorkflowRunsError, ListWorkflowRunsResponse, OpsAddConnectorData, OpsAddConnectorError, OpsAddConnectorResponse, OpsAddMemoryItemData, OpsAddMemoryItemError, OpsAddMemoryItemResponse, OpsApprovePackData, OpsApprovePackError, OpsApprovePackResponse, OpsApproveReviewerData, OpsApproveReviewerError, OpsApproveReviewerResponse, OpsCertifyPackData, OpsCertifyPackError, OpsCertifyPackResponse, OpsCreatePackData, OpsCreatePackError, OpsCreatePackResponse, OpsCreateTenantData, OpsCreateTenantError, OpsCreateTenantResponse, OpsDeclareIncidentData, OpsDeclareIncidentError, OpsDeclareIncidentResponse, OpsDeleteMemoryItemData, OpsDeleteMemoryItemError, OpsDeleteMemoryItemResponse, OpsDeprecatePackData, OpsDeprecatePackError, OpsDeprecatePackResponse, OpsDisableConnectorData, OpsDisableConnectorError, OpsDisableConnectorResponse, OpsEnableConnectorData, OpsEnableConnectorError, OpsEnableConnectorResponse, OpsExportDefinitionData, OpsExportDefinitionError, OpsExportDefinitionResponse, OpsGetBillingData, OpsGetBillingError, OpsGetBillingResponse, OpsGetDefinitionData, OpsGetDefinitionError, OpsGetDefinitionResponse, OpsGetHealthData, OpsGetHealthError, OpsGetHealthResponse, OpsGetMeData, OpsGetMeError, OpsGetMeResponse, OpsGetOverviewData, OpsGetOverviewError, OpsGetOverviewResponse, OpsGetPackData, OpsGetPackError, OpsGetPackResponse, OpsGetRunData, OpsGetRunError, OpsGetRunResponse, OpsGetRuntimeStatusData, OpsGetRuntimeStatusError, OpsGetRuntimeStatusResponse, OpsGetTenantData, OpsGetTenantError, OpsGetTenantResponse, OpsHealthCheckConnectorData, OpsHealthCheckConnectorError, OpsHealthCheckConnectorResponse, OpsListAuditData, OpsListAuditError, OpsListAuditResponse, OpsListAvailableToolkitsData, OpsListAvailableToolkitsError, OpsListAvailableToolkitsResponse, OpsListConnectorsData, OpsListConnectorsError, OpsListConnectorsResponse, OpsListDefinitionsData, OpsListDefinitionsError, OpsListDefinitionsResponse, OpsListGuardrailsData, OpsListGuardrailsError, OpsListGuardrailsResponse, OpsListMemoryItemsData, OpsListMemoryItemsError, OpsListMemoryItemsResponse, OpsListMemorySpacesData, OpsListMemorySpacesError, OpsListMemorySpacesResponse, OpsListPacksData, OpsListPacksError, OpsListPacksResponse, OpsListReviewersData, OpsListReviewersError, OpsListReviewersResponse, OpsListRunsData, OpsListRunsError, OpsListRunsResponse, OpsListTeamData, OpsListTeamError, OpsListTeamResponse, OpsListTenantsData, OpsListTenantsError, OpsListTenantsResponse, OpsPublishDefinitionData, OpsPublishDefinitionError, OpsPublishDefinitionResponse, OpsReactivateTenantData, OpsReactivateTenantError, OpsReactivateTenantResponse, OpsReinstateReviewerData, OpsReinstateReviewerError, OpsReinstateReviewerResponse, OpsRejectPackData, OpsRejectPackError, OpsRejectPackResponse, OpsRepublishPackData, OpsRepublishPackError, OpsRepublishPackResponse, OpsSetConnectorDefaultsData, OpsSetConnectorDefaultsError, OpsSetConnectorDefaultsResponse, OpsSetGuardrailData, OpsSetGuardrailError, OpsSetGuardrailResponse, OpsSetReviewerLevelData, OpsSetReviewerLevelError, OpsSetReviewerLevelResponse, OpsSetTenantPlanData, OpsSetTenantPlanError, OpsSetTenantPlanResponse, OpsSetTenantSpendCapData, OpsSetTenantSpendCapError, OpsSetTenantSpendCapResponse, OpsSubmitPackData, OpsSubmitPackError, OpsSubmitPackResponse, OpsSuspendReviewerData, OpsSuspendReviewerError, OpsSuspendReviewerResponse, OpsSuspendTenantData, OpsSuspendTenantError, OpsSuspendTenantResponse, OpsUpdateIncidentData, OpsUpdateIncidentError, OpsUpdateIncidentResponse, OpsValidateDefinitionData, OpsValidateDefinitionError, OpsValidateDefinitionResponse, RemoveOrgReviewerData, RemoveOrgReviewerError, RemoveOrgReviewerResponse, RetractMemoryData, RetractMemoryError, RetractMemoryResponse, ReviewMemoryCandidateData, ReviewMemoryCandidateError, ReviewMemoryCandidateResponse, RevokeGrantData, RevokeGrantError, RevokeGrantResponse, RevokeTokenData, RevokeTokenError, RevokeTokenResponse, SaveStudioAgentData, SaveStudioAgentError, SaveStudioAgentResponse, SaveStudioPackData, SaveStudioPackError, SaveStudioPackResponse, SetReviewerNetworkData, SetReviewerNetworkError, SetReviewerNetworkResponse, StartWorkflowRunData, StartWorkflowRunError, StartWorkflowRunResponse, SubmitHumanTaskData, SubmitHumanTaskError, SubmitHumanTaskResponse, SuggestWorkflowPackData, SuggestWorkflowPackError, SuggestWorkflowPackResponse, SyncConnectionData, SyncConnectionError, SyncConnectionResponse, TestStudioPackData, TestStudioPackError, TestStudioPackResponse, UpdateReviewerProfileData, UpdateReviewerProfileError, UpdateReviewerProfileResponse, ValidateStudioAgentData, ValidateStudioAgentError, ValidateStudioAgentResponse, ValidateStudioPackData, ValidateStudioPackError, ValidateStudioPackResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -523,8 +523,11 @@ export const listConnectionsOptions = (options?: Options<ListConnectionsData>) =
 /**
  * Connect Connection
  *
- * Connect an app (a connector key or app name) for the org. Sandbox connector mode connects it to
- * sandbox data; live app connections are not available yet (409). The demo workspace has none to make.
+ * Connect an app (a connector key or app name) for the org. `mode: sandbox` (the default) connects it to
+ * sandbox data. `mode: live` starts signing in to the org's own account: the connection is pending and
+ * `redirectUrl` is the app's sign-in page, which returns to the web's Connections page; only an owner or
+ * admin may, and only they may switch an app connected to the org's own account to sandbox data (403
+ * FORBIDDEN otherwise). The demo workspace has none to make (409).
  */
 export const connectConnectionMutation = (options?: Partial<Options<ConnectConnectionData>>): UseMutationOptions<ConnectConnectionResponse, ConnectConnectionError, Options<ConnectConnectionData>> => {
     const mutationOptions: UseMutationOptions<ConnectConnectionResponse, ConnectConnectionError, Options<ConnectConnectionData>> = {
@@ -541,7 +544,33 @@ export const connectConnectionMutation = (options?: Partial<Options<ConnectConne
 };
 
 /**
+ * Sync Connection
+ *
+ * Live workspace: check the org's own account for an app with Composio, after the person comes back from
+ * signing in. Connected when the account is active, with the grants of the packs that use the app; not
+ * connected (or needing sign-in again) when the sign-in failed or expired; still pending while it is in
+ * progress. The demo workspace has nothing to sync (409).
+ */
+export const syncConnectionMutation = (options?: Partial<Options<SyncConnectionData>>): UseMutationOptions<SyncConnectionResponse, SyncConnectionError, Options<SyncConnectionData>> => {
+    const mutationOptions: UseMutationOptions<SyncConnectionResponse, SyncConnectionError, Options<SyncConnectionData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await syncConnection({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
  * Disconnect Connection
+ *
+ * Disconnect an app: every pack the org added loses access to it. In the live workspace, an app
+ * connected to the org's own account (mode composio, whatever its status) is only disconnected by an owner
+ * or admin (403 FORBIDDEN otherwise); its account is removed at the connection service.
  */
 export const disconnectConnectionMutation = (options?: Partial<Options<DisconnectConnectionData>>): UseMutationOptions<DisconnectConnectionResponse, DisconnectConnectionError, Options<DisconnectConnectionData>> => {
     const mutationOptions: UseMutationOptions<DisconnectConnectionResponse, DisconnectConnectionError, Options<DisconnectConnectionData>> = {
@@ -559,11 +588,37 @@ export const disconnectConnectionMutation = (options?: Partial<Options<Disconnec
 
 /**
  * Revoke Grant
+ *
+ * Revoke one grant: the pack (`install`) may no longer use the `capability` of the `app`. In the live
+ * workspace only an owner or admin may (403 FORBIDDEN otherwise), and the revocation is remembered until
+ * it is allowed again.
  */
 export const revokeGrantMutation = (options?: Partial<Options<RevokeGrantData>>): UseMutationOptions<RevokeGrantResponse, RevokeGrantError, Options<RevokeGrantData>> => {
     const mutationOptions: UseMutationOptions<RevokeGrantResponse, RevokeGrantError, Options<RevokeGrantData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await revokeGrant({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Allow Grant
+ *
+ * Live workspace: allow a grant a person revoked again (the same `app`, `install` and `capability` as
+ * revoking it). The revocation is forgotten, and the grant comes back when a pack the org added still uses
+ * the capability; 404 when the org's connection holds no such revocation. Only an owner or admin may (403
+ * FORBIDDEN otherwise). The demo workspace remembers no revocations (409).
+ */
+export const allowGrantMutation = (options?: Partial<Options<AllowGrantData>>): UseMutationOptions<AllowGrantResponse, AllowGrantError, Options<AllowGrantData>> => {
+    const mutationOptions: UseMutationOptions<AllowGrantResponse, AllowGrantError, Options<AllowGrantData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await allowGrant({
                 ...options,
                 ...fnOptions,
                 throwOnError: true
@@ -878,6 +933,283 @@ export const setReviewerNetworkMutation = (options?: Partial<Options<SetReviewer
     return mutationOptions;
 };
 
+export const getStudioPaletteQueryKey = (options: Options<GetStudioPaletteData>) => createQueryKey('getStudioPalette', options);
+
+/**
+ * Get Studio Palette
+ *
+ * What a pack's steps can use: the agents, app tools, memory and result shapes the org may see.
+ */
+export const getStudioPaletteOptions = (options: Options<GetStudioPaletteData>) => queryOptions<GetStudioPaletteResponse, GetStudioPaletteError, GetStudioPaletteResponse, ReturnType<typeof getStudioPaletteQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getStudioPalette({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getStudioPaletteQueryKey(options)
+});
+
+export const listStudioAgentsQueryKey = (options: Options<ListStudioAgentsData>) => createQueryKey('listStudioAgents', options);
+
+/**
+ * List Studio Agents
+ *
+ * The agents the org built.
+ */
+export const listStudioAgentsOptions = (options: Options<ListStudioAgentsData>) => queryOptions<ListStudioAgentsResponse, ListStudioAgentsError, ListStudioAgentsResponse, ReturnType<typeof listStudioAgentsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await listStudioAgents({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: listStudioAgentsQueryKey(options)
+});
+
+/**
+ * Create Studio Agent
+ *
+ * Save a new agent (version 1). 422 INVALID_DEFINITION lists each problem; reviewers get 403.
+ */
+export const createStudioAgentMutation = (options?: Partial<Options<CreateStudioAgentData>>): UseMutationOptions<CreateStudioAgentResponse, CreateStudioAgentError, Options<CreateStudioAgentData>> => {
+    const mutationOptions: UseMutationOptions<CreateStudioAgentResponse, CreateStudioAgentError, Options<CreateStudioAgentData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await createStudioAgent({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Validate Studio Agent
+ *
+ * Check an agent draft without saving it.
+ */
+export const validateStudioAgentMutation = (options?: Partial<Options<ValidateStudioAgentData>>): UseMutationOptions<ValidateStudioAgentResponse, ValidateStudioAgentError, Options<ValidateStudioAgentData>> => {
+    const mutationOptions: UseMutationOptions<ValidateStudioAgentResponse, ValidateStudioAgentError, Options<ValidateStudioAgentData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await validateStudioAgent({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const getStudioAgentQueryKey = (options: Options<GetStudioAgentData>) => createQueryKey('getStudioAgent', options);
+
+/**
+ * Get Studio Agent
+ */
+export const getStudioAgentOptions = (options: Options<GetStudioAgentData>) => queryOptions<GetStudioAgentResponse, GetStudioAgentError, GetStudioAgentResponse, ReturnType<typeof getStudioAgentQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getStudioAgent({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getStudioAgentQueryKey(options)
+});
+
+/**
+ * Save Studio Agent
+ *
+ * Save the draft as the next version; an unchanged draft keeps the current one. 409 VERSION_CONFLICT when
+ * `baseVersion` is not the latest.
+ */
+export const saveStudioAgentMutation = (options?: Partial<Options<SaveStudioAgentData>>): UseMutationOptions<SaveStudioAgentResponse, SaveStudioAgentError, Options<SaveStudioAgentData>> => {
+    const mutationOptions: UseMutationOptions<SaveStudioAgentResponse, SaveStudioAgentError, Options<SaveStudioAgentData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await saveStudioAgent({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const listStudioPacksQueryKey = (options: Options<ListStudioPacksData>) => createQueryKey('listStudioPacks', options);
+
+/**
+ * List Studio Packs
+ *
+ * The Workflow Packs the org built.
+ */
+export const listStudioPacksOptions = (options: Options<ListStudioPacksData>) => queryOptions<ListStudioPacksResponse, ListStudioPacksError, ListStudioPacksResponse, ReturnType<typeof listStudioPacksQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await listStudioPacks({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: listStudioPacksQueryKey(options)
+});
+
+/**
+ * Create Studio Pack
+ *
+ * Save a new pack (version 1), listed only in the org's own marketplace as built by its team. 422
+ * INVALID_DEFINITION lists each problem with the step it is about (`errors[].key`).
+ */
+export const createStudioPackMutation = (options?: Partial<Options<CreateStudioPackData>>): UseMutationOptions<CreateStudioPackResponse, CreateStudioPackError, Options<CreateStudioPackData>> => {
+    const mutationOptions: UseMutationOptions<CreateStudioPackResponse, CreateStudioPackError, Options<CreateStudioPackData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await createStudioPack({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Validate Studio Pack
+ *
+ * Check a pack draft without saving it. Pass `key` when the draft edits a saved pack; without it the
+ * draft is checked as a new pack, so a saved pack's own name reads as taken.
+ */
+export const validateStudioPackMutation = (options?: Partial<Options<ValidateStudioPackData>>): UseMutationOptions<ValidateStudioPackResponse, ValidateStudioPackError, Options<ValidateStudioPackData>> => {
+    const mutationOptions: UseMutationOptions<ValidateStudioPackResponse, ValidateStudioPackError, Options<ValidateStudioPackData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await validateStudioPack({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Import Studio Workflow
+ *
+ * Read a workflow.yaml as steps. Nothing is saved. 422 INVALID_YAML when it cannot be read.
+ */
+export const importStudioWorkflowMutation = (options?: Partial<Options<ImportStudioWorkflowData>>): UseMutationOptions<ImportStudioWorkflowResponse, ImportStudioWorkflowError, Options<ImportStudioWorkflowData>> => {
+    const mutationOptions: UseMutationOptions<ImportStudioWorkflowResponse, ImportStudioWorkflowError, Options<ImportStudioWorkflowData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await importStudioWorkflow({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Test Studio Pack
+ *
+ * Start a sandbox test run of the org's own pack (returns 202: started, not finished). It runs on sandbox
+ * data without adding the pack and is labelled as a sandbox test. The input must match the pack's input
+ * schema (422 INVALID_INPUT) and the budget the pack's maximum (422 BUDGET_TOO_HIGH); a pack without a
+ * maximum needs a budget (422 BUDGET_REQUIRED). The platform pause and the monthly spend cap apply.
+ */
+export const testStudioPackMutation = (options?: Partial<Options<TestStudioPackData>>): UseMutationOptions<TestStudioPackResponse, TestStudioPackError, Options<TestStudioPackData>> => {
+    const mutationOptions: UseMutationOptions<TestStudioPackResponse, TestStudioPackError, Options<TestStudioPackData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await testStudioPack({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const getStudioPackWorkflowQueryKey = (options: Options<GetStudioPackWorkflowData>) => createQueryKey('getStudioPackWorkflow', options);
+
+/**
+ * Get Studio Pack Workflow
+ *
+ * The pack's workflow.yaml.
+ */
+export const getStudioPackWorkflowOptions = (options: Options<GetStudioPackWorkflowData>) => queryOptions<GetStudioPackWorkflowResponse, GetStudioPackWorkflowError, GetStudioPackWorkflowResponse, ReturnType<typeof getStudioPackWorkflowQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getStudioPackWorkflow({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getStudioPackWorkflowQueryKey(options)
+});
+
+export const getStudioPackQueryKey = (options: Options<GetStudioPackData>) => createQueryKey('getStudioPack', options);
+
+/**
+ * Get Studio Pack
+ */
+export const getStudioPackOptions = (options: Options<GetStudioPackData>) => queryOptions<GetStudioPackResponse, GetStudioPackError, GetStudioPackResponse, ReturnType<typeof getStudioPackQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getStudioPack({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getStudioPackQueryKey(options)
+});
+
+/**
+ * Save Studio Pack
+ *
+ * Save the draft as the next version; an unchanged draft keeps the current one. 409 VERSION_CONFLICT when
+ * `baseVersion` is not the latest. A run already started keeps the version it pinned. A pack the org has
+ * added keeps its connection grants in step with the save, and cannot be renamed while one of its runs is
+ * in progress (409 RUNS_IN_PROGRESS).
+ */
+export const saveStudioPackMutation = (options?: Partial<Options<SaveStudioPackData>>): UseMutationOptions<SaveStudioPackResponse, SaveStudioPackError, Options<SaveStudioPackData>> => {
+    const mutationOptions: UseMutationOptions<SaveStudioPackResponse, SaveStudioPackError, Options<SaveStudioPackData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await saveStudioPack({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
 export const opsListPacksQueryKey = (options?: Options<OpsListPacksData>) => createQueryKey('opsListPacks', options);
 
 /**
@@ -1167,7 +1499,8 @@ export const opsListDefinitionsQueryKey = (options?: Options<OpsListDefinitionsD
 /**
  * Ops List Definitions
  *
- * The latest version of every definition, by kind then key.
+ * The latest version of every platform definition, by kind then key. An org's own definitions are not
+ * listed.
  */
 export const opsListDefinitionsOptions = (options?: Options<OpsListDefinitionsData>) => queryOptions<OpsListDefinitionsResponse, OpsListDefinitionsError, OpsListDefinitionsResponse, ReturnType<typeof opsListDefinitionsQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
@@ -1207,7 +1540,8 @@ export const opsExportDefinitionOptions = (options: Options<OpsExportDefinitionD
  *
  * Check an edit (or a new definition) against the latest published versions of everything else. Never
  * saves anything.
- * `errors` lists every problem found, including ones in other definitions.
+ * `errors` lists every problem found, including ones in other definitions. `warnings` says how many
+ * definitions that teams built in their Studio the edit would break; it never names them.
  */
 export const opsValidateDefinitionMutation = (options?: Partial<Options<OpsValidateDefinitionData>>): UseMutationOptions<OpsValidateDefinitionResponse, OpsValidateDefinitionError, Options<OpsValidateDefinitionData>> => {
     const mutationOptions: UseMutationOptions<OpsValidateDefinitionResponse, OpsValidateDefinitionError, Options<OpsValidateDefinitionData>> = {
@@ -1229,7 +1563,7 @@ export const opsValidateDefinitionMutation = (options?: Partial<Options<OpsValid
  * Validate, then publish the edit as the next version; an unknown kind/key is created as version 1.
  * 422 INVALID_DEFINITION (with `errors`) when it does not validate; 409 VERSION_CONFLICT when
  * `baseVersion` is sent and someone has published since; 409 NO_CHANGE when it equals the latest
- * version.
+ * version. The detail's `warnings` counts the definitions teams built that this version breaks.
  */
 export const opsPublishDefinitionMutation = (options?: Partial<Options<OpsPublishDefinitionData>>): UseMutationOptions<OpsPublishDefinitionResponse, OpsPublishDefinitionError, Options<OpsPublishDefinitionData>> => {
     const mutationOptions: UseMutationOptions<OpsPublishDefinitionResponse, OpsPublishDefinitionError, Options<OpsPublishDefinitionData>> = {
@@ -1323,7 +1657,7 @@ export const opsListMemorySpacesQueryKey = (options?: Options<OpsListMemorySpace
 /**
  * Ops List Memory Spaces
  *
- * Every memory space definition with its item count.
+ * Every platform memory space definition with its item count. An org's own spaces are not listed.
  */
 export const opsListMemorySpacesOptions = (options?: Options<OpsListMemorySpacesData>) => queryOptions<OpsListMemorySpacesResponse, OpsListMemorySpacesError, OpsListMemorySpacesResponse, ReturnType<typeof opsListMemorySpacesQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
@@ -1380,7 +1714,8 @@ export const opsAddMemoryItemMutation = (options?: Partial<Options<OpsAddMemoryI
 /**
  * Ops Delete Memory Item
  *
- * Remove one item from its space.
+ * Remove one item from its space. An item in an org's own space is 404, worded like an unknown item so
+ * the space's key is never shown.
  */
 export const opsDeleteMemoryItemMutation = (options?: Partial<Options<OpsDeleteMemoryItemData>>): UseMutationOptions<OpsDeleteMemoryItemResponse, OpsDeleteMemoryItemError, Options<OpsDeleteMemoryItemData>> => {
     const mutationOptions: UseMutationOptions<OpsDeleteMemoryItemResponse, OpsDeleteMemoryItemError, Options<OpsDeleteMemoryItemData>> = {

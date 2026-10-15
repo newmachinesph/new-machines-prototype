@@ -119,7 +119,7 @@ nodes:
     config:
       tool: googlesheets.append_rows
       args:
-        spreadsheetId: demo-reconciliation-sheet
+        spreadsheetId: =input.spreadsheet_id
         range: Reconciliation!A:F
         valueInputOption: RAW
         values: =nodes.report.output.rows

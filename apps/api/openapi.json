@@ -2174,8 +2174,115 @@
           "connections"
         ],
         "summary": "Connect Connection",
-        "description": "Connect an app (a connector key or app name) for the org. Sandbox connector mode connects it to\nsandbox data; live app connections are not available yet (409). The demo workspace has none to make.",
+        "description": "Connect an app (a connector key or app name) for the org. `mode: sandbox` (the default) connects it to\nsandbox data. `mode: live` starts signing in to the org's own account: the connection is pending and\n`redirectUrl` is the app's sign-in page, which returns to the web's Connections page; only an owner or\nadmin may, and only they may switch an app connected to the org's own account to sandbox data (403\nFORBIDDEN otherwise). The demo workspace has none to make (409).",
         "operationId": "connectConnection",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "app_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "App Name"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConnectRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectStarted"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict (CONFLICT, LIVE_CONNECT_UNAVAILABLE, NO_LIVE_TOOLKIT).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The connection service did not answer (CONNECTION_SERVICE_UNAVAILABLE).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/connections/{app_name}:sync": {
+      "post": {
+        "tags": [
+          "connections"
+        ],
+        "summary": "Sync Connection",
+        "description": "Live workspace: check the org's own account for an app with Composio, after the person comes back from\nsigning in. Connected when the account is active, with the grants of the packs that use the app; not\nconnected (or needing sign-in again) when the sign-in failed or expired; still pending while it is in\nprogress. The demo workspace has nothing to sync (409).",
+        "operationId": "syncConnection",
         "security": [
           {
             "HTTPBearer": []
@@ -2234,7 +2341,7 @@
             }
           },
           "409": {
-            "description": "Conflict",
+            "description": "Conflict (CONFLICT, LIVE_CONNECT_UNAVAILABLE).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2252,6 +2359,16 @@
                 }
               }
             }
+          },
+          "503": {
+            "description": "The connection service did not answer (CONNECTION_SERVICE_UNAVAILABLE).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
           }
         }
       }
@@ -2262,6 +2379,7 @@
           "connections"
         ],
         "summary": "Disconnect Connection",
+        "description": "Disconnect an app: every pack the org added loses access to it. In the live workspace, an app\nconnected to the org's own account (mode composio, whatever its status) is only disconnected by an owner\nor admin (403 FORBIDDEN otherwise); its account is removed at the connection service.",
         "operationId": "disconnectConnection",
         "security": [
           {
@@ -2349,6 +2467,7 @@
           "connections"
         ],
         "summary": "Revoke Grant",
+        "description": "Revoke one grant: the pack (`install`) may no longer use the `capability` of the `app`. In the live\nworkspace only an owner or admin may (403 FORBIDDEN otherwise), and the revocation is remembered until\nit is allowed again.",
         "operationId": "revokeGrant",
         "security": [
           {
@@ -2420,6 +2539,110 @@
           },
           "409": {
             "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "connections"
+        ],
+        "summary": "Allow Grant",
+        "description": "Live workspace: allow a grant a person revoked again (the same `app`, `install` and `capability` as\nrevoking it). The revocation is forgotten, and the grant comes back when a pack the org added still uses\nthe capability; 404 when the org's connection holds no such revocation. Only an owner or admin may (403\nFORBIDDEN otherwise). The demo workspace remembers no revocations (409).",
+        "operationId": "allowGrant",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "app",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "App"
+            }
+          },
+          {
+            "name": "install",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Install"
+            }
+          },
+          {
+            "name": "capability",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Capability"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Connection"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict (CONFLICT).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3838,6 +4061,1412 @@
           },
           "409": {
             "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/organizations/{org_id}/studio/palette": {
+      "get": {
+        "tags": [
+          "studio"
+        ],
+        "summary": "Get Studio Palette",
+        "description": "What a pack's steps can use: the agents, app tools, memory and result shapes the org may see.",
+        "operationId": "getStudioPalette",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Org Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Palette"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/organizations/{org_id}/studio/agents": {
+      "get": {
+        "tags": [
+          "studio"
+        ],
+        "summary": "List Studio Agents",
+        "description": "The agents the org built.",
+        "operationId": "listStudioAgents",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Org Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StudioAgentSummary"
+                  },
+                  "title": "Response Liststudioagents"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "studio"
+        ],
+        "summary": "Create Studio Agent",
+        "description": "Save a new agent (version 1). 422 INVALID_DEFINITION lists each problem; reviewers get 403.",
+        "operationId": "createStudioAgent",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Org Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentDraft"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudioAgent"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict (KEY_TAKEN).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/organizations/{org_id}/studio/agents:validate": {
+      "post": {
+        "tags": [
+          "studio"
+        ],
+        "summary": "Validate Studio Agent",
+        "description": "Check an agent draft without saving it.",
+        "operationId": "validateStudioAgent",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Org Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentDraft"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BuilderCheck"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/organizations/{org_id}/studio/agents/{key}": {
+      "get": {
+        "tags": [
+          "studio"
+        ],
+        "summary": "Get Studio Agent",
+        "operationId": "getStudioAgent",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Org Id"
+            }
+          },
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 100,
+              "pattern": "^[a-z0-9][a-z0-9-]*$",
+              "title": "Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudioAgent"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "studio"
+        ],
+        "summary": "Save Studio Agent",
+        "description": "Save the draft as the next version; an unchanged draft keeps the current one. 409 VERSION_CONFLICT when\n`baseVersion` is not the latest.",
+        "operationId": "saveStudioAgent",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Org Id"
+            }
+          },
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 100,
+              "pattern": "^[a-z0-9][a-z0-9-]*$",
+              "title": "Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveAgentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudioAgent"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict (VERSION_CONFLICT, KEY_TAKEN).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/organizations/{org_id}/studio/packs": {
+      "get": {
+        "tags": [
+          "studio"
+        ],
+        "summary": "List Studio Packs",
+        "description": "The Workflow Packs the org built.",
+        "operationId": "listStudioPacks",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Org Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StudioPackSummary"
+                  },
+                  "title": "Response Liststudiopacks"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "studio"
+        ],
+        "summary": "Create Studio Pack",
+        "description": "Save a new pack (version 1), listed only in the org's own marketplace as built by its team. 422\nINVALID_DEFINITION lists each problem with the step it is about (`errors[].key`).",
+        "operationId": "createStudioPack",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Org Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PackDraft"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudioPack"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict (KEY_TAKEN).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/organizations/{org_id}/studio/packs:validate": {
+      "post": {
+        "tags": [
+          "studio"
+        ],
+        "summary": "Validate Studio Pack",
+        "description": "Check a pack draft without saving it. Pass `key` when the draft edits a saved pack; without it the\ndraft is checked as a new pack, so a saved pack's own name reads as taken.",
+        "operationId": "validateStudioPack",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Org Id"
+            }
+          },
+          {
+            "name": "key",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 100,
+                  "pattern": "^[a-z0-9][a-z0-9-]*$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The org's own pack the draft edits, so its current name is not counted against it.",
+              "title": "Key"
+            },
+            "description": "The org's own pack the draft edits, so its current name is not counted against it."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PackDraft"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BuilderCheck"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/organizations/{org_id}/studio/workflow:import": {
+      "post": {
+        "tags": [
+          "studio"
+        ],
+        "summary": "Import Studio Workflow",
+        "description": "Read a workflow.yaml as steps. Nothing is saved. 422 INVALID_YAML when it cannot be read.",
+        "operationId": "importStudioWorkflow",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Org Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportWorkflowRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportedWorkflow"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/organizations/{org_id}/studio/packs/{key}:test": {
+      "post": {
+        "tags": [
+          "studio"
+        ],
+        "summary": "Test Studio Pack",
+        "description": "Start a sandbox test run of the org's own pack (returns 202: started, not finished). It runs on sandbox\ndata without adding the pack and is labelled as a sandbox test. The input must match the pack's input\nschema (422 INVALID_INPUT) and the budget the pack's maximum (422 BUDGET_TOO_HIGH); a pack without a\nmaximum needs a budget (422 BUDGET_REQUIRED). The platform pause and the monthly spend cap apply.",
+        "operationId": "testStudioPack",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Org Id"
+            }
+          },
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 100,
+              "pattern": "^[a-z0-9][a-z0-9-]*$",
+              "title": "Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SandboxRunRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Run"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict (PLATFORM_PAUSED, SANDBOX_UNAVAILABLE, SPEND_CAP, PACK_UNAVAILABLE).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request (INVALID_INPUT, BUDGET_REQUIRED, BUDGET_TOO_HIGH).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The workflow engine is unavailable (RUNTIME_UNAVAILABLE).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/organizations/{org_id}/studio/packs/{key}/workflow": {
+      "get": {
+        "tags": [
+          "studio"
+        ],
+        "summary": "Get Studio Pack Workflow",
+        "description": "The pack's workflow.yaml.",
+        "operationId": "getStudioPackWorkflow",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Org Id"
+            }
+          },
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 100,
+              "pattern": "^[a-z0-9][a-z0-9-]*$",
+              "title": "Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowYaml"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/organizations/{org_id}/studio/packs/{key}": {
+      "get": {
+        "tags": [
+          "studio"
+        ],
+        "summary": "Get Studio Pack",
+        "operationId": "getStudioPack",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Org Id"
+            }
+          },
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 100,
+              "pattern": "^[a-z0-9][a-z0-9-]*$",
+              "title": "Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudioPack"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "studio"
+        ],
+        "summary": "Save Studio Pack",
+        "description": "Save the draft as the next version; an unchanged draft keeps the current one. 409 VERSION_CONFLICT when\n`baseVersion` is not the latest. A run already started keeps the version it pinned. A pack the org has\nadded keeps its connection grants in step with the save, and cannot be renamed while one of its runs is\nin progress (409 RUNS_IN_PROGRESS).",
+        "operationId": "saveStudioPack",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Org Id"
+            }
+          },
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 100,
+              "pattern": "^[a-z0-9][a-z0-9-]*$",
+              "title": "Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SavePackRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudioPack"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict (VERSION_CONFLICT, KEY_TAKEN, RUNS_IN_PROGRESS).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -5359,7 +6988,7 @@
           "ops"
         ],
         "summary": "Ops List Definitions",
-        "description": "The latest version of every definition, by kind then key.",
+        "description": "The latest version of every platform definition, by kind then key. An org's own definitions are not\nlisted.",
         "operationId": "opsListDefinitions",
         "responses": {
           "200": {
@@ -5589,7 +7218,7 @@
           "ops"
         ],
         "summary": "Ops Validate Definition",
-        "description": "Check an edit (or a new definition) against the latest published versions of everything else. Never\nsaves anything.\n`errors` lists every problem found, including ones in other definitions.",
+        "description": "Check an edit (or a new definition) against the latest published versions of everything else. Never\nsaves anything.\n`errors` lists every problem found, including ones in other definitions. `warnings` says how many\ndefinitions that teams built in their Studio the edit would break; it never names them.",
         "operationId": "opsValidateDefinition",
         "security": [
           {
@@ -5719,7 +7348,7 @@
           "ops"
         ],
         "summary": "Ops Publish Definition",
-        "description": "Validate, then publish the edit as the next version; an unknown kind/key is created as version 1.\n422 INVALID_DEFINITION (with `errors`) when it does not validate; 409 VERSION_CONFLICT when\n`baseVersion` is sent and someone has published since; 409 NO_CHANGE when it equals the latest\nversion.",
+        "description": "Validate, then publish the edit as the next version; an unknown kind/key is created as version 1.\n422 INVALID_DEFINITION (with `errors`) when it does not validate; 409 VERSION_CONFLICT when\n`baseVersion` is sent and someone has published since; 409 NO_CHANGE when it equals the latest\nversion. The detail's `warnings` counts the definitions teams built that this version breaks.",
         "operationId": "opsPublishDefinition",
         "security": [
           {
@@ -6248,7 +7877,7 @@
           "ops"
         ],
         "summary": "Ops List Memory Spaces",
-        "description": "Every memory space definition with its item count.",
+        "description": "Every platform memory space definition with its item count. An org's own spaces are not listed.",
         "operationId": "opsListMemorySpaces",
         "responses": {
           "200": {
@@ -6549,7 +8178,7 @@
           "ops"
         ],
         "summary": "Ops Delete Memory Item",
-        "description": "Remove one item from its space.",
+        "description": "Remove one item from its space. An item in an org's own space is 404, worded like an unknown item so\nthe space's key is never shown.",
         "operationId": "opsDeleteMemoryItem",
         "security": [
           {
@@ -8895,6 +10524,10 @@
               "sample"
             ],
             "title": "Source"
+          },
+          "builtByTeam": {
+            "type": "boolean",
+            "title": "Builtbyteam"
           }
         },
         "type": "object",
@@ -8914,6 +10547,72 @@
         ],
         "title": "Agent",
         "description": "A catalog agent. `source` is \"definition\" for an agent definition, \"sample\" for a demo fixture\nagent (sample agents have no skills, tools or model profile). `used_by` lists the packs whose `agents`\nname it."
+      },
+      "AgentDraft": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 1,
+            "pattern": "^[^\\r\\n]+$",
+            "title": "Name"
+          },
+          "summary": {
+            "type": "string",
+            "maxLength": 280,
+            "minLength": 1,
+            "pattern": "^[^\\r\\n]+$",
+            "title": "Summary"
+          },
+          "instructions": {
+            "type": "string",
+            "maxLength": 12000,
+            "minLength": 1,
+            "title": "Instructions"
+          },
+          "modelProfile": {
+            "type": "string",
+            "enum": [
+              "reasoning",
+              "fast"
+            ],
+            "title": "Modelprofile",
+            "default": "reasoning"
+          },
+          "skills": {
+            "items": {
+              "$ref": "#/components/schemas/SkillDraft"
+            },
+            "type": "array",
+            "maxItems": 10,
+            "title": "Skills"
+          },
+          "tools": {
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_-]*\\.[a-z][a-z0-9_-]*$"
+            },
+            "type": "array",
+            "maxItems": 12,
+            "title": "Tools"
+          },
+          "maxTurns": {
+            "type": "integer",
+            "maximum": 20.0,
+            "minimum": 1.0,
+            "title": "Maxturns",
+            "default": 6
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "summary",
+          "instructions"
+        ],
+        "title": "AgentDraft",
+        "description": "An agent as the Studio edits it. Tools are app tools that only read."
       },
       "AgentPackRef": {
         "properties": {
@@ -9293,6 +10992,50 @@
         ],
         "title": "BillingSummary"
       },
+      "BuilderCheck": {
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "title": "Ok"
+          },
+          "issues": {
+            "items": {
+              "$ref": "#/components/schemas/BuilderIssue"
+            },
+            "type": "array",
+            "title": "Issues"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ok",
+          "issues"
+        ],
+        "title": "BuilderCheck"
+      },
+      "BuilderIssue": {
+        "properties": {
+          "path": {
+            "type": "string",
+            "title": "Path"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "step": {
+            "type": "string",
+            "title": "Step"
+          }
+        },
+        "type": "object",
+        "required": [
+          "path",
+          "message"
+        ],
+        "title": "BuilderIssue",
+        "description": "One problem in a draft. `step` names the step it is about, when it is about one."
+      },
       "ChainStep": {
         "properties": {
           "kind": {
@@ -9339,7 +11082,24 @@
         ],
         "title": "ChainStep"
       },
-      "Connection": {
+      "ConnectRequest": {
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "live",
+              "sandbox"
+            ],
+            "title": "Mode",
+            "default": "sandbox"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "ConnectRequest",
+        "description": "How to connect an app: `live` signs in to the org's own account; `sandbox` serves sandbox data."
+      },
+      "ConnectStarted": {
         "properties": {
           "app": {
             "type": "string",
@@ -9355,7 +11115,8 @@
               "connected",
               "not_connected",
               "sandbox",
-              "needs_reauth"
+              "needs_reauth",
+              "pending"
             ],
             "title": "Status"
           },
@@ -9381,6 +11142,14 @@
             "type": "array",
             "title": "Grants"
           },
+          "revoked": {
+            "items": {
+              "$ref": "#/components/schemas/RevokedGrant"
+            },
+            "type": "array",
+            "title": "Revoked",
+            "default": []
+          },
           "lastUsed": {
             "type": "string",
             "title": "Lastused"
@@ -9400,6 +11169,104 @@
               "composio"
             ],
             "title": "Mode"
+          },
+          "notice": {
+            "type": "string",
+            "const": "sign_in_not_removed",
+            "title": "Notice"
+          },
+          "redirectUrl": {
+            "type": "string",
+            "title": "Redirecturl"
+          }
+        },
+        "type": "object",
+        "required": [
+          "app",
+          "account",
+          "status",
+          "provider",
+          "oauthScopes",
+          "grants"
+        ],
+        "title": "ConnectStarted",
+        "description": "A connection just made or started. `redirect_url` (live only) is the app's sign-in page, which returns\nto the web's Connections page with `?connected=<key>`."
+      },
+      "Connection": {
+        "properties": {
+          "app": {
+            "type": "string",
+            "title": "App"
+          },
+          "account": {
+            "type": "string",
+            "title": "Account"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "connected",
+              "not_connected",
+              "sandbox",
+              "needs_reauth",
+              "pending"
+            ],
+            "title": "Status"
+          },
+          "provider": {
+            "type": "string",
+            "enum": [
+              "Composio",
+              "Mock"
+            ],
+            "title": "Provider"
+          },
+          "oauthScopes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Oauthscopes"
+          },
+          "grants": {
+            "items": {
+              "$ref": "#/components/schemas/Grant"
+            },
+            "type": "array",
+            "title": "Grants"
+          },
+          "revoked": {
+            "items": {
+              "$ref": "#/components/schemas/RevokedGrant"
+            },
+            "type": "array",
+            "title": "Revoked",
+            "default": []
+          },
+          "lastUsed": {
+            "type": "string",
+            "title": "Lastused"
+          },
+          "health": {
+            "type": "string",
+            "title": "Health"
+          },
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "sandbox",
+              "composio"
+            ],
+            "title": "Mode"
+          },
+          "notice": {
+            "type": "string",
+            "const": "sign_in_not_removed",
+            "title": "Notice"
           }
         },
         "type": "object",
@@ -9802,6 +11669,39 @@
         ],
         "title": "CreatedToken"
       },
+      "DecisionDefault": {
+        "properties": {
+          "route": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]{0,39}$",
+            "title": "Route"
+          },
+          "verdict": {
+            "type": "string",
+            "enum": [
+              "APPROVED",
+              "HUMAN_REVIEW",
+              "BLOCKED",
+              "REJECTED"
+            ],
+            "title": "Verdict",
+            "default": "HUMAN_REVIEW"
+          },
+          "explanation": {
+            "type": "string",
+            "maxLength": 400,
+            "minLength": 1,
+            "title": "Explanation"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "route",
+          "explanation"
+        ],
+        "title": "DecisionDefault"
+      },
       "DecisionRecord": {
         "properties": {
           "question": {
@@ -9880,6 +11780,75 @@
           "policy"
         ],
         "title": "DecisionRecord"
+      },
+      "DecisionRule": {
+        "properties": {
+          "when": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "When"
+          },
+          "route": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]{0,39}$",
+            "title": "Route"
+          },
+          "verdict": {
+            "type": "string",
+            "enum": [
+              "APPROVED",
+              "HUMAN_REVIEW",
+              "BLOCKED",
+              "REJECTED"
+            ],
+            "title": "Verdict",
+            "default": "APPROVED"
+          },
+          "explanation": {
+            "type": "string",
+            "maxLength": 400,
+            "minLength": 1,
+            "title": "Explanation"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "when",
+          "route",
+          "explanation"
+        ],
+        "title": "DecisionRule",
+        "description": "`when` is CEL over the run state; the first rule that is true picks the route."
+      },
+      "DecisionRules": {
+        "properties": {
+          "question": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Question"
+          },
+          "rules": {
+            "items": {
+              "$ref": "#/components/schemas/DecisionRule"
+            },
+            "type": "array",
+            "maxItems": 20,
+            "title": "Rules"
+          },
+          "default": {
+            "$ref": "#/components/schemas/DecisionDefault"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "question",
+          "default"
+        ],
+        "title": "DecisionRules"
       },
       "DeclareIncidentRequest": {
         "properties": {
@@ -9967,6 +11936,13 @@
             },
             "type": "array",
             "title": "Usedby"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings"
           }
         },
         "type": "object",
@@ -9980,7 +11956,7 @@
           "usedBy"
         ],
         "title": "DefinitionDetail",
-        "description": "One definition at one version. `yaml` is the main file as exported (JSON for a schema); `files` holds\nthe Markdown files of an agent by path relative to its folder. `body` is the same main file parsed, so a\nclient can read fields without a YAML parser. `refs` are the definitions this one refers to and\n`used_by` those that refer to it, both computed from the latest versions."
+        "description": "One definition at one version. `yaml` is the main file as exported (JSON for a schema); `files` holds\nthe Markdown files of an agent by path relative to its folder. `body` is the same main file parsed, so a\nclient can read fields without a YAML parser. `refs` are the definitions this one refers to and\n`used_by` those that refer to it, both computed from the latest versions. `warnings` is set on a publish\nthat breaks definitions teams built in their Studio: a count only, never their keys."
       },
       "DefinitionExport": {
         "properties": {
@@ -10706,6 +12682,53 @@
         ],
         "title": "HumanTask"
       },
+      "ImportWorkflowRequest": {
+        "properties": {
+          "yaml": {
+            "type": "string",
+            "maxLength": 200000,
+            "minLength": 1,
+            "title": "Yaml"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "yaml"
+        ],
+        "title": "ImportWorkflowRequest",
+        "description": "A workflow.yaml, such as one exported from a pack."
+      },
+      "ImportedWorkflow": {
+        "properties": {
+          "entryStep": {
+            "type": "string",
+            "title": "Entrystep"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/StepDraft"
+            },
+            "type": "array",
+            "title": "Steps"
+          },
+          "issues": {
+            "items": {
+              "$ref": "#/components/schemas/BuilderIssue"
+            },
+            "type": "array",
+            "title": "Issues"
+          }
+        },
+        "type": "object",
+        "required": [
+          "entryStep",
+          "steps",
+          "issues"
+        ],
+        "title": "ImportedWorkflow",
+        "description": "The steps read from a workflow.yaml, and what could not be read."
+      },
       "Incident": {
         "properties": {
           "id": {
@@ -10791,6 +12814,44 @@
           "text"
         ],
         "title": "IncidentUpdate"
+      },
+      "InputField": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]{0,39}$",
+            "title": "Name"
+          },
+          "label": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Label"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "text",
+              "date",
+              "number"
+            ],
+            "title": "Type",
+            "default": "text"
+          },
+          "required": {
+            "type": "boolean",
+            "title": "Required",
+            "default": true
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "label"
+        ],
+        "title": "InputField",
+        "description": "One field of the run's start form."
       },
       "InstallRequest": {
         "properties": {
@@ -12023,6 +14084,10 @@
               "team_then_network"
             ],
             "title": "Reviewerpool"
+          },
+          "builtByTeam": {
+            "type": "boolean",
+            "title": "Builtbyteam"
           }
         },
         "type": "object",
@@ -12120,6 +14185,98 @@
           "runs"
         ],
         "title": "PackCount"
+      },
+      "PackDraft": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "outcome": {
+            "type": "string",
+            "maxLength": 280,
+            "minLength": 1,
+            "title": "Outcome"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Description"
+          },
+          "humanReview": {
+            "type": "string",
+            "maxLength": 400,
+            "minLength": 1,
+            "title": "Humanreview"
+          },
+          "function": {
+            "type": "string",
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Function",
+            "default": "finance-ops"
+          },
+          "industries": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 5,
+            "minItems": 1,
+            "title": "Industries"
+          },
+          "inputFields": {
+            "items": {
+              "$ref": "#/components/schemas/InputField"
+            },
+            "type": "array",
+            "maxItems": 10,
+            "title": "Inputfields"
+          },
+          "budgetMinor": {
+            "type": "integer",
+            "maximum": 100000.0,
+            "minimum": 100.0,
+            "title": "Budgetminor",
+            "default": 1500
+          },
+          "humanBudgetMinor": {
+            "type": "integer",
+            "maximum": 100000.0,
+            "minimum": 0.0,
+            "title": "Humanbudgetminor",
+            "default": 0
+          },
+          "entryStep": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]{0,39}$",
+            "title": "Entrystep"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/StepDraft"
+            },
+            "type": "array",
+            "maxItems": 60,
+            "minItems": 2,
+            "title": "Steps"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "outcome",
+          "description",
+          "humanReview",
+          "entryStep",
+          "steps"
+        ],
+        "title": "PackDraft",
+        "description": "A Workflow Pack as the Studio edits it: what the marketplace shows, the start form, the budget and\nthe steps."
       },
       "PackEstimate": {
         "properties": {
@@ -12408,6 +14565,174 @@
           "history"
         ],
         "title": "PackListingDetail"
+      },
+      "Palette": {
+        "properties": {
+          "agents": {
+            "items": {
+              "$ref": "#/components/schemas/PaletteAgent"
+            },
+            "type": "array",
+            "title": "Agents"
+          },
+          "tools": {
+            "items": {
+              "$ref": "#/components/schemas/PaletteTool"
+            },
+            "type": "array",
+            "title": "Tools"
+          },
+          "spaces": {
+            "items": {
+              "$ref": "#/components/schemas/PaletteSpace"
+            },
+            "type": "array",
+            "title": "Spaces"
+          },
+          "schemas": {
+            "items": {
+              "$ref": "#/components/schemas/PaletteSchema"
+            },
+            "type": "array",
+            "title": "Schemas"
+          }
+        },
+        "type": "object",
+        "required": [
+          "agents",
+          "tools",
+          "spaces",
+          "schemas"
+        ],
+        "title": "Palette",
+        "description": "What a pack's steps can use, from the registry: agents, app tools, memory and result shapes."
+      },
+      "PaletteAgent": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "builtByTeam": {
+            "type": "boolean",
+            "title": "Builtbyteam"
+          },
+          "modelProfile": {
+            "type": "string",
+            "title": "Modelprofile"
+          },
+          "outputSchemaRef": {
+            "type": "string",
+            "title": "Outputschemaref"
+          },
+          "outputSchema": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Outputschema"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "name",
+          "summary",
+          "outputSchemaRef"
+        ],
+        "title": "PaletteAgent"
+      },
+      "PaletteSchema": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "body": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Body"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "title",
+          "body"
+        ],
+        "title": "PaletteSchema"
+      },
+      "PaletteSpace": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "name"
+        ],
+        "title": "PaletteSpace"
+      },
+      "PaletteTool": {
+        "properties": {
+          "ref": {
+            "type": "string",
+            "title": "Ref"
+          },
+          "app": {
+            "type": "string",
+            "title": "App"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "actionClass": {
+            "type": "string",
+            "title": "Actionclass"
+          },
+          "capability": {
+            "type": "string",
+            "title": "Capability"
+          },
+          "inputSchema": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Inputschema"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ref",
+          "app",
+          "name",
+          "description",
+          "actionClass",
+          "capability",
+          "inputSchema"
+        ],
+        "title": "PaletteTool"
       },
       "PassportResult": {
         "properties": {
@@ -12997,6 +15322,25 @@
         ],
         "title": "ReviewerNetworkRequest"
       },
+      "RevokedGrant": {
+        "properties": {
+          "install": {
+            "type": "string",
+            "title": "Install"
+          },
+          "capability": {
+            "type": "string",
+            "title": "Capability"
+          }
+        },
+        "type": "object",
+        "required": [
+          "install",
+          "capability"
+        ],
+        "title": "RevokedGrant",
+        "description": "A grant a person revoked on a connection (`DELETE /v1/grants`): recomputing the connection's grants\nnever brings it back until it is allowed again (`POST /v1/grants`)."
+      },
       "Run": {
         "properties": {
           "id": {
@@ -13100,6 +15444,10 @@
           "recovered": {
             "type": "string",
             "title": "Recovered"
+          },
+          "sandboxTest": {
+            "type": "boolean",
+            "title": "Sandboxtest"
           }
         },
         "type": "object",
@@ -13337,6 +15685,10 @@
             "type": "boolean",
             "title": "Hasdetail",
             "default": false
+          },
+          "sandboxTest": {
+            "type": "boolean",
+            "title": "Sandboxtest"
           }
         },
         "type": "object",
@@ -13414,6 +15766,62 @@
         ],
         "title": "RuntimeStatus",
         "description": "Reachability of the runtime's parts; carries no connection strings or secrets."
+      },
+      "SandboxRunRequest": {
+        "properties": {
+          "input": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Input"
+          },
+          "budgetMinor": {
+            "type": "integer",
+            "title": "Budgetminor",
+            "gt": 0,
+            "le": 100000
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "SandboxRunRequest",
+        "description": "The run input (checked against the pack's input schema) and an optional budget; the pack's maximum\nwhen omitted."
+      },
+      "SaveAgentRequest": {
+        "properties": {
+          "draft": {
+            "$ref": "#/components/schemas/AgentDraft"
+          },
+          "baseVersion": {
+            "type": "integer",
+            "title": "Baseversion",
+            "ge": 1
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "draft"
+        ],
+        "title": "SaveAgentRequest",
+        "description": "`base_version` is the version the edit started from; 409 VERSION_CONFLICT when someone saved since."
+      },
+      "SavePackRequest": {
+        "properties": {
+          "draft": {
+            "$ref": "#/components/schemas/PackDraft"
+          },
+          "baseVersion": {
+            "type": "integer",
+            "title": "Baseversion",
+            "ge": 1
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "draft"
+        ],
+        "title": "SavePackRequest"
       },
       "ServiceStatus": {
         "properties": {
@@ -13580,6 +15988,30 @@
         ],
         "title": "SetSpendCapRequest"
       },
+      "SkillDraft": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 1,
+            "pattern": "^[^\\r\\n]+$",
+            "title": "Title"
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 8000,
+            "minLength": 1,
+            "title": "Text"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "title",
+          "text"
+        ],
+        "title": "SkillDraft"
+      },
       "Spent": {
         "properties": {
           "ai": {
@@ -13719,6 +16151,212 @@
         ],
         "title": "StartRunRequest",
         "description": "`input` is either the pack's input object (checked against its input JSON Schema) or free text: a\ndate range such as \"2026-10-06..2026-10-12\" or \"last 7 days\", or for a pack whose input is one date, a\nday such as \"2026-10-13\" or \"today\"."
+      },
+      "StepDraft": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]{0,39}$",
+            "title": "Id"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "trigger",
+              "memory",
+              "connector",
+              "agent",
+              "decision",
+              "human_workforce",
+              "approval",
+              "verification",
+              "end"
+            ],
+            "title": "Type"
+          },
+          "config": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Config"
+          },
+          "routes": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Routes"
+          },
+          "rules": {
+            "$ref": "#/components/schemas/DecisionRules",
+            "title": "Rules"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "type"
+        ],
+        "title": "StepDraft",
+        "description": "One workflow node. `config` is the node's config as the runtime reads it (strings starting with \"=\"\nare CEL); `routes` maps each outcome to the next step. A decision keeps its rules in `rules`."
+      },
+      "StudioAgent": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "publishedAt": {
+            "type": "string",
+            "title": "Publishedat"
+          },
+          "publishedBy": {
+            "type": "string",
+            "title": "Publishedby"
+          },
+          "draft": {
+            "$ref": "#/components/schemas/AgentDraft"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "version",
+          "publishedAt",
+          "publishedBy",
+          "draft"
+        ],
+        "title": "StudioAgent"
+      },
+      "StudioAgentSummary": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "modelProfile": {
+            "type": "string",
+            "title": "Modelprofile"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "publishedAt": {
+            "type": "string",
+            "title": "Publishedat"
+          },
+          "usedBy": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Usedby"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "name",
+          "summary",
+          "modelProfile",
+          "version",
+          "publishedAt",
+          "usedBy"
+        ],
+        "title": "StudioAgentSummary"
+      },
+      "StudioPack": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "publishedAt": {
+            "type": "string",
+            "title": "Publishedat"
+          },
+          "publishedBy": {
+            "type": "string",
+            "title": "Publishedby"
+          },
+          "draft": {
+            "$ref": "#/components/schemas/PackDraft"
+          },
+          "added": {
+            "type": "boolean",
+            "title": "Added"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "version",
+          "publishedAt",
+          "publishedBy",
+          "draft",
+          "added"
+        ],
+        "title": "StudioPack"
+      },
+      "StudioPackSummary": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "outcome": {
+            "type": "string",
+            "title": "Outcome"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "publishedAt": {
+            "type": "string",
+            "title": "Publishedat"
+          },
+          "steps": {
+            "type": "integer",
+            "title": "Steps"
+          },
+          "added": {
+            "type": "boolean",
+            "title": "Added"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "name",
+          "outcome",
+          "version",
+          "publishedAt",
+          "steps",
+          "added"
+        ],
+        "title": "StudioPackSummary"
       },
       "SubmitReviewRequest": {
         "properties": {
@@ -13981,9 +16619,18 @@
               "connected",
               "not_connected",
               "sandbox",
-              "needs_reauth"
+              "needs_reauth",
+              "pending"
             ],
             "title": "Status"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "sandbox",
+              "composio"
+            ],
+            "title": "Mode"
           }
         },
         "type": "object",
@@ -14488,6 +17135,13 @@
             },
             "type": "array",
             "title": "Errors"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings"
           }
         },
         "type": "object",
@@ -14495,7 +17149,8 @@
           "ok",
           "errors"
         ],
-        "title": "ValidateDefinitionResult"
+        "title": "ValidateDefinitionResult",
+        "description": "`warnings`, when present, says how many definitions teams built the edit would break (never which)."
       },
       "VersionMeta": {
         "properties": {
@@ -14538,6 +17193,19 @@
           "publishedAt"
         ],
         "title": "VersionMeta"
+      },
+      "WorkflowYaml": {
+        "properties": {
+          "yaml": {
+            "type": "string",
+            "title": "Yaml"
+          }
+        },
+        "type": "object",
+        "required": [
+          "yaml"
+        ],
+        "title": "WorkflowYaml"
       }
     },
     "securitySchemes": {

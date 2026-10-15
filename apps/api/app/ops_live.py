@@ -7,10 +7,11 @@ another's rows. Each function takes an open psycopg connection; an action writes
 
 import logging
 from datetime import UTC, date, datetime, timedelta
+from typing import Any
 
 from pydantic import ValidationError
 
-from app import ops_state, workspace
+from app import live_connections, ops_state, workspace
 from app.defs import registry
 from app.errors import NO_CHANGE, ApiProblem
 from app.models.common import Money, money_text
@@ -35,7 +36,7 @@ from app.models.ops import (
 )
 from app.models.runs import Run
 from app.run_tasks import OPEN_STATUSES, release_claims
-from app.runtime import gateway
+from app.runtime import gateway, routes
 from app.runtime.projection import TERMINAL_RUN_STATUSES
 from app.store import iso, locked_store
 
@@ -68,7 +69,9 @@ SUCCESS_WINDOW_DAYS = 7
 HOURS = 24
 LIVE_PROVIDER = "Composio"
 LIVE_AUTH = "oauth_managed"
-CONNECTED = ("connected", "sandbox")
+# A connection row counts as connected only when a run could reach the app through it: the rule
+# `live_connections.shown_status` shows as connected or sandbox, in SQL.
+ROUTABLE = routes.ROUTABLE_SQL.format(c="c")
 # A connector's category, from the first of its tools' capabilities whose domain (the part before the
 # first ".") is listed here.
 CATEGORIES = {
@@ -85,7 +88,7 @@ LIVE_SIMULATED_FIELDS = ["kpis.platformDailyCap", "kpis.incidentsOpen"]
 PLATFORM_DAILY_CAP = "platform_daily_ai_cap"
 
 # One row per org with its counts. Each subquery is correlated on `o.id`, so it reads that org's rows only.
-_TENANTS = """
+_TENANTS = f"""
 SELECT * FROM (
   SELECT o.id, o.name, o.plan, o.status, o.created_at, o.monthly_cap_minor,
     COALESCE((SELECT m.email FROM org_members m
@@ -103,7 +106,7 @@ SELECT * FROM (
       WHERE r.org_id = o.id AND t.kind = 'human' AND t.status = %(open)s) AS open_human_tasks,
     (SELECT count(*) FROM installations i WHERE i.org_id = o.id) AS packs_installed,
     (SELECT count(*) FROM connections c
-      WHERE c.org_id = o.id AND c.status = ANY(%(connected)s)) AS connectors,
+      WHERE c.org_id = o.id AND {ROUTABLE}) AS connectors,
     (SELECT a.reason FROM ops_audit a
       WHERE a.target_type = 'tenant' AND a.target_id = o.id AND a.action = 'tenant.suspend'
       ORDER BY a.at DESC, a.id DESC LIMIT 1) AS suspend_reason
@@ -159,7 +162,7 @@ def _tenant(row: dict, spent: int) -> Tenant:
 
 def _params(**extra) -> dict:
     since = datetime.now(UTC) - timedelta(days=RUN_WINDOW_DAYS)
-    return {"since": since, "open": OPEN_STATUSES["human"], "connected": list(CONNECTED), **extra}
+    return {"since": since, "open": OPEN_STATUSES["human"], **extra}
 
 
 def list_tenants(conn, status: str | None, q: str | None) -> list[Tenant]:
@@ -215,6 +218,18 @@ def _usage_by_day(conn, org_id: str, today: date) -> list[UsagePoint]:
     return [UsagePoint(day=d.isoformat(), amount_minor=by_day.get(d, 0)) for d in days]
 
 
+def _tenant_connection(org_id: str, row: dict[str, Any]) -> TenantConnection:
+    """One connection row as the console shows it: the status the web list shows (`shown_status`, so a
+    connected row that `routes.route_of` cannot reach needs signing in again) and its mode. A disconnected
+    row keeps its last mode in the table, but the console reports none, as the web list does."""
+    disconnected = row["status"] == "not_connected"
+    return TenantConnection(
+        app=row["app"],
+        status=live_connections.shown_status(org_id, row),
+        mode=None if disconnected else row["mode"],
+    )
+
+
 def get_tenant(conn, org_id: str) -> TenantDetail:
     """One org with its members, hired packs, app connections, newest runs and real per-day spend."""
     tenant = _find(conn, org_id)
@@ -222,13 +237,13 @@ def get_tenant(conn, org_id: str) -> TenantDetail:
         "SELECT pack_slug FROM installations WHERE org_id = %s ORDER BY installed_at, pack_slug", (org_id,)
     ).fetchall()
     connections = conn.execute(
-        "SELECT app, status FROM connections WHERE org_id = %s ORDER BY app", (org_id,)
+        "SELECT app, status, mode, account_id FROM connections WHERE org_id = %s ORDER BY app", (org_id,)
     ).fetchall()
     return TenantDetail(
         **tenant.model_dump(),
         members_list=workspace.org_members(conn, org_id),
         installed_packs=[r["pack_slug"] for r in packs],
-        connectors_list=[TenantConnection(app=r["app"], status=r["status"]) for r in connections],
+        connectors_list=[_tenant_connection(org_id, r) for r in connections],
         recent_runs=_recent_runs(conn, tenant),
         usage_by_day=_usage_by_day(conn, org_id, datetime.now(UTC).date()),
         simulated=False,
@@ -334,8 +349,7 @@ def _connector_usage(conn, now: datetime) -> tuple[dict[str, int], dict[str, dic
     `<connector>.<tool>` ref every tool.call receipt entry carries. A call the policy denied or held for
     approval never reached the connector, so it is neither a call nor an error."""
     connected = conn.execute(
-        "SELECT app, count(DISTINCT org_id) AS orgs FROM connections WHERE status = ANY(%s) GROUP BY app",
-        (list(CONNECTED),),
+        f"SELECT c.app, count(DISTINCT c.org_id) AS orgs FROM connections c WHERE {ROUTABLE} GROUP BY c.app"
     ).fetchall()
     start, end = _day(now)
     calls = conn.execute(

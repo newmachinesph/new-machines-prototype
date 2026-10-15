@@ -63,7 +63,8 @@ def _pin_agent_refs(pin: _Pinner) -> None:
 
 
 def build_snapshot(conn, pack_slug: str, org_id: str, overrides: dict, disabled: set[str]) -> dict:
-    """Resolve and pin `pack_slug` for `org_id`. LookupError for an unknown pack or a missing reference.
+    """Resolve and pin `pack_slug` for `org_id`. LookupError for an unknown pack, a missing reference, or a
+    definition another org owns privately (an org can only ever run what it may see).
 
     Runs on the caller's connection and never commits.
     """
@@ -82,6 +83,9 @@ def build_snapshot(conn, pack_slug: str, org_id: str, overrides: dict, disabled:
         if contract.get(field):
             pin.pin("schema", contract[field])
     pin.pin("models", MODELS_KEY)
+    if hidden := registry.hidden_from(conn, list(pin.pinned), org_id):
+        kind, key = hidden[0]
+        raise LookupError(f"{kind}/{key} is not available to {org_id}")
 
     defs: dict[str, dict] = {}
     versions = []

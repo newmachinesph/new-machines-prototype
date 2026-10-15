@@ -16,6 +16,7 @@ import { useFormat } from "@/lib/use-format";
 // Sentinel values double as the `category` URL parameter, so they stay English; the labels shown are translated.
 const ALL = "All packs";
 const HIRED = "Added";
+const TEAM = "Built by your team";
 const ALL_INDUSTRIES = "";
 
 export function PackGrid() {
@@ -36,16 +37,24 @@ export function PackGrid() {
         <QueryState query={agentsQuery} skeleton={<PackGridSkeleton />}>
           {() => {
             const categories = [...new Set(PACKS.map((p) => p.category))];
-            const filters = [
+            const teamCount = PACKS.filter((p) => p.builtByTeam).length;
+            // Views (All packs, Added, and Built by your team when the org has built one) above the line.
+            const views = [
               { label: ALL, text: t("all"), n: PACKS.length },
               { label: HIRED, text: t("hired"), n: PACKS.filter((p) => p.installed).length },
+              ...(teamCount > 0 ? [{ label: TEAM, text: t("team"), n: teamCount }] : []),
+            ];
+            const filters = [
+              ...views,
               ...categories.map((c) => ({ label: c, text: c, n: PACKS.filter((p) => p.category === c).length })),
             ];
+            const inView = (p: (typeof PACKS)[number]) =>
+              cat === ALL || (cat === HIRED ? p.installed : cat === TEAM ? !!p.builtByTeam : p.category === cat);
             const needle = q.trim().toLowerCase();
             const shown = PACKS.filter(
               (p) =>
                 (industry === ALL_INDUSTRIES || (p.industries ?? []).includes(industry)) &&
-                (cat === ALL || (cat === HIRED ? p.installed : p.category === cat)) &&
+                inView(p) &&
                 (!needle ||
                   [p.name, p.outcome, p.publisher, p.category].some((field) => field.toLowerCase().includes(needle))),
             );
@@ -60,8 +69,8 @@ export function PackGrid() {
                   >
                     {filters.map((f, i) => (
                       <Fragment key={f.label}>
-                        {/* Views (All packs, Added) above the line, categories below it. */}
-                        {i === 2 ? (
+                        {/* Views above the line, categories below it. */}
+                        {i === views.length ? (
                           <span
                             aria-hidden
                             className="mx-1 my-1.5 w-px shrink-0 bg-rule xl:mx-2.5 xl:my-2 xl:h-px xl:w-auto"
@@ -153,14 +162,17 @@ export function PackGrid() {
                                   {t("publisherVersion", { publisher: p.publisher, version: p.version })}
                                 </div>
                               </div>
-                              {p.installed ? (
-                                <span className="flex shrink-0 items-center gap-1 text-xs font-medium">
-                                  <Check className="size-3.5" strokeWidth={2.25} aria-hidden />
-                                  {t("hired")}
-                                </span>
-                              ) : p.certified ? null : (
-                                <Pill tone="quiet">{t("notCertified")}</Pill>
-                              )}
+                              <span className="flex shrink-0 flex-col items-end gap-1">
+                                {p.builtByTeam ? <Pill tone="machine">{t("team")}</Pill> : null}
+                                {p.installed ? (
+                                  <span className="flex items-center gap-1 text-xs font-medium">
+                                    <Check className="size-3.5" strokeWidth={2.25} aria-hidden />
+                                    {t("hired")}
+                                  </span>
+                                ) : p.certified || p.builtByTeam ? null : (
+                                  <Pill tone="quiet">{t("notCertified")}</Pill>
+                                )}
+                              </span>
                             </div>
                             <p className="mt-3 text-sm leading-relaxed text-grey-700">{p.outcome}</p>
                             <div className="mt-4 mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted">

@@ -153,7 +153,8 @@ def test_start_pins_a_snapshot_inserts_the_run_and_starts_the_workflow(api, rec,
 
     [(kind, run_id, snapshot, input)] = rec.calls
     assert (kind, run_id) == ("start", "run_2001")
-    assert input == {"since": "2026-10-06", "until": "2026-10-12"}
+    sheet = "sandbox-reconciliation-sheet-00000001"  # the input schema's default
+    assert input == {"since": "2026-10-06", "until": "2026-10-12", "spreadsheet_id": sheet}
     pinned = {(v["kind"], v["key"]): v["version"] for v in snapshot["versions"]}
     assert pinned[("pack", PACK)] == 1 and pinned[("contract", PACK)] == 1
     assert snapshot["org_id"] == "org_hp01" and snapshot["budget_minor"] == 2000
@@ -375,6 +376,86 @@ def test_free_text_for_the_overdue_pack_passes_its_input_schema():
     }
 
 
+def test_a_schema_error_message_replaces_the_validator_text():
+    schema = {
+        "type": "object",
+        "properties": {
+            "code": {"type": "string", "minLength": 3, "pattern": "^[a-z]+$", "errorMessage": "Bad."}
+        },
+    }
+    with pytest.raises(ApiProblem) as err:
+        real_runs.check_input(PACK, {"code": "A"}, schema)
+    assert [(i.path, i.message) for i in err.value.errors] == [("code", "Bad.")]
+
+
+def test_a_reconciliation_run_without_a_sheet_writes_to_the_sandbox_sheet():
+    schema = _pack_input_schema(PACK)
+    sandbox = schema["properties"]["spreadsheet_id"]["default"]
+    got = real_runs.check_input(PACK, "2026-10-01..2026-10-05", schema)
+    assert got == {"since": "2026-10-01", "until": "2026-10-05", "spreadsheet_id": sandbox}
+    given = {"since": "2026-10-01", "until": "2026-10-05"}
+    assert real_runs.check_input(PACK, given, schema)["spreadsheet_id"] == sandbox
+    assert given == {"since": "2026-10-01", "until": "2026-10-05"}  # the caller's object is not changed
+
+
+def test_a_reconciliation_run_keeps_the_sheet_it_names():
+    sheet = "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms"
+    inp = {"since": "2026-10-01", "until": "2026-10-05", "spreadsheet_id": sheet}
+    assert real_runs.check_input(PACK, inp, _pack_input_schema(PACK))["spreadsheet_id"] == sheet
+
+
+SHEET_MESSAGE = (
+    "Use the spreadsheet ID from the sheet's URL: 30 or more letters, digits, hyphens (-) or underscores (_)."
+)
+
+
+def test_a_malformed_sheet_id_is_refused_plainly():
+    inp = {"since": "2026-10-01", "until": "2026-10-05", "spreadsheet_id": "demo-reconciliation-sheet"}
+    with pytest.raises(ApiProblem) as err:
+        real_runs.check_input(PACK, inp, _pack_input_schema(PACK))
+    assert err.value.status == 422 and err.value.code == "INVALID_INPUT"
+    [issue] = err.value.errors
+    assert issue.path == "spreadsheet_id"
+    assert issue.message == SHEET_MESSAGE
+    assert err.value.detail == f"The input is not valid. Spreadsheet ID: {SHEET_MESSAGE}"
+
+
+def test_a_missing_field_is_named_by_its_title():
+    schema = {
+        "type": "object",
+        "required": ["sheet", "since"],
+        "properties": {"sheet": {"type": "string", "title": "Sheet ID"}, "since": {"type": "string"}},
+    }
+    with pytest.raises(ApiProblem) as err:
+        real_runs.check_input(PACK, {}, schema)
+    assert [(i.path, i.message) for i in err.value.errors] == [
+        ("sheet", "Sheet ID is required."),
+        ("since", "since is required."),
+    ]
+    assert err.value.detail == "The input is not valid. Sheet ID is required."  # the title is said once
+
+
+def test_a_nested_field_error_is_named_by_its_title():
+    schema = {
+        "type": "object",
+        "properties": {
+            "range": {"type": "object", "properties": {"to": {"type": "string", "title": "End date"}}}
+        },
+    }
+    with pytest.raises(ApiProblem) as err:
+        real_runs.check_input(PACK, {"range": {"to": 3}}, schema)
+    assert err.value.errors[0].path == "range/to"
+    assert err.value.detail.startswith("The input is not valid. End date: ")
+
+
+def test_a_default_is_copied_into_each_input():
+    schema = {"type": "object", "properties": {"tags": {"type": "array", "default": ["a"]}}}
+    first = real_runs.check_input(PACK, {}, schema)
+    first["tags"].append("b")
+    assert schema["properties"]["tags"]["default"] == ["a"]
+    assert real_runs.check_input(PACK, {}, schema) == {"tags": ["a"]}
+
+
 def test_a_free_text_start_of_the_overdue_pack_runs_for_real(api, rec):
     """A start that sends free text (a pack page without the form's fields) must not fail with 422."""
     res = api.post(
@@ -387,7 +468,7 @@ def test_a_free_text_start_of_the_overdue_pack_runs_for_real(api, rec):
 
 def test_every_real_pack_detail_carries_its_input_schema(api):
     for pack, required in (
-        (PACK, ["since", "until"]),
+        (PACK, ["since", "until", "spreadsheet_id"]),
         (OVERDUE, ["as_of"]),
         ("refund-triage", ["since", "until"]),
     ):

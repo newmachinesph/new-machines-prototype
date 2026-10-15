@@ -2,19 +2,20 @@
 except that earnings also include the network reviews the actor did for other orgs.
 
 A run starts only for a pack the org has hired whose apps are all connected, with an input that matches the
-pack's input schema and a budget within the hire's per-run cap, while the month's spend is below the
-workspace's monthly cap."""
+pack's input schema (naming the org's own sheet when it writes to its own Google Sheets account) and a budget
+within the hire's per-run cap, while the month's spend is below the workspace's monthly cap."""
 
 from app import db, live_catalog, live_connections, real_runs, workspace
 from app.auth import Actor
 from app.defs.current import latest_bodies
-from app.errors import ApiProblem
+from app.errors import ApiProblem, ProblemIssue
 from app.models.common import Money, money_text
 from app.models.org import MemoryItem
 from app.models.requests import StartRunRequest
 from app.models.runs import Run
 from app.models.work import Earning
 from app.redaction import scrub
+from app.runtime import routes
 from app.runtime.memory import READABLE_BY_ORG, SHARED_SOURCES
 from app.store import iso
 
@@ -32,11 +33,46 @@ def _and(names: list[str]) -> str:
 
 # --- runs -----------------------------------------------------------------------------------------------
 
+SHEETS_APP = "googlesheets"  # the connector key of Google Sheets
+SHEET_FIELD = "spreadsheet_id"  # the run input naming the sheet a pack writes to
+REAL_SHEET_NEEDED = (
+    "Google Sheets is connected to your own account, so use the spreadsheet ID from your sheet's URL "
+    "instead of the sandbox sheet."
+)
+
+
+def _check_real_sheet(org_id: str, slug: str, pack: dict, schema: dict | None, inp: dict) -> None:
+    """A run that writes to the org's own Google Sheets account must name the org's own sheet: the input
+    schema's default is the sandbox sheet, which no real account has. 422 at the field otherwise."""
+    if SHEETS_APP not in [str(c) for c in pack.get("connectors") or []]:
+        return
+    prop = ((schema or {}).get("properties") or {}).get(SHEET_FIELD)
+    if not isinstance(prop, dict) or "default" not in prop or inp.get(SHEET_FIELD) != prop["default"]:
+        return
+    if routes.current_route(org_id, SHEETS_APP).mode != "composio":
+        return
+    issue = ProblemIssue(kind="input", key=slug, path=SHEET_FIELD, message=REAL_SHEET_NEEDED)
+    raise real_runs.invalid_input(schema, [issue])
+
+
+def check_spend(org_id: str) -> None:
+    """409 SPEND_CAP once this month's spend has reached the workspace's monthly cap."""
+    org = workspace.organization(org_id)
+    cap = org.monthly_cap.amount_minor
+    if org.month_spent.amount_minor >= cap:
+        raise ApiProblem(
+            409,
+            "SPEND_CAP",
+            f"This month's spend has reached the workspace's monthly cap of {money_text(cap)}. "
+            "New runs start again next month.",
+        )
+
 
 def start_run(body: StartRunRequest, actor: Actor) -> Run:
-    """Start a real run for the actor's org after the hire, connection, input and spend checks. The run
-    pins the persisted ops connector settings (`ops_state.snapshot_policy`)."""
-    defs = live_catalog.definitions()
+    """Start a real run for the actor's org after the hire, connection, input and spend checks. Only a pack
+    the org may see can start (the platform's or its own). The run pins the persisted ops connector settings
+    (`ops_state.snapshot_policy`)."""
+    defs = live_catalog.definitions(actor.org_id)
     version = defs.pack(body.pack_slug)
     if version is None:
         raise ApiProblem(404, "NOT_FOUND", f"No Workflow Pack called {body.pack_slug}.")
@@ -50,7 +86,9 @@ def start_run(body: StartRunRequest, actor: Actor) -> Run:
         raise ApiProblem(
             409, "APPS_NOT_CONNECTED", f"Connect {_and(missing)} before starting a run of {name}."
         )
-    inp = real_runs.check_input(slug, body.input, live_catalog.input_schema(defs, pack))
+    schema = live_catalog.input_schema(defs, pack)
+    inp = real_runs.check_input(slug, body.input, schema)
+    _check_real_sheet(actor.org_id, slug, pack, schema, inp)
     run_cap = int(hire["cap_minor"])
     if body.budget_minor > run_cap:
         raise ApiProblem(
@@ -59,15 +97,7 @@ def start_run(body: StartRunRequest, actor: Actor) -> Run:
             f"The budget is over the spending cap of {money_text(run_cap)} per run set when {name} was "
             "added. Lower the budget or raise the cap.",
         )
-    org = workspace.organization(actor.org_id)
-    cap = org.monthly_cap.amount_minor
-    if org.month_spent.amount_minor >= cap:
-        raise ApiProblem(
-            409,
-            "SPEND_CAP",
-            f"This month's spend has reached the workspace's monthly cap of {money_text(cap)}. "
-            "New runs start again next month.",
-        )
+    check_spend(actor.org_id)
     return real_runs.start_real_run(body.model_copy(update={"pack_slug": slug}), actor, None, inp)
 
 

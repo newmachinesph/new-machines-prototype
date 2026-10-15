@@ -14,7 +14,7 @@ from app import db as app_db
 from app.defs import registry
 from app.defs.loader import load_bundle
 from app.main import create_app
-from app.runtime import drivers, memory
+from app.runtime import memory
 from app.store import get_store, reset_store
 from app.worker import activities
 
@@ -22,6 +22,7 @@ PROJECT = "nm-demo-test"
 PACK = "order-payment-reconciliation"
 PACK_NAME = "Order & Payment Reconciliation"
 INPUT = {"since": "2026-10-06", "until": "2026-10-12"}
+SHEET = "sandbox-reconciliation-sheet-00000001"  # the input schema's default spreadsheet_id
 SEED_PACKS = {
     PACK: PACK_NAME,
     "overdue-invoice-follow-up": "Overdue Invoice Follow-up",
@@ -164,8 +165,8 @@ def test_the_marketplace_is_the_pack_definitions(ana):
 
 def test_pack_detail_carries_the_input_schema(ana):
     pack = ana.get(f"/v1/workflow-packs/{PACK}").json()
-    assert pack["inputSchema"]["required"] == ["since", "until"]
-    assert set(pack["inputSchema"]["properties"]) == {"since", "until"}
+    assert pack["inputSchema"]["required"] == ["since", "until", "spreadsheet_id"]
+    assert set(pack["inputSchema"]["properties"]) == {"since", "until", "spreadsheet_id"}
     assert ana.get("/v1/workflow-packs/weekly-inventory-report").status_code == 404  # a demo fixture pack
     assert ana.get("/v1/workflow-packs/nope").status_code == 404
 
@@ -281,7 +282,7 @@ def test_connections_are_the_apps_hired_packs_use(ana):
         ("stripe", "Stripe", "not_connected"),
         ("googlesheets", "Google Sheets", "not_connected"),
     ]
-    assert all(c["grants"] == [] and c["mode"] == "sandbox" for c in listed)
+    assert all(c["grants"] == [] and "mode" not in c for c in listed)
 
 
 def test_connecting_in_sandbox_mode_grants_the_tools_of_hired_packs(ana, db):
@@ -306,14 +307,6 @@ def test_an_app_connected_before_the_hire_gains_the_packs_grants(ana):
     ana.hire()
     stripe = next(c for c in ana.get("/v1/connections").json() if c["key"] == "stripe")
     assert stripe["grants"] == [{"install": PACK_NAME, "capability": "payments.read", "access": "read"}]
-
-
-@pytest.mark.parametrize("mode", ["live", "auto"])
-def test_live_app_connections_are_not_available_yet(ana, monkeypatch, mode):
-    monkeypatch.setenv("NM_CONNECTOR_MODE", mode)
-    res = ana.connect("shopify")
-    assert res.status_code == 409
-    assert res.json()["detail"] == "Live app connections are not available yet."
 
 
 def test_disconnect_and_revoke_update_the_orgs_row(ana, db):
@@ -384,7 +377,7 @@ def test_every_missing_field_is_named_once(ana, starts):
     res = ana.start(input={})
     assert res.status_code == 422
     assert [e["path"] for e in res.json()["errors"]] == ["since", "until"]
-    assert res.json()["detail"] == "The input is not valid. since: since is required."
+    assert res.json()["detail"] == "The input is not valid. since is required."
 
 
 def test_nested_input_errors_keep_their_path():
@@ -416,11 +409,15 @@ def test_a_ready_pack_starts_a_real_run_for_the_org(ana, starts, db):
     res = ana.start()
     assert res.status_code == 202, res.text
     run = res.json()
-    assert starts.calls == [(run["id"], ana.org_id, INPUT)]
+    assert starts.calls == [(run["id"], ana.org_id, {**INPUT, "spreadsheet_id": SHEET})]
     [row] = _rows(db, "SELECT org_id, input FROM runs")
-    assert row == {"org_id": ana.org_id, "input": INPUT}
+    assert row == {"org_id": ana.org_id, "input": {**INPUT, "spreadsheet_id": SHEET}}
     text = ana.start(input="2026-10-01..2026-10-02")  # the older free-text form still works
-    assert text.status_code == 202 and starts.calls[-1][2] == {"since": "2026-10-01", "until": "2026-10-02"}
+    assert text.status_code == 202 and starts.calls[-1][2] == {
+        "since": "2026-10-01",
+        "until": "2026-10-02",
+        "spreadsheet_id": SHEET,
+    }
 
 
 def test_a_budget_over_the_hires_per_run_cap_is_refused(ana, starts):
@@ -440,28 +437,6 @@ def test_a_hired_pack_carries_its_per_run_cap(ana):
     assert detail["perRunCap"] == {"amountMinor": 700, "currency": "USD"}
     listed = next(p for p in ana.get("/v1/workflow-packs").json() if p["slug"] == PACK)
     assert listed["perRunCap"]["amountMinor"] == 700
-
-
-@pytest.mark.parametrize("mode", ["live", "auto"])
-def test_a_sandbox_connection_opens_the_gate_only_while_runs_would_use_sandbox_data(
-    ana, starts, monkeypatch, mode
-):
-    _ready(ana)
-    monkeypatch.setenv("NM_CONNECTOR_MODE", mode)
-    # In auto mode the worker uses the customer's account for a toolkit Composio reports as connected.
-    monkeypatch.setattr(drivers.ComposioDriver, "is_connected", lambda self, toolkit: toolkit == "stripe")
-    res = ana.start()
-    assert res.status_code == 409 and res.json()["code"] == "APPS_NOT_CONNECTED"
-    expected = "Shopify, Stripe and Google Sheets" if mode == "live" else "Stripe"
-    assert res.json()["detail"] == f"Connect {expected} before starting a run of {PACK_NAME}."
-    assert starts.calls == []
-
-
-def test_auto_mode_counts_sandbox_connections_for_apps_composio_has_not_connected(ana, starts, monkeypatch):
-    _ready(ana)
-    monkeypatch.setenv("NM_CONNECTOR_MODE", "auto")
-    monkeypatch.setattr(drivers.ComposioDriver, "is_connected", lambda self, toolkit: False)
-    assert ana.start().status_code == 202
 
 
 def test_a_pack_another_org_hired_cannot_be_started(ana, ben, starts):
@@ -670,13 +645,18 @@ def test_migration_003_gives_old_run_items_their_org_and_quarantines_the_rest(db
             "m_seed": (None, "active"),
             "m_console": (None, "active"),
         }
-    finally:  # whatever failed above, `nm_test` keeps 003 and 008's pools for the tests after this one
+    finally:  # whatever failed above, `nm_test` keeps 008's pools and 011's statuses for the tests after it
         db.rollback()
-        app_db.migrate(db)  # 003 re-adds its own pool check: put 008's back
+        app_db.migrate(db)  # 003 re-adds its own pool and status checks: put 008's and 011's back
         db.execute("ALTER TABLE installations DROP CONSTRAINT IF EXISTS installations_reviewer_pool_check")
         db.execute(
             "ALTER TABLE installations ADD CONSTRAINT installations_reviewer_pool_check "
             "CHECK (reviewer_pool IN ('team', 'network', 'team_then_network'))"
+        )
+        db.execute("ALTER TABLE connections DROP CONSTRAINT IF EXISTS connections_status_check")
+        db.execute(
+            "ALTER TABLE connections ADD CONSTRAINT connections_status_check "
+            "CHECK (status IN ('connected','not_connected','sandbox','needs_reauth','pending'))"
         )
         db.commit()
 

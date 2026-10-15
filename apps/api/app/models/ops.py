@@ -125,11 +125,13 @@ class Tenant(Model):
 
 class TenantConnection(Model):
     app: str
-    status: Literal["connected", "not_connected", "sandbox", "needs_reauth"]
+    status: Literal["connected", "not_connected", "sandbox", "needs_reauth", "pending"]
+    # How the app is reached: sandbox data or the tenant's own account (live rows; demo fixtures have none).
+    mode: Literal["sandbox", "composio"] | Opt = None
 
     @classmethod
     def of(cls, connection: Connection) -> TenantConnection:
-        return cls(app=connection.app, status=connection.status)
+        return cls(app=connection.app, status=connection.status, mode=connection.mode)
 
 
 class UsagePoint(Model):
@@ -561,7 +563,8 @@ class DefinitionDetail(Model):
     """One definition at one version. `yaml` is the main file as exported (JSON for a schema); `files` holds
     the Markdown files of an agent by path relative to its folder. `body` is the same main file parsed, so a
     client can read fields without a YAML parser. `refs` are the definitions this one refers to and
-    `used_by` those that refer to it, both computed from the latest versions."""
+    `used_by` those that refer to it, both computed from the latest versions. `warnings` is set on a publish
+    that breaks definitions teams built in their Studio: a count only, never their keys."""
 
     summary: DefinitionSummary
     versions: list[VersionMeta]  # newest first
@@ -570,6 +573,7 @@ class DefinitionDetail(Model):
     files: dict[str, str]
     refs: list[DefinitionRef]
     used_by: list[DefinitionRef]
+    warnings: list[str] | Opt = None
 
 
 class DefinitionIssue(Model):
@@ -598,8 +602,11 @@ class PublishDefinitionRequest(ValidateDefinitionRequest):
 
 
 class ValidateDefinitionResult(Model):
+    """`warnings`, when present, says how many definitions teams built the edit would break (never which)."""
+
     ok: bool
     errors: list[DefinitionIssue]
+    warnings: list[str] | Opt = None
 
 
 class DefinitionExport(Model):

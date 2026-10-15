@@ -8,7 +8,7 @@ import json
 import re
 from dataclasses import dataclass
 from datetime import UTC, date, datetime
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from functools import cache
 from typing import Any, Protocol
 
@@ -586,6 +586,104 @@ def fake_writer(inputs: dict) -> dict:
     return {"drafts": drafts}
 
 
+# --- team agents (built in the Studio) ----------------------------------------------------------------------
+
+TEAM_RESULT_TITLE = "Agent result"  # the title of shared/agent-result, which every team agent submits
+FAKE_TEAM_DATE = "2026-10-13"  # a review item's date when its record has none
+FAKE_TEAM_LIMIT = 3  # records a team agent works on under the fake model
+_SETTLED = {"paid", "void", "closed", "uncollectible", "refunded"}
+_LIST_KEYS = ("data", "orders", "messages", "items", "records")
+_CURRENCY = "USD"
+_CURRENCY_CODE = re.compile(r"^[A-Za-z]{3}$")
+_FALLBACK_EMAIL = "customer@example.com"
+
+
+def _first_records(inputs: dict) -> list[dict]:
+    """The first list of records among the inputs (by input name), a connector's envelope unwrapped."""
+    for _, value in sorted(inputs.items()):
+        if isinstance(value, dict):
+            value = next(
+                (value[k] for k in _LIST_KEYS if isinstance(value.get(k), list) and value.get(k)), None
+            )
+        if isinstance(value, list) and value and all(isinstance(r, dict) for r in value):
+            return value
+    return []
+
+
+def _email(record: dict) -> str:
+    for key in ("customer_email", "email", "sender", "from", "to"):
+        found = _EMAIL.search(str(record.get(key) or ""))
+        if found:
+            return found.group(0)
+    return _FALLBACK_EMAIL
+
+
+def _record_ref(record: dict, index: int) -> str:
+    return str(record.get("number") or record.get("name") or record.get("id") or f"item-{index + 1}")
+
+
+def _record_minor(record: dict) -> int:
+    for key in ("amount_due", "amount"):
+        value = record.get(key)
+        if isinstance(value, int) and not isinstance(value, bool):
+            return value
+    if record.get("total_price") is not None:
+        try:
+            return int((Decimal(str(record["total_price"])) * 100).to_integral_value())
+        except InvalidOperation, ValueError:
+            return 0
+    return 0
+
+
+def _record_currency(record: dict) -> str:
+    code = str(record.get("currency") or "")
+    return code.upper() if _CURRENCY_CODE.match(code) else _CURRENCY
+
+
+def _record_day(record: dict) -> str:
+    for key in ("due_date", "created", "created_at"):
+        if record.get(key):
+            try:
+                return _day(record[key]).isoformat()
+            except ValueError, TypeError, OverflowError:
+                continue
+    return FAKE_TEAM_DATE
+
+
+def fake_team_agent(inputs: dict) -> dict:
+    """A deterministic result for any team agent (shared/agent-result): one message and one review item for
+    each of the first three open records in its inputs."""
+    records = [r for r in _first_records(inputs) if str(r.get("status") or "").lower() not in _SETTLED]
+    messages, items = [], []
+    for i, record in enumerate(records[:FAKE_TEAM_LIMIT]):
+        ref = _record_ref(record, i)
+        messages.append(
+            {"to": _email(record), "about": f"About {ref}", "facts": [f"Reference: {ref}."], "ref": ref}
+        )
+        items.append(
+            {
+                "ref": ref,
+                "date": _record_day(record),
+                "amount_minor": _record_minor(record),
+                "currency": _record_currency(record),
+                "flag": "Check before sending",
+                "note": f"Drafted from record {ref}.",
+            }
+        )
+    n = len(messages)
+    summary = (
+        f"Prepared {n} message{'s' if n != 1 else ''} from the inputs."
+        if n
+        else "Nothing to work on in the inputs."
+    )
+    return {"summary": summary, "messages": messages, "review_items": items}
+
+
+def _submits(tools: list[ToolSpec], title: str) -> bool:
+    """Whether the agent's submit tool takes the schema titled `title`."""
+    return any(t.name == SUBMIT_TOOL and t.input_schema.get("title") == title for t in tools)
+
+
 _DEFAULT_SCRIPT = {
     "finance-agent": fake_match,
     "ops-agent": fake_report,
@@ -601,7 +699,8 @@ class FakeProvider:
 
     Without a script entry, the agents in _DEFAULT_SCRIPT (the reconciliation, overdue invoice and refund
     triage agents, and the shared writer) submit a deterministic result computed from their inputs, valid
-    against their output schemas.
+    against their output schemas. Any other agent whose result is shared/agent-result (an agent an org built
+    in the Studio) submits `fake_team_agent`'s result.
     """
 
     def __init__(self, script: dict[str, list[ModelTurn]] | None = None) -> None:
@@ -615,9 +714,12 @@ class FakeProvider:
         if agent_id in self._script:
             turns = self._script[agent_id]
             return turns[min(turn_index, len(turns) - 1)]
-        if agent_id not in _DEFAULT_SCRIPT:
+        if agent_id in _DEFAULT_SCRIPT:
+            result = _DEFAULT_SCRIPT[agent_id](inputs_of(messages))
+        elif _submits(tools, TEAM_RESULT_TITLE):
+            result = fake_team_agent(inputs_of(messages))
+        else:
             raise LookupError(f"fake provider has no script for agent {agent_id!r}")
-        result = _DEFAULT_SCRIPT[agent_id](inputs_of(messages))
         block = {"type": "tool_use", "id": f"toolu_fake_{turn_index}", "name": SUBMIT_TOOL, "input": result}
         return ModelTurn(
             content=[block],

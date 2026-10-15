@@ -7,8 +7,9 @@ from fastapi.testclient import TestClient
 
 from app import settings, temporal_client
 from app.auth import OpsActor, get_ops_actor
-from app.defs import refs, registry
+from app.defs import owners, refs, registry
 from app.defs.loader import load_bundle
+from app.defs.model import Definition, path_for
 from app.main import create_app
 from app.store import reset_store
 
@@ -332,6 +333,59 @@ def test_publish_an_invalid_edit_is_422_with_errors_and_nothing_changes(api):
 def test_publish_requires_a_reason(api):
     res = api.post("/v1/ops/definitions/agent/finance-agent:publish", json=agent_edit(api, 7))
     assert res.status_code == 422 and res.json()["code"] == "SCHEMA_INVALID"
+
+
+TEAM_ORG = "org_team00000000001"
+
+
+def _notes_connector(api, tool_id: str) -> str:
+    """A platform connector "notes" with one read tool, as YAML."""
+    tool = {"id": tool_id, "slug": "NOTES_LIST", "version": "20261010_00", "action_class": "read"}
+    tool |= {"capability": "notes.read", "description": "List notes.", "input_schema": {"type": "object"}}
+    return copy_as(api, "connector", "gmail", "notes", app="Notes", toolkit="notes", tools=[tool])
+
+
+def _team_agent_using(db, tool_ref: str) -> str:
+    """An org's own copy of the writer agent that reads with `tool_ref`. Returns its key."""
+    source = registry.latest(db, "agent", "writer-agent")
+    key = owners.org_key(TEAM_ORG, "notes-reader")
+    runtime = {**source.body["runtime"], "tools": [tool_ref]}
+    body = {**source.body, "agent_id": key, "runtime": runtime, "requested_tool_capabilities": ["notes.read"]}
+    registry.claim(db, "agent", key, owners.org_owner(TEAM_ORG), "test")
+    d = Definition(kind="agent", key=key, body=body, files=source.files, path=path_for("agent", key))
+    registry.publish(db, d, "test", "team copy for a test", source=registry.BUILDER)
+    db.commit()
+    return key
+
+
+def test_an_edit_that_breaks_a_teams_definition_warns_with_a_count_only(api, db):
+    assert publish_new(api, "connector", "notes", _notes_connector(api, "list_notes")).status_code == 201
+    key = _team_agent_using(db, "notes.list_notes")
+    renamed = {"yaml": _notes_connector(api, "list_all_notes")}
+    check = api.post("/v1/ops/definitions/connector/notes:validate", json=renamed)
+    assert check.status_code == 200, check.text
+    assert check.json()["ok"] is True and check.json()["errors"] == []
+    [warning] = check.json()["warnings"]
+    assert warning.startswith("This edit breaks 1 definition a team built")
+    for private in (key, TEAM_ORG, owners.org_namespace(TEAM_ORG), "writer-agent"):
+        assert private not in check.text
+    harmless = {"yaml": _notes_connector(api, "list_notes").replace("app: Notes", "app: Notebook")}
+    assert "warnings" not in api.post("/v1/ops/definitions/connector/notes:validate", json=harmless).json()
+    published = api.post("/v1/ops/definitions/connector/notes:publish", json={**renamed, "reason": REASON})
+    assert published.status_code == 201, published.text
+    assert published.json()["warnings"] == [warning]
+    for private in (key, TEAM_ORG, owners.org_namespace(TEAM_ORG), "writer-agent"):
+        assert private not in published.text
+    assert "warnings" not in api.get("/v1/ops/definitions/connector/notes").json()
+
+
+def test_a_teams_definition_already_broken_is_not_counted_against_an_edit(api, db):
+    assert publish_new(api, "connector", "notes", _notes_connector(api, "list_notes")).status_code == 201
+    _team_agent_using(db, "notes.no_such_tool")  # broken before any edit
+    check = api.post(
+        "/v1/ops/definitions/connector/notes:validate", json={"yaml": _notes_connector(api, "x")}
+    )
+    assert check.status_code == 200 and "warnings" not in check.json()
 
 
 def test_support_can_read_but_not_write(as_support):

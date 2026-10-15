@@ -1,0 +1,41 @@
+{
+  "input_parameters": {
+    "properties": {
+      "ids_only": {
+        "type": "boolean"
+      },
+      "include_payload": {
+        "type": "boolean"
+      },
+      "include_spam_trash": {
+        "type": "boolean"
+      },
+      "label_ids": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "max_results": {
+        "maximum": 500,
+        "minimum": 1,
+        "type": "integer"
+      },
+      "page_token": {
+        "type": "string"
+      },
+      "query": {
+        "type": "string"
+      },
+      "user_id": {
+        "type": "string"
+      },
+      "verbose": {
+        "type": "boolean"
+      }
+    },
+    "type": "object"
+  },
+  "slug": "GMAIL_FETCH_EMAILS",
+  "version": "20261010_00"
+}

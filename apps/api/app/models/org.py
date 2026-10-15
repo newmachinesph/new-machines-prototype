@@ -1,6 +1,6 @@
 from typing import Literal
 
-from app.models.common import Actor, Model, Money, Opt
+from app.models.common import Actor, Model, Money, Opt, RequestModel
 from app.models.runs import Spent
 
 
@@ -10,19 +10,46 @@ class Grant(Model):
     access: Literal["read", "write (approval)", "write", "denied"]
 
 
+class RevokedGrant(Model):
+    """A grant a person revoked on a connection (`DELETE /v1/grants`): recomputing the connection's grants
+    never brings it back until it is allowed again (`POST /v1/grants`)."""
+
+    install: str
+    capability: str
+
+
 class Connection(Model):
     app: str
     account: str
-    status: Literal["connected", "not_connected", "sandbox", "needs_reauth"]
+    status: Literal["connected", "not_connected", "sandbox", "needs_reauth", "pending"]
     provider: Literal["Composio", "Mock"]
     oauth_scopes: list[str]
     grants: list[Grant]
+    # Live workspace: what a person revoked on this connection, whatever its status, so the web can offer to
+    # allow each one again. Always empty in the demo.
+    revoked: list[RevokedGrant] = []
     last_used: str | Opt = None
     health: str | Opt = None
     # Live workspace: the connector definition key (what `:connect` takes) and how the app is reached
     # (sandbox data, or the customer's own account through Composio).
     key: str | Opt = None
     mode: Literal["sandbox", "composio"] | Opt = None
+    # Live workspace: set when an action half-succeeded. "sign_in_not_removed": disconnected here, but the
+    # account could not be removed at Composio yet (the next connect or disconnect retries).
+    notice: Literal["sign_in_not_removed"] | Opt = None
+
+
+class ConnectRequest(RequestModel):
+    """How to connect an app: `live` signs in to the org's own account; `sandbox` serves sandbox data."""
+
+    mode: Literal["live", "sandbox"] = "sandbox"
+
+
+class ConnectStarted(Connection):
+    """A connection just made or started. `redirect_url` (live only) is the app's sign-in page, which returns
+    to the web's Connections page with `?connected=<key>`."""
+
+    redirect_url: str | Opt = None
 
 
 class MemoryItem(Model):

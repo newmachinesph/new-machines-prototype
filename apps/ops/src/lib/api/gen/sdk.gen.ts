@@ -4,8 +4,8 @@ import * as z from 'zod';
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { AcceptInvitationData, AcceptInvitationErrors, AcceptInvitationResponses, AddOrgReviewerData, AddOrgReviewerErrors, AddOrgReviewerResponses, ApproveApprovalData, ApproveApprovalErrors, ApproveApprovalResponses, ClaimHumanTaskData, ClaimHumanTaskErrors, ClaimHumanTaskResponses, ConnectConnectionData, ConnectConnectionErrors, ConnectConnectionResponses, CreateTokenData, CreateTokenErrors, CreateTokenResponses, DeclineApprovalData, DeclineApprovalErrors, DeclineApprovalResponses, DeclineInvitationData, DeclineInvitationErrors, DeclineInvitationResponses, DisconnectConnectionData, DisconnectConnectionErrors, DisconnectConnectionResponses, GetAgentData, GetAgentErrors, GetAgentResponses, GetCatalogTaxonomyData, GetCatalogTaxonomyErrors, GetCatalogTaxonomyResponses, GetHumanTaskData, GetHumanTaskErrors, GetHumanTaskResponses, GetMeData, GetMeErrors, GetMeResponses, GetOrganizationData, GetOrganizationErrors, GetOrganizationResponses, GetReviewerProfileData, GetReviewerProfileErrors, GetReviewerProfileResponses, GetUsageData, GetUsageErrors, GetUsageResponses, GetWorkflowPackData, GetWorkflowPackErrors, GetWorkflowPackResponses, GetWorkflowRunData, GetWorkflowRunErrors, GetWorkflowRunReceiptData, GetWorkflowRunReceiptErrors, GetWorkflowRunReceiptResponses, GetWorkflowRunResponses, InstallWorkflowPackData, InstallWorkflowPackErrors, InstallWorkflowPackResponses, InviteMemberData, InviteMemberErrors, InviteMemberResponses, ListAgentsData, ListAgentsErrors, ListAgentsResponses, ListApprovalsData, ListApprovalsErrors, ListApprovalsResponses, ListAttentionData, ListAttentionErrors, ListAttentionResponses, ListConnectionsData, ListConnectionsErrors, ListConnectionsResponses, ListEarningsData, ListEarningsErrors, ListEarningsResponses, ListEligibleHumanTasksData, ListEligibleHumanTasksErrors, ListEligibleHumanTasksResponses, ListMembersData, ListMembersErrors, ListMembersResponses, ListMemoryData, ListMemoryErrors, ListMemoryResponses, ListOrgReviewersData, ListOrgReviewersErrors, ListOrgReviewersResponses, ListPoliciesData, ListPoliciesErrors, ListPoliciesResponses, ListTokensData, ListTokensErrors, ListTokensResponses, ListWorkflowPacksData, ListWorkflowPacksErrors, ListWorkflowPacksResponses, ListWorkflowRunsData, ListWorkflowRunsErrors, ListWorkflowRunsResponses, OpsAddConnectorData, OpsAddConnectorErrors, OpsAddConnectorResponses, OpsAddMemoryItemData, OpsAddMemoryItemErrors, OpsAddMemoryItemResponses, OpsApprovePackData, OpsApprovePackErrors, OpsApprovePackResponses, OpsApproveReviewerData, OpsApproveReviewerErrors, OpsApproveReviewerResponses, OpsCertifyPackData, OpsCertifyPackErrors, OpsCertifyPackResponses, OpsCreatePackData, OpsCreatePackErrors, OpsCreatePackResponses, OpsCreateTenantData, OpsCreateTenantErrors, OpsCreateTenantResponses, OpsDeclareIncidentData, OpsDeclareIncidentErrors, OpsDeclareIncidentResponses, OpsDeleteMemoryItemData, OpsDeleteMemoryItemErrors, OpsDeleteMemoryItemResponses, OpsDeprecatePackData, OpsDeprecatePackErrors, OpsDeprecatePackResponses, OpsDisableConnectorData, OpsDisableConnectorErrors, OpsDisableConnectorResponses, OpsEnableConnectorData, OpsEnableConnectorErrors, OpsEnableConnectorResponses, OpsExportDefinitionData, OpsExportDefinitionErrors, OpsExportDefinitionResponses, OpsGetBillingData, OpsGetBillingErrors, OpsGetBillingResponses, OpsGetDefinitionData, OpsGetDefinitionErrors, OpsGetDefinitionResponses, OpsGetHealthData, OpsGetHealthErrors, OpsGetHealthResponses, OpsGetMeData, OpsGetMeErrors, OpsGetMeResponses, OpsGetOverviewData, OpsGetOverviewErrors, OpsGetOverviewResponses, OpsGetPackData, OpsGetPackErrors, OpsGetPackResponses, OpsGetRunData, OpsGetRunErrors, OpsGetRunResponses, OpsGetRuntimeStatusData, OpsGetRuntimeStatusErrors, OpsGetRuntimeStatusResponses, OpsGetTenantData, OpsGetTenantErrors, OpsGetTenantResponses, OpsHealthCheckConnectorData, OpsHealthCheckConnectorErrors, OpsHealthCheckConnectorResponses, OpsListAuditData, OpsListAuditErrors, OpsListAuditResponses, OpsListAvailableToolkitsData, OpsListAvailableToolkitsErrors, OpsListAvailableToolkitsResponses, OpsListConnectorsData, OpsListConnectorsErrors, OpsListConnectorsResponses, OpsListDefinitionsData, OpsListDefinitionsErrors, OpsListDefinitionsResponses, OpsListGuardrailsData, OpsListGuardrailsErrors, OpsListGuardrailsResponses, OpsListMemoryItemsData, OpsListMemoryItemsErrors, OpsListMemoryItemsResponses, OpsListMemorySpacesData, OpsListMemorySpacesErrors, OpsListMemorySpacesResponses, OpsListPacksData, OpsListPacksErrors, OpsListPacksResponses, OpsListReviewersData, OpsListReviewersErrors, OpsListReviewersResponses, OpsListRunsData, OpsListRunsErrors, OpsListRunsResponses, OpsListTeamData, OpsListTeamErrors, OpsListTeamResponses, OpsListTenantsData, OpsListTenantsErrors, OpsListTenantsResponses, OpsPublishDefinitionData, OpsPublishDefinitionErrors, OpsPublishDefinitionResponses, OpsReactivateTenantData, OpsReactivateTenantErrors, OpsReactivateTenantResponses, OpsReinstateReviewerData, OpsReinstateReviewerErrors, OpsReinstateReviewerResponses, OpsRejectPackData, OpsRejectPackErrors, OpsRejectPackResponses, OpsRepublishPackData, OpsRepublishPackErrors, OpsRepublishPackResponses, OpsSetConnectorDefaultsData, OpsSetConnectorDefaultsErrors, OpsSetConnectorDefaultsResponses, OpsSetGuardrailData, OpsSetGuardrailErrors, OpsSetGuardrailResponses, OpsSetReviewerLevelData, OpsSetReviewerLevelErrors, OpsSetReviewerLevelResponses, OpsSetTenantPlanData, OpsSetTenantPlanErrors, OpsSetTenantPlanResponses, OpsSetTenantSpendCapData, OpsSetTenantSpendCapErrors, OpsSetTenantSpendCapResponses, OpsSubmitPackData, OpsSubmitPackErrors, OpsSubmitPackResponses, OpsSuspendReviewerData, OpsSuspendReviewerErrors, OpsSuspendReviewerResponses, OpsSuspendTenantData, OpsSuspendTenantErrors, OpsSuspendTenantResponses, OpsUpdateIncidentData, OpsUpdateIncidentErrors, OpsUpdateIncidentResponses, OpsValidateDefinitionData, OpsValidateDefinitionErrors, OpsValidateDefinitionResponses, RemoveOrgReviewerData, RemoveOrgReviewerErrors, RemoveOrgReviewerResponses, RetractMemoryData, RetractMemoryErrors, RetractMemoryResponses, ReviewMemoryCandidateData, ReviewMemoryCandidateErrors, ReviewMemoryCandidateResponses, RevokeGrantData, RevokeGrantErrors, RevokeGrantResponses, RevokeTokenData, RevokeTokenErrors, RevokeTokenResponses, SetReviewerNetworkData, SetReviewerNetworkErrors, SetReviewerNetworkResponses, StartWorkflowRunData, StartWorkflowRunErrors, StartWorkflowRunResponses, SubmitHumanTaskData, SubmitHumanTaskErrors, SubmitHumanTaskResponses, SuggestWorkflowPackData, SuggestWorkflowPackErrors, SuggestWorkflowPackResponses, UpdateReviewerProfileData, UpdateReviewerProfileErrors, UpdateReviewerProfileResponses } from './types.gen';
-import { zAcceptInvitationPath, zAcceptInvitationResponse, zAddOrgReviewerBody, zAddOrgReviewerPath, zAddOrgReviewerResponse, zApproveApprovalPath, zApproveApprovalResponse, zClaimHumanTaskPath, zClaimHumanTaskResponse, zConnectConnectionPath, zConnectConnectionResponse, zCreateTokenBody, zCreateTokenResponse, zDeclineApprovalPath, zDeclineApprovalResponse, zDeclineInvitationPath, zDeclineInvitationResponse, zDisconnectConnectionPath, zDisconnectConnectionResponse, zGetAgentPath, zGetAgentResponse, zGetCatalogTaxonomyResponse, zGetHumanTaskPath, zGetHumanTaskResponse, zGetMeResponse, zGetOrganizationPath, zGetOrganizationResponse, zGetReviewerProfileResponse, zGetUsagePath, zGetUsageResponse, zGetWorkflowPackPath, zGetWorkflowPackResponse, zGetWorkflowRunPath, zGetWorkflowRunReceiptPath, zGetWorkflowRunReceiptResponse, zGetWorkflowRunResponse, zInstallWorkflowPackBody, zInstallWorkflowPackPath, zInstallWorkflowPackResponse, zInviteMemberBody, zInviteMemberPath, zInviteMemberResponse, zListAgentsResponse, zListApprovalsResponse, zListAttentionPath, zListAttentionResponse, zListConnectionsResponse, zListEarningsResponse, zListEligibleHumanTasksResponse, zListMembersPath, zListMembersResponse, zListMemoryResponse, zListOrgReviewersPath, zListOrgReviewersResponse, zListPoliciesPath, zListPoliciesResponse, zListTokensResponse, zListWorkflowPacksResponse, zListWorkflowRunsResponse, zOpsAddConnectorBody, zOpsAddConnectorResponse, zOpsAddMemoryItemBody, zOpsAddMemoryItemPath, zOpsAddMemoryItemResponse, zOpsApprovePackBody, zOpsApprovePackPath, zOpsApprovePackResponse, zOpsApproveReviewerBody, zOpsApproveReviewerPath, zOpsApproveReviewerResponse, zOpsCertifyPackBody, zOpsCertifyPackPath, zOpsCertifyPackResponse, zOpsCreatePackBody, zOpsCreatePackResponse, zOpsCreateTenantBody, zOpsCreateTenantResponse, zOpsDeclareIncidentBody, zOpsDeclareIncidentResponse, zOpsDeleteMemoryItemBody, zOpsDeleteMemoryItemPath, zOpsDeleteMemoryItemResponse, zOpsDeprecatePackBody, zOpsDeprecatePackPath, zOpsDeprecatePackResponse, zOpsDisableConnectorBody, zOpsDisableConnectorPath, zOpsDisableConnectorResponse, zOpsEnableConnectorBody, zOpsEnableConnectorPath, zOpsEnableConnectorResponse, zOpsExportDefinitionPath, zOpsExportDefinitionQuery, zOpsExportDefinitionResponse, zOpsGetBillingResponse, zOpsGetDefinitionPath, zOpsGetDefinitionQuery, zOpsGetDefinitionResponse, zOpsGetHealthResponse, zOpsGetMeResponse, zOpsGetOverviewResponse, zOpsGetPackPath, zOpsGetPackResponse, zOpsGetRunPath, zOpsGetRunResponse, zOpsGetRuntimeStatusResponse, zOpsGetTenantPath, zOpsGetTenantResponse, zOpsHealthCheckConnectorPath, zOpsHealthCheckConnectorResponse, zOpsListAuditQuery, zOpsListAuditResponse, zOpsListAvailableToolkitsResponse, zOpsListConnectorsResponse, zOpsListDefinitionsResponse, zOpsListGuardrailsResponse, zOpsListMemoryItemsPath, zOpsListMemoryItemsResponse, zOpsListMemorySpacesResponse, zOpsListPacksQuery, zOpsListPacksResponse, zOpsListReviewersQuery, zOpsListReviewersResponse, zOpsListRunsQuery, zOpsListRunsResponse, zOpsListTeamResponse, zOpsListTenantsQuery, zOpsListTenantsResponse, zOpsPublishDefinitionBody, zOpsPublishDefinitionPath, zOpsPublishDefinitionResponse, zOpsReactivateTenantBody, zOpsReactivateTenantPath, zOpsReactivateTenantResponse, zOpsReinstateReviewerBody, zOpsReinstateReviewerPath, zOpsReinstateReviewerResponse, zOpsRejectPackBody, zOpsRejectPackPath, zOpsRejectPackResponse, zOpsRepublishPackBody, zOpsRepublishPackPath, zOpsRepublishPackResponse, zOpsSetConnectorDefaultsBody, zOpsSetConnectorDefaultsPath, zOpsSetConnectorDefaultsResponse, zOpsSetGuardrailBody, zOpsSetGuardrailPath, zOpsSetGuardrailResponse, zOpsSetReviewerLevelBody, zOpsSetReviewerLevelPath, zOpsSetReviewerLevelResponse, zOpsSetTenantPlanBody, zOpsSetTenantPlanPath, zOpsSetTenantPlanResponse, zOpsSetTenantSpendCapBody, zOpsSetTenantSpendCapPath, zOpsSetTenantSpendCapResponse, zOpsSubmitPackBody, zOpsSubmitPackPath, zOpsSubmitPackResponse, zOpsSuspendReviewerBody, zOpsSuspendReviewerPath, zOpsSuspendReviewerResponse, zOpsSuspendTenantBody, zOpsSuspendTenantPath, zOpsSuspendTenantResponse, zOpsUpdateIncidentBody, zOpsUpdateIncidentPath, zOpsUpdateIncidentResponse, zOpsValidateDefinitionBody, zOpsValidateDefinitionPath, zOpsValidateDefinitionResponse, zRemoveOrgReviewerBody, zRemoveOrgReviewerPath, zRemoveOrgReviewerResponse, zRetractMemoryPath, zRetractMemoryResponse, zReviewMemoryCandidateBody, zReviewMemoryCandidatePath, zReviewMemoryCandidateResponse, zRevokeGrantQuery, zRevokeGrantResponse, zRevokeTokenPath, zRevokeTokenResponse, zSetReviewerNetworkBody, zSetReviewerNetworkPath, zSetReviewerNetworkResponse, zStartWorkflowRunBody, zStartWorkflowRunHeaders, zStartWorkflowRunResponse, zSubmitHumanTaskBody, zSubmitHumanTaskPath, zSubmitHumanTaskResponse, zSuggestWorkflowPackBody, zSuggestWorkflowPackResponse, zUpdateReviewerProfileBody, zUpdateReviewerProfileResponse } from './zod.gen';
+import type { AcceptInvitationData, AcceptInvitationErrors, AcceptInvitationResponses, AddOrgReviewerData, AddOrgReviewerErrors, AddOrgReviewerResponses, AllowGrantData, AllowGrantErrors, AllowGrantResponses, ApproveApprovalData, ApproveApprovalErrors, ApproveApprovalResponses, ClaimHumanTaskData, ClaimHumanTaskErrors, ClaimHumanTaskResponses, ConnectConnectionData, ConnectConnectionErrors, ConnectConnectionResponses, CreateStudioAgentData, CreateStudioAgentErrors, CreateStudioAgentResponses, CreateStudioPackData, CreateStudioPackErrors, CreateStudioPackResponses, CreateTokenData, CreateTokenErrors, CreateTokenResponses, DeclineApprovalData, DeclineApprovalErrors, DeclineApprovalResponses, DeclineInvitationData, DeclineInvitationErrors, DeclineInvitationResponses, DisconnectConnectionData, DisconnectConnectionErrors, DisconnectConnectionResponses, GetAgentData, GetAgentErrors, GetAgentResponses, GetCatalogTaxonomyData, GetCatalogTaxonomyErrors, GetCatalogTaxonomyResponses, GetHumanTaskData, GetHumanTaskErrors, GetHumanTaskResponses, GetMeData, GetMeErrors, GetMeResponses, GetOrganizationData, GetOrganizationErrors, GetOrganizationResponses, GetReviewerProfileData, GetReviewerProfileErrors, GetReviewerProfileResponses, GetStudioAgentData, GetStudioAgentErrors, GetStudioAgentResponses, GetStudioPackData, GetStudioPackErrors, GetStudioPackResponses, GetStudioPackWorkflowData, GetStudioPackWorkflowErrors, GetStudioPackWorkflowResponses, GetStudioPaletteData, GetStudioPaletteErrors, GetStudioPaletteResponses, GetUsageData, GetUsageErrors, GetUsageResponses, GetWorkflowPackData, GetWorkflowPackErrors, GetWorkflowPackResponses, GetWorkflowRunData, GetWorkflowRunErrors, GetWorkflowRunReceiptData, GetWorkflowRunReceiptErrors, GetWorkflowRunReceiptResponses, GetWorkflowRunResponses, ImportStudioWorkflowData, ImportStudioWorkflowErrors, ImportStudioWorkflowResponses, InstallWorkflowPackData, InstallWorkflowPackErrors, InstallWorkflowPackResponses, InviteMemberData, InviteMemberErrors, InviteMemberResponses, ListAgentsData, ListAgentsErrors, ListAgentsResponses, ListApprovalsData, ListApprovalsErrors, ListApprovalsResponses, ListAttentionData, ListAttentionErrors, ListAttentionResponses, ListConnectionsData, ListConnectionsErrors, ListConnectionsResponses, ListEarningsData, ListEarningsErrors, ListEarningsResponses, ListEligibleHumanTasksData, ListEligibleHumanTasksErrors, ListEligibleHumanTasksResponses, ListMembersData, ListMembersErrors, ListMembersResponses, ListMemoryData, ListMemoryErrors, ListMemoryResponses, ListOrgReviewersData, ListOrgReviewersErrors, ListOrgReviewersResponses, ListPoliciesData, ListPoliciesErrors, ListPoliciesResponses, ListStudioAgentsData, ListStudioAgentsErrors, ListStudioAgentsResponses, ListStudioPacksData, ListStudioPacksErrors, ListStudioPacksResponses, ListTokensData, ListTokensErrors, ListTokensResponses, ListWorkflowPacksData, ListWorkflowPacksErrors, ListWorkflowPacksResponses, ListWorkflowRunsData, ListWorkflowRunsErrors, ListWorkflowRunsResponses, OpsAddConnectorData, OpsAddConnectorErrors, OpsAddConnectorResponses, OpsAddMemoryItemData, OpsAddMemoryItemErrors, OpsAddMemoryItemResponses, OpsApprovePackData, OpsApprovePackErrors, OpsApprovePackResponses, OpsApproveReviewerData, OpsApproveReviewerErrors, OpsApproveReviewerResponses, OpsCertifyPackData, OpsCertifyPackErrors, OpsCertifyPackResponses, OpsCreatePackData, OpsCreatePackErrors, OpsCreatePackResponses, OpsCreateTenantData, OpsCreateTenantErrors, OpsCreateTenantResponses, OpsDeclareIncidentData, OpsDeclareIncidentErrors, OpsDeclareIncidentResponses, OpsDeleteMemoryItemData, OpsDeleteMemoryItemErrors, OpsDeleteMemoryItemResponses, OpsDeprecatePackData, OpsDeprecatePackErrors, OpsDeprecatePackResponses, OpsDisableConnectorData, OpsDisableConnectorErrors, OpsDisableConnectorResponses, OpsEnableConnectorData, OpsEnableConnectorErrors, OpsEnableConnectorResponses, OpsExportDefinitionData, OpsExportDefinitionErrors, OpsExportDefinitionResponses, OpsGetBillingData, OpsGetBillingErrors, OpsGetBillingResponses, OpsGetDefinitionData, OpsGetDefinitionErrors, OpsGetDefinitionResponses, OpsGetHealthData, OpsGetHealthErrors, OpsGetHealthResponses, OpsGetMeData, OpsGetMeErrors, OpsGetMeResponses, OpsGetOverviewData, OpsGetOverviewErrors, OpsGetOverviewResponses, OpsGetPackData, OpsGetPackErrors, OpsGetPackResponses, OpsGetRunData, OpsGetRunErrors, OpsGetRunResponses, OpsGetRuntimeStatusData, OpsGetRuntimeStatusErrors, OpsGetRuntimeStatusResponses, OpsGetTenantData, OpsGetTenantErrors, OpsGetTenantResponses, OpsHealthCheckConnectorData, OpsHealthCheckConnectorErrors, OpsHealthCheckConnectorResponses, OpsListAuditData, OpsListAuditErrors, OpsListAuditResponses, OpsListAvailableToolkitsData, OpsListAvailableToolkitsErrors, OpsListAvailableToolkitsResponses, OpsListConnectorsData, OpsListConnectorsErrors, OpsListConnectorsResponses, OpsListDefinitionsData, OpsListDefinitionsErrors, OpsListDefinitionsResponses, OpsListGuardrailsData, OpsListGuardrailsErrors, OpsListGuardrailsResponses, OpsListMemoryItemsData, OpsListMemoryItemsErrors, OpsListMemoryItemsResponses, OpsListMemorySpacesData, OpsListMemorySpacesErrors, OpsListMemorySpacesResponses, OpsListPacksData, OpsListPacksErrors, OpsListPacksResponses, OpsListReviewersData, OpsListReviewersErrors, OpsListReviewersResponses, OpsListRunsData, OpsListRunsErrors, OpsListRunsResponses, OpsListTeamData, OpsListTeamErrors, OpsListTeamResponses, OpsListTenantsData, OpsListTenantsErrors, OpsListTenantsResponses, OpsPublishDefinitionData, OpsPublishDefinitionErrors, OpsPublishDefinitionResponses, OpsReactivateTenantData, OpsReactivateTenantErrors, OpsReactivateTenantResponses, OpsReinstateReviewerData, OpsReinstateReviewerErrors, OpsReinstateReviewerResponses, OpsRejectPackData, OpsRejectPackErrors, OpsRejectPackResponses, OpsRepublishPackData, OpsRepublishPackErrors, OpsRepublishPackResponses, OpsSetConnectorDefaultsData, OpsSetConnectorDefaultsErrors, OpsSetConnectorDefaultsResponses, OpsSetGuardrailData, OpsSetGuardrailErrors, OpsSetGuardrailResponses, OpsSetReviewerLevelData, OpsSetReviewerLevelErrors, OpsSetReviewerLevelResponses, OpsSetTenantPlanData, OpsSetTenantPlanErrors, OpsSetTenantPlanResponses, OpsSetTenantSpendCapData, OpsSetTenantSpendCapErrors, OpsSetTenantSpendCapResponses, OpsSubmitPackData, OpsSubmitPackErrors, OpsSubmitPackResponses, OpsSuspendReviewerData, OpsSuspendReviewerErrors, OpsSuspendReviewerResponses, OpsSuspendTenantData, OpsSuspendTenantErrors, OpsSuspendTenantResponses, OpsUpdateIncidentData, OpsUpdateIncidentErrors, OpsUpdateIncidentResponses, OpsValidateDefinitionData, OpsValidateDefinitionErrors, OpsValidateDefinitionResponses, RemoveOrgReviewerData, RemoveOrgReviewerErrors, RemoveOrgReviewerResponses, RetractMemoryData, RetractMemoryErrors, RetractMemoryResponses, ReviewMemoryCandidateData, ReviewMemoryCandidateErrors, ReviewMemoryCandidateResponses, RevokeGrantData, RevokeGrantErrors, RevokeGrantResponses, RevokeTokenData, RevokeTokenErrors, RevokeTokenResponses, SaveStudioAgentData, SaveStudioAgentErrors, SaveStudioAgentResponses, SaveStudioPackData, SaveStudioPackErrors, SaveStudioPackResponses, SetReviewerNetworkData, SetReviewerNetworkErrors, SetReviewerNetworkResponses, StartWorkflowRunData, StartWorkflowRunErrors, StartWorkflowRunResponses, SubmitHumanTaskData, SubmitHumanTaskErrors, SubmitHumanTaskResponses, SuggestWorkflowPackData, SuggestWorkflowPackErrors, SuggestWorkflowPackResponses, SyncConnectionData, SyncConnectionErrors, SyncConnectionResponses, TestStudioPackData, TestStudioPackErrors, TestStudioPackResponses, UpdateReviewerProfileData, UpdateReviewerProfileErrors, UpdateReviewerProfileResponses, ValidateStudioAgentData, ValidateStudioAgentErrors, ValidateStudioAgentResponses, ValidateStudioPackData, ValidateStudioPackErrors, ValidateStudioPackResponses } from './types.gen';
+import { zAcceptInvitationPath, zAcceptInvitationResponse, zAddOrgReviewerBody, zAddOrgReviewerPath, zAddOrgReviewerResponse, zAllowGrantQuery, zAllowGrantResponse, zApproveApprovalPath, zApproveApprovalResponse, zClaimHumanTaskPath, zClaimHumanTaskResponse, zConnectConnectionBody, zConnectConnectionPath, zConnectConnectionResponse, zCreateStudioAgentBody, zCreateStudioAgentPath, zCreateStudioAgentResponse, zCreateStudioPackBody, zCreateStudioPackPath, zCreateStudioPackResponse, zCreateTokenBody, zCreateTokenResponse, zDeclineApprovalPath, zDeclineApprovalResponse, zDeclineInvitationPath, zDeclineInvitationResponse, zDisconnectConnectionPath, zDisconnectConnectionResponse, zGetAgentPath, zGetAgentResponse, zGetCatalogTaxonomyResponse, zGetHumanTaskPath, zGetHumanTaskResponse, zGetMeResponse, zGetOrganizationPath, zGetOrganizationResponse, zGetReviewerProfileResponse, zGetStudioAgentPath, zGetStudioAgentResponse, zGetStudioPackPath, zGetStudioPackResponse, zGetStudioPackWorkflowPath, zGetStudioPackWorkflowResponse, zGetStudioPalettePath, zGetStudioPaletteResponse, zGetUsagePath, zGetUsageResponse, zGetWorkflowPackPath, zGetWorkflowPackResponse, zGetWorkflowRunPath, zGetWorkflowRunReceiptPath, zGetWorkflowRunReceiptResponse, zGetWorkflowRunResponse, zImportStudioWorkflowBody, zImportStudioWorkflowPath, zImportStudioWorkflowResponse, zInstallWorkflowPackBody, zInstallWorkflowPackPath, zInstallWorkflowPackResponse, zInviteMemberBody, zInviteMemberPath, zInviteMemberResponse, zListAgentsResponse, zListApprovalsResponse, zListAttentionPath, zListAttentionResponse, zListConnectionsResponse, zListEarningsResponse, zListEligibleHumanTasksResponse, zListMembersPath, zListMembersResponse, zListMemoryResponse, zListOrgReviewersPath, zListOrgReviewersResponse, zListPoliciesPath, zListPoliciesResponse, zListStudioAgentsPath, zListStudioAgentsResponse, zListStudioPacksPath, zListStudioPacksResponse, zListTokensResponse, zListWorkflowPacksResponse, zListWorkflowRunsResponse, zOpsAddConnectorBody, zOpsAddConnectorResponse, zOpsAddMemoryItemBody, zOpsAddMemoryItemPath, zOpsAddMemoryItemResponse, zOpsApprovePackBody, zOpsApprovePackPath, zOpsApprovePackResponse, zOpsApproveReviewerBody, zOpsApproveReviewerPath, zOpsApproveReviewerResponse, zOpsCertifyPackBody, zOpsCertifyPackPath, zOpsCertifyPackResponse, zOpsCreatePackBody, zOpsCreatePackResponse, zOpsCreateTenantBody, zOpsCreateTenantResponse, zOpsDeclareIncidentBody, zOpsDeclareIncidentResponse, zOpsDeleteMemoryItemBody, zOpsDeleteMemoryItemPath, zOpsDeleteMemoryItemResponse, zOpsDeprecatePackBody, zOpsDeprecatePackPath, zOpsDeprecatePackResponse, zOpsDisableConnectorBody, zOpsDisableConnectorPath, zOpsDisableConnectorResponse, zOpsEnableConnectorBody, zOpsEnableConnectorPath, zOpsEnableConnectorResponse, zOpsExportDefinitionPath, zOpsExportDefinitionQuery, zOpsExportDefinitionResponse, zOpsGetBillingResponse, zOpsGetDefinitionPath, zOpsGetDefinitionQuery, zOpsGetDefinitionResponse, zOpsGetHealthResponse, zOpsGetMeResponse, zOpsGetOverviewResponse, zOpsGetPackPath, zOpsGetPackResponse, zOpsGetRunPath, zOpsGetRunResponse, zOpsGetRuntimeStatusResponse, zOpsGetTenantPath, zOpsGetTenantResponse, zOpsHealthCheckConnectorPath, zOpsHealthCheckConnectorResponse, zOpsListAuditQuery, zOpsListAuditResponse, zOpsListAvailableToolkitsResponse, zOpsListConnectorsResponse, zOpsListDefinitionsResponse, zOpsListGuardrailsResponse, zOpsListMemoryItemsPath, zOpsListMemoryItemsResponse, zOpsListMemorySpacesResponse, zOpsListPacksQuery, zOpsListPacksResponse, zOpsListReviewersQuery, zOpsListReviewersResponse, zOpsListRunsQuery, zOpsListRunsResponse, zOpsListTeamResponse, zOpsListTenantsQuery, zOpsListTenantsResponse, zOpsPublishDefinitionBody, zOpsPublishDefinitionPath, zOpsPublishDefinitionResponse, zOpsReactivateTenantBody, zOpsReactivateTenantPath, zOpsReactivateTenantResponse, zOpsReinstateReviewerBody, zOpsReinstateReviewerPath, zOpsReinstateReviewerResponse, zOpsRejectPackBody, zOpsRejectPackPath, zOpsRejectPackResponse, zOpsRepublishPackBody, zOpsRepublishPackPath, zOpsRepublishPackResponse, zOpsSetConnectorDefaultsBody, zOpsSetConnectorDefaultsPath, zOpsSetConnectorDefaultsResponse, zOpsSetGuardrailBody, zOpsSetGuardrailPath, zOpsSetGuardrailResponse, zOpsSetReviewerLevelBody, zOpsSetReviewerLevelPath, zOpsSetReviewerLevelResponse, zOpsSetTenantPlanBody, zOpsSetTenantPlanPath, zOpsSetTenantPlanResponse, zOpsSetTenantSpendCapBody, zOpsSetTenantSpendCapPath, zOpsSetTenantSpendCapResponse, zOpsSubmitPackBody, zOpsSubmitPackPath, zOpsSubmitPackResponse, zOpsSuspendReviewerBody, zOpsSuspendReviewerPath, zOpsSuspendReviewerResponse, zOpsSuspendTenantBody, zOpsSuspendTenantPath, zOpsSuspendTenantResponse, zOpsUpdateIncidentBody, zOpsUpdateIncidentPath, zOpsUpdateIncidentResponse, zOpsValidateDefinitionBody, zOpsValidateDefinitionPath, zOpsValidateDefinitionResponse, zRemoveOrgReviewerBody, zRemoveOrgReviewerPath, zRemoveOrgReviewerResponse, zRetractMemoryPath, zRetractMemoryResponse, zReviewMemoryCandidateBody, zReviewMemoryCandidatePath, zReviewMemoryCandidateResponse, zRevokeGrantQuery, zRevokeGrantResponse, zRevokeTokenPath, zRevokeTokenResponse, zSaveStudioAgentBody, zSaveStudioAgentPath, zSaveStudioAgentResponse, zSaveStudioPackBody, zSaveStudioPackPath, zSaveStudioPackResponse, zSetReviewerNetworkBody, zSetReviewerNetworkPath, zSetReviewerNetworkResponse, zStartWorkflowRunBody, zStartWorkflowRunHeaders, zStartWorkflowRunResponse, zSubmitHumanTaskBody, zSubmitHumanTaskPath, zSubmitHumanTaskResponse, zSuggestWorkflowPackBody, zSuggestWorkflowPackResponse, zSyncConnectionPath, zSyncConnectionResponse, zTestStudioPackBody, zTestStudioPackPath, zTestStudioPackResponse, zUpdateReviewerProfileBody, zUpdateReviewerProfileResponse, zValidateStudioAgentBody, zValidateStudioAgentPath, zValidateStudioAgentResponse, zValidateStudioPackBody, zValidateStudioPackPath, zValidateStudioPackQuery, zValidateStudioPackResponse } from './zod.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -465,23 +465,54 @@ export const listConnections = <ThrowOnError extends boolean = false>(options?: 
 /**
  * Connect Connection
  *
- * Connect an app (a connector key or app name) for the org. Sandbox connector mode connects it to
- * sandbox data; live app connections are not available yet (409). The demo workspace has none to make.
+ * Connect an app (a connector key or app name) for the org. `mode: sandbox` (the default) connects it to
+ * sandbox data. `mode: live` starts signing in to the org's own account: the connection is pending and
+ * `redirectUrl` is the app's sign-in page, which returns to the web's Connections page; only an owner or
+ * admin may, and only they may switch an app connected to the org's own account to sandbox data (403
+ * FORBIDDEN otherwise). The demo workspace has none to make (409).
  */
 export const connectConnection = <ThrowOnError extends boolean = false>(options: Options<ConnectConnectionData, ThrowOnError>): RequestResult<ConnectConnectionResponses, ConnectConnectionErrors, ThrowOnError> => (options.client ?? client).post<ConnectConnectionResponses, ConnectConnectionErrors, ThrowOnError>({
     requestValidator: async (data) => await z.object({
-        body: z.never().optional(),
+        body: zConnectConnectionBody.optional(),
         path: zConnectConnectionPath,
         query: z.never().optional()
     }).parseAsync(data),
     responseValidator: async (data) => await zConnectConnectionResponse.parseAsync(data),
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/v1/connections/{app_name}:connect',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Sync Connection
+ *
+ * Live workspace: check the org's own account for an app with Composio, after the person comes back from
+ * signing in. Connected when the account is active, with the grants of the packs that use the app; not
+ * connected (or needing sign-in again) when the sign-in failed or expired; still pending while it is in
+ * progress. The demo workspace has nothing to sync (409).
+ */
+export const syncConnection = <ThrowOnError extends boolean = false>(options: Options<SyncConnectionData, ThrowOnError>): RequestResult<SyncConnectionResponses, SyncConnectionErrors, ThrowOnError> => (options.client ?? client).post<SyncConnectionResponses, SyncConnectionErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zSyncConnectionPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zSyncConnectionResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/connections/{app_name}:sync',
     ...options
 });
 
 /**
  * Disconnect Connection
+ *
+ * Disconnect an app: every pack the org added loses access to it. In the live workspace, an app
+ * connected to the org's own account (mode composio, whatever its status) is only disconnected by an owner
+ * or admin (403 FORBIDDEN otherwise); its account is removed at the connection service.
  */
 export const disconnectConnection = <ThrowOnError extends boolean = false>(options: Options<DisconnectConnectionData, ThrowOnError>): RequestResult<DisconnectConnectionResponses, DisconnectConnectionErrors, ThrowOnError> => (options.client ?? client).post<DisconnectConnectionResponses, DisconnectConnectionErrors, ThrowOnError>({
     requestValidator: async (data) => await z.object({
@@ -497,6 +528,10 @@ export const disconnectConnection = <ThrowOnError extends boolean = false>(optio
 
 /**
  * Revoke Grant
+ *
+ * Revoke one grant: the pack (`install`) may no longer use the `capability` of the `app`. In the live
+ * workspace only an owner or admin may (403 FORBIDDEN otherwise), and the revocation is remembered until
+ * it is allowed again.
  */
 export const revokeGrant = <ThrowOnError extends boolean = false>(options: Options<RevokeGrantData, ThrowOnError>): RequestResult<RevokeGrantResponses, RevokeGrantErrors, ThrowOnError> => (options.client ?? client).delete<RevokeGrantResponses, RevokeGrantErrors, ThrowOnError>({
     requestValidator: async (data) => await z.object({
@@ -505,6 +540,26 @@ export const revokeGrant = <ThrowOnError extends boolean = false>(options: Optio
         query: zRevokeGrantQuery
     }).parseAsync(data),
     responseValidator: async (data) => await zRevokeGrantResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/grants',
+    ...options
+});
+
+/**
+ * Allow Grant
+ *
+ * Live workspace: allow a grant a person revoked again (the same `app`, `install` and `capability` as
+ * revoking it). The revocation is forgotten, and the grant comes back when a pack the org added still uses
+ * the capability; 404 when the org's connection holds no such revocation. Only an owner or admin may (403
+ * FORBIDDEN otherwise). The demo workspace remembers no revocations (409).
+ */
+export const allowGrant = <ThrowOnError extends boolean = false>(options: Options<AllowGrantData, ThrowOnError>): RequestResult<AllowGrantResponses, AllowGrantErrors, ThrowOnError> => (options.client ?? client).post<AllowGrantResponses, AllowGrantErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: z.never().optional(),
+        query: zAllowGrantQuery
+    }).parseAsync(data),
+    responseValidator: async (data) => await zAllowGrantResponse.parseAsync(data),
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/v1/grants',
     ...options
@@ -787,6 +842,281 @@ export const setReviewerNetwork = <ThrowOnError extends boolean = false>(options
     responseValidator: async (data) => await zSetReviewerNetworkResponse.parseAsync(data),
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/v1/organizations/{org_id}/reviewer-network',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Get Studio Palette
+ *
+ * What a pack's steps can use: the agents, app tools, memory and result shapes the org may see.
+ */
+export const getStudioPalette = <ThrowOnError extends boolean = false>(options: Options<GetStudioPaletteData, ThrowOnError>): RequestResult<GetStudioPaletteResponses, GetStudioPaletteErrors, ThrowOnError> => (options.client ?? client).get<GetStudioPaletteResponses, GetStudioPaletteErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zGetStudioPalettePath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zGetStudioPaletteResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/organizations/{org_id}/studio/palette',
+    ...options
+});
+
+/**
+ * List Studio Agents
+ *
+ * The agents the org built.
+ */
+export const listStudioAgents = <ThrowOnError extends boolean = false>(options: Options<ListStudioAgentsData, ThrowOnError>): RequestResult<ListStudioAgentsResponses, ListStudioAgentsErrors, ThrowOnError> => (options.client ?? client).get<ListStudioAgentsResponses, ListStudioAgentsErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zListStudioAgentsPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zListStudioAgentsResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/organizations/{org_id}/studio/agents',
+    ...options
+});
+
+/**
+ * Create Studio Agent
+ *
+ * Save a new agent (version 1). 422 INVALID_DEFINITION lists each problem; reviewers get 403.
+ */
+export const createStudioAgent = <ThrowOnError extends boolean = false>(options: Options<CreateStudioAgentData, ThrowOnError>): RequestResult<CreateStudioAgentResponses, CreateStudioAgentErrors, ThrowOnError> => (options.client ?? client).post<CreateStudioAgentResponses, CreateStudioAgentErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zCreateStudioAgentBody,
+        path: zCreateStudioAgentPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zCreateStudioAgentResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/organizations/{org_id}/studio/agents',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Validate Studio Agent
+ *
+ * Check an agent draft without saving it.
+ */
+export const validateStudioAgent = <ThrowOnError extends boolean = false>(options: Options<ValidateStudioAgentData, ThrowOnError>): RequestResult<ValidateStudioAgentResponses, ValidateStudioAgentErrors, ThrowOnError> => (options.client ?? client).post<ValidateStudioAgentResponses, ValidateStudioAgentErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zValidateStudioAgentBody,
+        path: zValidateStudioAgentPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zValidateStudioAgentResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/organizations/{org_id}/studio/agents:validate',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Get Studio Agent
+ */
+export const getStudioAgent = <ThrowOnError extends boolean = false>(options: Options<GetStudioAgentData, ThrowOnError>): RequestResult<GetStudioAgentResponses, GetStudioAgentErrors, ThrowOnError> => (options.client ?? client).get<GetStudioAgentResponses, GetStudioAgentErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zGetStudioAgentPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zGetStudioAgentResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/organizations/{org_id}/studio/agents/{key}',
+    ...options
+});
+
+/**
+ * Save Studio Agent
+ *
+ * Save the draft as the next version; an unchanged draft keeps the current one. 409 VERSION_CONFLICT when
+ * `baseVersion` is not the latest.
+ */
+export const saveStudioAgent = <ThrowOnError extends boolean = false>(options: Options<SaveStudioAgentData, ThrowOnError>): RequestResult<SaveStudioAgentResponses, SaveStudioAgentErrors, ThrowOnError> => (options.client ?? client).post<SaveStudioAgentResponses, SaveStudioAgentErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zSaveStudioAgentBody,
+        path: zSaveStudioAgentPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zSaveStudioAgentResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/organizations/{org_id}/studio/agents/{key}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * List Studio Packs
+ *
+ * The Workflow Packs the org built.
+ */
+export const listStudioPacks = <ThrowOnError extends boolean = false>(options: Options<ListStudioPacksData, ThrowOnError>): RequestResult<ListStudioPacksResponses, ListStudioPacksErrors, ThrowOnError> => (options.client ?? client).get<ListStudioPacksResponses, ListStudioPacksErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zListStudioPacksPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zListStudioPacksResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/organizations/{org_id}/studio/packs',
+    ...options
+});
+
+/**
+ * Create Studio Pack
+ *
+ * Save a new pack (version 1), listed only in the org's own marketplace as built by its team. 422
+ * INVALID_DEFINITION lists each problem with the step it is about (`errors[].key`).
+ */
+export const createStudioPack = <ThrowOnError extends boolean = false>(options: Options<CreateStudioPackData, ThrowOnError>): RequestResult<CreateStudioPackResponses, CreateStudioPackErrors, ThrowOnError> => (options.client ?? client).post<CreateStudioPackResponses, CreateStudioPackErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zCreateStudioPackBody,
+        path: zCreateStudioPackPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zCreateStudioPackResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/organizations/{org_id}/studio/packs',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Validate Studio Pack
+ *
+ * Check a pack draft without saving it. Pass `key` when the draft edits a saved pack; without it the
+ * draft is checked as a new pack, so a saved pack's own name reads as taken.
+ */
+export const validateStudioPack = <ThrowOnError extends boolean = false>(options: Options<ValidateStudioPackData, ThrowOnError>): RequestResult<ValidateStudioPackResponses, ValidateStudioPackErrors, ThrowOnError> => (options.client ?? client).post<ValidateStudioPackResponses, ValidateStudioPackErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zValidateStudioPackBody,
+        path: zValidateStudioPackPath,
+        query: zValidateStudioPackQuery.optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zValidateStudioPackResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/organizations/{org_id}/studio/packs:validate',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Import Studio Workflow
+ *
+ * Read a workflow.yaml as steps. Nothing is saved. 422 INVALID_YAML when it cannot be read.
+ */
+export const importStudioWorkflow = <ThrowOnError extends boolean = false>(options: Options<ImportStudioWorkflowData, ThrowOnError>): RequestResult<ImportStudioWorkflowResponses, ImportStudioWorkflowErrors, ThrowOnError> => (options.client ?? client).post<ImportStudioWorkflowResponses, ImportStudioWorkflowErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zImportStudioWorkflowBody,
+        path: zImportStudioWorkflowPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zImportStudioWorkflowResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/organizations/{org_id}/studio/workflow:import',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Test Studio Pack
+ *
+ * Start a sandbox test run of the org's own pack (returns 202: started, not finished). It runs on sandbox
+ * data without adding the pack and is labelled as a sandbox test. The input must match the pack's input
+ * schema (422 INVALID_INPUT) and the budget the pack's maximum (422 BUDGET_TOO_HIGH); a pack without a
+ * maximum needs a budget (422 BUDGET_REQUIRED). The platform pause and the monthly spend cap apply.
+ */
+export const testStudioPack = <ThrowOnError extends boolean = false>(options: Options<TestStudioPackData, ThrowOnError>): RequestResult<TestStudioPackResponses, TestStudioPackErrors, ThrowOnError> => (options.client ?? client).post<TestStudioPackResponses, TestStudioPackErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zTestStudioPackBody,
+        path: zTestStudioPackPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zTestStudioPackResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/organizations/{org_id}/studio/packs/{key}:test',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Get Studio Pack Workflow
+ *
+ * The pack's workflow.yaml.
+ */
+export const getStudioPackWorkflow = <ThrowOnError extends boolean = false>(options: Options<GetStudioPackWorkflowData, ThrowOnError>): RequestResult<GetStudioPackWorkflowResponses, GetStudioPackWorkflowErrors, ThrowOnError> => (options.client ?? client).get<GetStudioPackWorkflowResponses, GetStudioPackWorkflowErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zGetStudioPackWorkflowPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zGetStudioPackWorkflowResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/organizations/{org_id}/studio/packs/{key}/workflow',
+    ...options
+});
+
+/**
+ * Get Studio Pack
+ */
+export const getStudioPack = <ThrowOnError extends boolean = false>(options: Options<GetStudioPackData, ThrowOnError>): RequestResult<GetStudioPackResponses, GetStudioPackErrors, ThrowOnError> => (options.client ?? client).get<GetStudioPackResponses, GetStudioPackErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zGetStudioPackPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zGetStudioPackResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/organizations/{org_id}/studio/packs/{key}',
+    ...options
+});
+
+/**
+ * Save Studio Pack
+ *
+ * Save the draft as the next version; an unchanged draft keeps the current one. 409 VERSION_CONFLICT when
+ * `baseVersion` is not the latest. A run already started keeps the version it pinned. A pack the org has
+ * added keeps its connection grants in step with the save, and cannot be renamed while one of its runs is
+ * in progress (409 RUNS_IN_PROGRESS).
+ */
+export const saveStudioPack = <ThrowOnError extends boolean = false>(options: Options<SaveStudioPackData, ThrowOnError>): RequestResult<SaveStudioPackResponses, SaveStudioPackErrors, ThrowOnError> => (options.client ?? client).post<SaveStudioPackResponses, SaveStudioPackErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zSaveStudioPackBody,
+        path: zSaveStudioPackPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zSaveStudioPackResponse.parseAsync(data),
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/organizations/{org_id}/studio/packs/{key}',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -1089,7 +1419,8 @@ export const opsHealthCheckConnector = <ThrowOnError extends boolean = false>(op
 /**
  * Ops List Definitions
  *
- * The latest version of every definition, by kind then key.
+ * The latest version of every platform definition, by kind then key. An org's own definitions are not
+ * listed.
  */
 export const opsListDefinitions = <ThrowOnError extends boolean = false>(options?: Options<OpsListDefinitionsData, ThrowOnError>): RequestResult<OpsListDefinitionsResponses, OpsListDefinitionsErrors, ThrowOnError> => (options?.client ?? client).get<OpsListDefinitionsResponses, OpsListDefinitionsErrors, ThrowOnError>({
     requestValidator: async (data) => await z.object({
@@ -1125,7 +1456,8 @@ export const opsExportDefinition = <ThrowOnError extends boolean = false>(option
  *
  * Check an edit (or a new definition) against the latest published versions of everything else. Never
  * saves anything.
- * `errors` lists every problem found, including ones in other definitions.
+ * `errors` lists every problem found, including ones in other definitions. `warnings` says how many
+ * definitions that teams built in their Studio the edit would break; it never names them.
  */
 export const opsValidateDefinition = <ThrowOnError extends boolean = false>(options: Options<OpsValidateDefinitionData, ThrowOnError>): RequestResult<OpsValidateDefinitionResponses, OpsValidateDefinitionErrors, ThrowOnError> => (options.client ?? client).post<OpsValidateDefinitionResponses, OpsValidateDefinitionErrors, ThrowOnError>({
     requestValidator: async (data) => await z.object({
@@ -1149,7 +1481,7 @@ export const opsValidateDefinition = <ThrowOnError extends boolean = false>(opti
  * Validate, then publish the edit as the next version; an unknown kind/key is created as version 1.
  * 422 INVALID_DEFINITION (with `errors`) when it does not validate; 409 VERSION_CONFLICT when
  * `baseVersion` is sent and someone has published since; 409 NO_CHANGE when it equals the latest
- * version.
+ * version. The detail's `warnings` counts the definitions teams built that this version breaks.
  */
 export const opsPublishDefinition = <ThrowOnError extends boolean = false>(options: Options<OpsPublishDefinitionData, ThrowOnError>): RequestResult<OpsPublishDefinitionResponses, OpsPublishDefinitionErrors, ThrowOnError> => (options.client ?? client).post<OpsPublishDefinitionResponses, OpsPublishDefinitionErrors, ThrowOnError>({
     requestValidator: async (data) => await z.object({
@@ -1241,7 +1573,7 @@ export const opsUpdateIncident = <ThrowOnError extends boolean = false>(options:
 /**
  * Ops List Memory Spaces
  *
- * Every memory space definition with its item count.
+ * Every platform memory space definition with its item count. An org's own spaces are not listed.
  */
 export const opsListMemorySpaces = <ThrowOnError extends boolean = false>(options?: Options<OpsListMemorySpacesData, ThrowOnError>): RequestResult<OpsListMemorySpacesResponses, OpsListMemorySpacesErrors, ThrowOnError> => (options?.client ?? client).get<OpsListMemorySpacesResponses, OpsListMemorySpacesErrors, ThrowOnError>({
     requestValidator: async (data) => await z.object({
@@ -1296,7 +1628,8 @@ export const opsAddMemoryItem = <ThrowOnError extends boolean = false>(options: 
 /**
  * Ops Delete Memory Item
  *
- * Remove one item from its space.
+ * Remove one item from its space. An item in an org's own space is 404, worded like an unknown item so
+ * the space's key is never shown.
  */
 export const opsDeleteMemoryItem = <ThrowOnError extends boolean = false>(options: Options<OpsDeleteMemoryItemData, ThrowOnError>): RequestResult<OpsDeleteMemoryItemResponses, OpsDeleteMemoryItemErrors, ThrowOnError> => (options.client ?? client).post<OpsDeleteMemoryItemResponses, OpsDeleteMemoryItemErrors, ThrowOnError>({
     requestValidator: async (data) => await z.object({

@@ -14,7 +14,7 @@ import type { RunStatus, RunSummary } from "@/lib/types";
 import { Segmented, Select, Tooltip } from "./base";
 import { PackIcon } from "./pack-icon";
 import { Skeleton } from "./skeleton";
-import { Id, OutcomeRail, RunStatusPill } from "./ui";
+import { Id, OutcomeRail, RunStatusPill, SimTag } from "./ui";
 
 export type RowRun = RunSummary;
 
@@ -138,6 +138,7 @@ export function RunsBrowser({ runs, linkable }: { runs: RowRun[]; linkable: stri
                           <span className="font-medium">{r.title}</span>
                         )}
                         <div className="mt-0.5 flex items-center gap-2 text-xs text-muted">
+                          {r.sandboxTest ? <SimTag className="shrink-0">{t("sandboxTest")}</SimTag> : null}
                           <span className="truncate">{packName(r.packSlug)}</span>
                           <Id className="hidden text-[11px] xl:inline">{r.id}</Id>
                         </div>

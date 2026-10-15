@@ -127,6 +127,7 @@ def create_app() -> FastAPI:
         org,
         reviewers,
         runs,
+        studio,
         tasks,
     )
 
@@ -140,6 +141,7 @@ def create_app() -> FastAPI:
         me,
         org,
         reviewers,
+        studio,
         ops_catalog,
         ops_definitions,
         ops_health,

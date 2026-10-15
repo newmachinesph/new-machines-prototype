@@ -274,7 +274,8 @@ def test_call_tool_read_runs_through_sandbox(snapshot):
 
 
 def test_call_tool_write_needs_approval(snapshot):
-    args = {"spreadsheetId": "s", "range": "R!A:F", "valueInputOption": "RAW", "values": [["a"]]}
+    sheet = "sandbox-reconciliation-sheet-00000001"
+    args = {"spreadsheetId": sheet, "range": "R!A:F", "valueInputOption": "RAW", "values": [["a"]]}
     decision, result = gateway.call_tool(
         snapshot=snapshot, tool_ref="googlesheets.append_rows", args=args, approved=False, mode="sandbox"
     )

@@ -89,6 +89,15 @@ def test_parse_definition_rejects_bad_yaml():
         parse_definition("connector", "shop", "a: [", {}, "connectors/shop.yaml")
 
 
+def test_load_bundle_rejects_an_owner_namespaced_key(tmp_path):
+    """A key with "--" belongs to a workspace's own definitions, so the files can never take one."""
+    (tmp_path / "connectors").mkdir()
+    text = "kind: connector\nkey: org-1--shop\napp: Shop\ntools: []\n"
+    (tmp_path / "connectors" / "shop.yaml").write_text(text, encoding="utf-8")
+    with pytest.raises(LoadError, match="org-1--shop"):
+        load_bundle(tmp_path)
+
+
 # --- validation ------------------------------------------------------------------------------------
 
 

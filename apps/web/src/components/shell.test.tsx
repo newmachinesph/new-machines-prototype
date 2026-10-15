@@ -1,4 +1,5 @@
-import { screen } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { renderWithIntl } from "@/test/intl";
 import { AppShell } from "./shell";
@@ -16,9 +17,11 @@ const LIVE_ME = {
 const data = vi.hoisted(() => ({
   me: { isPending: false, isError: false, data: {} } as MeState,
   plan: "Trial",
+  path: "/app",
 }));
 
-vi.mock("next/navigation", () => ({ usePathname: () => "/app" }));
+// The workspace menu's language items refresh the router after a choice; the menu must open without one.
+vi.mock("next/navigation", () => ({ usePathname: () => data.path, useRouter: () => ({ refresh: vi.fn() }) }));
 vi.mock("@/lib/auth/session", () => ({ useSession: () => ({ signOut: vi.fn() }) }));
 // The palette itself is tested on its own; here it only reports the pages AppShell hands it.
 vi.mock("./command-palette", () => ({
@@ -54,6 +57,7 @@ describe("AppShell", () => {
     })) as never;
     data.me = ok({ ...LIVE_ME });
     data.plan = "Trial";
+    data.path = "/app";
   });
 
   it("names the signed-in user's own workspace, plan and role", () => {
@@ -67,7 +71,7 @@ describe("AppShell", () => {
 
   it("labels a live workspace's sandbox apps and billing, not a demo", () => {
     renderWithIntl(<AppShell>page</AppShell>);
-    expect(screen.getByRole("button", { name: "Sandbox apps, simulated billing" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Simulated data, simulated billing" })).toBeInTheDocument();
     expect(screen.queryByText(/Demo workspace/)).not.toBeInTheDocument();
   });
 
@@ -133,5 +137,44 @@ describe("AppShell", () => {
     expect(screen.getAllByRole("button", { name: "Workspace unavailable, switch workspace" }).length).toBeGreaterThan(
       0,
     );
+  });
+
+  it("shows the Studio's navigation in studio mode, and links back to the business workspace", () => {
+    renderWithIntl(<AppShell mode="studio">page</AppShell>);
+    expect(screen.getAllByRole("link", { name: "Agents" })[0]).toHaveAttribute("href", "/studio/agents");
+    expect(screen.getAllByRole("link", { name: "Workflow Packs" })[0]).toHaveAttribute("href", "/studio/packs");
+    expect(screen.getAllByRole("link", { name: "Business workspace" })[0]).toHaveAttribute("href", "/app");
+    expect(screen.queryByRole("link", { name: "Approvals" })).toBeNull();
+    const hrefs = (screen.getByTestId("palette-pages").dataset.hrefs ?? "").split(" ");
+    expect(hrefs).toEqual(["/studio", "/studio/agents", "/studio/packs"]);
+  });
+
+  it("reads a new Studio record as New, and a saved one by the name part of its key", () => {
+    const crumbs = () =>
+      within(screen.getByRole("navigation", { name: "Breadcrumb" }))
+        .getAllByRole("listitem")
+        .map((li) => li.textContent);
+    data.path = "/studio/packs/new";
+    const { unmount } = renderWithIntl(<AppShell mode="studio">page</AppShell>);
+    expect(crumbs()).toEqual(["Workflow Packs", "New"]);
+    expect(
+      within(screen.getByRole("navigation", { name: "Breadcrumb" })).getByRole("link", { name: "Workflow Packs" }),
+    ).toHaveAttribute("href", "/studio/packs");
+    unmount();
+    data.path = "/studio/packs/acme--invoices";
+    renderWithIntl(<AppShell mode="studio">page</AppShell>);
+    expect(crumbs()).toEqual(["Workflow Packs", "invoices"]);
+  });
+
+  it("offers the Developer Studio in the workspace menu of a live workspace only", async () => {
+    const { unmount } = renderWithIntl(<AppShell>page</AppShell>);
+    await userEvent.click(screen.getAllByRole("button", { name: "Ana's workspace, switch workspace" })[0]);
+    expect(await screen.findByRole("menuitem", { name: /Developer Studio/ })).toHaveAttribute("href", "/studio");
+    unmount();
+    data.me = ok({ ...LIVE_ME, workspace: "demo" });
+    renderWithIntl(<AppShell>page</AppShell>);
+    await userEvent.click(screen.getAllByRole("button", { name: "Ana's workspace, switch workspace" })[0]);
+    expect(await screen.findByRole("menuitem", { name: /Reviewer portal/ })).toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: /Developer Studio/ })).toBeNull();
   });
 });

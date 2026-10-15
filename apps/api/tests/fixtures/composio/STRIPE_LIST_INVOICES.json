@@ -1,0 +1,36 @@
+{
+  "input_parameters": {
+    "properties": {
+      "collection_method": {
+        "type": "string"
+      },
+      "created": {
+        "additionalProperties": {
+          "type": "integer"
+        },
+        "type": "object"
+      },
+      "customer": {
+        "type": "string"
+      },
+      "ending_before": {
+        "type": "string"
+      },
+      "limit": {
+        "type": "integer"
+      },
+      "starting_after": {
+        "type": "string"
+      },
+      "status": {
+        "type": "string"
+      },
+      "subscription": {
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "slug": "STRIPE_LIST_INVOICES",
+  "version": "20261007_00"
+}

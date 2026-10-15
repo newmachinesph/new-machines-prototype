@@ -29,7 +29,11 @@ from app.worker.activities import PackActivities
 from app.worker.workflow import PackRunner, RunInput
 
 PACK = "order-payment-reconciliation"
-INPUT = {"since": "2026-10-06", "until": "2026-10-12"}
+INPUT = {
+    "since": "2026-10-06",
+    "until": "2026-10-12",
+    "spreadsheet_id": "sandbox-reconciliation-sheet-00000001",
+}
 QUEUE = "test-packs"
 WAIT_S = 30.0
 

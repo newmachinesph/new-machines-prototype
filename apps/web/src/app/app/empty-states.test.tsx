@@ -19,7 +19,9 @@ vi.mock("@/lib/queries/workspace", () => ({
 describe("empty lists in a new workspace", () => {
   it("runs: points at starting a run", () => {
     renderWithIntl(<RunsList />);
-    expect(screen.getByText("No runs yet. Start a run of one of your packs and follow its work here.")).toBeInTheDocument();
+    expect(
+      screen.getByText("No runs yet. Start a run of one of your packs and follow its work here."),
+    ).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Start a run" })).toHaveAttribute("href", "/app/runs/new");
   });
 

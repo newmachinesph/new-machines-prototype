@@ -28,7 +28,9 @@ Environment variables (all optional, read at call time by `apps/api/app/settings
 | `TEMPORAL_TARGET` / `TEMPORAL_NAMESPACE` | `127.0.0.1:7243` / `default` |
 | `NM_TASK_QUEUE` | `nm-packs` |
 | `NM_MODEL_ENV` | `test` (`test`, `dev`, `prod`) |
-| `NM_CONNECTOR_MODE` | `sandbox` (`auto`, `sandbox`, `live`) |
+| `NM_CONNECTOR_MODE` | `sandbox` (`auto`, `sandbox`, `live`); demo workspace only |
+| `NM_WEB_ORIGIN` | first `ALLOWED_ORIGINS` entry, else `http://localhost:3100` (where app sign-in links return) |
+| `COMPOSIO_API_KEY` | unset (live workspace: real app connections; demo: the `live`/`auto` connector modes) |
 | `NM_DEFS_DIR` | `<repo>/definitions` |
 | `NM_DEFS_AUTO_APPLY` | unset |
 
@@ -60,8 +62,9 @@ uv run --project apps/api python scripts/smoke_recon.py --model-env dev    # rea
 values. Model profiles and the provider mapping per environment live in `definitions/models.yaml`.
 `--live` swaps the sandbox connectors for live ones, and works only once that is set up: `COMPOSIO_API_KEY`
 and `DEMO_USER_UID` in `demo-app/.env`, Shopify, Stripe and Google Sheets accounts connected in Composio for
-that user, and a real `spreadsheetId` in place of the placeholder `demo-reconciliation-sheet` in
-`definitions/packs/order-payment-reconciliation/workflow.yaml` (the `write` node). The script always targets
+that user, and a real spreadsheet ID in place of the sandbox default `sandbox-reconciliation-sheet-00000001`
+(the `spreadsheet_id` run input, defaulted in `definitions/packs/order-payment-reconciliation/schemas/input.json`;
+the `write` node appends to it). The script always targets
 the local Temporal (`127.0.0.1:7243`), whatever `.env` says, and exits non-zero if any step fails, including
 when the receipt does not end with its seal. Typical output: every node `COMPLETED`, AI spend of a few cents
 (minor units), `receipt verified True`.
@@ -71,9 +74,10 @@ To run the pieces yourself, from `apps/api` with `demo-app/.env` loaded:
 ```bash
 # worker
 NM_RUNTIME=temporal NM_MODEL_ENV=dev uv run --env-file ../../.env python -m app.worker
-# API on 8400 (applies definitions at startup)
+# API on 8400 (applies definitions at startup). ALLOWED_ORIGINS names only the ops console here, so
+# NM_WEB_ORIGIN names the customer web app, where app sign-in links return.
 NM_RUNTIME=temporal NM_MODEL_ENV=dev NM_DEFS_AUTO_APPLY=1 AUTH_MODE=dev ALLOWED_ORIGINS=http://localhost:3400 \
-  uv run --env-file ../../.env uvicorn app.main:app --port 8400
+  NM_WEB_ORIGIN=http://localhost:3100 uv run --env-file ../../.env uvicorn app.main:app --port 8400
 ```
 
 Validate or apply the definition files without the API: `uv run python -m app.defs validate|apply|export`.

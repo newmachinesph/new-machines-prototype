@@ -1,4 +1,5 @@
-import type { Connection, LedgerTxn, MemoryItem } from "@/lib/types";
+import type { Connection } from "@/lib/api/gen/types.gen";
+import type { LedgerTxn, MemoryItem } from "@/lib/types";
 import { usd } from "@/lib/format";
 
 export const ORG = {

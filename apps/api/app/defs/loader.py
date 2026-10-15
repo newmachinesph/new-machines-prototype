@@ -5,11 +5,13 @@ from pathlib import Path
 
 import yaml
 
+from app.defs import owners
 from app.defs.model import SHARED_SCHEMAS, Bundle, Definition
 
 
 class LoadError(ValueError):
-    """A definition file could not be parsed at all (bad YAML/JSON, not a mapping, no kind/key)."""
+    """A definition file could not be parsed at all (bad YAML/JSON, not a mapping, no kind/key), or names a
+    key the files may not hold (one with "--", reserved for a workspace's own definitions)."""
 
 
 def _norm(text: str) -> str:
@@ -99,6 +101,11 @@ def load_bundle(root: Path) -> Bundle:
             found.append(_from_file(kind, p, root))
     items: dict[tuple[str, str], Definition] = {}
     for d in found:
+        if owners.is_reserved(d.key):
+            raise LoadError(
+                f"{d.path}: key {d.key!r} contains {owners.SEPARATOR}, which belongs to a workspace's own "
+                "definitions and never comes from the files"
+            )
         if (d.kind, d.key) in items:
             raise LoadError(f"duplicate definition {d.kind}/{d.key} ({d.path})")
         items[(d.kind, d.key)] = d

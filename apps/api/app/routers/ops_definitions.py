@@ -5,17 +5,17 @@ runtime is off. Publishing validates the edited definition against the latest pu
 everything else, inserts the next version (source "console") and writes an ops audit entry.
 """
 
-import json
 import re
+from dataclasses import dataclass
 from pathlib import PurePosixPath
 from typing import Annotated
 
-import yaml
 from fastapi import Query
 
 from app import db, ops_state, workspace
 from app.auth import CurrentOps, OpsWriter
-from app.defs import refs, registry
+from app.defs import owners, refs, registry
+from app.defs import text as def_text
 from app.defs.model import Bundle, Definition, path_for
 from app.defs.validate import validate_bundle
 from app.errors import NO_CHANGE, ApiProblem, ProblemIssue, conflicts
@@ -69,14 +69,22 @@ def _refs(pairs: list[tuple[str, str]]) -> list[DefinitionRef]:
     return [DefinitionRef(kind=k, key=key) for k, key in pairs]
 
 
+def require_platform(conn, kind: str, key: str) -> None:
+    """An org's or a developer's own definition is not shown or edited in the console: 404, as for an unknown
+    key (`registry.latest_platform` lists by the same rule)."""
+    if registry.owner_of(conn, kind, key).kind != "platform":
+        raise ApiProblem(404, "NOT_FOUND", f"No definition {kind}/{key}.")
+
+
 def detail_of(conn, kind: str, key: str, version: int | None = None) -> DefinitionDetail:
+    require_platform(conn, kind, key)
     history = registry.versions(conn, kind, key)
     if not history:
         raise ApiProblem(404, "NOT_FOUND", f"No definition {kind}/{key}.")
     chosen = history[0] if version is None else next((v for v in history if v.version == version), None)
     if chosen is None:
         raise ApiProblem(404, "NOT_FOUND", f"{kind}/{key} has no version {version}.")
-    bundle = registry.latest_bundle(conn)
+    bundle = registry.visible_bundle(conn, None)
     return DefinitionDetail(
         summary=summary_of(chosen),
         versions=[
@@ -105,40 +113,6 @@ def _issue(kind: str, key: str, path: str, message: str) -> DefinitionIssue:
 KEY_PATTERN = re.compile(r"[a-z0-9][a-z0-9_-]{0,63}")  # a new definition's key (a schema's has one slash)
 
 
-class _Unparseable(Exception):
-    """The submitted text cannot be read; the message is safe to show to the user."""
-
-
-def _has_anchor(text: str) -> bool:
-    """True when the YAML uses an anchor or alias, which can expand into a huge structure."""
-    return any(
-        isinstance(e, yaml.AliasEvent) or getattr(e, "anchor", None) is not None for e in yaml.parse(text)
-    )
-
-
-def _parse_text(kind: str, text: str) -> dict:
-    """The submitted main file as a mapping. Raises _Unparseable with a user-facing message."""
-    try:
-        if kind == "schema":
-            data = json.loads(text)
-        elif _has_anchor(text):
-            raise _Unparseable("YAML anchors and aliases (& and *) are not allowed.")
-        else:
-            data = yaml.safe_load(text)
-    except json.JSONDecodeError as exc:
-        raise _Unparseable(f"JSON is not valid: line {exc.lineno}, column {exc.colno}: {exc.msg}.") from None
-    except yaml.MarkedYAMLError as exc:
-        mark = exc.problem_mark
-        where = f"line {mark.line + 1}, column {mark.column + 1}: " if mark else ""
-        problem = (exc.problem or "cannot be read").replace("<stream end>", "the end of the text")
-        raise _Unparseable(f"YAML is not valid: {where}{problem}.") from None
-    except yaml.YAMLError:
-        raise _Unparseable("YAML is not valid.") from None
-    if not isinstance(data, dict):
-        raise _Unparseable("The top level must be a mapping.")
-    return data
-
-
 def _definition(kind: str, key: str, data: dict, files: dict[str, str]) -> Definition:
     """422 KEY_MISMATCH when the text names a different kind or key than the URL (schemas name neither)."""
     if kind == "schema":
@@ -155,6 +129,8 @@ def _definition(kind: str, key: str, data: dict, files: dict[str, str]) -> Defin
 
 
 def _check_new_key(kind: str, key: str) -> None:
+    if owners.is_reserved(key):
+        raise ApiProblem(422, "INVALID_KEY", "A key with -- belongs to a workspace's own definitions.")
     parts = key.split("/") if kind == "schema" else [key]
     if len(parts) > (2 if kind == "schema" else 1) or not all(KEY_PATTERN.fullmatch(p) for p in parts):
         raise ApiProblem(
@@ -180,25 +156,60 @@ def _file_issues(kind: str, key: str, files: dict[str, str]) -> list[DefinitionI
     return issues
 
 
-def check_edit(
-    conn, kind: str, key: str, body: ValidateDefinitionRequest
-) -> tuple[Definition | None, list[DefinitionIssue], bool]:
-    """Parse the edit and validate it against the latest published versions of everything else. An unknown
-    kind/key is a new definition. Returns (definition, errors, is_new); the definition is None when the text
-    did not parse."""
+def _team_breaks(conn, platform: Bundle, edited: Definition) -> int:
+    """How many of the definitions teams built in their Studio (org-owned; the console never names them) stop
+    validating with the edit. One that is already broken without it is not counted."""
+    everything = registry.latest_bundle(conn)
+    team = (set(everything.items) - set(platform.items)) & registry.org_owned_keys(conn)
+    if not team:
+        return 0
+    with_edit = Bundle(items={**everything.items, (edited.kind, edited.key): edited})
+    broken = {(e.kind, e.key) for e in validate_bundle(with_edit) if (e.kind, e.key) in team}
+    if not broken:
+        return 0
+    already = {(e.kind, e.key) for e in validate_bundle(everything)}
+    return len(broken - already)
+
+
+def _team_warning(count: int) -> list[str] | None:
+    """The warning for `count` broken team definitions: a count only, never a key, name or org."""
+    if count == 0:
+        return None
+    noun = "definition a team built" if count == 1 else "definitions teams built"
+    return [f"This edit breaks {count} {noun} in the Studio. Those teams will need to update their work."]
+
+
+@dataclass(frozen=True)
+class Edit:
+    """A checked edit. `definition` is None when the text did not parse; `warnings` is for Validate and
+    Publish, and never names a team's definition."""
+
+    definition: Definition | None
+    errors: list[DefinitionIssue]
+    is_new: bool
+    warnings: list[str] | None = None
+
+
+def check_edit(conn, kind: str, key: str, body: ValidateDefinitionRequest) -> Edit:
+    """Parse the edit and validate it against the latest published versions of every other platform
+    definition. Platform definitions only: an org's or a developer's own key is 404, and a key with "--"
+    cannot be created. An unknown kind/key is a new definition. The private definitions orgs built are
+    validated too, but only counted: see `_team_breaks`."""
+    require_platform(conn, kind, key)
     is_new = registry.latest(conn, kind, key) is None
     if is_new:
         _check_new_key(kind, key)
     issues = _file_issues(kind, key, body.files)
     try:
-        data = _parse_text(kind, body.yaml)
-    except _Unparseable as exc:
-        return None, [*issues, _issue(kind, key, "(root)", str(exc))], is_new
+        data = def_text.parse_text(kind, body.yaml)
+    except def_text.Unparseable as exc:
+        return Edit(None, [*issues, _issue(kind, key, "(root)", str(exc))], is_new)
     edited = _definition(kind, key, data, body.files)
-    items = dict(registry.latest_bundle(conn).items)
-    items[(kind, key)] = edited
+    platform = registry.visible_bundle(conn, None)
+    items = {**platform.items, (kind, key): edited}
     errors = [_issue(e.kind, e.key, e.path, e.message) for e in validate_bundle(Bundle(items=items))]
-    return edited, [*issues, *errors], is_new
+    warnings = _team_warning(_team_breaks(conn, platform, edited)) if not errors else None
+    return Edit(edited, [*issues, *errors], is_new, warnings)
 
 
 @router.get(
@@ -208,10 +219,11 @@ def check_edit(
     responses=RUNTIME_RESPONSES,
 )
 def ops_list_definitions(_: CurrentOps) -> list[DefinitionSummary]:
-    """The latest version of every definition, by kind then key."""
+    """The latest version of every platform definition, by kind then key. An org's own definitions are not
+    listed."""
     require_runtime()
     with db.connect() as conn:
-        return [summary_of(v) for v in registry.latest_all(conn)]
+        return [summary_of(v) for v in registry.latest_platform(conn)]
 
 
 @router.get(
@@ -226,6 +238,7 @@ def ops_export_definition(
     """The files of one version as {path relative to the definitions root: text}, ready to go into git."""
     require_runtime()
     with db.connect() as conn:
+        require_platform(conn, kind, key)
         found = (
             registry.latest(conn, kind, key)
             if version is None
@@ -248,11 +261,12 @@ def ops_validate_definition(
 ) -> ValidateDefinitionResult:
     """Check an edit (or a new definition) against the latest published versions of everything else. Never
     saves anything.
-    `errors` lists every problem found, including ones in other definitions."""
+    `errors` lists every problem found, including ones in other definitions. `warnings` says how many
+    definitions that teams built in their Studio the edit would break; it never names them."""
     require_runtime()
     with db.connect() as conn:
-        _, errors, _ = check_edit(conn, kind, key, body)
-    return ValidateDefinitionResult(ok=not errors, errors=errors)
+        edit = check_edit(conn, kind, key, body)
+    return ValidateDefinitionResult(ok=not edit.errors, errors=edit.errors, warnings=edit.warnings)
 
 
 @router.post(
@@ -268,10 +282,11 @@ def ops_publish_definition(
     """Validate, then publish the edit as the next version; an unknown kind/key is created as version 1.
     422 INVALID_DEFINITION (with `errors`) when it does not validate; 409 VERSION_CONFLICT when
     `baseVersion` is sent and someone has published since; 409 NO_CHANGE when it equals the latest
-    version."""
+    version. The detail's `warnings` counts the definitions teams built that this version breaks."""
     require_runtime()
     with db.connect() as conn:
-        edited, errors, _ = check_edit(conn, kind, key, body)
+        edit = check_edit(conn, kind, key, body)
+        edited, errors = edit.definition, edit.errors
         if edited is None or errors:
             first = errors[0]
             raise ApiProblem(
@@ -294,7 +309,7 @@ def ops_publish_definition(
             ) from None
         except registry.NoChange:
             raise ApiProblem(409, NO_CHANGE, f"{kind}/{key} is unchanged.") from None
-        detail = detail_of(conn, kind, key)
+        detail = detail_of(conn, kind, key).model_copy(update={"warnings": edit.warnings})
         action = "definition.create" if before is None else "definition.publish"
         summary = (
             f"created v{published.version}" if before is None else f"v{before.version} → v{published.version}"

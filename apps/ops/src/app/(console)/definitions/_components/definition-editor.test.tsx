@@ -94,6 +94,36 @@ describe("DefinitionEditor", () => {
     expect(await screen.findByText(/No problems found/)).toBeInTheDocument();
   });
 
+  it("shows the API's warning about teams' definitions next to a valid result", async () => {
+    const user = userEvent.setup();
+    const warning =
+      "This edit breaks 2 definitions teams built in the Studio. Those teams will need to update their work.";
+    state.validate.mockResolvedValue({ ok: true, errors: [], warnings: [warning] });
+    renderEditor();
+    await user.click(screen.getByRole("button", { name: "Validate" }));
+    expect(await screen.findByText(/No problems found/)).toBeInTheDocument();
+    expect(screen.getByText(warning)).toBeInTheDocument();
+  });
+
+  it("keeps the API's warning about teams' definitions on screen after publishing", async () => {
+    const user = userEvent.setup();
+    const warning = "This edit breaks 1 definition a team built in the Studio. That team will need to update its work.";
+    const view = renderEditor();
+    // As in the app: the publish writes its result to the cache, so the editor gets the new version as props.
+    state.publish.mockImplementation(async ({ body }: { body: { yaml: string; files: Record<string, string> } }) => {
+      view.rerender(editorTree({ initial: { yaml: body.yaml, files: body.files }, nextVersion: 4 }));
+      return { summary: { version: 3 }, yaml: body.yaml, files: body.files, warnings: [warning] };
+    });
+    await user.type(screen.getByRole("textbox", { name: "agent.yaml" }), "# edited\n");
+    await user.click(screen.getByRole("button", { name: "Publish" }));
+    const dialog = await screen.findByRole("alertdialog");
+    await user.type(within(dialog).getByLabelText("Reason"), "Allow one more turn");
+    await user.click(within(dialog).getByRole("button", { name: "Publish v3" }));
+    await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
+    expect(screen.getByText(warning)).toBeInTheDocument();
+    expect(screen.getByText(`Finance agent published as v3. ${warning}`)).toBeInTheDocument();
+  });
+
   it("asks for a reason before publishing, then publishes the edited files", async () => {
     const user = userEvent.setup();
     const onPublished = vi.fn();

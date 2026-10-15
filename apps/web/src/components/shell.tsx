@@ -67,8 +67,11 @@ type PageKey =
   | "settings"
   | "reviewers"
   | "availableTasks"
-  | "earnings";
-type CrumbKey = "crumbDeliverable" | "crumbHire" | "crumbStartRun";
+  | "earnings"
+  | "studio"
+  | "studioAgents"
+  | "studioPacks";
+type CrumbKey = "crumbDeliverable" | "crumbHire" | "crumbStartRun" | "crumbNew";
 
 /** `label` is a key under `nav`. */
 type Item = { href: string; label: PageKey; icon: LucideIcon; exact?: boolean; liveOnly?: boolean };
@@ -99,10 +102,23 @@ const WORK_NAV: Item[][] = [
   ],
 ];
 
-/** The pages a workspace offers, in the sidebar and the command palette alike. Reviewer management exists only
+const STUDIO_NAV: Item[][] = [
+  [
+    { href: "/studio", label: "studio", icon: House, exact: true },
+    { href: "/studio/agents", label: "studioAgents", icon: Bot },
+    { href: "/studio/packs", label: "studioPacks", icon: Workflow },
+  ],
+];
+
+/** Which view a layout shows: the business workspace, the reviewer portal or the Developer Studio. */
+export type ShellMode = "business" | "work" | "studio";
+const NAV: Record<ShellMode, Item[][]> = { business: BUSINESS_NAV, work: WORK_NAV, studio: STUDIO_NAV };
+const HOME: Record<ShellMode, string> = { business: "/app", work: "/work", studio: "/studio" };
+
+/** The pages a view offers, in the sidebar and the command palette alike. Reviewer management exists only
  * in a live workspace, so the demo's navigation is unchanged. */
-const navFor = (work: boolean, live: boolean): Item[][] =>
-  (work ? WORK_NAV : BUSINESS_NAV).map((g) => g.filter((item) => live || !item.liveOnly));
+const navFor = (mode: ShellMode, live: boolean): Item[][] =>
+  NAV[mode].map((g) => g.filter((item) => live || !item.liveOnly));
 
 type Crumb = { label: string; href?: string; mono?: boolean };
 
@@ -111,12 +127,12 @@ const SUBPAGE: Record<string, CrumbKey> = { evidence: "crumbDeliverable", instal
 
 function crumbsFor(
   path: string,
-  work: boolean,
+  mode: ShellMode,
   recordName: string | undefined,
   t: (key: PageKey | CrumbKey) => string,
 ): Crumb[] {
   const parts = path.split("/").filter(Boolean);
-  const nav = (work ? WORK_NAV : BUSINESS_NAV).flat();
+  const nav = NAV[mode].flat();
   const out: Crumb[] = [];
   let href = `/${parts[0] ?? ""}`;
   parts.slice(1).forEach((seg, i) => {
@@ -127,23 +143,28 @@ function crumbsFor(
         const key = nav.find((n) => n.href === href)?.label;
         out.push({ label: key ? t(key) : seg, href });
       }
+    } else if (mode === "studio" && seg === "new") {
+      out.push({ label: t("crumbNew"), href });
     } else if (SUBPAGE[seg]) {
       out.push({ label: t(SUBPAGE[seg]), href });
     } else {
       out.push(recordName ? { label: recordName, href } : { label: seg, href, mono: true });
     }
   });
-  if (!out.length) out.push({ label: t(work ? "availableTasks" : "overview") });
+  if (!out.length)
+    out.push({ label: t(mode === "work" ? "availableTasks" : mode === "studio" ? "studio" : "overview") });
   return out;
 }
 
-function Breadcrumbs({ path, work }: { path: string; work: boolean }) {
+function Breadcrumbs({ path, mode }: { path: string; mode: ShellMode }) {
   const slug = /^\/app\/marketplace\/([^/]+)/.exec(path)?.[1];
   const agentId = /^\/app\/agents\/([^/]+)/.exec(path)?.[1];
+  // A Studio key is <org namespace>--<name>: the name part reads as the record's name.
+  const studioName = /^\/studio\/(?:agents|packs)\/([^/]+)/.exec(path)?.[1]?.split("--").pop();
   const packName = usePackName(slug);
   const agentName = useAgentName(agentId);
   const t = useTranslations("nav");
-  const crumbs = crumbsFor(path, work, packName ?? agentName, t);
+  const crumbs = crumbsFor(path, mode, packName ?? agentName ?? studioName, t);
   return (
     <nav aria-label={t("breadcrumb")} className="min-w-0">
       <ol className="flex min-w-0 items-center gap-1.5 text-sm">
@@ -230,7 +251,9 @@ function usePerson() {
   return { name, known, role: me ? t(`roles.${me.role}`) : "" };
 }
 
-function WorkspaceMenu({ work }: { work: boolean }) {
+function WorkspaceMenu({ mode }: { mode: ShellMode }) {
+  const work = mode === "work";
+  const live = useIsLive();
   const { signOut } = useSession();
   const toast = useToast();
   const t = useTranslations("nav");
@@ -281,7 +304,7 @@ function WorkspaceMenu({ work }: { work: boolean }) {
             {initial(orgName)}
           </span>
           <span className="min-w-0 flex-1 truncate">{orgName}</span>
-          {work ? null : <Check className="size-3.5" aria-label={t("current")} />}
+          {mode === "business" ? <Check className="size-3.5" aria-label={t("current")} /> : null}
         </MenuLink>
         <MenuLink href="/work">
           <span
@@ -293,6 +316,19 @@ function WorkspaceMenu({ work }: { work: boolean }) {
           <span className="flex-1">{t("reviewerPortal")}</span>
           {work ? <Check className="size-3.5" aria-label={t("current")} /> : null}
         </MenuLink>
+        {/* Building agents and packs is part of the live workspace only. */}
+        {live ? (
+          <MenuLink href="/studio">
+            <span
+              className="grid size-5 place-items-center rounded bg-machine text-[10px] font-semibold text-paper"
+              aria-hidden
+            >
+              S
+            </span>
+            <span className="flex-1">{t("developerStudio")}</span>
+            {mode === "studio" ? <Check className="size-3.5" aria-label={t("current")} /> : null}
+          </MenuLink>
+        ) : null}
         <MenuSeparator />
         <LanguageMenuItems />
         <MenuSeparator />
@@ -306,10 +342,10 @@ function WorkspaceMenu({ work }: { work: boolean }) {
 }
 
 /** Badge counts come from the cached lists, so they move when an approval or a claim does. None while loading. */
-function useNavCounts(work: boolean): Record<string, number | undefined> {
-  const approvals = useApprovals(!work);
-  const memory = useMemory(!work);
-  const tasks = useEligibleTasks(work);
+function useNavCounts(mode: ShellMode): Record<string, number | undefined> {
+  const approvals = useApprovals(mode === "business");
+  const memory = useMemory(mode === "business");
+  const tasks = useEligibleTasks(mode === "work");
   return {
     "/app/approvals": approvals.data?.filter((a) => a.status === "PENDING").length,
     "/app/memory": memory.data?.filter((m) => m.state === "CANDIDATE").length,
@@ -317,9 +353,9 @@ function useNavCounts(work: boolean): Record<string, number | undefined> {
   };
 }
 
-function NavGroups({ work, path, onNavigate }: { work: boolean; path: string; onNavigate?: () => void }) {
-  const counts = useNavCounts(work);
-  const groups = navFor(work, useIsLive());
+function NavGroups({ mode, path, onNavigate }: { mode: ShellMode; path: string; onNavigate?: () => void }) {
+  const counts = useNavCounts(mode);
+  const groups = navFor(mode, useIsLive());
   return groups.map((g, i) => (
     <ul key={i} className={cn("space-y-0.5", i > 0 && "mt-2 border-t border-rule pt-2")}>
       {g.map((item) => (
@@ -331,21 +367,22 @@ function NavGroups({ work, path, onNavigate }: { work: boolean; path: string; on
   ));
 }
 
-function SwitchWorkspaceLink({ work, onNavigate }: { work: boolean; onNavigate?: () => void }) {
+function SwitchWorkspaceLink({ mode, onNavigate }: { mode: ShellMode; onNavigate?: () => void }) {
   const t = useTranslations("nav");
   return (
     <Link
-      href={work ? "/app" : "/work"}
+      href={mode === "business" ? "/work" : "/app"}
       onClick={onNavigate}
       className="flex h-8 items-center gap-2.5 rounded-md px-2.5 text-sm text-grey-700 hover:bg-grey-50 hover:text-ink"
     >
       <ArrowLeftRight className="size-4 text-grey-500" strokeWidth={1.75} aria-hidden />
-      {work ? t("businessWorkspace") : t("reviewerPortal")}
+      {mode === "business" ? t("reviewerPortal") : t("businessWorkspace")}
     </Link>
   );
 }
 
-function Sidebar({ work, path }: { work: boolean; path: string }) {
+function Sidebar({ mode, path }: { mode: ShellMode; path: string }) {
+  const work = mode === "work";
   const setPaletteOpen = useUi((s) => s.setPaletteOpen);
   const t = useTranslations("nav");
   const person = usePerson();
@@ -353,7 +390,7 @@ function Sidebar({ work, path }: { work: boolean; path: string }) {
     <aside className="hidden w-[248px] shrink-0 border-r border-rule bg-paper lg:block">
       <div className="sticky top-0 flex h-dvh flex-col">
         <div className="px-3 pt-3">
-          <WorkspaceMenu work={work} />
+          <WorkspaceMenu mode={mode} />
           <button
             type="button"
             onClick={() => setPaletteOpen(true)}
@@ -365,10 +402,10 @@ function Sidebar({ work, path }: { work: boolean; path: string }) {
           </button>
         </div>
         <nav aria-label={t("main")} className="mt-3 flex-1 space-y-1 overflow-y-auto px-3">
-          <NavGroups work={work} path={path} />
+          <NavGroups mode={mode} path={path} />
         </nav>
         <div className="border-t border-rule p-3">
-          <SwitchWorkspaceLink work={work} />
+          <SwitchWorkspaceLink mode={mode} />
           <div className="mt-1 flex items-center gap-2.5 px-2.5 py-1.5">
             <span
               className="grid size-6 place-items-center rounded-full bg-grey-100 text-[11px] font-semibold"
@@ -388,7 +425,7 @@ function Sidebar({ work, path }: { work: boolean; path: string }) {
 }
 
 /** Below lg the sidebar becomes a drawer from the left, opened from the top bar. */
-function MobileNav({ work, path }: { work: boolean; path: string }) {
+function MobileNav({ mode, path }: { mode: ShellMode; path: string }) {
   const open = useUi((s) => s.drawerOpen);
   const setOpen = useUi((s) => s.setDrawerOpen);
   const t = useTranslations("nav");
@@ -423,7 +460,7 @@ function MobileNav({ work, path }: { work: boolean; path: string }) {
           <div className="flex items-center gap-1 px-3 pt-3">
             {/* A pick in the workspace menu closes the drawer even when it links to the current page. */}
             <div className="min-w-0 flex-1" onClickCapture={(e) => (e.target as HTMLElement).closest("a") && close()}>
-              <WorkspaceMenu work={work} />
+              <WorkspaceMenu mode={mode} />
             </div>
             <Dialog.Close
               aria-label={t("closeNavigation")}
@@ -433,10 +470,10 @@ function MobileNav({ work, path }: { work: boolean; path: string }) {
             </Dialog.Close>
           </div>
           <nav aria-label={t("main")} className="mt-3 flex-1 space-y-1 overflow-y-auto px-3">
-            <NavGroups work={work} path={path} onNavigate={close} />
+            <NavGroups mode={mode} path={path} onNavigate={close} />
           </nav>
           <div className="border-t border-rule p-3">
-            <SwitchWorkspaceLink work={work} onNavigate={close} />
+            <SwitchWorkspaceLink mode={mode} onNavigate={close} />
           </div>
         </Dialog.Popup>
       </Dialog.Portal>
@@ -462,16 +499,16 @@ function SimulationBadge() {
   );
 }
 
-function TopBar({ work, path }: { work: boolean; path: string }) {
+function TopBar({ mode, path }: { mode: ShellMode; path: string }) {
   const setPaletteOpen = useUi((s) => s.setPaletteOpen);
   const t = useTranslations("nav");
   return (
     <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-rule bg-paper/90 px-4 backdrop-blur sm:px-6 lg:px-8">
-      <MobileNav work={work} path={path} />
-      <Link href={work ? "/work" : "/app"} className="shrink-0 lg:hidden" aria-label={t("home")}>
+      <MobileNav mode={mode} path={path} />
+      <Link href={HOME[mode]} className="shrink-0 lg:hidden" aria-label={t("home")}>
         <Mark trim className="h-3.5 text-ink" title="" />
       </Link>
-      <Breadcrumbs path={path} work={work} />
+      <Breadcrumbs path={path} mode={mode} />
       <div className="ml-auto flex items-center gap-2">
         <SimulationBadge />
         <button
@@ -482,7 +519,7 @@ function TopBar({ work, path }: { work: boolean; path: string }) {
         >
           <Search className="size-4" strokeWidth={1.75} aria-hidden />
         </button>
-        {work ? null : (
+        {mode !== "business" ? null : (
           <>
             <Link
               href="/app/marketplace"
@@ -528,21 +565,20 @@ export function StartRunMenu() {
   );
 }
 
-export function AppShell({ children, mode = "business" }: { children: ReactNode; mode?: "business" | "work" }) {
+export function AppShell({ children, mode = "business" }: { children: ReactNode; mode?: ShellMode }) {
   const live = useIsLive();
   const path = usePathname();
-  const work = mode === "work";
   const t = useTranslations("nav");
-  const pages = navFor(work, live)
+  const pages = navFor(mode, live)
     .flat()
     .map(({ href, label, icon }) => ({ href, label: t(label), icon }));
   return (
     <ClockProvider live={live}>
       <div className="flex min-h-dvh">
-        <Sidebar work={work} path={path} />
+        <Sidebar mode={mode} path={path} />
         <CommandPalette pages={pages} />
         <div className="min-w-0 flex-1">
-          <TopBar work={work} path={path} />
+          <TopBar mode={mode} path={path} />
           <main id="main" className="px-4 py-6 sm:px-6 lg:px-8 lg:py-7">
             <div className="mx-auto max-w-[2000px]">{children}</div>
           </main>

@@ -14,11 +14,12 @@ from app import db, settings
 from app.defs.loader import load_bundle
 from app.models.runs import Run
 from app.routers import tasks
-from app.runtime import gateway, providers
+from app.runtime import agent, gateway, providers
 from app.runtime.drivers import ToolResult
 from app.worker import activities
 from app.worker.activities import NodeCall
 from app.worker.workflow import PackRunner
+from tests.test_tool_results import _seal
 from tests.test_workflow import (  # noqa: F401  (runtime_env is a fixture)
     _assert_sealed,
     _drive,
@@ -130,7 +131,7 @@ class ForEach:
         monkeypatch.setattr(
             activities, "_commit", lambda call, events, write=None: self.commits.append((call.step, events))
         )
-        monkeypatch.setattr(activities, "_recorded_tool_call", lambda run_id, key, call_id: None)  # no DB
+        monkeypatch.setattr(activities, "_recorded_tool_call", lambda *_: activities.RecordedCall())  # no DB
 
     def run(self, attempt: int = 2) -> tuple:
         return asyncio.run(self.runner._for_each("send", attempt))
@@ -246,7 +247,7 @@ def test_for_each_items_are_bound_only_while_their_args_resolve(stub, monkeypatc
 
 def test_a_connector_without_for_each_keeps_its_single_call(stub, monkeypatch):
     fake = stub()
-    monkeypatch.setattr(activities, "_recorded_tool_call", lambda run_id, key, call_id: None)  # no DB
+    monkeypatch.setattr(activities, "_recorded_tool_call", lambda *_: activities.RecordedCall())  # no DB
     node = {
         "id": "send",
         "type": "connector",
@@ -335,6 +336,178 @@ def test_a_single_connector_node_retried_after_its_commit_makes_no_second_call(r
     assert _tool_results(runtime_env, run_id) == [("send:1:tool.call:4", {"id": "r-1"})]
 
 
+def test_a_read_keeps_no_result_and_its_retry_reads_again(runtime_env, stub):  # noqa: F811
+    fake = stub()
+    run_id, snapshot = _new_run(runtime_env)  # the recon pack pins shopify.list_orders, a read
+    call = NodeCall(run_id, snapshot, "orders", {}, attempt=1, step=3)
+    first = activities._tool_call(call, "shopify.list_orders", {"limit": 5}, "tc_orders_1", False)
+    assert first.write is None  # nothing kept for a read
+    activities._commit(call, [first.event], first.write)
+    # Temporal retries the activity after its commit landed: the read runs again for its data.
+    again = activities._tool_call(call, "shopify.list_orders", {"limit": 5}, "tc_orders_1", False)
+    assert len(fake.calls) == 2
+    assert first.data == {"id": "r-1"} and again.data == {"id": "r-2"}
+    assert again.event[1]["id"] == "tc_orders_1" and again.failed is None
+    assert _tool_results(runtime_env, run_id) == []
+    assert [e["id"] for e in _tool_calls(runtime_env, run_id)] == ["tc_orders_1"]
+
+
+def test_a_read_that_fails_when_read_again_is_retried_not_recorded(runtime_env, stub):  # noqa: F811
+    failed = ToolResult(ok=False, data=None, mocked=True, error="quota exceeded")
+    stub([(_permit(), None), (_permit(), failed)])
+    run_id, snapshot = _new_run(runtime_env)
+    call = NodeCall(run_id, snapshot, "orders", {}, attempt=1, step=3)
+    first = activities._tool_call(call, "shopify.list_orders", {}, "tc_orders_1", False)
+    activities._commit(call, [first.event], first.write)
+    with pytest.raises(ApplicationError) as err:
+        activities._tool_call(call, "shopify.list_orders", {}, "tc_orders_1", False)
+    assert err.value.type == "ReadAgain" and not err.value.non_retryable
+    assert [e["id"] for e in _tool_calls(runtime_env, run_id)] == ["tc_orders_1"]
+
+
+def test_a_write_still_keeps_its_result_for_a_retry(runtime_env, stub):  # noqa: F811
+    stub()
+    run_id, _ = _new_run(runtime_env)
+    snapshot = {"defs": {"workflow": {"w": {"body": {"nodes": [_send_node()]}}}}}  # unknown class: kept
+    item = activities.ItemCall(run_id, snapshot, "send", 1, 4, 0, {"recipient_email": "a@example.com"}, True)
+    activities.PackActivities().for_each_call(item)
+    assert _tool_results(runtime_env, run_id) == [("send:1:tool.call:4", {"id": "r-1"})]
+
+
+def _agent_use(run_id: str, block_id: str = "toolu_1") -> activities.ToolUse:
+    name = agent.tool_name("gmail.create_draft")
+    block = {"id": block_id, "name": name, "input": {"recipient_email": "a@example.com"}}
+    return activities.ToolUse(run_id, {}, "draft", 1, 5, block, [name])
+
+
+def test_an_agent_tool_call_retried_after_its_commit_makes_no_second_call(runtime_env, stub):  # noqa: F811
+    fake = stub()
+    run_id, _ = _new_run(runtime_env)
+    first = activities.PackActivities().tool_call(_agent_use(run_id))
+    again = activities.PackActivities().tool_call(_agent_use(run_id))
+    assert len(fake.calls) == 1
+    assert (
+        again
+        == first
+        == {
+            "type": "tool_result",
+            "tool_use_id": "toolu_1",
+            "content": json.dumps({"id": "r-1"}),
+            "is_error": False,
+        }
+    )
+    assert [e["id"] for e in _tool_calls(runtime_env, run_id)] == ["toolu_1"]
+    assert _tool_results(runtime_env, run_id) == [("draft:1:tool.call:5", {"id": "r-1"})]
+
+
+def test_a_denied_agent_tool_call_retried_stays_denied_without_a_call(runtime_env, stub):  # noqa: F811
+    fake = stub([(_deny(), None)])
+    run_id, _ = _new_run(runtime_env)
+    first = activities.PackActivities().tool_call(_agent_use(run_id))
+    again = activities.PackActivities().tool_call(_agent_use(run_id))
+    assert len(fake.calls) == 1
+    assert again == first and first["content"] == "Not permitted: ACTION_CLASS_DENIED" and first["is_error"]
+
+
+def test_an_agent_tool_call_on_a_sealed_run_is_refused_without_a_call(runtime_env, stub):  # noqa: F811
+    fake = stub()
+    run_id, _ = _new_run(runtime_env)
+    _seal(run_id)
+    with pytest.raises(ApplicationError) as err:
+        activities.PackActivities().tool_call(_agent_use(run_id))
+    assert err.value.type == activities.RUN_SEALED and err.value.non_retryable
+    assert fake.calls == [] and _tool_calls(runtime_env, run_id) == []
+
+
+def test_an_agent_tool_call_retried_after_the_seal_is_refused_without_a_call(runtime_env, stub):  # noqa: F811
+    fake = stub()
+    run_id, _ = _new_run(runtime_env)
+    activities.PackActivities().tool_call(_agent_use(run_id))
+    _seal(run_id)  # the seal deletes the kept result: the retry cannot rebuild it and must not call again
+    with pytest.raises(ApplicationError) as err:
+        activities.PackActivities().tool_call(_agent_use(run_id))
+    assert err.value.type == activities.RUN_SEALED and err.value.non_retryable
+    assert len(fake.calls) == 1
+
+
+def test_a_for_each_item_on_a_sealed_run_is_refused_without_a_call(runtime_env, stub):  # noqa: F811
+    fake = stub()
+    run_id, _ = _new_run(runtime_env)
+    _seal(run_id)
+    snapshot = {"defs": {"workflow": {"w": {"body": {"nodes": [_send_node()]}}}}}
+    item = activities.ItemCall(run_id, snapshot, "send", 1, 4, 0, {"recipient_email": "a@example.com"}, True)
+    with pytest.raises(ApplicationError) as err:
+        activities.PackActivities().for_each_call(item)
+    assert err.value.type == activities.RUN_SEALED and err.value.non_retryable
+    assert fake.calls == []
+
+
+def test_a_single_connector_node_on_a_sealed_run_is_refused_without_a_call(runtime_env, stub):  # noqa: F811
+    fake = stub()
+    run_id, _ = _new_run(runtime_env)
+    _seal(run_id)
+    node = {
+        "id": "send",
+        "type": "connector",
+        "config": {"tool": "gmail.create_draft", "args": {"recipient_email": "a@example.com"}},
+        "routes": {"ok": "verify", "error": "failed"},
+    }
+    snapshot = {"defs": {"workflow": {"w": {"body": {"nodes": [node]}}}}}
+    state = {"input": {}, "nodes": {}, "memory": [], "approvals": {"send": True}}
+    with pytest.raises(ApplicationError) as err:
+        activities.PackActivities().run_node(NodeCall(run_id, snapshot, "send", state, attempt=1, step=4))
+    assert err.value.type == activities.RUN_SEALED and err.value.non_retryable
+    assert fake.calls == []
+
+
+def test_an_agent_read_keeps_no_result_and_its_retry_reads_again(runtime_env, stub):  # noqa: F811
+    fake = stub()
+    run_id, snapshot = _new_run(runtime_env)  # the recon pack pins shopify.list_orders, a read
+    name = agent.tool_name("shopify.list_orders")
+    use = activities.ToolUse(
+        run_id, snapshot, "orders", 1, 3, {"id": "toolu_r", "name": name, "input": {}}, [name]
+    )
+    first = activities.PackActivities().tool_call(use)
+    assert _tool_results(runtime_env, run_id) == []
+    again = activities.PackActivities().tool_call(use)
+    assert len(fake.calls) == 2
+    assert first["content"] == json.dumps({"id": "r-1"}) and again["content"] == json.dumps({"id": "r-2"})
+    assert [e["id"] for e in _tool_calls(runtime_env, run_id)] == ["toolu_r"]
+
+
+def test_a_write_whose_data_is_null_is_rebuilt_on_retry_without_a_call(runtime_env, stub):  # noqa: F811
+    fake = stub([(_permit(), ToolResult(ok=True, data=None, mocked=True))])
+    run_id, _ = _new_run(runtime_env)
+    first = activities.PackActivities().tool_call(_agent_use(run_id))
+    again = activities.PackActivities().tool_call(_agent_use(run_id))
+    assert len(fake.calls) == 1
+    assert again == first and first["content"] == "null" and not first["is_error"]
+
+
+def test_a_recorded_write_whose_kept_result_is_missing_fails_for_good(runtime_env, stub):  # noqa: F811
+    fake = stub()
+    run_id, _ = _new_run(runtime_env)
+    use = _agent_use(run_id)
+    entry = {"id": "toolu_1", "ok": True, "action_class": "write", "policy": {"verdict": gateway.PERMIT}}
+    with db.connect() as conn:
+        key = activities.event_key(use.node_id, use.attempt, "tool.call", use.step)
+        activities.record_events(conn, run_id, [(key, "tool.call", use.node_id, entry)])
+        conn.commit()
+    with pytest.raises(ApplicationError) as err:
+        activities.PackActivities().tool_call(use)
+    assert err.value.type == "ResultLost" and err.value.non_retryable
+    assert fake.calls == []
+
+
+def test_an_agent_tool_use_without_an_id_answers_with_an_empty_id(runtime_env, stub):  # noqa: F811
+    stub()
+    run_id, snapshot = _new_run(runtime_env)
+    use = activities.ToolUse(run_id, snapshot, "draft", 1, 5, {"id": None, "name": "unknown__tool"}, [])
+    block = activities.PackActivities().tool_call(use)
+    assert block["tool_use_id"] == "" and block["content"] == "Not permitted: TOOL_NOT_OFFERED"
+    assert [e["id"] for e in _tool_calls(runtime_env, run_id)] == [""]
+
+
 # --- reviewer records ----------------------------------------------------------------------------------
 
 
@@ -382,6 +555,19 @@ def test_a_generic_review_item_names_its_counterpart():
         ("She asked us to call +1 415-555-0100 or (415) 555 0100.", "She asked us to call Hidden or Hidden."),
         ("Call 4155550100.", "Call Hidden."),
         ("Due 2026-09-22, 21 days late: firm.", "Due 2026-09-22, 21 days late: firm."),
+        ("Call +1 555-123-4567 2026-10-13 please.", "Call Hidden please."),
+        ("Ring 415 555 0100 1234 5678 now.", "Ring Hidden now."),
+        ("Reconcile 2026-10-06..2026-10-12 now.", "Reconcile 2026-10-06..2026-10-12 now."),
+        ("Period 2026-09-01 - 2026-09-30 end.", "Period 2026-09-01 - 2026-09-30 end."),
+        ("At 2026-10-01 12:30 sharp.", "At 2026-10-01 12:30 sharp."),
+        ("Call 415-555-0100x23.", "Call Hidden."),
+        ("Call 415-555-0100 ext. 23 now.", "Call Hidden now."),
+        ("Call-4155550100 now.", "Call-Hidden now."),
+        ("Phone,4155550100 now.", "Phone,Hidden now."),
+        ("Total 1,250,000 due.", "Total 1,250,000 due."),
+        ("Order INV-123456789 open.", "Order INV-123456789 open."),
+        ("Line $1250000.00 open.", "Line $1250000.00 open."),
+        ("Charge ch_3Sandbox1003 ok.", "Charge ch_3Sandbox1003 ok."),
         ("Order #1003 for $1250000.00 (125000 minor) on ch_3Sandbox1003.", None),
     ],
 )

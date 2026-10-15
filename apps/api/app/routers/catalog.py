@@ -103,11 +103,12 @@ def get_catalog_taxonomy(_: CurrentActor) -> Taxonomy:
     return Taxonomy(functions=entries("functions"), industries=entries("industries"))
 
 
-def _agents() -> list[Agent]:
-    """The live workspace lists agent definitions only, used by pack definitions. The demo workspace adds the
-    sample agents, and usage comes from the marketplace packs it lists."""
+def _agents(org_id: str | None = None) -> list[Agent]:
+    """The live workspace lists agent definitions only (the platform's and the org's own), used by pack
+    definitions the org may see. The demo workspace adds the sample agents, and usage comes from the
+    marketplace packs it lists."""
     if workspace.live():
-        return agent_catalog.catalog(agent_catalog.definition_pack_uses(), samples=[])
+        return agent_catalog.catalog(agent_catalog.definition_pack_uses(org_id), samples=[], org_id=org_id)
     with locked_store() as store:
         listed = [p for p in store.packs if is_listed(store, p)]
         samples = list(store.agents)
@@ -116,16 +117,16 @@ def _agents() -> list[Agent]:
 
 
 @router.get("/agents", operation_id="listAgents", response_model=list[Agent])
-def list_agents(_: CurrentActor) -> list[Agent]:
+def list_agents(actor: CurrentActor) -> list[Agent]:
     """Agents in the catalog: definition agents first, then (demo workspace only) sample agents."""
-    return _agents()
+    return _agents(actor.org_id)
 
 
 @router.get("/agents/{agent_id}", operation_id="getAgent", response_model=Agent)
-def get_agent(agent_id: str, _: CurrentActor) -> Agent:
+def get_agent(agent_id: str, actor: CurrentActor) -> Agent:
     # In the demo workspace a folded sample id (agent_finance) returns its definition agent.
     agent_id = _sample_aliases().get(agent_id, agent_id)
-    agent = next((a for a in _agents() if a.id == agent_id), None)
+    agent = next((a for a in _agents(actor.org_id) if a.id == agent_id), None)
     if agent is None:
         raise ApiProblem(404, "NOT_FOUND", f"No agent called {agent_id}.")
     return agent

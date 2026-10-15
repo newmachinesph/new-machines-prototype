@@ -6,11 +6,13 @@ toolkit: shopify
 tools:
   - id: list_orders
     slug: SHOPIFY_GET_ORDERS_WITH_FILTERS
+    version: "20261007_00"
     action_class: read
     capability: orders.read
     description: List store orders created in a date range, with totals, currency, payment status and refunds.
     input_schema:
       type: object
+      additionalProperties: false
       properties:
         created_at_min:
           type: string
