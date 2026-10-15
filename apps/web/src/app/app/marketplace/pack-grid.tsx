@@ -36,23 +36,26 @@ function FilterGroup({
   onPick: (label: string) => void;
 }) {
   return (
-    <div role="group" aria-label={title} className="flex flex-wrap items-center gap-1 xl:flex-col xl:items-stretch">
-      <span className="label w-full xl:mb-1">{title}</span>
-      {filters.map((f) => (
-        <button
-          key={f.label}
-          type="button"
-          aria-pressed={active === f.label}
-          onClick={() => onPick(f.label)}
-          className={cn(
-            "flex h-9 shrink-0 items-center justify-between gap-3 rounded-md px-3 text-sm whitespace-nowrap",
-            active === f.label ? "bg-grey-100 font-medium text-ink" : "text-grey-700 hover:bg-grey-50 hover:text-ink",
-          )}
-        >
-          {f.text}
-          <span className="tnum text-xs text-muted">{f.n}</span>
-        </button>
-      ))}
+    <div role="group" aria-label={title}>
+      <span className="label mb-1 block">{title}</span>
+      {/* One scrolling row on small screens; a column beside the packs from xl, where long names wrap. */}
+      <div className="flex [scrollbar-width:none] gap-1 overflow-x-auto xl:flex-col xl:overflow-visible">
+        {filters.map((f) => (
+          <button
+            key={f.label}
+            type="button"
+            aria-pressed={active === f.label}
+            onClick={() => onPick(f.label)}
+            className={cn(
+              "flex min-h-9 shrink-0 items-center justify-between gap-3 rounded-md px-3 text-left text-sm whitespace-nowrap xl:py-1.5 xl:whitespace-normal",
+              active === f.label ? "bg-grey-100 font-medium text-ink" : "text-grey-700 hover:bg-grey-50 hover:text-ink",
+            )}
+          >
+            <span className="min-w-0">{f.text}</span>
+            <span className="tnum shrink-0 text-xs text-muted">{f.n}</span>
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
