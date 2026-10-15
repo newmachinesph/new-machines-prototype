@@ -103,6 +103,18 @@ describe("AppShell", () => {
     expect(screen.queryByText("Demo operator")).not.toBeInTheDocument();
   });
 
+  it("names the signed-in reviewer in a live reviewer portal, and keeps the demo reviewer in the demo", () => {
+    data.me = ok({ ...LIVE_ME, role: "owner" }); // an owner reviewing works as a reviewer here
+    const { unmount } = renderWithIntl(<AppShell mode="work">page</AppShell>);
+    expect(screen.getByText("Ana Reyes")).toBeInTheDocument();
+    expect(screen.getByText("Reviewer")).toBeInTheDocument();
+    expect(screen.queryByText("Reviewer 204")).not.toBeInTheDocument();
+    unmount();
+    data.me = ok({ userId: "demo", orgId: "org_hp01", orgName: "Harbor", role: "owner", workspace: "demo" });
+    renderWithIntl(<AppShell mode="work">page</AppShell>);
+    expect(screen.getAllByText("Reviewer 204").length).toBeGreaterThan(0);
+  });
+
   it("lists Reviewers only in a live workspace", () => {
     const { unmount } = renderWithIntl(<AppShell>page</AppShell>);
     expect(screen.getAllByRole("link", { name: "Reviewers" })[0]).toHaveAttribute("href", "/app/reviewers");
@@ -110,6 +122,15 @@ describe("AppShell", () => {
     data.me = ok({ ...LIVE_ME, workspace: "demo" });
     renderWithIntl(<AppShell>page</AppShell>);
     expect(screen.queryByRole("link", { name: "Reviewers" })).toBeNull();
+  });
+
+  it("lists the Developer Studio in the business sidebar only in a live workspace", () => {
+    const { unmount } = renderWithIntl(<AppShell>page</AppShell>);
+    expect(screen.getAllByRole("link", { name: "Developer Studio" })[0]).toHaveAttribute("href", "/studio");
+    unmount();
+    data.me = ok({ ...LIVE_ME, workspace: "demo" });
+    renderWithIntl(<AppShell>page</AppShell>);
+    expect(screen.queryByRole("link", { name: "Developer Studio" })).toBeNull();
   });
 
   it("offers Reviewers in the command palette only in a live workspace", () => {

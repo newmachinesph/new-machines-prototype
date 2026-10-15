@@ -7,7 +7,8 @@ import type { Me } from "@/lib/api/gen/types.gen";
 import { renderWithIntl } from "@/test/intl";
 import { InvitationNotices } from "./invitation-notice";
 
-const sdk = vi.hoisted(() => ({ accept: vi.fn(), decline: vi.fn(), getMe: vi.fn() }));
+const sdk = vi.hoisted(() => ({ accept: vi.fn(), decline: vi.fn(), getMe: vi.fn(), push: vi.fn() }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push: sdk.push }) }));
 vi.mock("@/lib/api/gen/sdk.gen", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/api/gen/sdk.gen")>()),
   acceptInvitation: sdk.accept,
@@ -43,6 +44,7 @@ beforeEach(() => {
   sdk.accept.mockReset().mockResolvedValue({ data: JOINED });
   sdk.decline.mockReset().mockResolvedValue({ data: { ...OWN, invitations: [] } });
   sdk.getMe.mockReset().mockResolvedValue({ data: JOINED });
+  sdk.push.mockReset();
 });
 
 describe("InvitationNotices", () => {
@@ -72,6 +74,21 @@ describe("InvitationNotices", () => {
     await waitFor(() => expect(qc.getQueryData<Me>(getMeQueryKey())?.orgId).toBe("org_ana"));
     expect(sdk.getMe).toHaveBeenCalled();
     await waitFor(() => expect(screen.queryByRole("button", { name: "Accept" })).not.toBeInTheDocument());
+    expect(sdk.push).not.toHaveBeenCalled(); // a member stays in the business workspace
+  });
+
+  it("takes someone who accepts as a Reviewer to the reviewer portal, where their work is", async () => {
+    const asReviewer = { ...OWN.invitations![0], role: "reviewer" as const };
+    sdk.accept.mockResolvedValue({ data: { ...JOINED, role: "reviewer" } });
+    // As in the app, /v1/me answers only after the reset has emptied it and the notice has gone.
+    let answer: (v: unknown) => void = () => {};
+    sdk.getMe.mockReturnValue(new Promise((resolve) => (answer = resolve)));
+    setup({ ...OWN, invitations: [asReviewer] });
+    await userEvent.click(screen.getByRole("button", { name: "Accept" }));
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Accept" })).not.toBeInTheDocument());
+    expect(sdk.push).not.toHaveBeenCalled();
+    answer({ data: { ...JOINED, role: "reviewer" } });
+    await waitFor(() => expect(sdk.push).toHaveBeenCalledWith("/work"));
   });
 
   it("declining removes the notice and keeps the rest of the cache", async () => {

@@ -1439,6 +1439,10 @@ export type HumanTask = {
      * Via
      */
     via?: 'team' | 'network';
+    /**
+     * Details
+     */
+    details?: Array<DigestRow>;
 };
 
 /**

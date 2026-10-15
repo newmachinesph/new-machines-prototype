@@ -7,6 +7,7 @@ import {
   Brain,
   Check,
   ChevronRight,
+  Hammer,
   ChevronsUpDown,
   LogOut,
   CircleDollarSign,
@@ -70,7 +71,8 @@ type PageKey =
   | "earnings"
   | "studio"
   | "studioAgents"
-  | "studioPacks";
+  | "studioPacks"
+  | "developerStudio";
 type CrumbKey = "crumbDeliverable" | "crumbHire" | "crumbStartRun" | "crumbNew";
 
 /** `label` is a key under `nav`. */
@@ -83,6 +85,8 @@ const BUSINESS_NAV: Item[][] = [
     { href: "/app/approvals", label: "approvals", icon: ListChecks },
     { href: "/app/marketplace", label: "marketplace", icon: Store },
     { href: "/app/agents", label: "agents", icon: Bot },
+    // Where a business builds its own agents and packs (live workspace only, like the workspace menu's item).
+    { href: "/studio", label: "developerStudio", icon: Hammer, liveOnly: true },
   ],
   [
     { href: "/app/memory", label: "memory", icon: Brain },
@@ -115,8 +119,8 @@ export type ShellMode = "business" | "work" | "studio";
 const NAV: Record<ShellMode, Item[][]> = { business: BUSINESS_NAV, work: WORK_NAV, studio: STUDIO_NAV };
 const HOME: Record<ShellMode, string> = { business: "/app", work: "/work", studio: "/studio" };
 
-/** The pages a view offers, in the sidebar and the command palette alike. Reviewer management exists only
- * in a live workspace, so the demo's navigation is unchanged. */
+/** The pages a view offers, in the sidebar and the command palette alike. Reviewer management and the
+ * Developer Studio exist only in a live workspace, so the demo's navigation is unchanged. */
 const navFor = (mode: ShellMode, live: boolean): Item[][] =>
   NAV[mode].map((g) => g.filter((item) => live || !item.liveOnly));
 
@@ -264,7 +268,9 @@ function WorkspaceMenu({ mode }: { mode: ShellMode }) {
   const person = usePerson();
   const failed = meQuery.isError;
   const orgName = me?.orgName ?? "";
-  const name = work ? t("reviewerName") : failed ? t("workspaceUnavailable") : orgName;
+  // The demo's reviewer is a made-up persona; a live reviewer portal is the signed-in person's.
+  const persona = work && demo;
+  const name = persona ? t("reviewerName") : work ? t("reviewerPortal") : failed ? t("workspaceUnavailable") : orgName;
   // Until /v1/me answers there is no name to show, but the control still needs one.
   const label = name || t("workspaceLoading");
   return (
@@ -386,6 +392,8 @@ function Sidebar({ mode, path }: { mode: ShellMode; path: string }) {
   const setPaletteOpen = useUi((s) => s.setPaletteOpen);
   const t = useTranslations("nav");
   const person = usePerson();
+  const demo = useIsDemo();
+  const persona = work && demo;
   return (
     <aside className="hidden w-[248px] shrink-0 border-r border-rule bg-paper lg:block">
       <div className="sticky top-0 flex h-dvh flex-col">
@@ -411,11 +419,14 @@ function Sidebar({ mode, path }: { mode: ShellMode; path: string }) {
               className="grid size-6 place-items-center rounded-full bg-grey-100 text-[11px] font-semibold"
               aria-hidden
             >
-              {work ? "R" : initial(person.name)}
+              {persona ? "R" : initial(person.name)}
             </span>
             <div className="min-w-0 text-xs leading-tight">
-              <div className="truncate font-medium text-ink">{work ? t("reviewerName") : person.name}</div>
-              <div className="truncate text-muted">{work ? t("reviewerRole") : person.role}</div>
+              <div className="truncate font-medium text-ink">{persona ? t("reviewerName") : person.name}</div>
+              {/* In the reviewer portal everyone works as a reviewer, whatever their workspace role. */}
+              <div className="truncate text-muted">
+                {persona ? t("reviewerRole") : work ? t("roles.reviewer") : person.role}
+              </div>
             </div>
           </div>
         </div>

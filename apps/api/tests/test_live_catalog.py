@@ -14,7 +14,7 @@ from app import db as app_db
 from app.defs import registry
 from app.defs.loader import load_bundle
 from app.main import create_app
-from app.runtime import memory
+from app.runtime import memory, projection
 from app.store import get_store, reset_store
 from app.worker import activities
 
@@ -690,3 +690,101 @@ def test_earnings_are_the_tasks_the_reviewer_decided(ana, ben, db):
     assert all(e["status"] == "PAID_SIMULATED" and e["simulated"] is True for e in earned)
     assert ben.get("/v1/reviewer/earnings").json() == []  # Ben's decision was in Ana's org
     json.dumps(earned)
+
+
+def test_the_workflow_settling_a_review_keeps_the_reviewer_s_verdict(ana, db):
+    """The API stores the verdict; the workflow then records the same decision and must not drop it, or
+    Earnings falls back to "Approved" for a review sent back with corrections."""
+    _add_run(db, ana.org_id, "run_a")
+    api_result = {
+        "outcome": "resolved",
+        "note": "fix #1004",
+        "resolutions": [],
+        "verdict": "REVISION_REQUIRED",
+    }
+    db.execute(
+        "INSERT INTO run_tasks (id, run_id, node_id, kind, status, payload, result, decided_by, decided_at) "
+        "VALUES ('ht_rev', 'run_a', 'review', 'human', 'resolved', %s, %s, 'uid_ana', now())",
+        (Jsonb({"title": "Resolve mismatches"}), Jsonb(api_result)),
+    )
+    call = activities.TaskDecision(
+        run_id="run_a",
+        node_id="review",
+        attempt=1,
+        step=1,
+        kind="human",
+        task_id="ht_rev",
+        outcome="resolved",
+        note="fix #1004",
+        by="uid_ana",
+    )
+    activities._settle_task(db, call)
+    db.commit()
+    stored = db.execute("SELECT result FROM run_tasks WHERE id = 'ht_rev'").fetchone()["result"]
+    assert stored["verdict"] == "REVISION_REQUIRED"
+    assert [e["verdict"] for e in ana.get("/v1/reviewer/earnings").json()] == ["REVISION_REQUIRED"]
+
+
+def test_the_buyer_s_timeline_names_a_review_without_the_reviewer_s_account(ana, db):
+    """A network reviewer is "Network reviewer" to the buyer, never their account id, and their simulated pay
+    is the run's reviewer pay; a member shows by name. The verdict names the decision."""
+    _add_run(db, ana.org_id, "run_a")
+    tasks = [
+        ("ht_net", "uid_stranger", {"claimed_via": "network", "pay": 300}),
+        ("ht_team", "uid_ana", {"claimed_via": "team"}),
+    ]
+    for task_id, by, payload in tasks:
+        db.execute(
+            "INSERT INTO run_tasks (id, run_id, node_id, kind, status, payload, result, decided_by, "
+            "decided_at) VALUES (%s, 'run_a', 'review', 'human', 'resolved', %s, %s, %s, now())",
+            (task_id, Jsonb({"title": "Resolve", **payload}), Jsonb({"verdict": "REVISION_REQUIRED"}), by),
+        )
+    events = {}
+    for task_id, by, _ in tasks:
+        call = activities.TaskDecision(
+            run_id="run_a",
+            node_id="review",
+            attempt=1,
+            step=1,
+            kind="human",
+            task_id=task_id,
+            outcome="resolved",
+            by=by,
+        )
+        final = activities._settle_task(db, call)
+        events[task_id] = activities._task_events(final, activities._shown_decision(db, final))[0][1]
+    assert events["ht_net"]["decided_by"] == "Network reviewer"
+    assert events["ht_net"]["cost_minor"] == 300 and events["ht_net"]["verdict"] == "REVISION_REQUIRED"
+    assert "uid_stranger" not in json.dumps(events["ht_net"])
+    assert events["ht_team"]["decided_by"] == "Ana Reyes" and "cost_minor" not in events["ht_team"]
+
+    p = {"status": "WAITING_FOR_HUMAN", "nodes": [], "spent": {}, "timeline": []}
+    projection._on_human_task(p, {"node_id": "review", "at": "2026-10-15T00:00:00Z"}, events["ht_net"])
+    assert p["spent"]["human"]["amountMinor"] == 300  # the run's reviewer pay
+    assert [(t["who"], t["title"]) for t in p["timeline"]] == [
+        ("Network reviewer", "Sent back with corrections")
+    ]
+
+
+def test_runs_settled_before_the_fix_lose_the_network_reviewer_s_account_id(ana, db):
+    """Migration 014 renames the entries that resolved a network-claimed task, and nothing else."""
+    _add_run(db, ana.org_id, "run_a")
+    timeline = [
+        {"actor": "system", "who": "Human workforce", "title": "Created task ht_net", "ref": "ht_net"},
+        {"actor": "human", "who": "uid_stranger", "title": "Resolved the task", "ref": "ht_net"},
+        {"actor": "human", "who": "uid_ana", "title": "Resolved the task", "ref": "ht_team"},
+    ]
+    db.execute(
+        "UPDATE runs SET projection = projection || %s WHERE id = 'run_a'", (Jsonb({"timeline": timeline}),)
+    )
+    for task_id, by, via in (("ht_net", "uid_stranger", "network"), ("ht_team", "uid_ana", "team")):
+        db.execute(
+            "INSERT INTO run_tasks (id, run_id, node_id, kind, status, payload, decided_by, decided_at) "
+            "VALUES (%s, 'run_a', 'review', 'human', 'resolved', %s, %s, now())",
+            (task_id, Jsonb({"claimed_via": via}), by),
+        )
+    db.execute((app_db.MIGRATIONS_DIR / "014_anonymous_network_reviews.sql").read_text("utf-8"))
+    db.commit()
+    after = db.execute("SELECT projection FROM runs WHERE id = 'run_a'").fetchone()["projection"]["timeline"]
+    assert [t["who"] for t in after] == ["Human workforce", "Network reviewer", "uid_ana"]
+    assert [t["title"] for t in after] == [t["title"] for t in timeline]

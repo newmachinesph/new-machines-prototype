@@ -284,6 +284,57 @@ def test_network_reviewers_get_a_copy_without_the_org_or_contact_details(ana, ni
     assert body["payTerms"] == "Simulated pay: no money moves"
 
 
+def test_a_review_that_shows_an_object_reads_as_labelled_details(ana, nina, db):
+    """A pack built in the Studio often shows an agent's output: one row per key, sent with the task, not
+    the offer. The network copy is cleaned like the records; the team's hides contact details only."""
+    show = {"request": f"Check order #1001 for Ana's workspace. {NOTE}", "matched": True, "lines": [1, 2]}
+    _task(db, ana.org_id, "network", payload={"title": "Review the request", "show": show})
+    offer = nina.get("/v1/human-tasks/eligible").json()[0]
+    assert "details" not in offer
+    task = nina.get(f"/v1/human-tasks/{_pid(db)}")
+    _assert_clean(task.text)
+    assert task.json()["records"] == []
+    cleaned = "Check order #1001 for the customer. the customer asked: call Hidden or write Hidden."
+    # Postgres keeps an object's keys in its own order (jsonb), so the rows are compared as a set.
+    assert sorted(task.json()["details"], key=lambda r: r["label"]) == [
+        {"label": "Lines", "value": "[1, 2]"},
+        {"label": "Matched", "value": "true"},
+        {"label": "Request", "value": cleaned},
+    ]
+    row = {
+        **_rows(db, "SELECT * FROM run_tasks")[0],
+        "via": "team",
+        "run_title": "R",
+        "org_name": "Ana's workspace",
+    }
+    own = "Check order #1001 for Ana's workspace. Ana's workspace asked: call Hidden or write Hidden."
+    assert {d.label: d.value for d in tasks.real_task(row).details}["Request"] == own
+
+
+def test_details_are_cleaned_before_they_are_cut_or_shaped():
+    """A cut must not leave part of an email address or of the org's name that the cleaning no longer
+    recognises, and a key is cleaned before its dashes and underscores become spaces."""
+
+    def clean(text: str) -> str:
+        return scrub(text, "Coca-Cola")
+
+    pad = "x" * (tasks.MAX_DETAIL_CHARS - 12)
+    show = {"coca-cola_ref": f"{pad} write jane.doe@cocacola.com or Coca-Cola", "lines": [True, None, "a"]}
+    rows = {d.label: d.value for d in tasks._details(show, clean)}
+    assert "The customer ref" in rows
+    long = rows["The customer ref"]
+    assert len(long) == tasks.MAX_DETAIL_CHARS and long.endswith("…")
+    assert "jane" not in long and "cocacola" not in long and "Coca" not in long
+    assert rows["Lines"] == '[true, null, "a"]'
+    assert [(d.label, d.value) for d in tasks._details(["a", 2], clean)] == [("Details", '["a", 2]')]
+    assert [(d.label, d.value) for d in tasks._details("Check it.", clean)] == [("Details", "Check it.")]
+
+    many = tasks._details({f"k{i}": i for i in range(tasks.MAX_DETAILS + 4)}, clean)
+    assert len(many) == tasks.MAX_DETAILS + 1
+    assert (many[-1].label, many[-1].value) == ("More", "4 more fields are not shown here.")
+    assert tasks._details([{"ref": "r1"}, "a"], clean) == []  # a list of objects shows as records
+
+
 def test_no_network_response_carries_the_org_or_contact_details(ana, nina, db):
     _task(db, ana.org_id, "network", payload=_leaky_payload())
     db.execute("UPDATE runs SET projection = jsonb_set(projection, '{title}', '\"Ana''s workspace recon\"')")

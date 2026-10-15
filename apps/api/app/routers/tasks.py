@@ -1,9 +1,12 @@
+import json
+from collections.abc import Callable
+
 from app import live_work, network_reviewers, review_routing, run_tasks, temporal_client, workspace
 from app.auth import Actor, CurrentActor
 from app.errors import ApiProblem
 from app.models.common import Model, Money, money_text
 from app.models.requests import SubmitReviewRequest
-from app.models.work import Earning, HumanTask, OrderSide, PaymentSide, RedactedRecord
+from app.models.work import DigestRow, Earning, HumanTask, OrderSide, PaymentSide, RedactedRecord
 from app.models.workforce import NetworkProfile, NetworkProfileRequest
 from app.redaction import redacted, scrub, without_name
 from app.routing import ApiRouter
@@ -26,6 +29,9 @@ MAX_TEXT = 1000  # characters of a note, record id or resolution sent to the wor
 MAX_RESOLUTIONS = 100
 LEASE_MINUTES = 45
 MINUTES_PER_RECORD = 5
+MAX_DETAILS = 30  # rows a review's details show at most
+MAX_DETAIL_CHARS = 2000  # characters of one detail row's value
+MAX_LABEL_CHARS = 80  # characters of one detail row's label
 OBLIGATIONS = [
     "Customer names are hidden. Do not try to find them.",
     "No copying, screenshots or downloads.",
@@ -116,6 +122,45 @@ def _records(payload: dict) -> list[RedactedRecord]:
     return [record for _, record in _indexed_records(payload)]
 
 
+def _clip(text: str, limit: int) -> str:
+    return text if len(text) <= limit else f"{text[: limit - 1]}…"
+
+
+def _as_text(value: object) -> str:
+    return value if isinstance(value, str) else json.dumps(value, ensure_ascii=False, default=str)
+
+
+def _label(key: str) -> str:
+    """A shown object's key as a row label: `request_id` reads "Request id"."""
+    words = key.replace("_", " ").replace("-", " ").strip()
+    return _clip(words[:1].upper() + words[1:], MAX_LABEL_CHARS) if words else "Details"
+
+
+def _details(show: object, clean: Callable[[str], str]) -> list[DigestRow]:
+    """What a review shows that is not a list of records, as labelled rows. A pack built in the Studio often
+    shows an agent's output, an object: one row per key, and a last row saying how many more there are. A
+    list of objects shows as records instead (none here); a text, a number or a list of values is one row.
+
+    Each text is cleaned by `clean` whole, before it is shaped or cut, so a name or an email address is
+    never cut to a part the cleaning no longer recognises."""
+    if (
+        show is None
+        or show in ("", [], {})
+        or (isinstance(show, list) and any(isinstance(i, dict) for i in show))
+    ):
+        return []
+    rows = list(show.items()) if isinstance(show, dict) else [("Details", show)]
+    out = [
+        DigestRow(label=_label(clean(str(key))), value=_clip(clean(_as_text(value)), MAX_DETAIL_CHARS))
+        for key, value in rows[:MAX_DETAILS]
+    ]
+    if len(rows) > MAX_DETAILS:
+        out.append(
+            DigestRow(label="More", value=f"{len(rows) - MAX_DETAILS} more fields are not shown here.")
+        )
+    return out
+
+
 def _pay(payload: dict, via: str | None) -> tuple[int, str]:
     """(pay in minor units, pay terms) of the task as this reviewer sees it. A network copy shows the pay its
     network claim recorded, or before a claim the pay such a claim would record."""
@@ -185,6 +230,7 @@ def real_task(row: dict) -> HumanTask:
         return scrub(value, org_name) if network else value
 
     records = _network_records(payload, org_name) if network else _records(payload)
+    details = _details(payload.get("show"), (lambda v: scrub(v, org_name)) if network else redacted)
     title = text(str(payload.get("title") or "Review the result"))
     pay, terms = _pay(payload, via)
     posted_at = iso(row["created_at"])
@@ -216,6 +262,7 @@ def real_task(row: dict) -> HumanTask:
         real_run=True,
         run_outcome=RUN_OUTCOMES.get(row["status"]),
         via=via,
+        details=details or None,
     )
 
 
@@ -257,7 +304,7 @@ def list_eligible_human_tasks(actor: CurrentActor) -> list[HumanTask]:
     real = [real_task(row) for row in _offered_rows(actor)]
     fixtures = [] if workspace.live() else list(get_store().tasks.values())
     offered = [t for t in real if t.state == "OFFERED"] + [t for t in fixtures if t.state == "OFFERED"]
-    return [t.model_copy(update={"records": []}) for t in offered]
+    return [t.model_copy(update={"records": [], "details": None}) for t in offered]
 
 
 @router.get("/human-tasks/{task_id}", operation_id="getHumanTask", response_model=HumanTask)

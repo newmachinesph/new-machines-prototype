@@ -688,6 +688,8 @@
       "filterLabel": "Filter packs",
       "industryLabel": "Filter by industry",
       "allIndustries": "All industries",
+      "buildOwn": "Need a pack that isn't here? Build your own in the Developer Studio.",
+      "buildOwnCta": "Build a pack",
       "priceNote": "Prices are estimates per run. You only pay reviewers when a run needs one.",
       "search": "Search packs",
       "searchPlaceholder": "Search packs by outcome, publisher or category",
@@ -1234,6 +1236,9 @@
         "helpRun": "Needs someone with more authority or context. The run stops here."
       }
     },
+    "details": {
+      "title": "What to review"
+    },
     "feedback": {
       "label": "Feedback for the agent",
       "help": "Plain language. If it holds in general, it may be proposed as a memory for the business to approve.",
@@ -1241,6 +1246,7 @@
       "submit": "Submit review",
       "expired": "Your hold ran out. Claim the task again to submit.",
       "incomplete": "Decide on every record and write at least a sentence of feedback.",
+      "incompleteNoRecords": "Write at least a sentence of feedback.",
       "submitFailed": "Could not submit"
     },
     "record": {

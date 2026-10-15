@@ -33,6 +33,12 @@ class RedactedRecord(Model):
     agent_note: str
 
 
+class DigestRow(Model):
+    label: str
+    value: str
+    mono: bool | Opt = None
+
+
 class HumanTask(Model):
     id: str
     version: int
@@ -62,12 +68,9 @@ class HumanTask(Model):
     # Live workspace: how this reviewer reaches the task. "team": the org's own copy, unpaid; "network": a
     # copy without the org's name or contact details, with simulated pay.
     via: Literal["team", "network"] | Opt = None
-
-
-class DigestRow(Model):
-    label: str
-    value: str
-    mono: bool | Opt = None
+    # What the review shows that is not a list of records (a pack built in the Studio often shows an agent's
+    # output): labelled rows, cleaned as the records are. Sent with the task, not with an offer.
+    details: list[DigestRow] | Opt = None
 
 
 class EmailPreview(Model):

@@ -5,10 +5,17 @@ import type { HumanTask } from "@/lib/api/gen/types.gen";
 import { renderWithIntl } from "@/test/intl";
 import { TaskWorkspace } from "./task-workspace";
 
+const submitted = vi.hoisted(() => [] as unknown[]);
 const done = <T,>(_vars: unknown, opts?: { onSuccess?: (t: T) => void }) => opts?.onSuccess?.({} as T);
 vi.mock("@/lib/queries/tasks", () => ({
   useClaimTask: () => ({ mutate: done, isPending: false }),
-  useSubmitReview: () => ({ mutate: done, isPending: false }),
+  useSubmitReview: () => ({
+    mutate: (vars: unknown, opts?: { onSuccess?: (t: unknown) => void }) => {
+      submitted.push(vars);
+      done(vars, opts);
+    },
+    isPending: false,
+  }),
 }));
 vi.mock("@/components/base", async (orig) => ({ ...(await orig<object>()), useToast: () => vi.fn() }));
 const workspace = vi.hoisted(() => ({ demo: true }));
@@ -193,6 +200,35 @@ describe("TaskWorkspace team and network reviews", () => {
     await user.type(screen.getByRole("textbox", { name: "Feedback for the agent" }), "They are the same payment.");
     await user.click(screen.getByRole("button", { name: "Submit review" }));
   }
+
+  it("lets a reviewer claim and review a real run's task that shows no records", async () => {
+    workspace.demo = false;
+    const bare = { ...team, records: [], details: [{ label: "Request", value: "Check order #1001." }] };
+    const user = userEvent.setup();
+    renderWithIntl(<TaskWorkspace task={bare} buyer={bare.buyer} />);
+    expect(screen.queryByText("Only the reconciliation task can be claimed in this demo.")).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Claim this task" }));
+    // No records to call: the review is the verdict and the feedback alone, on what the pack shows.
+    expect(screen.queryByRole("radio", { name: "Same payment" })).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "What to review" })).toBeInTheDocument();
+    expect(screen.getByText("Request")).toBeInTheDocument();
+    expect(screen.getByText("Check order #1001.")).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: /Approve as is/ })).toBeChecked();
+    expect(screen.getByRole("button", { name: "Submit review" })).toBeDisabled();
+    expect(screen.getByText("Write at least a sentence of feedback.")).toBeInTheDocument();
+    await user.type(screen.getByRole("textbox", { name: "Feedback for the agent" }), "The request looks right.");
+    await user.click(screen.getByRole("button", { name: "Submit review" }));
+    expect(submitted.at(-1)).toMatchObject({
+      body: { verdict: "APPROVED", feedbackText: "The request looks right.", recordCalls: {} },
+    });
+    expect(screen.getByText("Review recorded. The run goes on with it.")).toBeInTheDocument();
+  });
+
+  it("keeps a demo fixture without records for looking only", () => {
+    renderWithIntl(<TaskWorkspace task={{ ...task, records: [] }} buyer={task.buyer} />);
+    expect(screen.getByRole("button", { name: "Claim this task" })).toBeDisabled();
+    expect(screen.getByText("Only the reconciliation task can be claimed in this demo.")).toBeInTheDocument();
+  });
 
   it("labels a team review unpaid before the claim, with no pay owed", () => {
     workspace.demo = false;

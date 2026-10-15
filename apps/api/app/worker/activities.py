@@ -33,6 +33,7 @@ SAFE_ERROR_TYPES = {"ConfigError", "CelError", "InputInvalid", "OutputInvalid"} 
 _OUTCOMES = {"human": {"resolved", "rejected", "timeout"}, "approval": {"granted", "denied", "timeout"}}
 REVIEW_VERDICTS = {"HUMAN_REVIEW", "ESCALATED", "REVISION_REQUIRED"}
 _FAILED_STATUS = {"rejected": "REJECTED", "denied": "REJECTED", "timeout": "TIMED_OUT"}
+NETWORK_REVIEWER = "Network reviewer"  # a network reviewer as the buyer's timeline names them
 
 SEALED = "receipt.sealed"
 RUN_SEALED = "RunSealed"  # error type: the run's receipt is sealed, so nothing more may happen in it
@@ -754,17 +755,56 @@ def _settle_task(conn, call: TaskDecision) -> TaskDecision:
     by = row["decided_by"] or call.by
     final = replace(call, by=by)
     open_only = "AND status IN ('open', 'pending')" if call.outcome == "timeout" else ""
+    # Merged, not replaced: the API's record of the decision carries more than the workflow's (the verdict).
     conn.execute(
-        "UPDATE run_tasks SET status = %s, result = %s, decided_by = %s, "
+        "UPDATE run_tasks SET status = %s, result = COALESCE(result, '{}'::jsonb) || %s, decided_by = %s, "
         f"decided_at = COALESCE(decided_at, now()) WHERE id = %s {open_only}",
         (call.outcome, Jsonb(_task_result(final)), by, call.task_id),
     )
     return final
 
 
-def _task_events(call: TaskDecision) -> list[Event]:
+def pay_minor(payload: dict) -> int:
+    """A human task's pay: `pay` in minor units, or a Money object; 0 without one."""
+    pay = payload.get("pay")
+    if isinstance(pay, dict):
+        pay = pay.get("amountMinor", pay.get("amount_minor"))
+    try:
+        return max(int(pay or 0), 0)
+    except TypeError, ValueError:
+        return 0
+
+
+def _shown_decision(conn, call: TaskDecision) -> dict:
+    """What the run's timeline shows of a settled decision. An approval: who decided, as recorded. A review:
+    who made it as the buyer may see them (a network reviewer stays anonymous, a member shows by name or
+    email), its verdict, and the network reviewer's simulated pay, which the run counts as reviewer pay."""
+    if call.kind != "human":
+        return {"decided_by": call.by}
+    row = conn.execute(
+        "SELECT t.payload, t.result, m.name, m.email FROM run_tasks t JOIN runs r ON r.id = t.run_id "
+        "LEFT JOIN org_members m ON m.org_id = r.org_id AND m.user_id = %s WHERE t.id = %s",
+        (call.by, call.task_id),
+    ).fetchone()
+    payload, result = (row["payload"] or {}, row["result"] or {}) if row else ({}, {})
+    network = payload.get("claimed_via") == "network"
+    if call.by is None:
+        who = None
+    elif network:
+        who = NETWORK_REVIEWER
+    else:  # the demo workspace's reviewers are not members: they show as recorded
+        who = (row and (row["name"] or row["email"])) or call.by
+    paid = network and call.outcome != "timeout"
+    return {
+        "decided_by": who,
+        "verdict": result.get("verdict"),
+        "cost_minor": pay_minor(payload) if paid else None,
+    }
+
+
+def _task_events(call: TaskDecision, shown: dict) -> list[Event]:
     human = call.kind == "human"
-    status = {"status": call.outcome, "decided_by": call.by}
+    status = {"status": call.outcome, **shown}
     if human:
         decided = ("human.task", {"task_id": call.task_id, "note": call.note or None, **status})
     else:
@@ -984,7 +1024,7 @@ class PackActivities:
             raise _fatal("ConfigError", f"{call.outcome!r} is not a {call.kind} outcome")
         with db.connect() as conn:
             final = _settle_task(conn, call)
-            record_events(conn, call.run_id, _keyed(call, _task_events(final)))
+            record_events(conn, call.run_id, _keyed(call, _task_events(final, _shown_decision(conn, final))))
             conn.commit()
         return {"output": _task_result(final), "route": final.outcome}
 

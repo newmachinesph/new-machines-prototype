@@ -8,10 +8,12 @@ import { Fragment } from "react";
 import { PackIcon } from "@/components/pack-icon";
 import { QueryState } from "@/components/query-state";
 import { Skeleton } from "@/components/skeleton";
-import { ActorGlyph, MockTag, Pill } from "@/components/ui";
+import { ActorGlyph, ButtonLink, MockTag, Pill } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useAgentById, useAgents, usePacks, useTaxonomy } from "@/lib/queries/catalog";
+import { useIsLive } from "@/lib/queries/me";
 import { useFormat } from "@/lib/use-format";
+import { useCanBuild } from "@/app/studio/can-build";
 
 // Sentinel values double as the `category` URL parameter, so they stay English; the labels shown are translated.
 const ALL = "All packs";
@@ -30,6 +32,9 @@ export function PackGrid() {
   const industries = taxonomy.data?.industries ?? [];
   const [industry, setIndustry] = useQueryState("industry", parseAsString.withDefault(ALL_INDUSTRIES));
   const [q, setQ] = useQueryState("q", parseAsString.withDefault(""));
+  // Owners and admins of a live workspace can build what the marketplace lacks (the Studio is live only).
+  const live = useIsLive();
+  const canBuild = useCanBuild();
 
   return (
     <QueryState query={packsQuery} skeleton={<PackGridSkeleton />}>
@@ -93,6 +98,14 @@ export function PackGrid() {
                       </Fragment>
                     ))}
                   </nav>
+                  {live && canBuild ? (
+                    <div className="space-y-2 border-t border-rule pt-4">
+                      <p className="text-sm leading-relaxed text-grey-700">{t("buildOwn")}</p>
+                      <ButtonLink href="/studio/packs/new" variant="secondary" className="h-8">
+                        {t("buildOwnCta")}
+                      </ButtonLink>
+                    </div>
+                  ) : null}
                   <p className="hidden border-t border-rule pt-4 text-xs leading-relaxed text-muted xl:block">
                     {t("priceNote")}
                   </p>
