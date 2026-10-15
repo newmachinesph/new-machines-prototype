@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { screen } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { renderWithIntl } from "@/test/intl";
 import { EarningsView } from "./earnings/earnings-view";
@@ -69,6 +69,7 @@ describe("reviewer portal views in Japanese", () => {
     renderWithIntl(<EarningsView />, { locale: "ja" });
     expect(screen.getByRole("heading", { name: "報酬" })).toBeInTheDocument();
     expect(screen.getByText("未払いの報酬")).toBeInTheDocument();
+    expect(screen.getByText("Quality audit, 5 reconciled orders").closest("li")).toHaveTextContent("判定: 承認");
     expect(screen.getByText("支払い済み")).toBeInTheDocument();
     expect(screen.getByText("Quality audit, 5 reconciled orders")).toBeInTheDocument();
     expect(screen.getAllByText("$7.50").length).toBeGreaterThan(0);
@@ -115,6 +116,21 @@ describe("reviewer portal in a live workspace", () => {
   });
 });
 
+describe("turning on network reviewing from the empty state", () => {
+  it("moves focus to the switch in the side card instead of dropping it on the page", async () => {
+    workspace.demo = false;
+    lists.tasks = [];
+    profile.data = { enabled: false, suspended: false, name: "Nina", languages: ["English"], skills: [] };
+    const { rerender } = renderWithIntl(<WorkView />);
+    const emptySwitch = screen.getByRole("checkbox", { name: "Review for the network" });
+    emptySwitch.focus();
+    profile.data = { enabled: true, suspended: false, name: "Nina", languages: ["English"], skills: [] };
+    rerender(<WorkView />);
+    await waitFor(() => expect(screen.getByRole("checkbox", { name: "Review for the network" })).toHaveFocus());
+    expect(document.body).not.toHaveFocus();
+  });
+});
+
 describe("reviewer portal with team and network tasks", () => {
   it("marks a team task unpaid and a network task as network work", () => {
     workspace.demo = false;
@@ -156,12 +172,44 @@ describe("reviewer portal with team and network tasks", () => {
     expect(screen.queryByText(/demo/i)).toBeNull();
     const team = screen.getByText("Team check").closest("li")!;
     expect(team).toHaveTextContent("Team review, unpaid");
-    expect(team).not.toHaveTextContent("Paid (simulated)");
+    expect(team).not.toHaveTextContent(/\bPaid\b/);
     expect(team).not.toHaveTextContent("$0.00");
     const network = screen.getByText("Network check").closest("li")!;
-    expect(network).toHaveTextContent("Paid (simulated)");
+    expect(network).toHaveTextContent(/\bPaid\b/);
     expect(network).toHaveTextContent("$1.50");
     lists.earnings = null;
+  });
+
+  it("links a live earning to its task with the verdict and payment apart, the zone named, and no raw id", () => {
+    workspace.demo = false;
+    renderWithIntl(<EarningsView />);
+    const row = screen.getByRole("link", { name: /Quality audit, 5 reconciled orders/ });
+    expect(row).toHaveAttribute("href", "/work/tasks/ht_009");
+    expect(row).toHaveTextContent("Verdict: Approved");
+    expect(row).toHaveTextContent("Payment: Owed$7.50");
+    expect(row).toHaveTextContent("Oct 11, 10:00 PM GMT+8");
+    expect(row).not.toHaveTextContent("ht_009");
+    expect(screen.getAllByText("Verdict").length).toBeGreaterThan(0);
+  });
+
+  it("shows demo earnings as plain rows, since the demo has no task page behind them", () => {
+    renderWithIntl(<EarningsView />);
+    expect(screen.queryByRole("link", { name: /Quality audit/ })).toBeNull();
+    const row = screen.getByText("Quality audit, 5 reconciled orders").closest("li")!;
+    expect(row).toHaveTextContent("Verdict: Approved");
+    expect(row).toHaveTextContent("Payment: Owed$7.50");
+  });
+
+  it("labels the simulated pay once, by the title, and calls unpaid amounts owed on both pages", () => {
+    const { unmount } = renderWithIntl(<EarningsView />);
+    expect(screen.getAllByText("No real payouts in this demo")).toHaveLength(1);
+    expect(screen.getAllByText("Owed").length).toBeGreaterThan(0); // the total and the row's status
+    expect(screen.queryByText("Owed to you")).toBeNull();
+    unmount();
+    renderWithIntl(<WorkView />);
+    expect(screen.getAllByText("Pay is simulated in this demo")).toHaveLength(1);
+    expect(screen.getByText("Owed")).toBeInTheDocument();
+    expect(screen.queryByText("Not yet paid")).toBeNull();
   });
 
   it("says in Japanese that team reviews are unpaid on the live earnings page", () => {
@@ -191,5 +239,25 @@ describe("reviewer portal with team and network tasks", () => {
     workspace.demo = true;
     renderWithIntl(<WorkView />);
     expect(screen.queryByRole("checkbox", { name: "Review for the network" })).toBeNull();
+  });
+
+  it("puts the network switch in the empty state when there are no tasks and the switch is off", () => {
+    profile.data = { enabled: false, suspended: false, name: "Nina Park", languages: [], skills: [] };
+    workspace.demo = false;
+    lists.tasks = [];
+    renderWithIntl(<WorkView />);
+    expect(screen.getByText(/Turn on network reviewing to get review tasks/)).toBeInTheDocument();
+    // Once: in the empty state, not again in the aside.
+    expect(screen.getByRole("checkbox", { name: "Review for the network" })).toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: "See earnings" })[0]).toHaveAttribute("href", "/work/earnings");
+  });
+
+  it("keeps the network switch in the aside once it is on", () => {
+    profile.data = { enabled: true, suspended: false, name: "Nina Park", languages: ["English"], skills: [] };
+    workspace.demo = false;
+    lists.tasks = [];
+    renderWithIntl(<WorkView />);
+    expect(screen.getByText(/No review tasks are open right now\. New ones appear/)).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: "Review for the network" })).toBeChecked();
   });
 });

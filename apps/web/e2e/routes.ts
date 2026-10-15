@@ -4,13 +4,16 @@ import type { Locator, Page } from "@playwright/test";
 export type RouteSpec = { path: string; ready: (page: Page) => Locator };
 
 const text = (value: string) => (page: Page) => page.locator("main").getByText(value).first();
+// For pages that render a phone copy and a desktop copy of the same row, wait for the one that is on screen.
+const visibleText = (value: string) => (page: Page) =>
+  page.locator("main").getByText(value).filter({ visible: true }).first();
 const PACK = text("Order & Payment Reconciliation");
 const TASK = text("Correct 3 order-to-payout exceptions");
 
 export const ROUTES: RouteSpec[] = [
   { path: "/", ready: (page) => page.locator("h1").first() },
   { path: "/app", ready: text("Reconcile Oct 11 orders") },
-  { path: "/app/runs", ready: text("Reconcile Oct 11 orders") },
+  { path: "/app/runs", ready: visibleText("Reconcile Oct 11 orders") },
   { path: "/app/runs/run_1042", ready: text("Reconcile Oct 1–10 orders") },
   { path: "/app/runs/run_1042/evidence", ready: text("Reconcile Oct 1–10 orders") },
   { path: "/app/runs/new", ready: PACK },

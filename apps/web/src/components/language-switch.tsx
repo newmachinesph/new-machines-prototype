@@ -37,7 +37,7 @@ export function LanguageSwitch({ className }: { className?: string }) {
           aria-pressed={locale === value}
           disabled={pending}
           onClick={() => choose(value)}
-          className="rounded px-1.5 py-0.5 text-xs text-muted aria-pressed:font-medium aria-pressed:text-ink"
+          className="min-h-10 rounded-md px-2.5 text-[13px] text-muted hover:text-ink aria-pressed:font-medium aria-pressed:text-ink"
         >
           {LOCALE_LABELS[value]}
         </button>

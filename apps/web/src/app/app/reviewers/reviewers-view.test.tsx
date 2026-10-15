@@ -9,6 +9,7 @@ const RITA = { email: "rita@example.com", name: "rita@example.com", role: "revie
 const state = vi.hoisted(() => ({
   workspace: "live",
   role: "owner",
+  email: "ana@example.com",
   allow: false,
   reviewers: [] as unknown[],
 }));
@@ -20,7 +21,7 @@ vi.mock("@/components/base", async (importOriginal) => ({
   useToast: () => m.toast,
 }));
 vi.mock("@/lib/queries/me", () => ({
-  useMe: () => ({ data: { workspace: state.workspace, role: state.role, orgId: "org_new" } }),
+  useMe: () => ({ data: { workspace: state.workspace, role: state.role, email: state.email, orgId: "org_new" } }),
   useOrgId: () => "org_new",
 }));
 vi.mock("@/lib/queries/reviewers", () => ({
@@ -37,7 +38,13 @@ vi.mock("@/lib/queries/reviewers", () => ({
 const path = { path: { org_id: "org_new" } };
 
 beforeEach(() => {
-  Object.assign(state, { workspace: "live", role: "owner", allow: false, reviewers: [ANA, RITA] });
+  Object.assign(state, {
+    workspace: "live",
+    role: "owner",
+    email: "ana@example.com",
+    allow: false,
+    reviewers: [ANA, RITA],
+  });
   for (const fn of Object.values(m)) fn.mockReset();
 });
 
@@ -82,6 +89,20 @@ describe("ReviewersView", () => {
     expect(input).toHaveAccessibleDescription("Enter a full email address, like name@company.com.");
     expect(screen.getByRole("button", { name: "Add" })).toBeDisabled();
     expect(m.add).not.toHaveBeenCalled();
+  });
+
+  it("offers Remove to everyone, with plainer wording when it is yourself", async () => {
+    state.email = "ANA@example.com";
+    renderWithIntl(<ReviewersView />);
+    expect(screen.getByRole("button", { name: "Remove rita@example.com" })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Remove Ana Reyes" }));
+    expect(screen.getByRole("heading", { name: "Remove yourself as a reviewer?" })).toBeInTheDocument();
+  });
+
+  it("shows no Remove button until we know who you are", () => {
+    state.email = undefined as unknown as string;
+    renderWithIntl(<ReviewersView />);
+    expect(screen.queryByRole("button", { name: /^Remove / })).toBeNull();
   });
 
   it("removes a reviewer after confirming and keeps focus in the list's section", async () => {

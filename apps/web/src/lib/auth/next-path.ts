@@ -1,7 +1,16 @@
-/** Where sign-in lands when there is no safe `next`. */
+/** Where sign-in lands when there is no safe `next`: the business workspace, or the portal for a reviewer. */
 export const DEFAULT_AFTER_SIGN_IN = "/app";
+export const REVIEWER_AFTER_SIGN_IN = "/work";
 
-const SIGNED_IN_AREAS = ["/app", "/work", "/studio"];
+export type SignedInArea = "app" | "work" | "studio";
+const SIGNED_IN_AREAS: SignedInArea[] = ["app", "work", "studio"];
+
+/** The signed-in area (`/app`, `/work` or `/studio`) a path belongs to, or null outside them. */
+export function signedInArea(path: string): SignedInArea | null {
+  return (
+    SIGNED_IN_AREAS.find((a) => path === `/${a}` || path.startsWith(`/${a}/`) || path.startsWith(`/${a}?`)) ?? null
+  );
+}
 
 /**
  * The `next` path after sign-in, or null when it is unsafe. Safe means a same-origin path (one leading `/`,
@@ -11,8 +20,7 @@ const SIGNED_IN_AREAS = ["/app", "/work", "/studio"];
 export function safeNext(raw: string | null | undefined): string | null {
   if (!raw || !raw.startsWith("/") || raw.startsWith("//") || raw.startsWith("/\\")) return null;
   if (raw.includes("://") || [...raw].some((c) => c < " " || c === "\\")) return null;
-  const inArea = SIGNED_IN_AREAS.some((a) => raw === a || raw.startsWith(`${a}/`) || raw.startsWith(`${a}?`));
-  return inArea ? raw : null;
+  return signedInArea(raw) ? raw : null;
 }
 
 /** The landing page, with a `next` that brings the visitor back to `path` (path and search) after sign-in. */

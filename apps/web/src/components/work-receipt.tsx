@@ -4,7 +4,8 @@ import { ShieldAlert, ShieldCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { RunStatus } from "@/lib/types";
 import { useReceipt } from "@/lib/queries/runs";
-import { Id, KeyValues, Pill, Section } from "./ui";
+import { CollapsibleSection, TechnicalDetails } from "./run-disclosures";
+import { Id, KeyValues, Pill } from "./ui";
 
 const HASH_PREFIX = 12;
 
@@ -25,7 +26,7 @@ const isKnownKind = (kind: string): kind is (typeof KNOWN_KINDS)[number] =>
   (KNOWN_KINDS as readonly string[]).includes(kind);
 
 /** The hash-chained record of a real run. Fixture runs have no receipt, so nothing renders for them. */
-export function WorkReceipt({ runId, status }: { runId: string; status: RunStatus }) {
+export function WorkReceipt({ runId, status, id }: { runId: string; status: RunStatus; id?: string }) {
   const t = useTranslations("run.view.receipt");
   const query = useReceipt(runId, status);
   const r = query.data;
@@ -34,7 +35,8 @@ export function WorkReceipt({ runId, status }: { runId: string; status: RunStatu
   const kindLabel = (kind: string) => (isKnownKind(kind) ? t(`kinds.${kind}`) : kind);
 
   return (
-    <Section
+    <CollapsibleSection
+      id={id}
       title={t("title")}
       aside={
         <Pill tone={r.verified ? "machine" : "blocked"}>
@@ -44,30 +46,33 @@ export function WorkReceipt({ runId, status }: { runId: string; status: RunStatu
       }
     >
       <div className="px-5 py-2">
-        <KeyValues
+        <KeyValues rows={[{ label: t("entries"), value: <span className="tnum">{r.entries}</span> }]} />
+        <p className="py-2 text-xs leading-relaxed text-muted">{t("help")}</p>
+        <TechnicalDetails
+          className="mb-3"
           rows={[
-            { label: t("entries"), value: <span className="tnum">{r.entries}</span> },
-            { label: t("headHash"), value: <Id>{r.headHash.slice(0, HASH_PREFIX)}</Id> },
+            { label: t("headHash"), value: r.headHash.slice(0, HASH_PREFIX) },
+            ...(r.pinned.length > 0
+              ? [
+                  {
+                    label: t("pinned"),
+                    value: (
+                      <ul className="space-y-1">
+                        {r.pinned.map((p) => (
+                          <li key={`${p.kind}:${p.key}`} className="flex flex-wrap items-baseline gap-x-2">
+                            <span className="text-muted">{kindLabel(p.kind)}</span>
+                            <Id className="text-[11px] break-all">{p.key}</Id>
+                            <span className="tnum text-grey-700">{t("version", { version: p.version })}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    ),
+                  },
+                ]
+              : []),
           ]}
         />
-        {r.pinned.length > 0 ? (
-          <div className="border-t border-rule py-3">
-            <h3 className="mb-2 text-xs font-medium text-muted">{t("pinned")}</h3>
-            <ul className="space-y-1.5 text-sm">
-              {r.pinned.map((p) => (
-                <li key={`${p.kind}:${p.key}`} className="flex items-baseline justify-between gap-3">
-                  <span className="min-w-0">
-                    <span className="text-xs text-muted">{kindLabel(p.kind)}</span>{" "}
-                    <Id className="break-all">{p.key}</Id>
-                  </span>
-                  <span className="tnum shrink-0 text-xs text-grey-700">{t("version", { version: p.version })}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
-        <p className="pb-2 text-xs leading-relaxed text-muted">{t("help")}</p>
       </div>
-    </Section>
+    </CollapsibleSection>
   );
 }

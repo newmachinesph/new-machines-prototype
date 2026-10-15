@@ -320,7 +320,10 @@ describe("StepSettings", () => {
 
   it("shows where each outcome goes, and duplicates and removes the step", async () => {
     const store = renderSettings("approve");
-    expect(screen.getByRole("combobox", { name: "granted goes to" })).toHaveTextContent("send");
+    // Targets read as the step list names them: number, kind of step, then the id.
+    expect(screen.getByRole("combobox", { name: "granted goes to" })).toHaveTextContent(
+      /^Step \d+: App step \(send\)$/,
+    );
     act(() => {
       store.getState().select("draft");
       store.getState().copy();

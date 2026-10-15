@@ -46,6 +46,7 @@ vi.mock("@/lib/queries/me", () => ({
 }));
 vi.mock("@/lib/queries/studio", () => ({
   useStudioAgents: () => ok([]),
+  useStudioPacks: () => ok([]),
   useStudioPalette: () => ok(PALETTE),
   useStudioAgent: () => mocks.agent,
   useCreateStudioAgent: () => mocks.create,
@@ -139,8 +140,9 @@ describe("AgentEditor", () => {
   it("keeps the turns field editable and settles it to a whole number from 1 to 20", async () => {
     renderWithIntl(<AgentEditor />);
     await fillIn();
-    const turns = screen.getByLabelText("Most turns per step");
-    expect(turns).toHaveAccessibleDescription(/from 1 to 20/);
+    const turns = screen.getByLabelText("Most tool calls per step");
+    // The range and the usual setting are read with the field.
+    expect(turns).toHaveAccessibleDescription(/from 1 to 20\. The usual setting is 6\./);
     await userEvent.clear(turns);
     expect(turns).toHaveValue(null);
     await userEvent.type(turns, "2.6");

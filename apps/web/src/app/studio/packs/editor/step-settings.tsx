@@ -10,6 +10,7 @@ import { Button } from "@/components/ui";
 import type { Palette } from "@/lib/api/gen/types.gen";
 import { celOptions, itemOptions } from "@/lib/builder/cel-fields";
 import type { StepEdge, StepNode, StepNodeData } from "@/lib/builder/graph";
+import { readingOrder } from "@/lib/builder/guided";
 import { outcomesOf } from "@/lib/builder/routes";
 import { STEP_SCHEMAS, withDerived } from "@/lib/builder/step-schemas";
 import { useEditor, useEditorApi, type PackDetails } from "@/lib/builder/store";
@@ -221,9 +222,14 @@ function Outcomes({
   const readOnly = useReadOnly();
   const outcomes = outcomesOf(data);
   if (!outcomes.length) return null;
+  // Named as the step list names them: its number in reading order and the kind of step, then the id.
   const targets = [
     { value: "", label: t("nowhere") },
-    ...nodes.filter((n) => n.id !== id && n.data.type !== "trigger").map((n) => ({ value: n.id, label: n.id })),
+    ...readingOrder(nodes, edges).flatMap((n, i) =>
+      n.id === id || n.data.type === "trigger"
+        ? []
+        : [{ value: n.id, label: t("stepTarget", { n: i + 1, kind: tc(`type.${n.data.type}`), id: n.id }) }],
+    ),
   ];
   const choose = (outcome: string, target: string) => {
     if (!target) {

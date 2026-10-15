@@ -413,7 +413,7 @@ function AgentForm({
                 />
               </label>
               <p id={turnsHelpId} className="mt-1 text-xs text-muted">
-                {t("maxTurnsHelp")}
+                {t("maxTurnsHelp", { n: DEFAULT_TURNS })}
               </p>
               <FieldError {...turnsErr} />
             </div>

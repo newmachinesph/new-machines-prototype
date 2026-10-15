@@ -1,5 +1,20 @@
 import { describe, expect, it } from "vitest";
-import { safeNext, signInHref } from "./next-path";
+import { safeNext, signInHref, signedInArea } from "./next-path";
+
+describe("signedInArea", () => {
+  it.each([
+    ["/app", "app"],
+    ["/app/runs/run_1042?x=1", "app"],
+    ["/work?tab=all", "work"],
+    ["/studio/packs/acme--invoices", "studio"],
+  ])("names the area of %s", (path, area) => {
+    expect(signedInArea(path)).toBe(area);
+  });
+
+  it.each(["/", "/application", "/workers", "/settings", "app"])("is null for %s", (path) => {
+    expect(signedInArea(path)).toBeNull();
+  });
+});
 
 describe("safeNext", () => {
   it.each([

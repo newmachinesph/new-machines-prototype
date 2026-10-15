@@ -4,7 +4,7 @@ import { renderWithIntl } from "@/test/intl";
 import { PackPage } from "./pack-page";
 
 vi.mock("next/navigation", () => ({ notFound: vi.fn() }));
-vi.mock("./sandbox-trial", () => ({ SandboxTrial: () => null }));
+vi.mock("./sandbox-trial", () => ({ SandboxTrial: () => null, TRIAL_ID: "sandbox-trial" }));
 
 const ok = <T,>(data: T) => ({ isPending: false, isError: false, data });
 const usd = (amountMinor: number) => ({ amountMinor, currency: "USD" });
@@ -32,7 +32,7 @@ const agents = [
     version: "1.0.0",
     publisher: "New Machines Labs",
     summary: "Matches.",
-    capabilities: [],
+    capabilities: ["finance.reconcile"],
   },
   {
     id: "ops-agent",
@@ -68,6 +68,37 @@ describe("PackPage agents", () => {
       "href",
       "/app/agents/ops-agent",
     );
+  });
+});
+
+describe("PackPage actions", () => {
+  it("offers one primary action, Add, with the sample-data trial as the secondary", () => {
+    renderWithIntl(<PackPage slug="order-payment-reconciliation" />);
+    const header = screen.getByRole("heading", { level: 1 }).closest("header")!;
+    expect(within(header).getByRole("link", { name: "Add to workspace" })).toHaveAttribute(
+      "href",
+      "/app/marketplace/order-payment-reconciliation/install",
+    );
+    expect(within(header).getByRole("link", { name: "See the sample-data trial" })).toHaveAttribute(
+      "href",
+      "#sandbox-trial",
+    );
+    expect(within(header).getAllByRole("link")).toHaveLength(2);
+    expect(document.body.textContent).not.toMatch(/hire/i);
+  });
+
+  it("shows capabilities as plain labels and explains the risk class", () => {
+    renderWithIntl(<PackPage slug="order-payment-reconciliation" />);
+    expect(screen.getByText("Payment reconciliation")).toBeInTheDocument();
+    expect(screen.queryByText("finance.reconcile")).toBeNull();
+    expect(screen.getByText("Medium")).toBeInTheDocument();
+    expect(screen.getByText(/Can write or send, but only with your approval/)).toBeInTheDocument();
+  });
+
+  it("hides the empty Trust Passport of a certified pack with no report", () => {
+    renderWithIntl(<PackPage slug="order-payment-reconciliation" />);
+    expect(screen.queryByRole("heading", { name: "Trust Passport" })).toBeNull();
+    expect(screen.queryByText(/No evaluation report/)).toBeNull();
   });
 });
 

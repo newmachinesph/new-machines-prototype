@@ -95,16 +95,18 @@ export function StepList({ disabled = false }: { disabled?: boolean }) {
                 aria-current={node.id === selectedId ? "step" : undefined}
                 onClick={() => focus(node.id)}
               >
-                <span className="flex items-center gap-1.5 font-mono text-[12px] text-ink">
+                {/* The kind of step in plain words; its name (an identifier) is in the settings. */}
+                <span className="flex items-center gap-1.5 text-xs font-medium text-muted">
                   <ActorGlyph actor={STEP_ACTOR[node.data.type]} className="size-2.5" />
-                  {node.id}
+                  {tc(`type.${node.data.type}`)}
+                  <span className="font-mono text-[11px] font-normal">{node.id}</span>
                 </span>
-                <span className="mt-0.5 block text-sm leading-snug text-grey-700">{sentence(node)}</span>
+                <span className="mt-0.5 block text-sm leading-snug text-ink">{sentence(node)}</span>
                 {count ? (
                   <span className="mt-0.5 block text-xs text-blocked">{tc("problems", { n: count })}</span>
                 ) : null}
               </button>
-              {disabled ? null : <AddAfter node={node} />}
+              {disabled ? null : <AddAfter node={node} n={i + 1} />}
             </div>
           </li>
         );
@@ -119,7 +121,7 @@ export function StepList({ disabled = false }: { disabled?: boolean }) {
  * it (it is left unconnected, for the builder to place), and when the new step has no outcome yet to carry it
  * (a decision, until its rules are added).
  */
-function AddAfter({ node }: { node: StepNode }) {
+function AddAfter({ node, n }: { node: StepNode; n: number }) {
   const t = useTranslations("studioPalette");
   const tc = useTranslations("studioCanvas");
   const toast = useToast();
@@ -129,9 +131,10 @@ function AddAfter({ node }: { node: StepNode }) {
   if (!outcome) return null;
   return (
     <MenuRoot>
+      {/* Named by the row's number, as the list shows it. A finger gets a 40px target. */}
       <MenuTrigger
-        aria-label={t("addAfter", { step: node.id })}
-        className="grid size-7 shrink-0 place-items-center rounded-md text-grey-500 hover:bg-grey-100 hover:text-ink"
+        aria-label={t("addAfter", { n })}
+        className="grid size-7 shrink-0 place-items-center rounded-md text-grey-500 hover:bg-grey-100 hover:text-ink pointer-coarse:-my-1.5 pointer-coarse:size-10"
       >
         <Plus className="size-4" aria-hidden />
       </MenuTrigger>

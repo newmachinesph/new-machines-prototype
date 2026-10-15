@@ -8,6 +8,24 @@ import { LiveOnly } from "./live-only";
 import { StudioHome } from "./studio-home";
 
 const ok = <T,>(data: T) => ({ isPending: false, isError: false, data });
+const agent = (key: string, name: string, publishedAt: string) => ({
+  key,
+  name,
+  summary: "Reads things.",
+  modelProfile: "fast",
+  version: 1,
+  publishedAt,
+  usedBy: [],
+});
+const pack = (key: string, name: string, added: boolean) => ({
+  key,
+  name,
+  outcome: "Every refund is checked.",
+  version: 1,
+  publishedAt: "2026-10-04T09:00:00Z",
+  steps: 3,
+  added,
+});
 const state = vi.hoisted(() => ({
   workspace: "live",
   role: "owner",
@@ -52,18 +70,50 @@ describe("Studio home", () => {
     expect(screen.getByText(/No agents yet/)).toBeInTheDocument();
   });
 
-  it("counts what the org has built", () => {
-    state.agents = [{ key: "a" }, { key: "b" }];
-    state.packs = [{ key: "p" }];
+  it("lists the newest few of what the org built as row links, and links to the full lists", () => {
+    state.agents = [
+      agent("a", "Ledger reader", "2026-10-01T09:00:00Z"),
+      agent("b", "Stock watcher", "2026-10-03T09:00:00Z"),
+      agent("c", "Refund checker", "2026-10-02T09:00:00Z"),
+      agent("d", "Oldest", "2026-09-01T09:00:00Z"),
+    ];
+    state.packs = [pack("p", "Refund check", true)];
     renderWithIntl(<StudioHome />);
-    expect(screen.getByRole("link", { name: "2 agents" })).toHaveAttribute("href", "/studio/agents");
-    expect(screen.getByRole("link", { name: "1 pack" })).toHaveAttribute("href", "/studio/packs");
+    const rows = screen.getAllByRole("link", { name: /v1$/ });
+    expect(rows.map((r) => r.textContent)).toEqual([
+      "Stock watcherReads things.v1",
+      "Refund checkerReads things.v1",
+      "Ledger readerReads things.v1",
+      "Refund checkEvery refund is checked.v1",
+    ]);
+    expect(rows[0]).toHaveAttribute("href", "/studio/agents/b");
+    expect(screen.queryByText("Oldest")).toBeNull();
+    expect(screen.getByRole("link", { name: "See all 4 agents" })).toHaveAttribute("href", "/studio/agents");
+    expect(screen.getByRole("link", { name: "See all 1 pack" })).toHaveAttribute("href", "/studio/packs");
   });
 
-  it("tells a member that only owners and admins build, and offers no New links", () => {
+  it("says what to do next: an agent first, then a pack, then adding the pack", () => {
+    const { unmount } = renderWithIntl(<StudioHome />);
+    expect(screen.getByText("Start with an agent, then put it in a pack.")).toBeInTheDocument();
+    unmount();
+    state.agents = [agent("a", "Ledger reader", "2026-10-01T09:00:00Z")];
+    const second = renderWithIntl(<StudioHome />);
+    expect(screen.getByText("You have an agent. Next, put it in a pack.")).toBeInTheDocument();
+    second.unmount();
+    state.packs = [pack("p", "Refund check", false)];
+    const third = renderWithIntl(<StudioHome />);
+    expect(screen.getByText("Add a pack to your workspace to run it.")).toBeInTheDocument();
+    third.unmount();
+    state.packs = [pack("p", "Refund check", true)];
+    renderWithIntl(<StudioHome />);
+    expect(screen.queryByText(/Next|Start with|Add a pack/)).toBeNull();
+  });
+
+  it("tells a member that only owners and admins build, and offers no New links or next step", () => {
     state.role = "member";
     renderWithIntl(<StudioHome />);
     expect(screen.getByText("Only owners and admins can build agents and packs.")).toBeInTheDocument();
+    expect(screen.queryByText(/Start with an agent/)).toBeNull();
     expect(screen.queryByRole("link", { name: "New agent" })).toBeNull();
     expect(screen.queryByRole("link", { name: "New pack" })).toBeNull();
   });
@@ -116,9 +166,13 @@ describe("Studio home", () => {
   });
 
   it("speaks Japanese", () => {
-    state.agents = [{ key: "a" }, { key: "b" }];
+    state.agents = [
+      agent("a", "Ledger reader", "2026-10-01T09:00:00Z"),
+      agent("b", "Stock watcher", "2026-10-02T09:00:00Z"),
+    ];
     renderWithIntl(<StudioHome />, { locale: "ja" });
     expect(screen.getByRole("link", { name: "新しいエージェント" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "エージェント 2 件" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "エージェント 2 件をすべて見る" })).toBeInTheDocument();
+    expect(screen.getByText("エージェントができました。次はパックに入れましょう。")).toBeInTheDocument();
   });
 });

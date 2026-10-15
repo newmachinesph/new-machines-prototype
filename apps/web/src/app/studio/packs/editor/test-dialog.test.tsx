@@ -72,6 +72,24 @@ describe("TestDialog", () => {
     expect(mocks.test.mutate.mock.calls[0][0].body).toEqual({ input: {}, budgetMinor: 1250 });
   });
 
+  it("shows the pack's own budget as the default, and explains the start form", async () => {
+    renderWithIntl(<TestDialog packKey="org-a1--overdue" dirty={false} inputFields={FIELDS} budgetMinor={2250} />);
+    await userEvent.click(screen.getByRole("button", { name: "Test in sandbox" }));
+    const budget = screen.getByLabelText("Most this test may spend (USD)");
+    expect(budget).toHaveAttribute("placeholder", "22.5");
+    expect(budget).toHaveAccessibleDescription("Optional. Leave it empty to use the pack's own budget of 22.5 USD.");
+    expect(
+      screen.getByText(/^The pack's start form, filled in as someone starting a real run would/),
+    ).toBeInTheDocument();
+  });
+
+  it("falls back to the API's default budget when the draft leaves it out, and skips the form note without fields", async () => {
+    renderWithIntl(<TestDialog packKey="org-a1--overdue" dirty={false} inputFields={[]} />);
+    await userEvent.click(screen.getByRole("button", { name: "Test in sandbox" }));
+    expect(screen.getByLabelText("Most this test may spend (USD)")).toHaveAttribute("placeholder", "15");
+    expect(screen.queryByText(/^The pack's start form/)).toBeNull();
+  });
+
   it("caps the budget field at the API's maximum of 100,000 cents", async () => {
     renderWithIntl(<TestDialog packKey="org-a1--overdue" dirty={false} inputFields={[]} />);
     await userEvent.click(screen.getByRole("button", { name: "Test in sandbox" }));

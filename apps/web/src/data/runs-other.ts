@@ -147,7 +147,7 @@ export const RUN_1045: Run = {
 
 const refundDecision: DecisionRecord = {
   question: "Does this request meet the refund policy?",
-  evaluator: { kind: "gemini", label: "Rules, then Gemini", configVersion: "2" },
+  evaluator: { kind: "gemini", label: "Rules, then the AI model", configVersion: "2" },
   chain: [
     { kind: "rules", verdict: "PASS", note: "Within 30 days of delivery. Item is not final sale." },
     { kind: "gemini", verdict: "APPROVED", note: "Photo shows a cracked lid, matching the customer's description." },
@@ -231,7 +231,7 @@ export const RUN_1044: Run = {
       id: "decide",
       type: "decision",
       label: "Meets refund policy?",
-      subtitle: "Rules, then Gemini",
+      subtitle: "Rules, then the AI model",
       actor: "machine",
       status: "COMPLETED",
       x: 720,

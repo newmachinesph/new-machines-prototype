@@ -87,6 +87,16 @@ describe("UsageView in the demo workspace", () => {
     renderWithIntl(<UsageView />);
     expect(screen.getByText("Spent in October")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "run_1047" })).toHaveAttribute("href", "/app/runs/run_1047");
+    // The run link sits in the opened panel, never inside the summary, and the id line is skipped when the title has it.
+    const links = screen.getAllByRole("link", { name: "View run" });
+    expect(links).toHaveLength(1);
+    expect(links[0]).toHaveAttribute("href", "/app/runs/run_1047");
+    expect(links[0]?.closest("summary")).toBeNull();
+    expect(screen.queryByRole("link", { name: "Budget hold for run_1047" })).toBeNull();
+    expect(document.querySelector("summary code")).toBeNull();
+    expect(screen.queryByRole("link", { name: "Reviewer pay, task ht_009" })).toBeNull();
+    expect(screen.getByRole("heading", { name: "Plan and payment" })).toBeInTheDocument();
+    expect(screen.queryByText(/posted twice|debits equal credits/)).toBeNull();
     expect(screen.getByText("2 payments. $4.00 of it was absorbed by New Machines.")).toBeInTheDocument();
     expect(screen.getByText("Pro, $49.00 a month (simulated)")).toBeInTheDocument();
     expect(screen.getByText("$5.44")).toBeInTheDocument();

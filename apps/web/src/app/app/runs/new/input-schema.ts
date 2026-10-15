@@ -85,6 +85,14 @@ function kindOf(s: JsonSchema): FieldKind {
   }
 }
 
+/** The "(YYYY-MM-DD)" hint some schemas put in a date's description: the date input already sets the format. */
+const DATE_FORMAT_HINT = /\s*\(\s*YYYY-MM-DD\s*\)/g;
+
+function describe(kind: FieldKind, s: JsonSchema): string | undefined {
+  if (kind !== "date" || !s.description) return s.description;
+  return s.description.replace(DATE_FORMAT_HINT, "").trim() || undefined;
+}
+
 function initialOf(kind: FieldKind, s: JsonSchema): string | boolean {
   if (kind === "boolean") return s.default === true;
   if (s.default === undefined || s.default === null) return "";
@@ -100,7 +108,7 @@ function field(path: string[], s: JsonSchema, required: boolean, group?: Group):
     name: path.join("."),
     path,
     label: s.title ?? humanize(key),
-    description: s.description,
+    description: describe(kind, s),
     kind,
     options: kind === "enum" ? (s.enum as string[]) : undefined,
     required,

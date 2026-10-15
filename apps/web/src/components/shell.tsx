@@ -30,7 +30,7 @@ import {
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { usePathname } from "next/navigation";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useId, type ReactNode } from "react";
 import { Mark } from "@/design-system/logo/Mark";
 import { useSession } from "@/lib/auth/session";
 import { ClockProvider } from "@/lib/clock";
@@ -38,10 +38,13 @@ import { cn } from "@/lib/cn";
 import { useAgentName, usePackName, usePacks } from "@/lib/queries/catalog";
 import { useIsDemo, useIsLive, useMe } from "@/lib/queries/me";
 import { useOrg } from "@/lib/queries/org";
+import { useStudioAgent, useStudioPack } from "@/lib/queries/studio";
 import { useEligibleTasks } from "@/lib/queries/tasks";
 import { useApprovals, useMemory } from "@/lib/queries/workspace";
 import { useUi } from "@/stores/ui";
 import {
+  MenuGroup,
+  MenuGroupLabel,
   MenuItem,
   MenuLabel,
   MenuLink,
@@ -72,57 +75,80 @@ type PageKey =
   | "studio"
   | "studioAgents"
   | "studioPacks"
-  | "developerStudio";
-type CrumbKey = "crumbDeliverable" | "crumbHire" | "crumbStartRun" | "crumbNew";
+  | "developerStudio"
+  | "reviewerPortal";
+type CrumbKey = "crumbDeliverable" | "crumbHire" | "crumbStartRun" | "crumbNew" | "crumbTask";
+type GroupKey = "work" | "setup" | "account" | "other";
 
 /** `label` is a key under `nav`. */
 type Item = { href: string; label: PageKey; icon: LucideIcon; exact?: boolean; liveOnly?: boolean };
+/** A labelled run of sidebar links; `label` is a key under `nav.groups`. A single unlabelled group is a plain list. */
+type Group = { label?: GroupKey; items: Item[] };
 
-const BUSINESS_NAV: Item[][] = [
-  [
-    { href: "/app", label: "overview", icon: House, exact: true },
-    { href: "/app/runs", label: "runs", icon: Workflow },
-    { href: "/app/approvals", label: "approvals", icon: ListChecks },
-    { href: "/app/marketplace", label: "marketplace", icon: Store },
-    { href: "/app/agents", label: "agents", icon: Bot },
-    // Where a business builds its own agents and packs (live workspace only, like the workspace menu's item).
-    { href: "/studio", label: "developerStudio", icon: Hammer, liveOnly: true },
-  ],
-  [
-    { href: "/app/memory", label: "memory", icon: Brain },
-    { href: "/app/connections", label: "connections", icon: Plug },
-    { href: "/app/reviewers", label: "reviewers", icon: UserCheck, liveOnly: true },
-  ],
-  [
-    { href: "/app/usage", label: "usage", icon: CircleDollarSign },
-    { href: "/app/settings", label: "settings", icon: Settings },
-  ],
+const BUSINESS_NAV: Group[] = [
+  {
+    label: "work",
+    items: [
+      { href: "/app", label: "overview", icon: House, exact: true },
+      { href: "/app/runs", label: "runs", icon: Workflow },
+      { href: "/app/approvals", label: "approvals", icon: ListChecks },
+      { href: "/app/marketplace", label: "marketplace", icon: Store },
+      { href: "/app/agents", label: "agents", icon: Bot },
+    ],
+  },
+  {
+    label: "setup",
+    items: [
+      { href: "/app/memory", label: "memory", icon: Brain },
+      { href: "/app/connections", label: "connections", icon: Plug },
+      { href: "/app/reviewers", label: "reviewers", icon: UserCheck, liveOnly: true },
+    ],
+  },
+  {
+    label: "account",
+    items: [
+      { href: "/app/usage", label: "usage", icon: CircleDollarSign },
+      { href: "/app/settings", label: "settings", icon: Settings },
+    ],
+  },
+  // Other roles' areas: the reviewer portal, and where a business builds its own agents and packs (live only).
+  {
+    label: "other",
+    items: [
+      { href: "/work", label: "reviewerPortal", icon: ArrowLeftRight },
+      { href: "/studio", label: "developerStudio", icon: Hammer, liveOnly: true },
+    ],
+  },
 ];
 
-const WORK_NAV: Item[][] = [
-  [
-    { href: "/work", label: "availableTasks", icon: Inbox, exact: true },
-    { href: "/work/earnings", label: "earnings", icon: Wallet },
-  ],
+const WORK_NAV: Group[] = [
+  {
+    items: [
+      { href: "/work", label: "availableTasks", icon: Inbox, exact: true },
+      { href: "/work/earnings", label: "earnings", icon: Wallet },
+    ],
+  },
 ];
 
-const STUDIO_NAV: Item[][] = [
-  [
-    { href: "/studio", label: "studio", icon: House, exact: true },
-    { href: "/studio/agents", label: "studioAgents", icon: Bot },
-    { href: "/studio/packs", label: "studioPacks", icon: Workflow },
-  ],
+const STUDIO_NAV: Group[] = [
+  {
+    items: [
+      { href: "/studio", label: "studio", icon: House, exact: true },
+      { href: "/studio/agents", label: "studioAgents", icon: Bot },
+      { href: "/studio/packs", label: "studioPacks", icon: Workflow },
+    ],
+  },
 ];
 
 /** Which view a layout shows: the business workspace, the reviewer portal or the Developer Studio. */
 export type ShellMode = "business" | "work" | "studio";
-const NAV: Record<ShellMode, Item[][]> = { business: BUSINESS_NAV, work: WORK_NAV, studio: STUDIO_NAV };
+const NAV: Record<ShellMode, Group[]> = { business: BUSINESS_NAV, work: WORK_NAV, studio: STUDIO_NAV };
 const HOME: Record<ShellMode, string> = { business: "/app", work: "/work", studio: "/studio" };
 
 /** The pages a view offers, in the sidebar and the command palette alike. Reviewer management and the
  * Developer Studio exist only in a live workspace, so the demo's navigation is unchanged. */
-const navFor = (mode: ShellMode, live: boolean): Item[][] =>
-  NAV[mode].map((g) => g.filter((item) => live || !item.liveOnly));
+const navFor = (mode: ShellMode, live: boolean): Group[] =>
+  NAV[mode].map((g) => ({ ...g, items: g.items.filter((item) => live || !item.liveOnly) }));
 
 type Crumb = { label: string; href?: string; mono?: boolean };
 
@@ -136,7 +162,7 @@ function crumbsFor(
   t: (key: PageKey | CrumbKey) => string,
 ): Crumb[] {
   const parts = path.split("/").filter(Boolean);
-  const nav = NAV[mode].flat();
+  const nav = NAV[mode].flatMap((g) => g.items);
   const out: Crumb[] = [];
   let href = `/${parts[0] ?? ""}`;
   parts.slice(1).forEach((seg, i) => {
@@ -151,6 +177,9 @@ function crumbsFor(
       out.push({ label: t("crumbNew"), href });
     } else if (SUBPAGE[seg]) {
       out.push({ label: t(SUBPAGE[seg]), href });
+    } else if (mode === "work") {
+      // A reviewer task's id is no name; the page itself carries the title.
+      out.push({ label: t("crumbTask"), href });
     } else {
       out.push(recordName ? { label: recordName, href } : { label: seg, href, mono: true });
     }
@@ -163,14 +192,21 @@ function crumbsFor(
 function Breadcrumbs({ path, mode }: { path: string; mode: ShellMode }) {
   const slug = /^\/app\/marketplace\/([^/]+)/.exec(path)?.[1];
   const agentId = /^\/app\/agents\/([^/]+)/.exec(path)?.[1];
-  // A Studio key is <org namespace>--<name>: the name part reads as the record's name.
-  const studioName = /^\/studio\/(?:agents|packs)\/([^/]+)/.exec(path)?.[1]?.split("--").pop();
+  const studio = /^\/studio\/(agents|packs)\/([^/]+)/.exec(path);
+  const studioKey = studio?.[2] === "new" ? undefined : studio?.[2];
+  const studioAgent = useStudioAgent(studio?.[1] === "agents" ? studioKey : undefined);
+  const studioPack = useStudioPack(studio?.[1] === "packs" ? studioKey : undefined);
+  // The record's name once it has loaded. Until then a Studio key, <org namespace>--<name>, reads as its name part.
+  const studioName = studioAgent.data?.draft.name ?? studioPack.data?.draft.name ?? studioKey?.split("--").pop();
   const packName = usePackName(slug);
   const agentName = useAgentName(agentId);
   const t = useTranslations("nav");
   const crumbs = crumbsFor(path, mode, packName ?? agentName ?? studioName, t);
+  // A single crumb only names the page. When the page carries its own heading, the shell hides it (see
+  // AppShell), so the name shows once; a trail stays, since it is how a person gets back up. The reviewer
+  // portal's pages keep theirs, so its top bar is never empty.
   return (
-    <nav aria-label={t("breadcrumb")} className="min-w-0">
+    <nav aria-label={t("breadcrumb")} className={cn("min-w-0", crumbs.length === 1 && mode !== "work" && "page-crumb")}>
       <ol className="flex min-w-0 items-center gap-1.5 text-sm">
         {crumbs.map((c, i) => {
           const last = i === crumbs.length - 1;
@@ -276,7 +312,7 @@ function WorkspaceMenu({ mode }: { mode: ShellMode }) {
   return (
     <MenuRoot>
       <MenuTrigger
-        className="flex h-10 w-full items-center gap-2.5 rounded-md px-2 text-left hover:bg-grey-50 data-[popup-open]:bg-grey-100"
+        className="flex min-h-10 w-full items-center gap-2.5 rounded-md px-2 py-1 text-left hover:bg-grey-50 data-[popup-open]:bg-grey-100"
         aria-label={t("switchWorkspace", { name: label })}
       >
         <span
@@ -288,7 +324,13 @@ function WorkspaceMenu({ mode }: { mode: ShellMode }) {
         >
           {work ? "R" : failed ? "!" : initial(orgName)}
         </span>
-        <span className={cn("min-w-0 flex-1 truncate text-sm font-medium", failed && !work && "text-blocked")}>
+        {/* A long workspace name wraps to a second line rather than losing its end to the plan pill. */}
+        <span
+          className={cn(
+            "line-clamp-2 min-w-0 flex-1 text-sm leading-tight font-medium break-words",
+            failed && !work && "text-blocked",
+          )}
+        >
           {name}
         </span>
         {work || !plan ? null : (
@@ -296,52 +338,58 @@ function WorkspaceMenu({ mode }: { mode: ShellMode }) {
             {plan}
           </span>
         )}
-        <ChevronsUpDown className="size-3.5 text-grey-500" aria-hidden />
+        <ChevronsUpDown className="size-3.5 shrink-0 text-grey-500" aria-hidden />
       </MenuTrigger>
       <MenuPopup align="start" className="w-64">
-        <MenuLabel>
-          {demo ? t("signedInAs") : person.known ? t("signedInAsUser", { who: person.known }) : t("signedIn")}
-        </MenuLabel>
-        <MenuLink href="/app">
-          <span
-            className="grid size-5 place-items-center rounded bg-ink text-[10px] font-semibold text-paper"
-            aria-hidden
-          >
-            {initial(orgName)}
-          </span>
-          <span className="min-w-0 flex-1 truncate">{orgName}</span>
-          {mode === "business" ? <Check className="size-3.5" aria-label={t("current")} /> : null}
-        </MenuLink>
-        <MenuLink href="/work">
-          <span
-            className="grid size-5 place-items-center rounded bg-human text-[10px] font-semibold text-paper"
-            aria-hidden
-          >
-            R
-          </span>
-          <span className="flex-1">{t("reviewerPortal")}</span>
-          {work ? <Check className="size-3.5" aria-label={t("current")} /> : null}
-        </MenuLink>
-        {/* Building agents and packs is part of the live workspace only. */}
-        {live ? (
-          <MenuLink href="/studio">
+        <MenuGroup>
+          <MenuGroupLabel>{t("switchTo")}</MenuGroupLabel>
+          <MenuLink href="/app">
             <span
-              className="grid size-5 place-items-center rounded bg-machine text-[10px] font-semibold text-paper"
+              className="grid size-5 place-items-center rounded bg-ink text-[10px] font-semibold text-paper"
               aria-hidden
             >
-              S
+              {initial(orgName)}
             </span>
-            <span className="flex-1">{t("developerStudio")}</span>
-            {mode === "studio" ? <Check className="size-3.5" aria-label={t("current")} /> : null}
+            <span className="min-w-0 flex-1 truncate">{orgName}</span>
+            {mode === "business" ? <Check className="size-3.5" aria-label={t("current")} /> : null}
           </MenuLink>
-        ) : null}
+          <MenuLink href="/work">
+            <span
+              className="grid size-5 place-items-center rounded bg-human text-[10px] font-semibold text-paper"
+              aria-hidden
+            >
+              R
+            </span>
+            <span className="flex-1">{t("reviewerPortal")}</span>
+            {work ? <Check className="size-3.5" aria-label={t("current")} /> : null}
+          </MenuLink>
+          {/* Building agents and packs is part of the live workspace only. */}
+          {live ? (
+            <MenuLink href="/studio">
+              <span
+                className="grid size-5 place-items-center rounded bg-machine text-[10px] font-semibold text-paper"
+                aria-hidden
+              >
+                S
+              </span>
+              <span className="flex-1">{t("developerStudio")}</span>
+              {mode === "studio" ? <Check className="size-3.5" aria-label={t("current")} /> : null}
+            </MenuLink>
+          ) : null}
+        </MenuGroup>
         <MenuSeparator />
         <LanguageMenuItems />
         <MenuSeparator />
-        <MenuItem onClick={() => void signOut().catch(() => toast(t("signOutFailed"), t("tryAgain"), "blocked"))}>
-          <LogOut className="size-4 text-grey-500" strokeWidth={1.75} aria-hidden />
-          {t("signOut")}
-        </MenuItem>
+        <MenuGroup>
+          <MenuGroupLabel>{t("groups.account")}</MenuGroupLabel>
+          <div className="truncate px-2.5 pb-1.5 text-sm text-grey-700">
+            {demo ? t("signedInAs") : person.known ? t("signedInAsUser", { who: person.known }) : t("signedIn")}
+          </div>
+          <MenuItem onClick={() => void signOut().catch(() => toast(t("signOutFailed"), t("tryAgain"), "blocked"))}>
+            <LogOut className="size-4 text-grey-500" strokeWidth={1.75} aria-hidden />
+            {t("signOut")}
+          </MenuItem>
+        </MenuGroup>
       </MenuPopup>
     </MenuRoot>
   );
@@ -361,29 +409,81 @@ function useNavCounts(mode: ShellMode): Record<string, number | undefined> {
 
 function NavGroups({ mode, path, onNavigate }: { mode: ShellMode; path: string; onNavigate?: () => void }) {
   const counts = useNavCounts(mode);
+  const t = useTranslations("nav.groups");
   const groups = navFor(mode, useIsLive());
-  return groups.map((g, i) => (
-    <ul key={i} className={cn("space-y-0.5", i > 0 && "mt-2 border-t border-rule pt-2")}>
-      {g.map((item) => (
-        <li key={item.href}>
-          <NavLink item={item} count={counts[item.href]} active={isActive(path, item)} onNavigate={onNavigate} />
-        </li>
-      ))}
-    </ul>
-  ));
+  // The sidebar and the drawer both render this list; each needs its own ids.
+  const uid = useId();
+  return groups.map((g, i) => {
+    const labelId = g.label ? `${uid}-${g.label}` : undefined;
+    return (
+      <div key={g.label ?? i} className={cn(i > 0 && "mt-3 border-t border-rule pt-3")}>
+        {g.label ? (
+          <div id={labelId} className="px-2.5 pb-1 text-[11px] font-medium tracking-wide text-muted uppercase">
+            {t(g.label)}
+          </div>
+        ) : null}
+        <ul aria-labelledby={labelId} className="space-y-0.5">
+          {g.items.map((item) => (
+            <li key={item.href}>
+              <NavLink item={item} count={counts[item.href]} active={isActive(path, item)} onNavigate={onNavigate} />
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+  });
 }
 
+/** The way back to the business workspace from the reviewer portal or the Studio. The business sidebar lists
+ * the other areas in its own nav group instead. */
 function SwitchWorkspaceLink({ mode, onNavigate }: { mode: ShellMode; onNavigate?: () => void }) {
   const t = useTranslations("nav");
+  if (mode === "business") return null;
   return (
     <Link
-      href={mode === "business" ? "/work" : "/app"}
+      href="/app"
       onClick={onNavigate}
-      className="flex h-8 items-center gap-2.5 rounded-md px-2.5 text-sm text-grey-700 hover:bg-grey-50 hover:text-ink"
+      className="flex h-9 items-center gap-2.5 rounded-md px-2.5 text-sm text-grey-700 hover:bg-grey-50 hover:text-ink"
     >
       <ArrowLeftRight className="size-4 text-grey-500" strokeWidth={1.75} aria-hidden />
-      {mode === "business" ? t("reviewerPortal") : t("businessWorkspace")}
+      {t("businessWorkspace")}
     </Link>
+  );
+}
+
+/** What is simulated here: the whole seeded demo, or a live workspace's sandbox apps and billing. Shown once,
+ * in the sidebar (and the drawer), so page headers stay clear; figures that are simulated carry their own
+ * inline tag. Below lg the sidebar is hidden, so SimulationStrip carries the label. */
+function SimulationBadge() {
+  const t = useTranslations("nav");
+  const me = useMe();
+  const demo = useIsDemo();
+  if (!me.data) return null;
+  return (
+    <Tooltip label={demo ? t("demoTooltip") : t("sandboxTooltip")} side="top">
+      <button
+        type="button"
+        className="mb-2 flex w-full items-center rounded-md border border-dashed border-sim/40 bg-sim-soft px-2.5 py-1.5 text-left text-xs leading-snug text-sim"
+      >
+        {demo ? t("demoBadge") : t("sandboxBadge")}
+      </button>
+    </Tooltip>
+  );
+}
+
+/** The same label as a thin strip under the top bar below lg, where the sidebar is not on screen. */
+function SimulationStrip() {
+  const t = useTranslations("nav");
+  const me = useMe();
+  const demo = useIsDemo();
+  if (!me.data) return null;
+  return (
+    <div
+      title={demo ? t("demoTooltip") : t("sandboxTooltip")}
+      className="border-t border-sim/20 bg-sim-soft px-4 py-1 text-xs leading-snug text-sim sm:px-6 lg:hidden"
+    >
+      {demo ? t("demoBadge") : t("sandboxBadge")}
+    </div>
   );
 }
 
@@ -413,8 +513,9 @@ function Sidebar({ mode, path }: { mode: ShellMode; path: string }) {
           <NavGroups mode={mode} path={path} />
         </nav>
         <div className="border-t border-rule p-3">
+          <SimulationBadge />
           <SwitchWorkspaceLink mode={mode} />
-          <div className="mt-1 flex items-center gap-2.5 px-2.5 py-1.5">
+          <div className="flex items-center gap-2.5 px-2.5 py-1.5">
             <span
               className="grid size-6 place-items-center rounded-full bg-grey-100 text-[11px] font-semibold"
               aria-hidden
@@ -460,7 +561,7 @@ function MobileNav({ mode, path }: { mode: ShellMode; path: string }) {
     <Dialog.Root open={open} onOpenChange={setOpen}>
       <Dialog.Trigger
         aria-label={t("openNavigation")}
-        className="-ml-1.5 grid size-8 shrink-0 place-items-center rounded-md text-grey-700 hover:bg-grey-100 data-[popup-open]:bg-grey-100 lg:hidden"
+        className="-ml-2.5 grid size-10 shrink-0 place-items-center rounded-md text-grey-700 hover:bg-grey-100 data-[popup-open]:bg-grey-100 lg:hidden"
       >
         <MenuIcon className="size-[18px]" strokeWidth={1.75} aria-hidden />
       </Dialog.Trigger>
@@ -475,7 +576,7 @@ function MobileNav({ mode, path }: { mode: ShellMode; path: string }) {
             </div>
             <Dialog.Close
               aria-label={t("closeNavigation")}
-              className="grid size-8 shrink-0 place-items-center rounded-md text-grey-500 hover:bg-grey-100 hover:text-ink"
+              className="grid size-10 shrink-0 place-items-center rounded-md text-grey-500 hover:bg-grey-100 hover:text-ink"
             >
               <X className="size-4" aria-hidden />
             </Dialog.Close>
@@ -484,6 +585,7 @@ function MobileNav({ mode, path }: { mode: ShellMode; path: string }) {
             <NavGroups mode={mode} path={path} onNavigate={close} />
           </nav>
           <div className="border-t border-rule p-3">
+            <SimulationBadge />
             <SwitchWorkspaceLink mode={mode} onNavigate={close} />
           </div>
         </Dialog.Popup>
@@ -492,58 +594,47 @@ function MobileNav({ mode, path }: { mode: ShellMode; path: string }) {
   );
 }
 
-/** What is simulated here: the whole seeded demo, or a live workspace's sandbox apps and billing. */
-function SimulationBadge() {
-  const t = useTranslations("nav");
-  const me = useMe();
-  const demo = useIsDemo();
-  if (!me.data) return null;
-  return (
-    <Tooltip label={demo ? t("demoTooltip") : t("sandboxTooltip")} side="bottom">
-      <button
-        type="button"
-        className="hidden items-center rounded-full border border-dashed border-sim/40 bg-sim-soft px-2.5 py-1 text-xs text-sim md:inline-flex"
-      >
-        {demo ? t("demoBadge") : t("sandboxBadge")}
-      </button>
-    </Tooltip>
-  );
-}
-
 function TopBar({ mode, path }: { mode: ShellMode; path: string }) {
   const setPaletteOpen = useUi((s) => s.setPaletteOpen);
   const t = useTranslations("nav");
   return (
-    <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-rule bg-paper/90 px-4 backdrop-blur sm:px-6 lg:px-8">
-      <MobileNav mode={mode} path={path} />
-      <Link href={HOME[mode]} className="shrink-0 lg:hidden" aria-label={t("home")}>
-        <Mark trim className="h-3.5 text-ink" title="" />
-      </Link>
-      <Breadcrumbs path={path} mode={mode} />
-      <div className="ml-auto flex items-center gap-2">
-        <SimulationBadge />
-        <button
-          type="button"
-          onClick={() => setPaletteOpen(true)}
-          aria-label={t("find")}
-          className="grid size-8 place-items-center rounded-md text-grey-700 hover:bg-grey-100 lg:hidden"
+    <div className="sticky top-0 z-20 border-b border-rule bg-paper/90 backdrop-blur">
+      <header className="flex h-14 items-center gap-2 px-4 sm:gap-3 sm:px-6 lg:px-8">
+        <MobileNav mode={mode} path={path} />
+        {/* Below lg the logo and the icon buttons are tap targets of 40px, whatever the size of their glyph. */}
+        <Link
+          href={HOME[mode]}
+          className="flex h-10 shrink-0 items-center rounded-md px-1.5 hover:bg-grey-100 lg:hidden"
+          aria-label={t("home")}
         >
-          <Search className="size-4" strokeWidth={1.75} aria-hidden />
-        </button>
-        {mode !== "business" ? null : (
-          <>
-            <Link
-              href="/app/marketplace"
-              className="hidden h-8 items-center gap-1.5 rounded-md px-2.5 text-sm text-grey-700 hover:bg-grey-100 hover:text-ink sm:inline-flex"
-            >
-              <LayoutGrid className="size-4" strokeWidth={1.75} aria-hidden />
-              {t("browsePacks")}
-            </Link>
-            <StartRunMenu />
-          </>
-        )}
-      </div>
-    </header>
+          <Mark trim className="h-3.5 text-ink" title="" />
+        </Link>
+        <Breadcrumbs path={path} mode={mode} />
+        <div className="ml-auto flex items-center gap-1 sm:gap-2">
+          <button
+            type="button"
+            onClick={() => setPaletteOpen(true)}
+            aria-label={t("find")}
+            className="grid size-10 place-items-center rounded-md text-grey-700 hover:bg-grey-100 lg:hidden"
+          >
+            <Search className="size-4" strokeWidth={1.75} aria-hidden />
+          </button>
+          {mode !== "business" ? null : (
+            <>
+              <Link
+                href="/app/marketplace"
+                className="hidden h-8 items-center gap-1.5 rounded-md px-2.5 text-sm text-grey-700 hover:bg-grey-100 hover:text-ink sm:inline-flex"
+              >
+                <LayoutGrid className="size-4" strokeWidth={1.75} aria-hidden />
+                {t("browsePacks")}
+              </Link>
+              <StartRunMenu />
+            </>
+          )}
+        </div>
+      </header>
+      <SimulationStrip />
+    </div>
   );
 }
 
@@ -581,11 +672,12 @@ export function AppShell({ children, mode = "business" }: { children: ReactNode;
   const path = usePathname();
   const t = useTranslations("nav");
   const pages = navFor(mode, live)
-    .flat()
+    .flatMap((g) => g.items)
     .map(({ href, label, icon }) => ({ href, label: t(label), icon }));
   return (
     <ClockProvider live={live}>
-      <div className="flex min-h-dvh">
+      {/* A page with its own heading is named once: the top bar's single crumb hides (a trail of crumbs stays). */}
+      <div className="flex min-h-dvh [&:has(main_h1)_.page-crumb]:hidden">
         <Sidebar mode={mode} path={path} />
         <CommandPalette pages={pages} />
         <div className="min-w-0 flex-1">

@@ -385,16 +385,16 @@ describe("ConnectionList in a live workspace", () => {
     renderWithIntl(<ConnectionList />);
     const stripe = card("Stripe");
     expect(within(stripe).getByText("Revoked")).toBeInTheDocument();
-    expect(within(stripe).getByText("payment.refund")).toBeInTheDocument();
+    expect(within(stripe).getByText("Refund payment")).toBeInTheDocument();
     await userEvent.click(
       within(stripe).getByRole("button", {
-        name: "Allow Order & Payment Reconciliation to use payment.refund on Stripe again",
+        name: "Allow Order & Payment Reconciliation “Refund payment” on Stripe again",
       }),
     );
     expect(allow).toHaveBeenCalledWith({ query: { app: "Stripe", ...revoked } }, expect.anything());
     expect(toast).toHaveBeenCalledWith(
       "Access allowed again",
-      "Order & Payment Reconciliation may use payment.refund on Stripe again.",
+      "Order & Payment Reconciliation has “Refund payment” on Stripe again.",
     );
   });
 
@@ -406,7 +406,7 @@ describe("ConnectionList in a live workspace", () => {
     await userEvent.click(screen.getByRole("button", { name: /Allow Order & Payment Reconciliation/ }));
     expect(toast).toHaveBeenCalledWith(
       "Nothing added",
-      "Order & Payment Reconciliation no longer uses payment.refund on Stripe, so nothing was added. The revocation is forgotten.",
+      "Order & Payment Reconciliation no longer uses “Refund payment” on Stripe, so nothing was added. The revocation is forgotten.",
     );
     expect(toast).not.toHaveBeenCalledWith("Access allowed again", expect.anything());
   });
@@ -420,10 +420,58 @@ describe("ConnectionList in a live workspace", () => {
     await userEvent.click(screen.getByRole("button", { name: /Allow Order & Payment Reconciliation/ }));
     expect(toast).toHaveBeenCalledWith(
       "Allowed again, but policy denies it",
-      "Order & Payment Reconciliation is allowed payment.refund on Stripe again, but a policy denies the call. Change the policy to let it through.",
+      "Order & Payment Reconciliation has “Refund payment” on Stripe again, but a policy denies the call. Change the policy to let it through.",
       "blocked",
     );
     expect(toast).not.toHaveBeenCalledWith("Nothing added", expect.anything());
+  });
+
+  it("names each grant in words and makes the destructive actions real buttons that ask first", async () => {
+    data.conns = [
+      {
+        ...live("Stripe", "stripe", "sandbox"),
+        grants: [
+          { install: "Order & Payment Reconciliation", capability: "payment.read", access: "read" },
+          { install: "Order & Payment Reconciliation", capability: "sheets.write", access: "write" },
+        ],
+      },
+    ];
+    renderWithIntl(<ConnectionList />);
+    const stripe = card("Stripe");
+    expect(within(stripe).getByText("Read payment")).toBeInTheDocument();
+    expect(within(stripe).getByText("Write sheets")).toBeInTheDocument();
+    expect(within(stripe).queryByText(/payment\.read|sheets\.write/)).toBeNull();
+    const disconnect = within(stripe).getByRole("button", { name: "Disconnect Stripe" });
+    const [revoke] = within(stripe).getAllByRole("button", { name: "Revoke" });
+    for (const b of [disconnect, revoke]) {
+      expect(b.tagName).toBe("BUTTON");
+      expect(b).toHaveClass("text-blocked");
+    }
+    await userEvent.click(revoke);
+    const dialog = await screen.findByRole("alertdialog", { name: "Revoke this access?" });
+    expect(
+      within(dialog).getByText(
+        "Order & Payment Reconciliation loses “Read payment” on Stripe. You can allow it again from this page.",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("maps known resources and actions to words and shows an unknown id as it is", () => {
+    data.conns = [
+      {
+        ...live("Stripe", "stripe", "sandbox"),
+        grants: [
+          { install: "Order & Payment Reconciliation", capability: "orders.read", access: "read" },
+          { install: "Order & Payment Reconciliation", capability: "payment.refund", access: "write" },
+          { install: "Order & Payment Reconciliation", capability: "widgets.frobnicate", access: "write" },
+        ],
+      },
+    ];
+    renderWithIntl(<ConnectionList />);
+    const stripe = card("Stripe");
+    expect(within(stripe).getByText("Read orders")).toBeInTheDocument();
+    expect(within(stripe).getByText("Refund payment")).toBeInTheDocument();
+    expect(within(stripe).getByText("widgets.frobnicate")).toBeInTheDocument();
   });
 
   it("links an empty list to the marketplace", () => {

@@ -43,7 +43,29 @@ describe("PacksList", () => {
     expect(screen.getByText("Added to your workspace")).toBeInTheDocument();
     expect(screen.getByText("Not added yet")).toBeInTheDocument();
     expect(screen.getByText("6 steps")).toBeInTheDocument();
-    expect(screen.getByText("Version 2")).toBeInTheDocument();
+    // The column header says "Version" once; the cell is the short form.
+    expect(screen.getByRole("columnheader", { name: "Version" })).toBeInTheDocument();
+    expect(screen.getByText("v2")).toBeInTheDocument();
+    expect(screen.queryByText("Version 2")).toBeNull();
+  });
+
+  it("offers to add a pack that is not in the workspace yet, on its marketplace page", () => {
+    renderWithIntl(<PacksList />);
+    expect(screen.getAllByRole("link", { name: "Add to workspace" })).toHaveLength(1);
+    expect(screen.getByRole("link", { name: "Add to workspace" })).toHaveAttribute(
+      "href",
+      "/app/marketplace/org-a1--stock-alert",
+    );
+  });
+
+  it("makes the whole row the pack's link, and stacks rows as cards on narrow screens", () => {
+    renderWithIntl(<PacksList />);
+    const name = screen.getByRole("link", { name: "Refund check" });
+    expect(name.className).toContain("after:inset-0");
+    const row = name.closest("tr");
+    expect(row?.className).toContain("relative");
+    expect(row?.className).toMatch(/\bgrid\b/);
+    expect(row?.className).toContain("sm:table-row");
   });
 
   it("offers a first pack to builders, and tells a member who can make one", () => {

@@ -1,4 +1,4 @@
-import { act, screen } from "@testing-library/react";
+import { act, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ReactFlowProvider } from "@xyflow/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -42,6 +42,21 @@ describe("StepList", () => {
     expect(items[5]).toHaveTextContent("1 problem");
   });
 
+  it("names each row by the kind of step in plain words, not by the step's identifier", () => {
+    renderList();
+    expect(screen.getByRole("button", { name: /^Start/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^Human review/ })).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: /^App step/ })).toHaveLength(2);
+    expect(screen.queryByRole("button", { name: /^invoices/ })).toBeNull();
+    expect(screen.queryByText("human_workforce")).toBeNull();
+  });
+
+  it("shows each step's id as secondary text after its kind", () => {
+    renderList();
+    const review = screen.getByRole("button", { name: /^Human review/ });
+    expect(within(review).getByText("review")).toBeInTheDocument();
+  });
+
   it("asks for a title when a review or approval has none, and ends a titled one once", () => {
     const store = renderList();
     act(() => {
@@ -56,13 +71,13 @@ describe("StepList", () => {
 
   it("selects a step when its row is chosen", async () => {
     const store = renderList();
-    await userEvent.click(screen.getByRole("button", { name: /^invoices/ }));
+    await userEvent.click(screen.getByRole("button", { name: /Reads from Stripe: List invoices/ }));
     expect(store.getState().selectedId).toBe("invoices");
   });
 
   it("adds a step after another, wired into its place", async () => {
     const store = renderList();
-    await userEvent.click(screen.getByRole("button", { name: "Add a step after review" }));
+    await userEvent.click(screen.getByRole("button", { name: "Add a step after step 6" }));
     await userEvent.click(await screen.findByRole("menuitem", { name: "Approval" }));
     const edges = store.getState().edges;
     expect(edges.find((e) => e.id === "review:resolved")?.target).toBe("approve_2");
@@ -72,7 +87,7 @@ describe("StepList", () => {
 
   it("says when the step that followed could not be wired after the new one", async () => {
     const store = renderList();
-    await userEvent.click(screen.getByRole("button", { name: "Add a step after approve" }));
+    await userEvent.click(screen.getByRole("button", { name: "Add a step after step 8" }));
     await userEvent.click(await screen.findByRole("menuitem", { name: "Check" }));
     expect(store.getState().edges.find((e) => e.id === "approve:granted")?.target).toBe("verify_2");
     expect(store.getState().edges.some((e) => e.target === "send")).toBe(false);
@@ -85,7 +100,7 @@ describe("StepList", () => {
 
   it("says that a new decision needs its rules before the path goes on", async () => {
     const store = renderList();
-    await userEvent.click(screen.getByRole("button", { name: "Add a step after review" }));
+    await userEvent.click(screen.getByRole("button", { name: "Add a step after step 6" }));
     await userEvent.click(await screen.findByRole("menuitem", { name: "Decision" }));
     expect(store.getState().edges.find((e) => e.id === "review:resolved")?.target).toBe("check_2");
     expect(toast).toHaveBeenCalledWith(
@@ -98,7 +113,7 @@ describe("StepList", () => {
   it("lets a member choose a row but not add a step", async () => {
     const store = renderList({ disabled: true });
     expect(screen.queryByRole("button", { name: /^Add a step after/ })).toBeNull();
-    await userEvent.click(screen.getByRole("button", { name: /^invoices/ }));
+    await userEvent.click(screen.getByRole("button", { name: /Reads from Stripe: List invoices/ }));
     expect(store.getState().selectedId).toBe("invoices");
   });
 

@@ -86,7 +86,7 @@ export const RoutedEdge = memo(function RoutedEdge({
       {label ? (
         <EdgeLabelRenderer>
           <div
-            className="nodrag nopan pointer-events-none absolute rounded-sm bg-stage px-1 text-[11px] leading-4 whitespace-nowrap text-muted"
+            className="nodrag nopan pointer-events-none absolute rounded-sm bg-stage px-1.5 text-[11px] leading-4 font-medium whitespace-nowrap text-grey-700"
             style={{ transform: `translate(-50%, -50%) translate(${at.x}px, ${at.y}px)` }}
           >
             {label}

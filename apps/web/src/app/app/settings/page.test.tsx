@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
 import { createTranslator } from "next-intl";
 import { describe, expect, it, vi } from "vitest";
 import { renderWithIntl } from "@/test/intl";
@@ -53,6 +53,22 @@ describe("the settings page", () => {
     renderWithIntl(await SettingsPage(), { locale: lang });
     expect(screen.getByRole("heading", { level: 1 })).toBeInTheDocument();
     expect(document.body.textContent).not.toMatch(VENDORS);
+  });
+
+  it("links to each section from the top of the page", async () => {
+    locale.current = "en";
+    renderWithIntl(await SettingsPage());
+    const nav = screen.getByRole("navigation", { name: "On this page" });
+    const hrefs = within(nav)
+      .getAllByRole("link")
+      .map((a) => [a.textContent, a.getAttribute("href")]);
+    expect(hrefs).toEqual([
+      ["Policies", "#policies"],
+      ["Members", "#members"],
+      ["Access for AI tools", "#ai-tools"],
+      ["Workspace", "#workspace"],
+    ]);
+    for (const [, href] of hrefs) expect(document.querySelector(href!)).not.toBeNull();
   });
 
   it("keeps every settings message vendor-neutral, including dialogs not on screen", () => {

@@ -364,7 +364,11 @@ export function Section({
     <section className={cn("panel", className)}>
       {title ? (
         <div className="flex items-center justify-between gap-3 border-b border-rule px-5 py-3.5">
-          <h2 ref={headingRef} tabIndex={headingRef ? -1 : undefined} className="h-section outline-none">
+          <h2
+            ref={headingRef}
+            tabIndex={headingRef ? -1 : undefined}
+            className="h-section scroll-mt-24 outline-none lg:scroll-mt-16"
+          >
             {title}
           </h2>
           {aside}

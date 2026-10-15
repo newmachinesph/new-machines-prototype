@@ -4,7 +4,7 @@ import { ReactFlowProvider, useReactFlow } from "@xyflow/react";
 import { Redo2, Undo2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { Segmented, useToast } from "@/components/base";
 import { QueryState } from "@/components/query-state";
@@ -36,9 +36,12 @@ import { StepList } from "./step-list";
 import { StepIssuesContext } from "./step-node";
 import { StepSettings } from "./step-settings";
 import { TestDialog } from "./test-dialog";
+import { useMatches } from "./use-matches";
 import { YamlDialog } from "./yaml-dialog";
 
 const NO_ISSUES: ServerIssue[] = [];
+// Tailwind's md: below it the canvas is left out and the panels stack.
+const CANVAS_QUERY = "(min-width: 48rem)";
 
 function useStarter(): PackDraft {
   const t = useTranslations("studioEditor");
@@ -187,7 +190,19 @@ function Workbench({ packKey, version, latest, onReload }: EditorProps) {
   const [panel, setPanel] = useState<"steps" | "add">("steps");
   // Where focus goes when the control that had it disappears (Remove, the Pack details button).
   const panelHeading = useRef<HTMLHeadingElement>(null);
+  const saveHintId = useId();
+  // A phone gets the step list and the settings, not a canvas too small to work on. The list, the outcome
+  // choices in the settings and undo cover every edit; positions are not part of the saved pack.
+  const withCanvas = useMatches(CANVAS_QUERY);
   const dirty = draftJson !== savedJson;
+  // A saved pack with nothing changed has nothing to save; the reason is read with the button, not only seen.
+  const noChanges = !!packKey && !dirty;
+  // When the panels stack with no canvas (a phone), the settings are below the fold: choosing a step in the list
+  // brings them into view. With a canvas, selecting or dragging a node must not scroll the canvas away.
+  useEffect(() => {
+    if (!selectedId || withCanvas) return;
+    panelHeading.current?.scrollIntoView?.({ block: "start" });
+  }, [selectedId, withCanvas]);
   useLeaveGuard(draftJson !== (savedJson || openedJson));
   // While a new pack is being created, the editor is locked: the page moves to the saved pack on success, and an
   // edit made in between would not be in it.
@@ -337,11 +352,25 @@ function Workbench({ packKey, version, latest, onReload }: EditorProps) {
             >
               <Redo2 className="size-4" aria-hidden />
             </Button>
-            <TestDialog packKey={packKey} dirty={dirty} inputFields={details.inputFields ?? []} />
+            <TestDialog
+              packKey={packKey}
+              dirty={dirty}
+              inputFields={details.inputFields ?? []}
+              budgetMinor={details.budgetMinor}
+            />
             <Button variant="secondary" onClick={onValidate} disabled={validate.isPending || !orgId}>
               {t("validate")}
             </Button>
-            <Button onClick={onSave} disabled={create.isPending || save.isPending || !orgId || (!!packKey && !dirty)}>
+            {noChanges ? (
+              <span id={saveHintId} className="text-xs text-muted">
+                {t("noChanges")}
+              </span>
+            ) : null}
+            <Button
+              onClick={onSave}
+              disabled={create.isPending || save.isPending || !orgId || noChanges}
+              aria-describedby={noChanges ? saveHintId : undefined}
+            >
               {t("save")}
             </Button>
           </>
@@ -392,10 +421,13 @@ function Workbench({ packKey, version, latest, onReload }: EditorProps) {
               <div className="min-h-0 flex-1 overflow-y-auto">
                 {panel === "steps" ? <StepList disabled={locked} /> : <PalettePanel disabled={locked} />}
               </div>
+              {withCanvas ? null : <p className="border-t border-rule p-3 text-xs text-muted">{t("smallScreen")}</p>}
             </Section>
-            <Section className="h-[680px] overflow-hidden">
-              <EditorCanvas readOnly={locked} />
-            </Section>
+            {withCanvas ? (
+              <Section className="h-[680px] overflow-hidden">
+                <EditorCanvas readOnly={locked} />
+              </Section>
+            ) : null}
             <Section
               title={selectedId ? t("stepSettings") : t("packDetails")}
               headingRef={panelHeading}

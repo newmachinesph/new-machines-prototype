@@ -5,17 +5,21 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { QueryState } from "@/components/query-state";
 import { Skeleton } from "@/components/skeleton";
-import { ActorGlyph, ButtonLink, Id, KeyValues, MockTag, PageHeader, Pill, Section } from "@/components/ui";
+import { ActorGlyph, ButtonLink, KeyValues, MockTag, PageHeader, Pill, Section } from "@/components/ui";
 import { ApiError } from "@/lib/api/errors";
 import { useAgentById, useAgents, usePack } from "@/lib/queries/catalog";
 import { useIsLive } from "@/lib/queries/me";
 import { useFormat } from "@/lib/use-format";
-import { SandboxTrial } from "./sandbox-trial";
+import { useCapabilityLabel } from "@/app/app/agents/capability-label";
+import { usePerRunPrice } from "../per-run";
+import { SandboxTrial, TRIAL_ID } from "./sandbox-trial";
 
 export function PackPage({ slug }: { slug: string }) {
   const t = useTranslations("marketplace.pack");
   const tc = useTranslations("common");
   const { money, list } = useFormat();
+  const perRun = usePerRunPrice();
+  const label = useCapabilityLabel();
   const packQuery = usePack(slug);
   const agentsQuery = useAgents();
   const agentById = useAgentById();
@@ -47,7 +51,13 @@ export function PackPage({ slug }: { slug: string }) {
                         </ButtonLink>
                       </>
                     ) : (
-                      <ButtonLink href={`/app/marketplace/${p.slug}/install`}>{t("reviewHire")}</ButtonLink>
+                      // One thing to do (add), and the no-risk way to look first: the trial further down the page.
+                      <>
+                        <ButtonLink href={`#${TRIAL_ID}`} variant="secondary">
+                          {t("tryFirst")}
+                        </ButtonLink>
+                        <ButtonLink href={`/app/marketplace/${p.slug}/install`}>{t("add")}</ButtonLink>
+                      </>
                     )
                   }
                 >
@@ -77,13 +87,15 @@ export function PackPage({ slug }: { slug: string }) {
                                 </span>
                               </div>
                               <p className="mt-1 pl-5 text-sm text-grey-700">{a.summary}</p>
-                              <div className="mt-2 flex flex-wrap gap-1.5 pl-5">
-                                {a.capabilities.map((c) => (
-                                  <Id key={c} className="rounded bg-grey-100 px-1.5 py-0.5 text-[11px]">
-                                    {c}
-                                  </Id>
-                                ))}
-                              </div>
+                              {a.capabilities.length ? (
+                                <ul className="mt-2 flex flex-wrap gap-1.5 pl-5">
+                                  {a.capabilities.map((c) => (
+                                    <li key={c} className="rounded bg-grey-100 px-1.5 py-0.5 text-[11px] text-grey-700">
+                                      {label(c)}
+                                    </li>
+                                  ))}
+                                </ul>
+                              ) : null}
                             </li>
                           );
                         })}
@@ -153,11 +165,9 @@ export function PackPage({ slug }: { slug: string }) {
                           </div>
                         </div>
                       </Section>
-                    ) : (
+                    ) : p.certified ? null : (
                       <Section title={t("passport")}>
-                        <p className="px-5 py-4 text-sm text-muted">
-                          {p.certified ? t("refreshing") : t("uncertifiedNote")}
-                        </p>
+                        <p className="px-5 py-4 text-sm text-muted">{t("uncertifiedNote")}</p>
                       </Section>
                     )}
 
@@ -171,11 +181,14 @@ export function PackPage({ slug }: { slug: string }) {
                           rows={[
                             {
                               label: t("agentsTools"),
-                              value: (
-                                <span className="tnum">
-                                  {t("perRun", { min: money(p.estimate.aiMin), max: money(p.estimate.aiMax) })}
-                                </span>
-                              ),
+                              value: (() => {
+                                const price = perRun(p.estimate);
+                                return (
+                                  <span className="tnum">
+                                    {price === null ? t("perRunUnset") : t("perRun", { price })}
+                                  </span>
+                                );
+                              })(),
                             },
                             {
                               label: tc("reviewerPay"),
@@ -213,7 +226,17 @@ export function PackPage({ slug }: { slug: string }) {
                         <KeyValues
                           rows={[
                             { label: t("processedIn"), value: list(p.regions) },
-                            { label: t("riskClass"), value: t(`risk.${p.riskClass}`) },
+                            {
+                              label: t("riskClass"),
+                              value: (
+                                <>
+                                  {t(`risk.${p.riskClass}`)}
+                                  <span className="mt-0.5 block text-xs leading-snug text-muted">
+                                    {t(`riskNote.${p.riskClass}`)}
+                                  </span>
+                                </>
+                              ),
+                            },
                             {
                               label: t("publisherSees"),
                               value: t("publisherSeesValue"),

@@ -4,14 +4,18 @@ import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { QueryState } from "@/components/query-state";
+import { useCodes, useWho } from "@/components/run-codes";
+import { TechnicalDetails } from "@/components/run-disclosures";
 import { Skeleton } from "@/components/skeleton";
-import { ActorGlyph, ActorLabel, Id, KeyValues, OutcomeRail, PageHeader, Section, SimTag } from "@/components/ui";
+import { ActorGlyph, ActorLabel, KeyValues, OutcomeRail, PageHeader, Section, SimTag } from "@/components/ui";
+import { INTL_TAGS, resolveLocale } from "@/i18n/locales";
 import { ApiError } from "@/lib/api/errors";
 import { sumMoney } from "@/lib/format";
 import { useRun } from "@/lib/queries/runs";
 import type { Run } from "@/lib/types";
 import { useFormat } from "@/lib/use-format";
-import { RECONCILIATION_PACK, changed, toolKey, toolUse } from "./run-facts";
+import { useViewerTimeZone } from "@/lib/use-viewer-time-zone";
+import { RECONCILIATION_PACK, changed, moneyText, toolKey, toolUse } from "./run-facts";
 
 export function EvidencePage({ id }: { id: string }) {
   const run = useRun(id);
@@ -34,13 +38,18 @@ export function EvidencePage({ id }: { id: string }) {
 function Evidence({ run }: { run: Run }) {
   const t = useTranslations("run.evidence");
   const tc = useTranslations("common");
+  const tt = useTranslations("run.technical");
+  const locale = INTL_TAGS[resolveLocale(useLocale())];
   const { dateTime, money } = useFormat();
+  const { zone } = useViewerTimeZone();
+  const { line } = useCodes();
+  const who = useWho();
   const d = run.deliverable;
   if (!d) notFound();
   const total = sumMoney(run.spent.ai, run.spent.human, run.spent.tools);
 
   // PRODUCT.md WORK-04: the evidence viewer answers seven questions.
-  const who = run.timeline.filter((e) => e.actor !== "system");
+  const parts = run.timeline.filter((e) => e.actor !== "system");
   // The reconciliation pack's page keeps its written copy; any other pack's is built from the run itself.
   const written = run.packSlug === RECONCILIATION_PACK;
 
@@ -66,7 +75,7 @@ function Evidence({ run }: { run: Run }) {
                 {d.rows.map((r) => (
                   <div key={r.label} className="bg-paper px-5 py-4">
                     <dt className="label">{r.label}</dt>
-                    <dd className="tnum mt-1 text-lg font-semibold tracking-tight">{r.value}</dd>
+                    <dd className="tnum mt-1 text-lg font-semibold tracking-tight">{moneyText(r.value, locale)}</dd>
                   </div>
                 ))}
               </dl>
@@ -95,28 +104,24 @@ function Evidence({ run }: { run: Run }) {
                 <KeyValues
                   rows={[
                     { label: t("input"), value: run.input },
+                    // What the contract promises, in words; its version is a technical detail below.
+                    ...(written
+                      ? [{ label: t("contract"), value: t("contractValue") }]
+                      : run.outcome
+                        ? [{ label: t("contract"), value: run.outcome }]
+                        : []),
                     {
-                      label: t("contract"),
-                      value: written ? (
-                        <span>
-                          {t.rich("contractValue", {
-                            ref: run.contractRef,
-                            mono: (chunks) => <Id>{chunks}</Id>,
-                          })}
-                        </span>
-                      ) : run.outcome ? (
-                        <span>
-                          {t.rich("contractOutcome", {
-                            ref: run.contractRef,
-                            outcome: run.outcome,
-                            mono: (chunks) => <Id>{chunks}</Id>,
-                          })}
-                        </span>
-                      ) : (
-                        <Id>{run.contractRef}</Id>
-                      ),
+                      label: t("requestedBy"),
+                      value: `${who(run.startedBy, "buyer")}, ${dateTime(run.startedAt, zone)}`,
                     },
-                    { label: t("requestedBy"), value: `${run.startedBy}, ${dateTime(run.startedAt)}` },
+                  ]}
+                />
+                <TechnicalDetails
+                  className="my-3"
+                  rows={[
+                    { label: tt("runId"), value: run.id },
+                    { label: tt("workflow"), value: run.workflowRef },
+                    { label: tt("contract"), value: run.contractRef },
                   ]}
                 />
               </div>
@@ -124,12 +129,12 @@ function Evidence({ run }: { run: Run }) {
 
             <Section title={t("whoDid")}>
               <ul className="divide-y divide-rule">
-                {who.map((e, i) => (
+                {parts.map((e, i) => (
                   <li key={i} className="grid grid-cols-[16px_1fr_auto] items-start gap-3 px-5 py-3 text-sm">
                     <ActorGlyph actor={e.actor} className="mt-1 size-3" />
                     <div>
-                      <span className="font-medium">{e.who}</span>
-                      <span className="text-grey-700">: {e.title}</span>
+                      <span className="font-medium">{who(e.who, e.actor)}</span>
+                      <span className="text-grey-700">: {line(e.title)}</span>
                     </div>
                     <span className="text-xs text-muted">
                       <ActorLabel actor={e.actor} />
@@ -160,12 +165,15 @@ function Evidence({ run }: { run: Run }) {
                       <ActorGlyph actor={e.by} />
                       {e.label}
                     </div>
-                    <div className="mt-0.5 flex items-center gap-2 pl-5 text-xs text-muted">
-                      {e.who} <Id className="text-[11px]">{e.id}</Id>
-                    </div>
+                    <div className="mt-0.5 pl-5 text-xs text-muted">{who(e.who, e.by)}</div>
                   </li>
                 ))}
               </ul>
+              {d.evidence.length > 0 ? (
+                <div className="px-5 pb-4">
+                  <TechnicalDetails rows={d.evidence.map((e) => ({ label: e.label, value: e.id }))} />
+                </div>
+              ) : null}
             </Section>
             <Section title={t("open")}>
               <ul className="space-y-2 px-5 py-4 text-sm">

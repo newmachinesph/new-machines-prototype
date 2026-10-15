@@ -48,13 +48,22 @@ describe("AgentPage", () => {
     expect(screen.getByRole("heading", { level: 1, name: "Finance Agent" })).toBeInTheDocument();
     expect(screen.getByText("Matches each order to the payment that settled it.")).toBeInTheDocument();
     expect(screen.getByText("New Machines Labs, version 1.0.0")).toBeInTheDocument();
-    expect(screen.getByText("finance.reconcile")).toBeInTheDocument();
+    expect(screen.getByText("Payment reconciliation")).toBeInTheDocument();
     expect(screen.getByText("Match orders")).toBeInTheDocument();
     expect(screen.getByText("Explain mismatch")).toBeInTheDocument();
     expect(screen.getByText("shopify.list_orders")).toBeInTheDocument();
     expect(screen.getByText("Reasoning model")).toBeInTheDocument();
     expect(screen.getByText("asia-south1")).toBeInTheDocument();
     expect(screen.queryByText("Sample")).not.toBeInTheDocument();
+  });
+
+  it("keeps the capability ids behind a Technical details disclosure", () => {
+    renderWithIntl(<AgentPage id="finance-agent" />);
+    const details = screen.getByText("Technical details").closest("details")!;
+    expect(details).not.toHaveAttribute("open");
+    expect(within(details).getByText("finance.reconcile")).toBeInTheDocument();
+    const capabilities = screen.getByRole("heading", { name: "Capabilities" }).closest("section")!;
+    expect(within(capabilities).getByText("Payment reconciliation").closest("details")).toBeNull();
   });
 
   it("links each pack that uses it to the marketplace", () => {

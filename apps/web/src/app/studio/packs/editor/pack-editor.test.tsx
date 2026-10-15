@@ -61,7 +61,7 @@ vi.stubGlobal(
 );
 
 const saveButton = () => screen.getByRole("button", { name: "Save pack" });
-const validateButton = () => screen.getByRole("button", { name: "Check with the server" });
+const validateButton = () => screen.getByRole("button", { name: "Check for problems" });
 /** Opens the editor on the saved Overdue pack at version 3. */
 function editing() {
   mocks.pack = { ...ok(SAVED), refetch: mocks.refetch };
@@ -113,7 +113,11 @@ describe("PackEditor", () => {
   it("saves an existing pack against the version it was opened at, and says when someone saved first", async () => {
     editing();
     expect(saveButton()).toBeDisabled();
+    // Why it is greyed is read with the button, not only seen beside it; it goes once there is something to save.
+    expect(saveButton()).toHaveAccessibleDescription("No changes to save.");
     await userEvent.type(screen.getByLabelText("Name"), " v2");
+    expect(saveButton()).not.toHaveAttribute("aria-describedby");
+    expect(screen.queryByText("No changes to save.")).toBeNull();
     await userEvent.click(saveButton());
     const [vars, handlers] = mocks.save.mutate.mock.calls[0];
     expect(vars.path).toEqual({ org_id: "org_a1", key: "org-a1--overdue" });
@@ -232,10 +236,10 @@ describe("PackEditor", () => {
 
   it("moves focus to the panel heading after Remove and after the Pack details button", async () => {
     renderWithIntl(<PackEditor />);
-    await userEvent.click(screen.getByRole("button", { name: /^review/ }));
+    await userEvent.click(screen.getByRole("button", { name: /^Human review/ }));
     await userEvent.click(screen.getByRole("button", { name: "Pack details" }));
     expect(screen.getByRole("heading", { name: "Pack details" })).toHaveFocus();
-    await userEvent.click(screen.getByRole("button", { name: /^review/ }));
+    await userEvent.click(screen.getByRole("button", { name: /^Human review/ }));
     await userEvent.click(screen.getByRole("button", { name: "Remove step" }));
     expect(screen.queryByLabelText("Step name")).toBeNull();
     expect(screen.getByRole("heading", { name: "Pack details" })).toHaveFocus();
@@ -244,10 +248,10 @@ describe("PackEditor", () => {
   it("forgets a focus request once a step is selected, so returning to the details does not jump into an old field", async () => {
     renderWithIntl(<PackEditor />);
     await userEvent.clear(budgetField());
-    await userEvent.click(screen.getByRole("button", { name: /^review/ }));
+    await userEvent.click(screen.getByRole("button", { name: /^Human review/ }));
     await userEvent.click(screen.getByRole("button", { name: /^Most a run may spend on agents \(USD\): enter/ }));
     expect(budgetField()).toHaveFocus();
-    await userEvent.click(screen.getByRole("button", { name: /^review/ }));
+    await userEvent.click(screen.getByRole("button", { name: /^Human review/ }));
     await userEvent.click(screen.getByRole("button", { name: "Pack details" }));
     expect(budgetField()).not.toHaveFocus();
     expect(screen.getByRole("heading", { name: "Pack details" })).toHaveFocus();
@@ -262,7 +266,7 @@ describe("PackEditor", () => {
     );
     expect(screen.getByText("A reviewer pool is needed.")).toBeInTheDocument();
     expect(screen.getByText("From the server")).toBeInTheDocument();
-    expect(mocks.toast).toHaveBeenCalledWith("The pack was not saved", "See the problems below the canvas.", "blocked");
+    expect(mocks.toast).toHaveBeenCalledWith("The pack was not saved", "See the problems below the steps.", "blocked");
   });
 
   it("checks a saved pack against its own key, so its name is not counted against it", async () => {
@@ -337,7 +341,7 @@ describe("PackEditor", () => {
     expect(screen.getAllByText(message)).toHaveLength(2);
     expect(screen.getByLabelText("Most a run may spend on agents (USD)")).toHaveAttribute("aria-invalid", "true");
     // Look at a step first, so the pick has to bring the details back.
-    await userEvent.click(screen.getByRole("button", { name: /^review/ }));
+    await userEvent.click(screen.getByRole("button", { name: /^Human review/ }));
     expect(screen.getByLabelText("Step name")).toHaveValue("review");
     await userEvent.click(screen.getByRole("button", { name: message }));
     expect(screen.getByLabelText("Most a run may spend on agents (USD)")).toHaveFocus();
@@ -345,7 +349,7 @@ describe("PackEditor", () => {
 
   it("opens the details for a problem the server reports without a step", async () => {
     renderWithIntl(<PackEditor />);
-    await userEvent.click(screen.getByRole("button", { name: /^review/ }));
+    await userEvent.click(screen.getByRole("button", { name: /^Human review/ }));
     await userEvent.click(validateButton());
     const issue = { path: "name", message: "Another pack is called that." };
     act(() => mocks.validate.mutate.mock.calls[0][1].onSuccess({ ok: false, issues: [issue] }));
@@ -363,7 +367,7 @@ describe("PackEditor", () => {
     // Base UI's checkbox is a span: it says it is disabled rather than being a disabled control.
     expect(screen.getByRole("checkbox", { name: "Required" })).toHaveAttribute("aria-disabled", "true");
     expect(screen.queryByRole("button", { name: "Save pack" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Check with the server" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Check for problems" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Undo" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Auto-arrange" })).toBeNull();
     expect(screen.queryByRole("button", { name: /Add a step after/ })).toBeNull();
@@ -372,10 +376,10 @@ describe("PackEditor", () => {
     expect(screen.queryByRole("button", { name: "Test in sandbox" })).toBeNull();
     await userEvent.click(screen.getByRole("button", { name: "workflow.yaml" }));
     expect(await screen.findByLabelText("The saved workflow.yaml")).toHaveValue("version: 1\n");
-    expect(screen.queryByRole("button", { name: "Import" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Import and replace" })).toBeNull();
     await userEvent.keyboard("{Escape}");
     // A step can be looked at, but its settings, choices and field pickers are off, and Delete removes nothing.
-    await userEvent.click(screen.getByRole("button", { name: /^review/ }));
+    await userEvent.click(screen.getByRole("button", { name: /^Human review/ }));
     expect(screen.getByLabelText("Step name")).toHaveValue("review");
     expect(screen.getByLabelText("Step name")).toBeDisabled();
     expect(screen.getByRole("combobox", { name: "resolved goes to" })).toBeDisabled();
@@ -394,9 +398,9 @@ describe("PackEditor", () => {
     expect(screen.getByRole("button", { name: "Test in sandbox" })).toBeDisabled();
     expect(screen.getByText("Save your changes to test them.")).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "workflow.yaml" }));
-    await userEvent.click(screen.getByRole("button", { name: "Import" }));
+    await userEvent.click(screen.getByRole("button", { name: "Import and replace" }));
     fireEvent.change(screen.getByLabelText("Paste a workflow.yaml"), { target: { value: "nodes: []" } });
-    await userEvent.click(screen.getByRole("button", { name: "Replace the canvas" }));
+    await userEvent.click(screen.getByRole("button", { name: "Replace the draft with this file" }));
     // An unreadable step has no step name to attach to: the API locates it by its path only.
     const issue = { path: "nodes[2]", message: "Step 3 cannot be read as a step." };
     act(() =>
@@ -406,13 +410,13 @@ describe("PackEditor", () => {
         issues: [issue],
       }),
     );
-    expect(mocks.toast).toHaveBeenCalledWith("Steps imported", "2 steps are on the canvas.");
+    expect(mocks.toast).toHaveBeenCalledWith("Steps imported", "2 steps are in the editor.");
     await userEvent.keyboard("{Escape}");
     // Under the canvas, and not passed off as a full check of the draft.
     expect(screen.getByText("From the server")).toBeInTheDocument();
     expect(screen.queryByText("Checked by the server")).toBeNull();
     // Like any problem the server reports without a step, it opens the pack details.
-    await userEvent.click(screen.getAllByRole("button", { name: /^recall/ })[0]);
+    await userEvent.click(screen.getAllByRole("button", { name: /^Memory/ })[0]);
     expect(screen.getByLabelText("Step name")).toHaveValue("recall");
     await userEvent.click(screen.getByRole("button", { name: /Step 3 cannot be read as a step/ }));
     expect(screen.queryByLabelText("Step name")).toBeNull();
@@ -420,6 +424,61 @@ describe("PackEditor", () => {
     // The import is one undoable step.
     await userEvent.click(screen.getByRole("button", { name: "Undo" }));
     expect(screen.queryByText("Step 3 cannot be read as a step.")).toBeNull();
+  });
+
+  it("leaves the canvas out on a phone, says so, and brings the settings into view when a step is chosen", async () => {
+    // Nothing matches: a viewport narrower than md, where the panels stack and the canvas is left out.
+    const hadMatchMedia = Object.getOwnPropertyDescriptor(window, "matchMedia");
+    window.matchMedia = vi.fn((query: string) => ({
+      matches: false,
+      media: query,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    })) as unknown as typeof window.matchMedia;
+    // jsdom does not scroll: what asked to be brought into view is recorded instead.
+    const scrolled: Element[] = [];
+    Element.prototype.scrollIntoView = function (this: Element) {
+      scrolled.push(this);
+    };
+    try {
+      renderWithIntl(<PackEditor />);
+      expect(screen.queryByRole("group", { name: "Workflow canvas" })).toBeNull();
+      expect(screen.getByText(/^Easier on a larger screen/)).toBeInTheDocument();
+      expect(scrolled).toHaveLength(0);
+      await userEvent.click(screen.getByRole("button", { name: /^Human review/ }));
+      expect(screen.getByLabelText("Step name")).toHaveValue("review");
+      expect(scrolled).toEqual([screen.getByRole("heading", { name: "Step settings" })]);
+    } finally {
+      if (hadMatchMedia) Object.defineProperty(window, "matchMedia", hadMatchMedia);
+      else delete (window as { matchMedia?: unknown }).matchMedia;
+      delete (Element.prototype as { scrollIntoView?: unknown }).scrollIntoView;
+    }
+  });
+
+  it("does not scroll the canvas away when a step is chosen while the canvas is shown", async () => {
+    // Stacked panels with a canvas (768 to 1279px): only the md query matches.
+    const hadMatchMedia = Object.getOwnPropertyDescriptor(window, "matchMedia");
+    window.matchMedia = vi.fn((query: string) => ({
+      matches: query === "(min-width: 48rem)",
+      media: query,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    })) as unknown as typeof window.matchMedia;
+    const scrolled: Element[] = [];
+    Element.prototype.scrollIntoView = function (this: Element) {
+      scrolled.push(this);
+    };
+    try {
+      renderWithIntl(<PackEditor />);
+      expect(screen.getByRole("group", { name: "Workflow canvas" })).toBeInTheDocument();
+      await userEvent.click(screen.getByRole("button", { name: /^Human review/ }));
+      expect(screen.getByLabelText("Step name")).toHaveValue("review");
+      expect(scrolled).toHaveLength(0);
+    } finally {
+      if (hadMatchMedia) Object.defineProperty(window, "matchMedia", hadMatchMedia);
+      else delete (window as { matchMedia?: unknown }).matchMedia;
+      delete (Element.prototype as { scrollIntoView?: unknown }).scrollIntoView;
+    }
   });
 
   it("shows a member a notice instead of the new pack editor", () => {

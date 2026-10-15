@@ -21,6 +21,7 @@ import { layoutGraph, mainPath, type GraphLayout, type LayoutEdge, type LayoutNo
 import { isFailureRoute, withTerminalStubs, type CanvasNode } from "@/lib/terminal-stubs";
 import type { NodeType, Run, RunEdge, RunNode } from "@/lib/types";
 import { RoutedEdge, type RoutedEdgeData } from "./routed-edge";
+import { useCodes } from "./run-codes";
 import { StepCard } from "./step-card";
 import { NodeStatusPill } from "./ui";
 
@@ -31,6 +32,7 @@ const isBlocked = (status: RunNode["status"]) => status === "BLOCKED" || status 
 const Step = memo(function Step({ data }: NodeProps<Node<StepData>>) {
   const { node, selected } = data;
   const t = useTranslations("run.canvas");
+  const { subtitle } = useCodes();
   const state = selected
     ? "selected"
     : node.status === "WAITING"
@@ -45,7 +47,7 @@ const Step = memo(function Step({ data }: NodeProps<Node<StepData>>) {
         actor={node.actor}
         kind={t(`nodeType.${node.type satisfies NodeType}`)}
         title={node.label}
-        subtitle={node.subtitle}
+        subtitle={subtitle(node)}
         small={node.type === "trigger" || node.type === "end"}
         state={state}
         dim={node.status === "CREATED"}

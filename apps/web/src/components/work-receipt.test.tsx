@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react";
+import { fireEvent, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { renderWithIntl } from "@/test/intl";
 import { WorkReceipt } from "./work-receipt";
@@ -29,6 +29,17 @@ describe("WorkReceipt", () => {
     expect(screen.queryByText(/0123456789abc/)).not.toBeInTheDocument();
     expect(screen.getByText("order-payment-reconciliation")).toBeInTheDocument();
     expect(screen.getByText("v2")).toBeInTheDocument();
+  });
+
+  it("keeps the hash and pinned versions under technical details, and folds the panel on a phone", () => {
+    state.query = { data: receipt };
+    renderWithIntl(<WorkReceipt runId="run_9" status="COMPLETED" />);
+    expect(screen.getByText("0123456789ab").closest("details")).not.toBeNull();
+    expect(screen.getByText("order-payment-reconciliation").closest("details")).not.toBeNull();
+    const toggle = screen.getByRole("button", { name: "Show Work receipt" });
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    fireEvent.click(toggle);
+    expect(screen.getByRole("button", { name: "Hide Work receipt" })).toHaveAttribute("aria-expanded", "true");
   });
 
   it("flags a chain that fails verification", () => {

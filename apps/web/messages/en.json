@@ -64,6 +64,13 @@
     "current": "Current",
     "reviewerPortal": "Reviewer portal",
     "businessWorkspace": "Business workspace",
+    "switchTo": "Switch to",
+    "groups": {
+      "work": "Work",
+      "setup": "Setup",
+      "account": "Account",
+      "other": "Other areas"
+    },
     "signOut": "Sign out",
     "signOutFailed": "Sign out did not finish",
     "tryAgain": "Try again.",
@@ -81,7 +88,7 @@
       "title": "Find anything",
       "placeholder": "Find pages, runs, packs and tasks",
       "empty": "Nothing matches. Try a run ID such as run_1047, or a pack name.",
-      "goToPage": "Go to page",
+      "runHint": "{status} · {when}",
       "approval": "Approval",
       "hired": "Added",
       "toMove": "to move",
@@ -113,6 +120,7 @@
     "studioAgents": "Agents",
     "studioPacks": "Workflow Packs",
     "crumbNew": "New",
+    "crumbTask": "Task",
     "developerStudio": "Developer Studio"
   },
   "status": {
@@ -161,6 +169,7 @@
       "threeRecords": "Three separate records. The evaluator only recommends; policy decides what is allowed; a person or approval signs off.",
       "evaluatorTitle": "What the evaluator recommends",
       "rules": "Rules",
+      "aiModel": "AI model",
       "chainVerdict": ": {verdict}",
       "verdict": {
         "APPROVED": "Approved",
@@ -182,7 +191,7 @@
       },
       "decision": "Decision",
       "signOffTitle": "Who signs off",
-      "waitingOn": "Waiting for a reviewer on <link>{id}</link>.",
+      "waitingOn": "Waiting for a reviewer. <link>Open the review task</link>",
       "grantedBy": "{by}.",
       "notRequired": "Not required.",
       "reviewerTask": "Reviewer task",
@@ -215,10 +224,10 @@
     "canvas": {
       "nodeType": {
         "trigger": "Trigger",
-        "connector": "Connector",
+        "connector": "App action",
         "parallel": "Parallel",
         "join": "Join",
-        "agent": "Agent",
+        "agent": "AI agent",
         "decision": "Decision",
         "human_workforce": "Human workforce",
         "approval": "Approval",
@@ -251,7 +260,7 @@
         "done": "Completed",
         "failed": "Failed"
       },
-      "outcomeTooltip": "Four separate marks, in order: executed, verified, accepted, settlement eligible. One can be done while another is not.",
+      "outcomeTooltip": "The stage the run is at, in order: executed, verified, accepted, settlement eligible. Stages this run does not need are left out.",
       "outcome": "Outcome",
       "run": "Run",
       "status": "Status",
@@ -265,7 +274,8 @@
       "soFar": "{duration} so far",
       "noMatch": "No runs match.",
       "clearFilters": "Clear filters",
-      "footer": "Outcome marks, in order: executed, verified, accepted, settlement eligible. One can be done while another is not. Costs are simulated."
+      "footerOutcome": "Outcome shows the stage the run is at: executed, verified, accepted, settlement eligible.",
+      "footer": "Costs are simulated."
     },
     "view": {
       "recovered": "Recovered after a worker restart",
@@ -276,6 +286,12 @@
       "canvasHelp": "Select a step, or an event in the timeline, to see who did it, what it cost and the records behind it. Drag to see the rest of the workflow.",
       "timeline": "Timeline",
       "pacificTime": "Times in Pacific time",
+      "localTime": "Times in your time zone ({zone})",
+      "legendAgent": "AI agent",
+      "legendApp": "App action",
+      "jumpTo": "Jump to",
+      "hideSystem": "Hide system steps",
+      "showTechnical": "Show technical details",
       "selectedStep": "Selected step",
       "cost": "Cost",
       "agentsAndModels": "Agents and models",
@@ -325,8 +341,7 @@
       "requested": "What was requested",
       "input": "Input",
       "contract": "Contract",
-      "contractValue": "<mono>{ref}</mono>: every order matched to a payout, exceptions reviewed by a person, totals verified to the cent.",
-      "contractOutcome": "<mono>{ref}</mono>: {outcome}",
+      "contractValue": "Every order matched to a payout, exceptions reviewed by a person, totals verified to the cent.",
       "requestedBy": "Requested by",
       "whoDid": "Who did each part",
       "permitted": "What was permitted, and what changed outside New Machines",
@@ -359,6 +374,75 @@
       "basisPendingAcceptance": "Waiting for your acceptance.",
       "basisAcceptanceNotGiven": "Your acceptance was not given.",
       "basisReviewerPay": "Reviewer pay is owed for the review a person did."
+    },
+    "technical": {
+      "title": "Technical details",
+      "expand": "Show {title}",
+      "collapse": "Hide {title}",
+      "runId": "Run ID",
+      "workflow": "Workflow version",
+      "contract": "Contract version",
+      "policyRef": "Policy",
+      "decisionId": "Decision record",
+      "evaluatorCodes": "Evaluator codes",
+      "policyCodes": "Policy codes",
+      "capability": "Capability",
+      "callId": "Call"
+    },
+    "who": {
+      "you": "You",
+      "member": "A member of your workspace",
+      "reviewer": "A reviewer"
+    },
+    "codes": {
+      "aiModel": "the AI model",
+      "createdTask": "Created a review task",
+      "pinnedVersions": "Locked the pack and policy versions for this run",
+      "waitingApproval": "Waiting for approval",
+      "reason": "Reason: {reason}",
+      "subtitle": {
+        "reasoning": "Careful, step-by-step reasoning",
+        "fast": "Quick, lighter reasoning",
+        "read": "Reads only",
+        "write": "Can make changes"
+      },
+      "map": {
+        "ACTION_CLASS_PERMITTED": "Allowed: your policies permit this kind of action",
+        "ACTION_CLASS_DENIED": "Not allowed: your policies do not permit this kind of action",
+        "APPROVAL_GRANTED": "Allowed after your approval",
+        "APPROVAL_REQUIRED": "Needs your approval first",
+        "CAPABILITY_NOT_IN_CONTRACT": "Not allowed: the pack's contract does not cover this action",
+        "CONNECTOR_DISABLED": "Not allowed: the app is disconnected",
+        "NOT_CONNECTED": "Not allowed: the app is not connected",
+        "GRANT_REVOKED": "Not allowed: access to the app was revoked",
+        "ROUTE_CHANGED": "Not allowed: the app was reconnected another way during the run",
+        "UNKNOWN_TOOL": "Not allowed: New Machines does not know this tool",
+        "TOOL_NOT_OFFERED": "Not allowed: the agent may not use this tool",
+        "RULES_EVALUATED": "Decided by the pack's rules",
+        "PAYMENT_ACTION": "Moves money, so a person must approve it",
+        "MONEY_MOVEMENT_BY_AGENT": "An agent would move money, so a person must approve it",
+        "MISMATCHES_FOUND": "Some orders and payments do not match",
+        "ALL_MATCHED": "Every order matched a payment",
+        "DATA_MISSING": "Some of the data was missing",
+        "NO_REQUESTS": "No requests to handle",
+        "CASES_PROPOSED": "Cases proposed for a decision",
+        "NOTHING_OVERDUE": "Nothing is overdue",
+        "REMINDERS_PLANNED": "Reminders planned",
+        "REFERENCE_MISMATCH": "A reference does not match",
+        "AMOUNT_DELTA": "The amounts differ",
+        "PAYOUT_NOT_FOUND": "No payout was found",
+        "WITHIN_RETURN_WINDOW": "Inside the return window",
+        "DAMAGE_DESCRIBED": "Damage was described",
+        "APPROVED": "Approved",
+        "HUMAN_REVIEW": "Needs a person",
+        "REJECTED": "Rejected",
+        "REVISION_REQUIRED": "Revision required",
+        "ESCALATED": "Escalated",
+        "BLOCKED": "Blocked",
+        "ERROR": "Error",
+        "TIMED_OUT": "Timed out",
+        "PASS": "Passed"
+      }
     }
   },
   "errors": {
@@ -368,9 +452,10 @@
     "pageCouldNotLoad": "This page could not load",
     "notFound": {
       "title": "There is nothing at this address",
-      "body": "The run, pack or task may have a different ID, or the link is incomplete.",
+      "body": "The link may be incomplete or out of date. Check the address and try again.",
       "overview": "Go to overview",
-      "allRuns": "See all runs"
+      "allRuns": "See all runs",
+      "signIn": "Sign in"
     },
     "signIn": {
       "mismatch": "That email and password did not match. Check them and try again.",
@@ -392,9 +477,14 @@
     },
     "recordLink": "See each step and who took it",
     "signInTitle": "Sign in to the demo workspace",
-    "signInHelp": "Use the login you were given, or any Google account.",
-    "footerNote": "Not indexed. Customers, orders and reviewers here are made up, and no money moves.",
-    "footerBuilt": "Built for the <cup>AI Builder Cup</cup>, December 2026.",
+    "signInTitleNext": "Sign in to continue to {page}",
+    "continueTo": {
+      "app": "the business workspace",
+      "work": "the reviewer portal",
+      "studio": "the Studio"
+    },
+    "signInHelp": "Use the demo login you were sent, or any Google account.",
+    "footerNote": "Customers, orders and reviewers here are made up, and no money moves.",
     "signIn": {
       "mockNote": "Sign-in is simulated. No credentials are checked.",
       "signingIn": "Signing in…",
@@ -403,8 +493,13 @@
       "email": "Email",
       "emailPlaceholder": "you@company.com",
       "password": "Password",
+      "passwordHint": "Sent to you with the demo login.",
+      "passwordSuffix": "password",
+      "show": "Show",
+      "hide": "Hide",
       "submit": "Sign in",
-      "joinNote": "You join Harbor & Pine Supply Co. as a paying member. Reviewers sign in here too and switch to the reviewer portal from the workspace menu."
+      "joinNoteMember": "Signing in with Google joins you to Harbor & Pine Supply Co. as a member.",
+      "joinNoteReviewer": "Reviewers: after signing in, open the reviewer portal from the menu."
     },
     "record": {
       "title": "Yesterday’s reconciliation at Harbor & Pine",
@@ -427,7 +522,8 @@
     "needsYou": "Needs you",
     "hiredPacks": "Your packs",
     "findMore": "Find more",
-    "packMeta": "{version}, {n, plural, one {# run} other {# runs}} in 30 days",
+    "lastRun": "Last run {when}",
+    "noRunsYet": "No runs yet",
     "runs": "Runs",
     "viewAll": "View all",
     "outcomeMarks": "Outcome marks: executed, verified, accepted, settlement eligible",
@@ -470,7 +566,9 @@
       "run": {
         "title": "Start a run",
         "detail": "Choose the data to work on, approve what needs you, and read the receipt."
-      }
+      },
+      "reviewerPrompt": "Here to review tasks instead?",
+      "reviewerLink": "Go to reviewer portal"
     },
     "invitation": {
       "title": "{org} invited you to join as {role}",
@@ -483,7 +581,9 @@
     "title": "Approvals",
     "lede": "When policy needs your sign-off, you approve one exact action. If anything in it changes, the approval no longer applies and you are asked again.",
     "earlier": "Earlier",
+    "openRun": "Open the run",
     "pastLine": "{status}, {when}",
+    "runLabel": "{title}, {when}",
     "past": {
       "PENDING": "Waiting",
       "GRANTED": "Approved by you",
@@ -571,8 +671,33 @@
     "writesWithApproval": "Writes with approval",
     "revoke": "Revoke",
     "revokeTitle": "Revoke this access?",
-    "revokeDescription": "{install} will no longer be able to use {capability} on {app}. You can allow it again from this page.",
+    "revokeDescription": "{install} loses “{capability}” on {app}. You can allow it again from this page.",
     "revokeConfirm": "Revoke access",
+    "capability": {
+      "read": "Read {resource}",
+      "write": "Write {resource}",
+      "other": "{action} {resource}",
+      "resources": {
+        "orders": "orders",
+        "payment": "payment",
+        "shipments": "shipments",
+        "invoice": "invoices",
+        "inventory": "inventory",
+        "pages": "pages",
+        "charges": "charges",
+        "sheets": "sheets",
+        "drive_file": "Drive files",
+        "message": "messages",
+        "refund": "refunds"
+      },
+      "actions": {
+        "refund": "Refund",
+        "issue": "Issue",
+        "create": "Create",
+        "create_draft": "Draft",
+        "propose": "Propose"
+      }
+    },
     "noPack": "No pack uses this connection.",
     "disconnectedToastBodyLive": "Runs that need it can't start until you connect it again.",
     "empty": "No apps yet. Add a pack and the apps it needs appear here, ready to connect.",
@@ -600,14 +725,14 @@
     "signInNotRemoved": "{app} is disconnected here, but its sign-in could not be removed from the connection service yet. It is removed the next time you connect {app}.",
     "revokedPill": "Revoked",
     "allowAgain": "Allow again",
-    "allowAgainFor": "Allow {install} to use {capability} on {app} again",
+    "allowAgainFor": "Allow {install} “{capability}” on {app} again",
     "allowedToast": "Access allowed again",
-    "allowedToastBody": "{install} may use {capability} on {app} again.",
+    "allowedToastBody": "{install} has “{capability}” on {app} again.",
     "allowFailed": "Could not allow access again",
     "allowedDeniedToast": "Allowed again, but policy denies it",
-    "allowedDeniedToastBody": "{install} is allowed {capability} on {app} again, but a policy denies the call. Change the policy to let it through.",
+    "allowedDeniedToastBody": "{install} has “{capability}” on {app} again, but a policy denies the call. Change the policy to let it through.",
     "nothingAllowedToast": "Nothing added",
-    "nothingAllowedToastBody": "{install} no longer uses {capability} on {app}, so nothing was added. The revocation is forgotten.",
+    "nothingAllowedToastBody": "{install} no longer uses “{capability}” on {app}, so nothing was added. The revocation is forgotten.",
     "simulatedToast": "{app} uses simulated data",
     "simulatedToastBody": "It was switched to simulated data while you were signing in. Nothing reaches your real account.",
     "badSignInLink": "The app's sign-in link was not a secure web address, so the browser stayed here.",
@@ -637,7 +762,6 @@
       "inUse": "In use",
       "rejected": "Rejected",
       "edited": "Edited by you before approving.",
-      "from": "From {source}",
       "appliesTo": "Would apply to: {name}",
       "conflict": "Conflicts with a memory already in use",
       "conflictNote": "Approving the new one marks <mono>{id}</mono> as corrected for weekend orders.",
@@ -653,15 +777,14 @@
       "rejectedTitle": "Rejected. Agents will not use it.",
       "rejectedBody": "It stays in the history."
     },
+    "source": {
+      "seed": "Set up with your workspace",
+      "console": "Added by New Machines",
+      "run": "From run {n}",
+      "other": "From {source}"
+    },
     "row": {
-      "scope": {
-        "Organization": "Organization",
-        "Department": "Department",
-        "Agent installation": "Agent installation",
-        "User": "User",
-        "Task": "Task"
-      },
-      "scopeLine": "{scope}: {name}",
+      "appliesTo": "Applies to {name}",
       "usedIn": "Used in {n, plural, one {# run} other {# runs}}",
       "state": {
         "CANDIDATE": "Proposed",
@@ -686,7 +809,9 @@
       "hired": "Added",
       "intro": "Workflow Packs bundle agents, the reviewers they need and the checks that prove the work. Try any pack on sample data before you add it.",
       "filterLabel": "Filter packs",
-      "industryLabel": "Filter by industry",
+      "viewsLabel": "Show",
+      "functionLabel": "Function",
+      "industryLabel": "Industry",
       "allIndustries": "All industries",
       "buildOwn": "Need a pack that isn't here? Build your own in the Developer Studio.",
       "buildOwnCta": "Build a pack",
@@ -699,15 +824,19 @@
       "notCertified": "Not yet certified",
       "team": "Built by your team",
       "reviewerWhenNeeded": "Reviewer when needed",
-      "perRun": "{min}–{max} per run"
+      "perRun": "{price} per run",
+      "perRunUnset": "Price not set"
+    },
+    "price": {
+      "range": "{min}–{max}"
     },
     "trial": {
       "title": "Try it in the sandbox",
       "badge": "Sample data, no live effects",
       "intro": "Runs the pack on synthetic data. Your real connections are not used, and any write is stopped before it leaves the sandbox.",
       "running": "Running…",
-      "again": "Run the trial again",
-      "start": "Run a free trial",
+      "again": "Try again",
+      "start": "Try on sample data",
       "finished": "Trial finished in 4.6s. No charge.",
       "script": {
         "recon": {
@@ -730,7 +859,8 @@
     "pack": {
       "seeRuns": "See its runs",
       "packSettings": "Pack settings",
-      "reviewHire": "Review and add",
+      "add": "Add to workspace",
+      "tryFirst": "See the sample-data trial",
       "publisherVersion": "{publisher}, version {version}",
       "hired": "Added",
       "notCertified": "Not yet certified",
@@ -742,11 +872,11 @@
       "outOf": "{value} of {total}",
       "limitations": "Known limitations",
       "retested": "Retested after",
-      "refreshing": "The evaluation report for this pack is being refreshed.",
       "uncertifiedNote": "Not yet certified. The publisher's own claims have not been tested by New Machines. Try it in the sandbox first.",
       "costs": "What it costs",
       "agentsTools": "Agents and tools",
-      "perRun": "{min}–{max} per run",
+      "perRun": "{price} per run",
+      "perRunUnset": "Price not set",
       "upTo": "up to {amount} per run",
       "noneByDefault": "None by default",
       "basis": "Basis",
@@ -764,6 +894,11 @@
         "low": "Low",
         "medium": "Medium",
         "high": "High"
+      },
+      "riskNote": {
+        "low": "Mostly reads data. Any write goes only to a place you pre-approved.",
+        "medium": "Can write or send, but only with your approval. A person reviews exceptions.",
+        "high": "Touches money or customer decisions. A person confirms every action."
       },
       "publisherSees": "Publisher sees",
       "publisherSeesValue": "Aggregate quality numbers only. Never your data or runs."
@@ -792,7 +927,6 @@
         "network": "The New Machines reviewer network",
         "networkNote": "Network reviewers see a redacted copy: no workspace name, emails or phone numbers. Their pay is simulated. While the network is on, your own team does not see these tasks, and a task nobody claims waits until it times out."
       },
-      "poolOff": "Your team only, while the network is off",
       "networkOff": "The reviewer network is off for your workspace, so your team reviews every task until an owner or admin allows it.",
       "networkOffLink": "Open Reviewers",
       "saveSettings": "Save pack settings",
@@ -801,12 +935,10 @@
       "settingsLede": "Change the spending cap and who reviews this pack's tasks.",
       "summary": "Summary",
       "pack": "Pack",
-      "version": "Version",
       "pinned": "Pinned. Updates need your approval.",
       "perRunLabel": "Per run",
-      "perRunValue": "{min}–{max} plus reviewer pay",
-      "cap": "Cap",
-      "capPerRun": "{amount} per run",
+      "perRunValue": "{price} plus reviewer pay. A run stops and asks you above {cap}",
+      "perRunUnset": "Agent price not set, plus reviewer pay. A run stops and asks you above {cap}",
       "region": "Data region",
       "agree": "I agree to the work contract and pay terms for this pack.",
       "readContract": "Read the contract",
@@ -831,9 +963,29 @@
       "showAll": "Show all agents",
       "empty": "No agents are available yet.",
       "publisherVersion": "{publisher}, version {version}",
-      "usedIn": "{n, plural, =0 {Not in a pack yet} one {Used in # pack} other {Used in # packs}}",
+      "usedIn": "{n, plural, =0 {Not in a pack yet} one {Used in # pack:} other {Used in # packs:}}",
       "sample": "Sample",
       "team": "Built by your team"
+    },
+    "capability": {
+      "finance_collections": "Invoice collections",
+      "finance_reconcile": "Payment reconciliation",
+      "operations_report": "Operations reporting",
+      "customer_refunds": "Customer refunds",
+      "retail_orders": "Retail orders",
+      "communications_draft": "Draft messages",
+      "orders_read": "Read orders",
+      "inventory_read": "Read inventory",
+      "refund_propose": "Propose refunds",
+      "invoice_read": "Read invoices",
+      "payment_read": "Read payments",
+      "message_create_draft": "Draft messages",
+      "report_compose": "Compose reports",
+      "drive_file_create": "Create files in Drive",
+      "shipments_read": "Read shipments",
+      "dispute_draft": "Draft dispute evidence",
+      "catalog_read": "Read the catalog",
+      "catalog_draft": "Draft catalog text"
     },
     "detail": {
       "allAgents": "All agents",
@@ -843,6 +995,8 @@
       "sampleNote": "A sample agent from the demo workspace. Its skills and tools are not published.",
       "capabilities": "Capabilities",
       "capabilitiesNote": "What the agent asks to do. Every action is still checked against your policies.",
+      "technical": "Technical details",
+      "capabilityIds": "Capability ids",
       "skills": "Skills",
       "noSkills": "No skills listed.",
       "tools": "Tools it may call",
@@ -905,10 +1059,18 @@
   "settings": {
     "title": "Settings",
     "lede": "Who can use this workspace, the rules every run follows, and access for the AI tools you connect.",
+    "onThisPage": "On this page",
     "policies": {
       "title": "Policies",
       "aside": "Checked on every action",
       "updated": "Updated {when}",
+      "version": "Version {n}",
+      "names": {
+        "tool_actions": "Tool actions",
+        "human_review": "Human review",
+        "spend_cap": "Spend cap",
+        "region": "Data region"
+      },
       "note": "A blocked action has no override button. To allow it, change the policy here, and the change is recorded."
     },
     "workspace": {
@@ -917,6 +1079,12 @@
       "cap": "Monthly cap",
       "capValue": "{amount} (simulated)",
       "region": "Data region",
+      "regionValue": "{place} ({code})",
+      "places": {
+        "asia-south1": "Mumbai",
+        "asia-northeast1": "Tokyo",
+        "us-central1": "Iowa, US"
+      },
       "reviewerLocations": "Reviewer locations",
       "reviewerLocationsValue": "United States, Philippines"
     },
@@ -942,7 +1110,6 @@
       "sentToastBody": "{address} can join as {role} once they accept. Simulated in this demo.",
       "sendFailed": "Could not send the invite",
       "pendingNote": "Invite sent, not accepted yet",
-      "signsInWith": "{email}, signs in with {via}",
       "invited": "Invited",
       "rolesLower": {
         "Member": "member",
@@ -951,7 +1118,7 @@
       "sentToastBodyLive": "{address} joins as {role} the next time they sign in with that email."
     },
     "tokens": {
-      "title": "Access for AI tools (MCP)",
+      "title": "Access for AI tools",
       "create": "Create token",
       "createTitle": "Create a token for an AI tool",
       "createDescription": "The token works for 30 days. It can never approve or decline anything, whatever you choose here.",
@@ -964,7 +1131,7 @@
         "runs:start": "Start runs of your packs",
         "approvals:list": "See what is waiting for approval"
       },
-      "lede": "Let an AI tool list your packs, start runs and see what is waiting. Tokens can never approve or decline anything.",
+      "lede": "Let an AI assistant list your packs, start runs and see what is waiting. A token works with any assistant that supports MCP connections, and can never approve or decline anything.",
       "createdToast": "Token created",
       "createdToastBody": "Copy it now. It is shown only once.",
       "createFailed": "Could not create the token",
@@ -1011,6 +1178,8 @@
     "removeLabel": "Remove {name}",
     "removeTitle": "Remove {name} as a reviewer?",
     "removeDescription": "They stop seeing your team's review tasks, and tasks they claimed go back to the queue. Someone who joined as a reviewer also leaves this workspace.",
+    "removeSelfTitle": "Remove yourself as a reviewer?",
+    "removeSelfDescription": "You stop seeing your team's review tasks, and tasks you claimed go back to the queue. Your role in the workspace does not change.",
     "removeConfirm": "Remove reviewer",
     "removed": "Reviewer removed",
     "removeFailed": "Could not remove the reviewer",
@@ -1031,7 +1200,7 @@
   },
   "usage": {
     "title": "Usage and billing",
-    "lede": "Every charge comes from a recorded run step and is posted twice: once against your account and once against where the money goes. In this demo no money moves.",
+    "lede": "Every charge comes from a recorded run step, so you can trace it back to the work. In this demo no money moves.",
     "simulated": "Simulated billing",
     "spent": "Spent in {month}",
     "ofCap": "{pct}% of the {cap} monthly cap",
@@ -1041,7 +1210,8 @@
     "reviewerPay": "Reviewer pay this month",
     "reviewerPayNote": "{n, plural, =0 {No reviewer payments yet.} one {# payment.} other {# payments.}}",
     "ledger": "Ledger",
-    "ledgerNote": "Each entry balances: debits equal credits",
+    "ledgerNote": "Open an entry to see where the money went",
+    "viewRun": "View run",
     "account": "Account",
     "debit": "Debit",
     "credit": "Credit",
@@ -1051,13 +1221,14 @@
       "PENDING": "Pending",
       "HELD": "Held"
     },
+    "planTitle": "Plan and payment",
     "plan": "Plan",
     "planValue": "{plan}, {price} a month (simulated)",
     "includes": "Includes",
     "includesValue": "Unlimited packs, 5 members, 30-day run history",
     "payment": "Payment method",
     "paymentValue": "None. This demo workspace never charges a card.",
-    "ledeLive": "Every charge comes from a recorded run step and is posted twice: once against your account and once against where the money goes. Billing is simulated: no money moves.",
+    "ledeLive": "Every charge comes from a recorded run step, so you can trace it back to the work. Billing is simulated: no money moves.",
     "heldNoteMany": "Held for {n} runs in progress. Each is released when its run finishes.",
     "heldNone": "Nothing is held right now.",
     "agentsToolsNoteNoPlan": "Metered per run step. Reviewer pay is counted separately.",
@@ -1097,7 +1268,7 @@
     "yourWork": "Your work",
     "openOffers": "Open offers",
     "worth": "Worth",
-    "notYetPaid": "Not yet paid",
+    "owed": "Owed",
     "acceptedSubmissions": "Accepted submissions",
     "seeEarnings": "See earnings",
     "how": {
@@ -1109,14 +1280,19 @@
       "simulated": "No real payouts in this demo",
       "ledeLive": "Reviews you do for the New Machines reviewer network earn simulated pay: no money moves. Reviews for your own workspace's team are unpaid.",
       "simulatedLive": "Pay is simulated",
-      "owed": "Owed to you",
+      "owed": "Owed",
       "paid": "Paid so far",
       "tasks": "Tasks",
+      "columns": {
+        "task": "Task",
+        "verdict": "Verdict",
+        "payment": "Payment"
+      },
       "failedCheck": "The run failed its independent check after your review. Your pay is unaffected.",
       "status": {
         "OWED": "Owed",
         "ELIGIBLE": "Ready to pay",
-        "PAID_SIMULATED": "Paid (simulated)",
+        "PAID_SIMULATED": "Paid",
         "IN_REVIEW": "In review"
       },
       "verdict": {
@@ -1129,6 +1305,7 @@
       "seeTasks": "See available tasks"
     },
     "empty": "No review tasks are open right now. New ones appear here when a run needs a person.",
+    "emptyNetwork": "No review tasks are open right now. Turn on network reviewing to get review tasks from other New Machines customers.",
     "simulatedPayLive": "Pay is simulated",
     "teamUnpaid": "Team review, unpaid",
     "network": "Network",
@@ -1141,10 +1318,12 @@
       "formDescription": "Customers never see your profile. New Machines uses it to offer you suitable tasks.",
       "name": "Name",
       "languages": "Languages",
-      "languagesHint": "For example English, Tagalog",
+      "languagesHint": "Separate with commas, for example English, Tagalog",
       "skills": "Skills",
-      "skillsHint": "For example Reconciliation, Refunds",
-      "save": "Save and review for the network",
+      "skillsHint": "Separate with commas, for example Reconciliation, Refunds, Exception review",
+      "save": "Save profile",
+      "saveAndStart": "Save and start reviewing",
+      "saved": "Profile saved",
       "on": "You review for the network",
       "off": "You no longer review for the network",
       "failed": "Could not update your reviewer profile",
@@ -1284,6 +1463,16 @@
       "team": "Team reviews are unpaid.",
       "network": "Simulated pay for this review: {pay}. No money moves."
     },
+    "summary": {
+      "title": "Your review",
+      "task": "What you reviewed",
+      "verdict": "Verdict",
+      "feedback": "Feedback",
+      "records": "Your calls",
+      "recordCall": "Order {id}: {call}",
+      "submitted": "Submitted",
+      "onEarnings": "Your verdict and when you submitted are listed on Earnings."
+    },
     "simulatedPayLive": "Simulated pay",
     "teamUnpaid": "Team review, unpaid"
   },
@@ -1296,8 +1485,12 @@
     "packsTitle": "Workflow Packs",
     "newAgent": "New agent",
     "newPack": "New pack",
-    "agentCount": "{n, plural, one {# agent} other {# agents}}",
-    "packCount": "{n, plural, one {# pack} other {# packs}}",
+    "allAgents": "See all {n, plural, one {# agent} other {# agents}}",
+    "allPacks": "See all {n, plural, one {# pack} other {# packs}}",
+    "version": "v{n}",
+    "nextAgent": "Start with an agent, then put it in a pack.",
+    "nextPack": "You have an agent. Next, put it in a pack.",
+    "nextAdd": "Add a pack to your workspace to run it.",
     "noAgents": "No agents yet. An agent reads from your apps and prepares work for a pack's steps.",
     "noPacks": "No packs yet. A pack is a workflow: its steps, who reviews and approves, and what it delivers.",
     "liveOnlyTitle": "The Studio is part of the live workspace",
@@ -1326,8 +1519,8 @@
     "model": "Model",
     "reasoning": "Reasoning model",
     "fast": "Fast model",
-    "maxTurns": "Most turns per step",
-    "maxTurnsHelp": "How many times the agent may call a tool before it must answer, from 1 to 20.",
+    "maxTurns": "Most tool calls per step",
+    "maxTurnsHelp": "How many times the agent may use a tool before it answers, from 1 to 20. The usual setting is {n}.",
     "tools": "Apps it reads",
     "toolsHelp": "Agents only read. Steps that change data in an app go in a pack, after an approval.",
     "toolsMax": "Up to {n} tools.",
@@ -1412,7 +1605,7 @@
   "studioFields": {
     "nothingSelected": "Choose a step on the canvas or in the step list to change its settings.",
     "stepName": "Step name",
-    "stepNameHelp": "Other steps read this step's result as nodes.STEP_NAME.output.",
+    "stepNameHelp": "Lowercase letters, digits and underscores, such as ledger_check. Other steps use it to read this step's result.",
     "rename": {
       "badId": "Use lowercase letters, digits and underscores, starting with a letter (40 at most).",
       "taken": "Another step already has that name."
@@ -1516,6 +1709,7 @@
     },
     "outcomes": "Where each outcome goes",
     "goesTo": "{outcome} goes to",
+    "stepTarget": "Step {n}: {kind} ({id})",
     "nowhere": "Not connected",
     "duplicate": "Duplicate step",
     "remove": "Remove step"
@@ -1544,7 +1738,7 @@
     "blocked": "Packs cannot use tools that delete records or move money.",
     "noMatch": "Nothing matches. Try another word.",
     "listLabel": "Steps in reading order",
-    "addAfter": "Add a step after {step}",
+    "addAfter": "Add a step after step {n}",
     "addAfterOutcome": "After the {outcome} outcome",
     "unlinked": "The step that followed is no longer connected",
     "cut": {
@@ -1590,8 +1784,8 @@
     "inWorkspace": "In your workspace",
     "added": "Added to your workspace",
     "notAdded": "Not added yet",
-    "versionHead": "Version",
-    "version": "Version {n}"
+    "addToWorkspace": "Add to workspace",
+    "versionHead": "Version"
   },
   "studioEditor": {
     "untitled": "Untitled pack",
@@ -1600,14 +1794,15 @@
     "unsaved": "Unsaved changes",
     "undo": "Undo",
     "redo": "Redo",
-    "validate": "Check with the server",
+    "validate": "Check for problems",
     "save": "Save pack",
+    "noChanges": "No changes to save.",
     "saved": "Pack saved",
     "savedVersion": "Version {n} is saved. Find it in your marketplace under Built by your team.",
     "notSaved": "The pack was not saved",
     "notChecked": "The pack was not checked",
-    "fixFirst": "Fix the problems below the canvas first. The server would refuse the pack as it is.",
-    "seeProblems": "See the problems below the canvas.",
+    "fixFirst": "Fix the problems below the steps first. The server would refuse the pack as it is.",
+    "seeProblems": "See the problems below the steps.",
     "conflictTitle": "A newer version was saved",
     "conflictBody": "Version {n} is now the latest. Loading it replaces any unsaved changes here.",
     "conflictSaved": "Someone saved a newer version since you opened this one. Loading it replaces any unsaved changes here.",
@@ -1622,6 +1817,7 @@
     "panels": "Side panel",
     "stepsPanel": "Steps",
     "addPanel": "Add",
+    "smallScreen": "Easier on a larger screen. The canvas is left out here: choose a step in the list to change its settings, and connect steps under Where each outcome goes.",
     "stepSettings": "Step settings",
     "packDetails": "Pack details",
     "showDetails": "Pack details",
@@ -1692,7 +1888,7 @@
     "title": "workflow.yaml",
     "lede": "The pack's steps as a workflow definition file, the same format the platform's own packs use.",
     "export": "Export",
-    "import": "Import",
+    "import": "Import and replace",
     "exportLabel": "The saved workflow.yaml",
     "exportFailed": "The workflow.yaml could not be loaded",
     "savedOnly": "This is the saved version. Save to include your latest changes.",
@@ -1701,13 +1897,14 @@
     "copied": "Copied",
     "copyFailed": "Could not copy. Select the text and copy it instead.",
     "importLabel": "Paste a workflow.yaml",
-    "importNote": "Its steps replace the ones on the canvas. You can undo this.",
-    "importButton": "Replace the canvas",
+    "importWarnTitle": "Importing replaces the current draft",
+    "importWarn": "Every step in this draft is replaced by the file's steps. Undo brings the old ones back.",
+    "importButton": "Replace the draft with this file",
     "imported": "Steps imported",
-    "importedBody": "{n, plural, one {# step is} other {# steps are}} on the canvas.",
+    "importedBody": "{n, plural, one {# step is} other {# steps are}} in the editor.",
     "importFailed": "The YAML could not be imported",
     "importIssues": "{n, plural, one {# step could not be read} other {# steps could not be read}}",
-    "noStartTitle": "The canvas was not changed",
+    "noStartTitle": "Nothing was changed",
     "noStart": "The file has no start step, so nothing was imported."
   },
   "studioTest": {
@@ -1717,8 +1914,9 @@
     "sandbox": "Sandbox data",
     "saveFirst": "Save the pack to test it.",
     "saveChangesFirst": "Save your changes to test them.",
+    "inputHelp": "The pack's start form, filled in as someone starting a real run would. The run reads it as its input.",
     "budget": "Most this test may spend (USD)",
-    "budgetHelp": "Optional. The pack's own budget applies when this is empty.",
+    "budgetHelp": "Optional. Leave it empty to use the pack's own budget of {amount} USD.",
     "start": "Start the test run",
     "failed": "The test run did not start",
     "budgetRequired": "Enter a budget for this test. The pack sets no maximum of its own.",

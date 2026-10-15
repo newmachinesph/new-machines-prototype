@@ -33,7 +33,7 @@ function Ledger({ ledger }: { ledger: LedgerTxn[] }) {
     return (
       <EmptyState
         action={
-          <ButtonLink href="/app/runs/new" variant="secondary" className="h-8">
+          <ButtonLink href="/app/runs/new" variant="secondary" className="h-10 sm:h-8">
             {t("startRun")}
           </ButtonLink>
         }
@@ -49,15 +49,25 @@ function Ledger({ ledger }: { ledger: LedgerTxn[] }) {
           <details className="group">
             <summary className="grid cursor-pointer list-none grid-cols-[1fr_auto] items-center gap-x-4 gap-y-1 px-5 py-3 hover:bg-grey-50/60 sm:grid-cols-[150px_1fr_110px_100px]">
               <span className="order-3 text-xs text-muted sm:order-none">{dateTime(txn.at)}</span>
-              <span className="text-sm">
+              {/* The link to the run lives in the opened panel, not in the summary, so tapping the title only toggles. */}
+              <span className="min-w-0 text-sm">
                 {txn.description}
-                {txn.runId ? <Id className="ml-2 text-[11px]">{txn.runId}</Id> : null}
+                {txn.runId && !txn.description.includes(txn.runId) ? (
+                  <Id className="mt-0.5 block text-[11px] text-muted">{txn.runId}</Id>
+                ) : null}
               </span>
               <span className="hidden sm:block">
                 <Pill tone={STATUS_TONE[txn.status]}>{t(`status.${txn.status}`)}</Pill>
               </span>
               <Amount value={txn.amount} className="text-right text-sm font-medium" />
             </summary>
+            {txn.runId ? (
+              <p className="mx-5 mb-2 text-xs">
+                <Link className="link" href={`/app/runs/${txn.runId}`}>
+                  {t("viewRun")}
+                </Link>
+              </p>
+            ) : null}
             <table className="mx-5 mb-3 w-[calc(100%-2.5rem)] text-xs">
               <thead>
                 <tr className="text-left text-muted">
@@ -149,7 +159,7 @@ function UsageBody({ ORG, LEDGER }: { ORG: Organization; LEDGER: LedgerTxn[] }) 
             <Ledger ledger={LEDGER} />
           </Section>
 
-          <Section title={t("plan")}>
+          <Section title={t("planTitle")}>
             <div className="px-5 py-2">
               <KeyValues
                 rows={[

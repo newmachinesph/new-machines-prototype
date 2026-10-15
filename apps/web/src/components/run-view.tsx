@@ -1,16 +1,38 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { INTL_TAGS, resolveLocale } from "@/i18n/locales";
 import { cn } from "@/lib/cn";
 import { sumMoney } from "@/lib/format";
-import type { Run } from "@/lib/types";
+import type { NodeType, Run } from "@/lib/types";
 import { useFormat } from "@/lib/use-format";
+import { useViewerTimeZone, zoneName } from "@/lib/use-viewer-time-zone";
+import { Checkbox } from "./base";
 import { NodeInspector } from "./node-inspector";
 import { RunCanvas } from "./run-canvas";
+import { useCodes, useWho } from "./run-codes";
+import { CollapsibleSection, TechnicalDetails } from "./run-disclosures";
 import { WorkReceipt } from "./work-receipt";
-import { ActorGlyph, ActorLabel, ButtonLink, Callout, Id, KeyValues, OutcomeRail, Section, SimTag } from "./ui";
+import {
+  ActorGlyph,
+  ActorLabel,
+  ButtonLink,
+  Callout,
+  Id,
+  KeyValues,
+  NodeStatusPill,
+  OutcomeRail,
+  Section,
+  SimTag,
+} from "./ui";
+
+/** Below `md` (the phone layout), where the step list and the inspector are far apart. */
+const PHONE_QUERY = "(max-width: 767px)";
+
+/** Where the page's parts are, for the jump links a phone needs (an id on the panel, or on its heading). */
+const ANCHORS = { steps: "run-steps", timeline: "run-timeline", cost: "run-cost", details: "run-details" } as const;
 
 function defaultNode(run: Run) {
   return (
@@ -23,10 +45,43 @@ function defaultNode(run: Run) {
 
 export function RunView({ run }: { run: Run }) {
   const t = useTranslations("run.view");
+  const tCanvas = useTranslations("run.canvas");
+  const tt = useTranslations("run.technical");
+  const locale = INTL_TAGS[resolveLocale(useLocale())];
   const { money, dateTime, timeSec } = useFormat();
+  const { zone, known } = useViewerTimeZone();
+  const { line } = useCodes();
+  const who = useWho();
   const [selected, setSelected] = useState(() => defaultNode(run));
+  const inspector = useRef<HTMLElement>(null);
+  // On a phone the chosen step's details are far below the list or timeline: bring them into view.
+  const choose = (id: string) => {
+    setSelected(id);
+    if (window.matchMedia?.(PHONE_QUERY).matches) {
+      requestAnimationFrame(() => inspector.current?.scrollIntoView?.({ block: "start", behavior: "auto" }));
+    }
+  };
+  const [hideSystem, setHideSystem] = useState(false);
+  const [technical, setTechnical] = useState(false);
   const node = run.nodes.find((n) => n.id === selected) ?? run.nodes[0];
   const total = sumMoney(run.spent.ai, run.spent.human, run.spent.tools);
+  const events = hideSystem ? run.timeline.filter((e) => e.actor !== "system") : run.timeline;
+
+  const deliverable = run.deliverable ? (
+    <ButtonLink href={`/app/runs/${run.id}/evidence`} className="w-full">
+      {t("openDeliverable")}
+    </ButtonLink>
+  ) : (
+    <p className="px-1 text-xs leading-relaxed text-muted">
+      {t.rich("deliverablePending", {
+        example: (chunks) => (
+          <Link className="link" href="/app/runs/run_1042/evidence">
+            {chunks}
+          </Link>
+        ),
+      })}
+    </p>
+  );
 
   return (
     <div className="space-y-5">
@@ -53,14 +108,42 @@ export function RunView({ run }: { run: Run }) {
 
       <OutcomeRail stages={run.stages} notes={run.stageNotes} />
 
+      {/* A phone reads the page top to bottom: the deliverable and the way around come first. */}
+      <div className="space-y-3 md:hidden">
+        {deliverable}
+        <nav aria-label={t("jumpTo")} className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+          <span className="text-muted">{t("jumpTo")}</span>
+          <a className="link py-2" href={`#${ANCHORS.steps}`}>
+            {t("steps")}
+          </a>
+          <a className="link py-2" href={`#${ANCHORS.timeline}`}>
+            {t("timeline")}
+          </a>
+          <a className="link py-2" href={`#${ANCHORS.cost}`}>
+            {t("cost")}
+          </a>
+          <a className="link py-2" href={`#${ANCHORS.details}`}>
+            {t("runDetails")}
+          </a>
+        </nav>
+      </div>
+
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_400px] 2xl:grid-cols-[minmax(0,1fr)_460px]">
-        <section className="panel overflow-hidden xl:col-span-2 2xl:col-span-1" aria-label={t("workflow")}>
+        <section
+          id={ANCHORS.steps}
+          className="panel scroll-mt-24 overflow-hidden lg:scroll-mt-20 xl:col-span-2 2xl:col-span-1"
+          aria-label={t("workflow")}
+        >
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-rule px-5 py-3">
             <h2 className="h-section">{t("steps")}</h2>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted">
               <span className="flex items-center gap-1.5">
                 <ActorGlyph actor="machine" className="size-2.5" />
-                <ActorLabel actor="machine" />
+                {t("legendAgent")}
+              </span>
+              <span className="flex items-center gap-1.5">
+                <ActorGlyph actor="machine" className="size-2.5" />
+                {t("legendApp")}
               </span>
               <span className="flex items-center gap-1.5">
                 <ActorGlyph actor="human" className="size-2.5" />
@@ -76,26 +159,65 @@ export function RunView({ run }: { run: Run }) {
               </span>
             </div>
           </div>
-          <div className="h-[400px] bg-stage/60 2xl:h-[480px]">
+          {/* The canvas needs room to read; a phone gets the same steps as a list, in workflow order. */}
+          <ol className="divide-y divide-rule md:hidden" aria-label={t("steps")}>
+            {run.nodes.map((n) => (
+              <li key={n.id}>
+                <button
+                  type="button"
+                  aria-current={n.id === selected ? "true" : undefined}
+                  onClick={() => choose(n.id)}
+                  className={cn(
+                    "flex min-h-12 w-full items-center gap-3 px-5 py-2.5 text-left",
+                    n.id === selected && "bg-stage/60",
+                  )}
+                >
+                  <ActorGlyph actor={n.actor} className="size-3" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-medium">{n.label}</span>
+                    <span className="block text-xs text-muted">{tCanvas(`nodeType.${n.type satisfies NodeType}`)}</span>
+                  </span>
+                  <NodeStatusPill status={n.status} />
+                </button>
+              </li>
+            ))}
+          </ol>
+          <div className="hidden h-[400px] bg-stage/60 md:block 2xl:h-[480px]">
             <RunCanvas run={run} selectedId={selected} onSelect={setSelected} />
           </div>
-          <div className="border-t border-rule px-5 py-2.5 text-xs text-muted">{t("canvasHelp")}</div>
+          <div className="hidden border-t border-rule px-5 py-2.5 text-xs text-muted md:block">{t("canvasHelp")}</div>
         </section>
 
         <Section
           className="order-3 self-start xl:order-none"
-          title={t("timeline")}
-          aside={<span className="text-xs text-muted">{t("pacificTime")}</span>}
+          title={
+            <span id={ANCHORS.timeline} className="scroll-mt-24 lg:scroll-mt-20">
+              {t("timeline")}
+            </span>
+          }
+          aside={
+            <span className="text-xs text-muted">
+              {known ? t("localTime", { zone: zoneName(zone, locale, new Date(run.startedAt)) }) : t("pacificTime")}
+            </span>
+          }
         >
+          <div className="flex flex-wrap gap-x-6 border-b border-rule px-5 py-1 sm:gap-y-2 sm:py-3">
+            <Checkbox checked={hideSystem} onCheckedChange={setHideSystem} className="py-2.5 sm:py-0">
+              {t("hideSystem")}
+            </Checkbox>
+            <Checkbox checked={technical} onCheckedChange={setTechnical} className="py-2.5 sm:py-0">
+              {t("showTechnical")}
+            </Checkbox>
+          </div>
           <ol className="relative px-5 py-4">
-            {run.timeline.map((e, i) => (
+            {events.map((e, i) => (
               <li key={i} className="relative grid grid-cols-[72px_16px_1fr] gap-x-3 pb-4 last:pb-0">
                 <time className="tnum pt-px text-right text-xs text-muted" dateTime={e.at}>
-                  {timeSec(e.at)}
+                  {timeSec(e.at, zone)}
                 </time>
                 <span className="relative flex justify-center pt-[3px]">
                   <ActorGlyph actor={e.actor} className="relative z-10 size-3" />
-                  {i < run.timeline.length - 1 ? (
+                  {i < events.length - 1 ? (
                     <span className="absolute top-4 bottom-[-14px] w-px bg-rule" aria-hidden />
                   ) : null}
                 </span>
@@ -103,17 +225,17 @@ export function RunView({ run }: { run: Run }) {
                   <button
                     type="button"
                     disabled={!e.nodeId}
-                    onClick={() => e.nodeId && setSelected(e.nodeId)}
+                    onClick={() => e.nodeId && choose(e.nodeId)}
                     className={cn(
                       "text-left text-sm font-medium enabled:hover:underline",
                       e.tone === "blocked" && "text-blocked",
                     )}
                   >
-                    {e.title}
+                    {line(e.title)}
                   </button>
                   <div className="text-xs text-muted">
-                    {e.who}
-                    {e.ref ? (
+                    {who(e.who, e.actor)}
+                    {technical && e.ref ? (
                       <>
                         {" "}
                         <Id className="ml-1 text-[11px]">{e.ref}</Id>
@@ -121,7 +243,7 @@ export function RunView({ run }: { run: Run }) {
                     ) : null}
                   </div>
                   {e.detail ? (
-                    <p className="mt-1 max-w-[70ch] text-[13px] leading-snug text-grey-700">{e.detail}</p>
+                    <p className="mt-1 max-w-[70ch] text-[13px] leading-snug text-grey-700">{line(e.detail)}</p>
                   ) : null}
                 </div>
               </li>
@@ -130,7 +252,7 @@ export function RunView({ run }: { run: Run }) {
         </Section>
 
         <div className="order-2 space-y-5 self-start xl:order-none 2xl:sticky 2xl:top-20 2xl:col-start-2 2xl:row-span-2 2xl:row-start-1 2xl:max-h-[calc(100dvh-6rem)] 2xl:[scrollbar-width:thin] 2xl:[scrollbar-color:var(--color-grey-200)_transparent] 2xl:overflow-y-auto">
-          <section className="panel" aria-label={t("selectedStep")}>
+          <section ref={inspector} className="panel scroll-mt-24 lg:scroll-mt-20" aria-label={t("selectedStep")}>
             <div className="border-b border-rule px-5 py-3">
               <h2 className="h-section">{t("selectedStep")}</h2>
             </div>
@@ -138,7 +260,14 @@ export function RunView({ run }: { run: Run }) {
               <NodeInspector node={node} />
             </div>
           </section>
-          <Section title={t("cost")} aside={<SimTag />}>
+          <Section
+            title={
+              <span id={ANCHORS.cost} className="scroll-mt-24 lg:scroll-mt-20">
+                {t("cost")}
+              </span>
+            }
+            aside={<SimTag />}
+          >
             <div className="px-5 py-2">
               <KeyValues
                 rows={[
@@ -154,38 +283,29 @@ export function RunView({ run }: { run: Run }) {
               />
             </div>
           </Section>
-          <Section title={t("runDetails")}>
+          <CollapsibleSection id={ANCHORS.details} className="scroll-mt-24 lg:scroll-mt-20" title={t("runDetails")}>
             <div className="px-5 py-2">
               <KeyValues
                 rows={[
-                  { label: t("run"), value: <Id>{run.id}</Id> },
                   {
                     label: t("started"),
-                    value: t("startedBy", { when: dateTime(run.startedAt), name: run.startedBy }),
+                    value: t("startedBy", { when: dateTime(run.startedAt, zone), name: who(run.startedBy, "buyer") }),
                   },
                   { label: t("input"), value: run.input },
-                  { label: t("workflowRef"), value: <Id>{run.workflowRef}</Id> },
-                  { label: t("contract"), value: <Id>{run.contractRef}</Id> },
+                ]}
+              />
+              <TechnicalDetails
+                className="my-3"
+                rows={[
+                  { label: tt("runId"), value: run.id },
+                  { label: tt("workflow"), value: run.workflowRef },
+                  { label: tt("contract"), value: run.contractRef },
                 ]}
               />
             </div>
-          </Section>
+          </CollapsibleSection>
           <WorkReceipt runId={run.id} status={run.status} />
-          {run.deliverable ? (
-            <ButtonLink href={`/app/runs/${run.id}/evidence`} className="w-full">
-              {t("openDeliverable")}
-            </ButtonLink>
-          ) : (
-            <p className="px-1 text-xs leading-relaxed text-muted">
-              {t.rich("deliverablePending", {
-                example: (chunks) => (
-                  <Link className="link" href="/app/runs/run_1042/evidence">
-                    {chunks}
-                  </Link>
-                ),
-              })}
-            </p>
-          )}
+          <div className="hidden md:block">{deliverable}</div>
         </div>
       </div>
     </div>

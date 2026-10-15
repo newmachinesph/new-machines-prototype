@@ -12,6 +12,20 @@ import type { MemoryItem } from "@/lib/types";
 import { useMemory, useRetractMemory, useReviewMemory } from "@/lib/queries/workspace";
 import { useFormat } from "@/lib/use-format";
 
+/** The API's source labels as whole phrases; a run's label ("Run run_2011") becomes "From run 2011". */
+const SOURCE_KEYS = { "Definitions seed": "seed", "New Machines": "console" } as const;
+const RUN_SOURCE = /^Run (run_(\w+))$/;
+
+function useSourceLabel() {
+  const t = useTranslations("memory.source");
+  return (source: string) => {
+    const key = SOURCE_KEYS[source as keyof typeof SOURCE_KEYS];
+    if (key) return t(key);
+    const run = RUN_SOURCE.exec(source);
+    return run ? t("run", { n: run[2] }) : t("other", { source });
+  };
+}
+
 function MemoryCandidate({
   item: m,
   conflict,
@@ -23,6 +37,7 @@ function MemoryCandidate({
 }) {
   const t = useTranslations("memory.candidate");
   const tc = useTranslations("common");
+  const sourceLabel = useSourceLabel();
   const errorText = useErrorText();
   // The outcome comes from the cached item; only the fact that you edited is kept here.
   const [edited, setEdited] = useState(false);
@@ -66,13 +81,14 @@ function MemoryCandidate({
         <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted">
           <span className="flex items-center gap-1.5">
             <ActorGlyph actor="human" />
-            {t("from", { source: m.source })}
+            {m.sourceRun ? (
+              <Link className="link" href={`/app/runs/${m.sourceRun}`}>
+                {sourceLabel(m.source)}
+              </Link>
+            ) : (
+              sourceLabel(m.source)
+            )}
           </span>
-          {m.sourceRun ? (
-            <Link className="link" href={`/app/runs/${m.sourceRun}`}>
-              {m.sourceRun}
-            </Link>
-          ) : null}
           <span>{t("appliesTo", { name: m.scopeName })}</span>
         </div>
         {conflict ? (
@@ -168,6 +184,7 @@ type Row = MemoryItem;
 
 function MemoryRow({ item: m, onRetract }: { item: Row; onRetract?: () => void }) {
   const t = useTranslations("memory.row");
+  const sourceLabel = useSourceLabel();
   const { dateTime } = useFormat();
   const state = m.retracted ? "RETRACTED" : m.state;
   return (
@@ -175,8 +192,8 @@ function MemoryRow({ item: m, onRetract }: { item: Row; onRetract?: () => void }
       <div className="min-w-0">
         <p className="text-sm">{m.text}</p>
         <div className="mt-1 flex flex-wrap gap-x-3 text-xs text-muted">
-          <span>{t("scopeLine", { scope: t(`scope.${m.scope}`), name: m.scopeName })}</span>
-          <span>{m.source}</span>
+          <span>{t("appliesTo", { name: m.scopeName })}</span>
+          <span>{sourceLabel(m.source)}</span>
           <span>{dateTime(m.createdAt)}</span>
           {m.usedIn ? <span>{t("usedIn", { n: m.usedIn })}</span> : null}
         </div>
@@ -185,10 +202,11 @@ function MemoryRow({ item: m, onRetract }: { item: Row; onRetract?: () => void }
         <Pill tone={STATE_TONE[state]}>{t(`state.${state}`)}</Pill>
         {onRetract ? (
           <Confirm
+            danger
             trigger={
-              <button type="button" data-retract className="link text-xs text-muted">
+              <Button variant="danger" className="h-10 sm:h-8" data-retract>
                 {t("retract")}
-              </button>
+              </Button>
             }
             title={t("retractTitle")}
             description={t("retractDescription")}
@@ -217,7 +235,7 @@ function NoMemory() {
     <div className="panel">
       <EmptyState
         action={
-          <ButtonLink href="/app/runs" variant="secondary" className="h-8">
+          <ButtonLink href="/app/runs" variant="secondary" className="h-10 sm:h-8">
             {t("seeRuns")}
           </ButtonLink>
         }

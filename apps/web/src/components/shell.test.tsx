@@ -18,6 +18,7 @@ const data = vi.hoisted(() => ({
   me: { isPending: false, isError: false, data: {} } as MeState,
   plan: "Trial",
   path: "/app",
+  studio: { agent: undefined as string | undefined, pack: undefined as string | undefined },
 }));
 
 // The workspace menu's language items refresh the router after a choice; the menu must open without one.
@@ -44,6 +45,14 @@ vi.mock("@/lib/queries/catalog", () => ({
   usePackName: () => undefined,
   useAgentName: () => undefined,
 }));
+vi.mock("@/lib/queries/studio", () => ({
+  useStudioAgent: (key?: string) => ({
+    data: key && data.studio.agent ? { draft: { name: data.studio.agent } } : undefined,
+  }),
+  useStudioPack: (key?: string) => ({
+    data: key && data.studio.pack ? { draft: { name: data.studio.pack } } : undefined,
+  }),
+}));
 vi.mock("@/lib/queries/tasks", () => ({ useEligibleTasks: () => ok([]) }));
 vi.mock("@/lib/queries/workspace", () => ({ useApprovals: () => ok([]), useMemory: () => ok([]) }));
 
@@ -58,6 +67,7 @@ describe("AppShell", () => {
     data.me = ok({ ...LIVE_ME });
     data.plan = "Trial";
     data.path = "/app";
+    data.studio = { agent: undefined, pack: undefined };
   });
 
   it("names the signed-in user's own workspace, plan and role", () => {
@@ -69,10 +79,58 @@ describe("AppShell", () => {
     expect(screen.queryByText(/Harbor/)).not.toBeInTheDocument();
   });
 
-  it("labels a live workspace's sandbox apps and billing, not a demo", () => {
+  it("labels a live workspace's sandbox apps and billing in the sidebar and, below lg, in a strip under the top bar", () => {
     renderWithIntl(<AppShell>page</AppShell>);
-    expect(screen.getByRole("button", { name: "Simulated data, simulated billing" })).toBeInTheDocument();
+    const badges = screen.getAllByRole("button", { name: "Simulated data, simulated billing" });
+    expect(badges).toHaveLength(1);
+    expect(screen.getByRole("complementary")).toContainElement(badges[0]);
+    expect(screen.getByRole("banner")).not.toContainElement(badges[0]);
     expect(screen.queryByText(/Demo workspace/)).not.toBeInTheDocument();
+    // The sidebar is hidden below lg: the strip keeps the label on screen, with the full sentence as its title.
+    const strip = screen.getAllByText("Simulated data, simulated billing").find((el) => el.tagName === "DIV");
+    expect(strip).toHaveClass("lg:hidden");
+    expect(strip).toHaveAttribute("title", expect.stringContaining("no money moves"));
+    expect(screen.getByRole("complementary")).not.toContainElement(strip as HTMLElement);
+  });
+
+  it("gives the sidebar and the drawer's nav groups different ids", async () => {
+    renderWithIntl(<AppShell>page</AppShell>);
+    await userEvent.click(screen.getByRole("button", { name: "Open navigation" }));
+    const lists = screen.getAllByRole("list", { name: "Work", hidden: true });
+    expect(lists).toHaveLength(2);
+    const ids = lists.map((l) => l.getAttribute("aria-labelledby"));
+    expect(new Set(ids).size).toBe(2);
+    for (const id of ids) expect(document.querySelectorAll(`[id="${id}"]`)).toHaveLength(1);
+  });
+
+  it("groups the business sidebar with labels, the other roles' areas last", () => {
+    renderWithIntl(<AppShell>page</AppShell>);
+    const nav = within(screen.getByRole("complementary")).getByRole("navigation", { name: "Main" });
+    expect(within(nav).getByRole("list", { name: "Work" })).toContainElement(
+      within(nav).getByRole("link", { name: "Runs" }),
+    );
+    expect(within(nav).getByRole("list", { name: "Setup" })).toContainElement(
+      within(nav).getByRole("link", { name: "Connections" }),
+    );
+    expect(within(nav).getByRole("list", { name: "Account" })).toContainElement(
+      within(nav).getByRole("link", { name: "Settings" }),
+    );
+    const other = within(nav).getByRole("list", { name: "Other areas" });
+    expect(within(other).getByRole("link", { name: "Reviewer portal" })).toHaveAttribute("href", "/work");
+    expect(within(other).getByRole("link", { name: "Developer Studio" })).toHaveAttribute("href", "/studio");
+  });
+
+  it("names a top-level page in the top bar only until the page brings its own heading", () => {
+    data.path = "/app/approvals";
+    const { unmount } = renderWithIntl(<AppShell>page</AppShell>);
+    const crumbs = () => screen.getByRole("navigation", { name: "Breadcrumb" });
+    expect(crumbs()).toHaveTextContent("Approvals");
+    expect(crumbs()).toHaveClass("page-crumb"); // hidden by the shell once <main> holds an h1
+    unmount();
+    data.path = "/app/runs/run_2012";
+    renderWithIntl(<AppShell>page</AppShell>);
+    expect(crumbs()).toHaveTextContent("Runsrun_2012");
+    expect(crumbs()).not.toHaveClass("page-crumb"); // a trail stays beside the page's heading
   });
 
   it("keeps the demo workspace's name and label", () => {
@@ -187,10 +245,43 @@ describe("AppShell", () => {
     expect(crumbs()).toEqual(["Workflow Packs", "invoices"]);
   });
 
+  it("reads a saved Studio record by its name once it has loaded", () => {
+    data.studio.pack = "Invoice checks";
+    data.path = "/studio/packs/acme--invoices";
+    renderWithIntl(<AppShell mode="studio">page</AppShell>);
+    expect(
+      within(screen.getByRole("navigation", { name: "Breadcrumb" }))
+        .getAllByRole("listitem")
+        .map((li) => li.textContent),
+    ).toEqual(["Workflow Packs", "Invoice checks"]);
+  });
+
+  it("names the reviewer portal's pages in the top bar, which the page's own heading does not hide", () => {
+    data.path = "/work/earnings";
+    const { unmount } = renderWithIntl(<AppShell mode="work">page</AppShell>);
+    const crumbs = () => screen.getByRole("navigation", { name: "Breadcrumb" });
+    expect(crumbs()).toHaveTextContent("Earnings");
+    expect(crumbs()).not.toHaveClass("page-crumb");
+    unmount();
+    data.path = "/work/tasks/ht_run_2012_review_1";
+    renderWithIntl(<AppShell mode="work">page</AppShell>);
+    expect(crumbs()).toHaveTextContent("Available tasksTask");
+    expect(crumbs()).not.toHaveTextContent("ht_run");
+  });
+
   it("offers the Developer Studio in the workspace menu of a live workspace only", async () => {
     const { unmount } = renderWithIntl(<AppShell>page</AppShell>);
     await userEvent.click(screen.getAllByRole("button", { name: "Ana's workspace, switch workspace" })[0]);
     expect(await screen.findByRole("menuitem", { name: /Developer Studio/ })).toHaveAttribute("href", "/studio");
+    // The menu is grouped: where to switch to, the language, then the account.
+    const menu = screen.getByRole("menu");
+    expect(within(menu).getByRole("group", { name: "Switch to" })).toContainElement(
+      within(menu).getByRole("menuitem", { name: /Reviewer portal/ }),
+    );
+    expect(within(menu).getByRole("group", { name: "Language" })).toBeInTheDocument();
+    const account = within(menu).getByRole("group", { name: "Account" });
+    expect(account).toHaveTextContent("Signed in as Ana Reyes");
+    expect(within(account).getByRole("menuitem", { name: "Sign out" })).toBeInTheDocument();
     unmount();
     data.me = ok({ ...LIVE_ME, workspace: "demo" });
     renderWithIntl(<AppShell>page</AppShell>);

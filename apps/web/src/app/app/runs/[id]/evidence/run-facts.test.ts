@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { RUN_1042 } from "@/data/runs-recon";
 import type { Run } from "@/lib/types";
-import { changed, toolUse } from "./run-facts";
+import { changed, moneyText, toolUse } from "./run-facts";
 
 type Call = NonNullable<Run["nodes"][number]["toolCalls"]>[number];
 
@@ -63,5 +63,17 @@ describe("toolUse and changed", () => {
   it("says nothing changed when every write was simulated, and when no app was called", () => {
     expect(changed(toolUse(run([call({ mocked: true })], true)))).toBe("simulated");
     expect(changed(toolUse(run([], true)))).toBe("noCalls");
+  });
+});
+
+describe("moneyText", () => {
+  it("writes an amount the API sent as '70.40 USD' the interface's way, and leaves other values alone", () => {
+    expect(moneyText("-70.40 USD", "en-US")).toBe("−$70.40");
+    expect(moneyText("89.66 USD", "en-US")).toBe("$89.66");
+    expect(moneyText("1200 JPY", "ja-JP")).toBe("￥1,200");
+    expect(moneyText("12", "en-US")).toBe("12");
+    expect(moneyText("2 pages", "en-US")).toBe("2 pages");
+    expect(moneyText("2 PDF", "en-US")).toBe("2 PDF");
+    expect(moneyText("3 CSV", "en-US")).toBe("3 CSV");
   });
 });

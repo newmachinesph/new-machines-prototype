@@ -15,7 +15,8 @@ import { byOperation } from "./me";
 
 export const ACTIVE_STATUSES: RunStatus[] = ["RUNNING", "WAITING_FOR_HUMAN", "WAITING_FOR_EVENT", "VERIFYING"];
 
-export const useRuns = (enabled = true) => useQuery({ ...listWorkflowRunsOptions(), refetchInterval: 10_000, enabled });
+export const useRuns = (enabled = true, poll = true) =>
+  useQuery({ ...listWorkflowRunsOptions(), refetchInterval: poll ? 10_000 : false, enabled });
 
 export const useRun = (id: string) =>
   useQuery({
