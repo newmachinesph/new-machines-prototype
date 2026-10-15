@@ -34,6 +34,7 @@ NODE_FAILURE_STATUSES = {"FAILED", "REJECTED", "TIMED_OUT", "BLOCKED", "CANCELLE
 TERMINAL_RUN_STATUSES = {"COMPLETED", "FAILED", "CANCELLED"}
 OPEN_ROW_STATUSES = {"open", "unreviewed"}
 SIMULATED_LIMITATION = "Simulated: connector data came from sandbox responses, not a live account."
+HUMAN_WORKFORCE = "Human workforce"  # `who` of the line that opens a review task (not of its decision)
 VIEW_ITEMS_MAX = 50  # a pack's deliverable view shows at most this many items
 VIEW_DETAIL_MAX = 160  # characters of an item's detail
 
@@ -270,6 +271,18 @@ def _on_node_waiting(p: dict, event: dict, data: dict) -> None:
     _set_run_status(p, "WAITING_FOR_HUMAN" if node["type"] == "human_workforce" else "WAITING_FOR_EVENT")
 
 
+def _task_decided(p: dict, node: dict) -> bool:
+    """Whether the timeline already names the decision that closed this step's review task: a line with the
+    task's ref other than the one that opened it (`_on_human_task`). A retry opens a new task, so the first
+    task's decision does not stand for the second."""
+    task_id = node.get("humanTaskId")
+    if task_id is None:
+        return False
+    opener = ("system", f"Created task {task_id}")
+    lines = [item for item in p["timeline"] if item.get("ref") == task_id]
+    return any((item.get("actor"), item.get("title")) != opener for item in lines)
+
+
 def _on_node_failed(p: dict, event: dict, data: dict) -> None:
     node = _node(p, event["node_id"])
     if node is None:
@@ -279,6 +292,11 @@ def _on_node_failed(p: dict, event: dict, data: dict) -> None:
     if data.get("error"):
         node["note"] = data["error"]
     _take_edge(p, node["id"], data.get("route"))
+    # A review closed by its task's decision (or timeout; `close_task` sends the status) has its own line with
+    # the reviewer's note: no second one. A review that failed without one (a guard, the budget, an activity
+    # error, a revisit whose task never opened: `PackActivities.fail`, no status) still says why it stopped.
+    if node["type"] == "human_workforce" and status in NODE_FAILURE_STATUSES and _task_decided(p, node):
+        return
     _say(
         p,
         event,
@@ -416,7 +434,7 @@ def _on_human_task(p: dict, event: dict, data: dict) -> None:
             "href": f"/work/tasks/{task_id}",
             "cta": "Open the reviewer task",
         }
-        _say(p, event, "system", "Human workforce", f"Created task {task_id}", detail=title, ref=task_id)
+        _say(p, event, "system", HUMAN_WORKFORCE, f"Created task {task_id}", detail=title, ref=task_id)
         return
     p.pop("attention", None)
     _set_run_status(p, "RUNNING")

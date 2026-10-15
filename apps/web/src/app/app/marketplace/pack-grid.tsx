@@ -43,6 +43,8 @@ export function PackGrid() {
           {() => {
             const categories = [...new Set(PACKS.map((p) => p.category))];
             const teamCount = PACKS.filter((p) => p.builtByTeam).length;
+            // A ?category= kept from when the org still had a team pack names a view that is no longer offered.
+            const view = cat === TEAM && teamCount === 0 ? ALL : cat;
             // Views (All packs, Added, and Built by your team when the org has built one) above the line.
             const views = [
               { label: ALL, text: t("all"), n: PACKS.length },
@@ -54,7 +56,7 @@ export function PackGrid() {
               ...categories.map((c) => ({ label: c, text: c, n: PACKS.filter((p) => p.category === c).length })),
             ];
             const inView = (p: (typeof PACKS)[number]) =>
-              cat === ALL || (cat === HIRED ? p.installed : cat === TEAM ? !!p.builtByTeam : p.category === cat);
+              view === ALL || (view === HIRED ? p.installed : view === TEAM ? !!p.builtByTeam : p.category === view);
             const needle = q.trim().toLowerCase();
             const shown = PACKS.filter(
               (p) =>
@@ -83,11 +85,11 @@ export function PackGrid() {
                         ) : null}
                         <button
                           type="button"
-                          aria-pressed={cat === f.label}
+                          aria-pressed={view === f.label}
                           onClick={() => setCat(f.label === ALL ? null : f.label)}
                           className={cn(
                             "flex h-8 shrink-0 items-center justify-between gap-3 rounded-md px-2.5 text-sm whitespace-nowrap",
-                            cat === f.label
+                            view === f.label
                               ? "bg-grey-100 font-medium text-ink"
                               : "text-grey-700 hover:bg-grey-50 hover:text-ink",
                           )}
@@ -175,17 +177,20 @@ export function PackGrid() {
                                   {t("publisherVersion", { publisher: p.publisher, version: p.version })}
                                 </div>
                               </div>
-                              <span className="flex shrink-0 flex-col items-end gap-1">
-                                {p.builtByTeam ? <Pill tone="machine">{t("team")}</Pill> : null}
-                                {p.installed ? (
-                                  <span className="flex items-center gap-1 text-xs font-medium">
-                                    <Check className="size-3.5" strokeWidth={2.25} aria-hidden />
-                                    {t("hired")}
-                                  </span>
-                                ) : p.certified || p.builtByTeam ? null : (
-                                  <Pill tone="quiet">{t("notCertified")}</Pill>
-                                )}
-                              </span>
+                              {/* The corner exists only with a badge in it: empty, it would still take its gap. */}
+                              {p.builtByTeam || p.installed || !p.certified ? (
+                                <span data-testid="pack-badges" className="flex shrink-0 flex-col items-end gap-1">
+                                  {p.builtByTeam ? <Pill tone="machine">{t("team")}</Pill> : null}
+                                  {p.installed ? (
+                                    <span className="flex items-center gap-1 text-xs font-medium">
+                                      <Check className="size-3.5" strokeWidth={2.25} aria-hidden />
+                                      {t("hired")}
+                                    </span>
+                                  ) : p.certified || p.builtByTeam ? null : (
+                                    <Pill tone="quiet">{t("notCertified")}</Pill>
+                                  )}
+                                </span>
+                              ) : null}
                             </div>
                             <p className="mt-3 text-sm leading-relaxed text-grey-700">{p.outcome}</p>
                             <div className="mt-4 mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted">

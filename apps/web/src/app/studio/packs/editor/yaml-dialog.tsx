@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/skeleton";
 import { Button, Callout } from "@/components/ui";
 import type { BuilderIssue } from "@/lib/api/gen/types.gen";
 import { useErrorText } from "@/lib/api/use-error-text";
-import { useEditorApi } from "@/lib/builder/store";
+import { useEditor, useEditorApi } from "@/lib/builder/store";
 import { useOrgId } from "@/lib/queries/me";
 import { useImportStudioWorkflow, useStudioPackWorkflow } from "@/lib/queries/studio";
 
@@ -43,6 +43,15 @@ export function YamlDialog({
   const [issues, setIssues] = useState<BuilderIssue[]>([]);
   // The last import came back without a start step, so the canvas was left alone.
   const [noStart, setNoStart] = useState(false);
+  // How long the history was once the import was on the canvas. Undoing the import takes its steps off the
+  // canvas, and what could not be read about them goes with them, for good: an edit made after the undo would
+  // make the history as long again without putting the steps back.
+  const [importedAt, setImportedAt] = useState<number | null>(null);
+  const past = useEditor((s) => s.history.past.length);
+  if (importedAt !== null && past < importedAt) {
+    setIssues([]);
+    setImportedAt(null);
+  }
   const exported = useStudioPackWorkflow(packKey, open && tab === "export");
   const importer = useImportStudioWorkflow();
 
@@ -70,8 +79,10 @@ export function YamlDialog({
           const hasStart = w.steps.some((s) => s.type === "trigger");
           setIssues(w.issues);
           setNoStart(!hasStart);
+          setImportedAt(null);
           if (!hasStart) return;
           api.getState().replaceGraph(w.steps);
+          setImportedAt(api.getState().history.past.length);
           onImported?.(w.issues);
           toast(t("imported"), t("importedBody", { n: w.steps.length }));
           if (!w.issues.length) setOpen(false);

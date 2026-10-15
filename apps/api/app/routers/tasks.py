@@ -139,15 +139,15 @@ def _label(key: str) -> str:
 def _details(show: object, clean: Callable[[str], str]) -> list[DigestRow]:
     """What a review shows that is not a list of records, as labelled rows. A pack built in the Studio often
     shows an agent's output, an object: one row per key, and a last row saying how many more there are. A
-    list of objects shows as records instead (none here); a text, a number or a list of values is one row.
+    list of objects shows as records instead (none here); a text, a number or a list of values is one row,
+    as are the plain values beside the objects in one list (one value shows as itself, nulls are dropped).
 
     Each text is cleaned by `clean` whole, before it is shaped or cut, so a name or an email address is
     never cut to a part the cleaning no longer recognises."""
-    if (
-        show is None
-        or show in ("", [], {})
-        or (isinstance(show, list) and any(isinstance(i, dict) for i in show))
-    ):
+    if isinstance(show, list) and any(isinstance(item, dict) for item in show):
+        plain = [item for item in show if not isinstance(item, dict) and item is not None]
+        show = plain[0] if len(plain) == 1 else plain  # the objects are the records
+    if show is None or show in ("", [], {}):
         return []
     rows = list(show.items()) if isinstance(show, dict) else [("Details", show)]
     out = [

@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -109,6 +109,22 @@ describe("PackGrid industry filter", () => {
     await user.click(screen.getByRole("button", { name: "Show all packs" }));
     expect(screen.getByRole("button", { name: /All industries/ })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByText("Reconciliation")).toBeInTheDocument();
+  });
+
+  it("reads a stale Built by your team view as All packs when the org has no team pack", () => {
+    url.initial = { category: "Built by your team" };
+    renderWithIntl(<PackGrid />);
+    expect(screen.queryByRole("button", { name: /Built by your team/ })).toBeNull();
+    expect(screen.getByRole("button", { name: /^All packs/ })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByText("Reconciliation")).toBeInTheDocument();
+    expect(screen.getByText("Claims intake")).toBeInTheDocument();
+  });
+
+  it("renders no badge column on a card with nothing to badge", () => {
+    renderWithIntl(<PackGrid />);
+    // Certified, not added, not the team's: the corner that would hold a badge is not there to take space.
+    const card = screen.getByRole("link", { name: /Reconciliation/ });
+    expect(within(card).queryByTestId("pack-badges")).toBeNull();
   });
 
   it("labels the chips in Japanese", () => {

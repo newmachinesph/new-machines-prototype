@@ -343,3 +343,129 @@ def test_folding_without_a_view_is_unchanged_for_any_pack():
     assert projection.apply_event(p, event) == projection.apply_event(p, event, None)
     done = projection.apply_event(p, event)
     assert done["summary"] == "Completed." and "deliverable" not in done
+
+
+# --- a review step on the timeline ------------------------------------------------------------------
+
+
+def _reviewed(events: list[tuple[str, str, dict]]) -> dict:
+    """The reconciliation pack's run with `events` ((type, node id, data), in order) folded in, as the
+    projection dict (`_fold` gives the validated Run; these tests read the timeline's wire form)."""
+    p = projection.initial_projection(
+        "run_v", _snapshot(RECON), {"since": "2026-10-06", "until": "2026-10-12"}, "You", 2500
+    )
+    for seq, (type_, node_id, data) in enumerate(events, start=1):
+        at = f"2026-10-13T10:00:{seq:02d}Z"
+        p = projection.apply_event(p, {"seq": seq, "at": at, "type": type_, "node_id": node_id, "data": data})
+    Run.model_validate(p)  # still a valid Run
+    return p
+
+
+def _review(p: dict) -> dict:
+    return next(n for n in p["nodes"] if n["id"] == "review")
+
+
+def _review_lines(p: dict) -> list[dict]:
+    return [t for t in p["timeline"] if t.get("nodeId") == "review"]
+
+
+OPENED = ("human.task", "review", {"task_id": "ht_1", "status": "open", "title": "Resolve mismatches"})
+
+
+def test_a_rejected_review_is_one_line_with_the_reviewer_s_note():
+    """The reviewer's decision line (`human.task`) carries the note; the step's `node.failed` that follows
+    adds no second line with the same note, as the completed path adds none. The step itself still fails."""
+    note = "Wrong period: these are September orders."
+    rejected = {"task_id": "ht_1", "status": "rejected", "decided_by": "Ana Reyes", "note": note}
+    p = _reviewed(
+        [
+            ("node.started", "review", {}),
+            ("node.waiting", "review", {"note": "Resolve mismatches"}),
+            OPENED,
+            ("human.task", "review", rejected),
+            ("node.failed", "review", {"status": "REJECTED", "route": "rejected", "error": note}),
+        ]
+    )
+    assert [(t["who"], t["title"], t.get("detail")) for t in _review_lines(p)] == [
+        ("Human workforce", "Created task ht_1", "Resolve mismatches"),
+        ("Ana Reyes", "Rejected the task", note),
+    ]
+    assert [t for t in p["timeline"] if note in str(t)] == [_review_lines(p)[1]]
+    assert _review(p)["status"] == "REJECTED" and _review(p)["note"] == note
+    assert [e["taken"] for e in p["edges"] if e["from"] == "review"] == [False, True, False]
+    assert p["status"] == "RUNNING"
+
+
+def test_a_review_that_timed_out_says_so_once():
+    p = _reviewed(
+        [
+            ("node.started", "review", {}),
+            OPENED,
+            ("human.task", "review", {"task_id": "ht_1", "status": "timeout"}),
+            (
+                "node.failed",
+                "review",
+                {"status": "TIMED_OUT", "route": "timeout", "error": "The task ended: timeout."},
+            ),
+        ]
+    )
+    assert [(t["actor"], t["title"]) for t in _review_lines(p)] == [
+        ("system", "Created task ht_1"),
+        ("system", "The task timed out"),
+    ]
+    assert _review(p)["status"] == "TIMED_OUT"
+
+
+def test_a_review_that_failed_without_a_decision_still_says_why():
+    """A guard or an activity error fails the step with no decision to show (`PackActivities.fail`): the
+    buyer still reads why it stopped. The same for a step that failed before any task was opened."""
+    reason = "BUDGET_EXCEEDED: the run's budget is spent"
+    opened = [("node.started", "review", {}), OPENED]
+    for events in (opened, opened[:1]):
+        p = _reviewed([*events, ("node.failed", "review", {"error": reason})])
+        last = _review_lines(p)[-1]
+        label = _review(p)["label"]
+        assert (last["title"], last["detail"], last["tone"]) == (f"{label} did not finish", reason, "blocked")
+        assert _review(p)["status"] == "FAILED"
+
+
+def test_a_revisited_review_that_fails_before_its_task_opens_still_says_why():
+    """The first task resolved; the step is revisited and fails with no new task (`PackActivities.fail`, no
+    status): the first task's decision does not cover it, so the step's line appears."""
+    p = _reviewed(
+        [
+            ("node.started", "review", {}),
+            OPENED,
+            ("human.task", "review", {"task_id": "ht_1", "status": "resolved", "note": "Fine."}),
+            ("node.completed", "review", {"route": "resolved", "summary": "Fine."}),
+            ("node.started", "review", {}),
+            ("node.failed", "review", {"error": "ACTIVITY_FAILED: open_task"}),
+        ]
+    )
+    assert [t["title"] for t in _review_lines(p)] == [
+        "Created task ht_1",
+        "Resolved the task",
+        f"{_review(p)['label']} did not finish",
+    ]
+    assert _review(p)["status"] == "FAILED" and _review(p)["note"] == "ACTIVITY_FAILED: open_task"
+
+
+def test_a_retried_review_s_second_task_has_its_own_lines():
+    """A second attempt opens a new task: the first task's decision line does not stand for the second."""
+    p = _reviewed(
+        [
+            ("node.started", "review", {}),
+            OPENED,
+            ("human.task", "review", {"task_id": "ht_1", "status": "rejected", "note": "No."}),
+            ("node.failed", "review", {"status": "REJECTED", "route": "rejected", "error": "No."}),
+            ("node.started", "review", {}),
+            ("human.task", "review", {"task_id": "ht_2", "status": "open", "title": "Resolve mismatches"}),
+            ("node.failed", "review", {"error": "ATTEMPTS_EXCEEDED: more than 4 node executions"}),
+        ]
+    )
+    assert [t["title"] for t in _review_lines(p)] == [
+        "Created task ht_1",
+        "Rejected the task",
+        "Created task ht_2",
+        f"{_review(p)['label']} did not finish",
+    ]

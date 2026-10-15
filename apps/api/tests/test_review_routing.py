@@ -332,7 +332,26 @@ def test_details_are_cleaned_before_they_are_cut_or_shaped():
     many = tasks._details({f"k{i}": i for i in range(tasks.MAX_DETAILS + 4)}, clean)
     assert len(many) == tasks.MAX_DETAILS + 1
     assert (many[-1].label, many[-1].value) == ("More", "4 more fields are not shown here.")
-    assert tasks._details([{"ref": "r1"}, "a"], clean) == []  # a list of objects shows as records
+    assert tasks._details([{"ref": "r1"}, {"ref": "r2"}], clean) == []  # a list of objects shows as records
+
+
+def test_a_mixed_list_shows_its_plain_values_as_one_details_row():
+    """A list with objects shows the objects as records; a text or a number beside them is not lost: the
+    plain values are one "Details" row, cleaned whole before it is cut like any other value."""
+
+    def clean(text: str) -> str:
+        return scrub(text, "Coca-Cola")
+
+    mixed = [{"ref": "r1"}, "Call Coca-Cola", 2, None, {"ref": "r2"}, "write jane.doe@cocacola.com"]
+    rows = [(d.label, d.value) for d in tasks._details(mixed, clean)]
+    assert rows == [("Details", '["Call the customer", 2, "write Hidden"]')]
+    one = [(d.label, d.value) for d in tasks._details([{"ref": "r1"}, "Call Coca-Cola", None], clean)]
+    assert one == [("Details", "Call the customer")]  # one value shows as itself, not as a list
+    assert tasks._details([{"ref": "r1"}, None], clean) == []
+    pad = "x" * tasks.MAX_DETAIL_CHARS
+    [long] = tasks._details([{"ref": "r1"}, f"{pad} write jane.doe@cocacola.com or Coca-Cola"], clean)
+    assert len(long.value) == tasks.MAX_DETAIL_CHARS and long.value.endswith("…")
+    assert "jane" not in long.value and "cocacola" not in long.value and "Coca" not in long.value
 
 
 def test_no_network_response_carries_the_org_or_contact_details(ana, nina, db):

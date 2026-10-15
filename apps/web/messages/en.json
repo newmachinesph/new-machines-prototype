@@ -1723,6 +1723,7 @@
     "failed": "The test run did not start",
     "budgetRequired": "Enter a budget for this test. The pack sets no maximum of its own.",
     "budgetTooHigh": "The budget is above the pack's maximum. Lower it.",
+    "invalidInput": "{n, plural, one {The start form has a problem. Fix it and try again.} other {The start form has problems. Fix them and try again.}}",
     "sandboxUnavailable": "This deployment does not use the platform's sandbox connectors, so test runs cannot start here.",
     "spendCap": "Your workspace has reached its monthly spend cap. Test runs count toward it.",
     "seeUsage": "See usage"

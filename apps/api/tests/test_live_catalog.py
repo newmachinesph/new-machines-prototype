@@ -788,3 +788,82 @@ def test_runs_settled_before_the_fix_lose_the_network_reviewer_s_account_id(ana,
     after = db.execute("SELECT projection FROM runs WHERE id = 'run_a'").fetchone()["projection"]["timeline"]
     assert [t["who"] for t in after] == ["Human workforce", "Network reviewer", "uid_ana"]
     assert [t["title"] for t in after] == [t["title"] for t in timeline]
+
+
+def _money(minor: int) -> dict:
+    return {"amountMinor": minor, "currency": "USD"}
+
+
+def _settled_run(db, org_id: str, run_id: str, titled: bool) -> None:
+    """A run of `org_id` with every kind of review task on its timeline, its network review `titled` by its
+    verdict as the worker does since the fix, or "Resolved the task" as before it."""
+    net_title = "Sent back with corrections" if titled else "Resolved the task"
+    _add_run(db, org_id, run_id)
+    timeline = [
+        {"actor": "system", "who": "Human workforce", "title": "Created task ht_net", "ref": "ht_net"},
+        {"actor": "human", "who": "Network reviewer", "title": net_title, "ref": "ht_net"},
+        {"actor": "human", "who": "Network reviewer", "title": "Resolved the task", "ref": "ht_old"},
+        {"actor": "human", "who": "Network reviewer", "title": "Rejected the task", "ref": "ht_rej"},
+        {"actor": "system", "who": "Reviewer", "title": "The task timed out", "ref": "ht_out"},
+        {"actor": "human", "who": "uid_ana", "title": "Resolved the task", "ref": "ht_team"},
+    ]
+    nodes = [
+        {"id": "match", "type": "agent", "label": "Match", "cost": _money(40)},
+        {"id": "review", "type": "human_workforce", "label": "Review"},
+    ]
+    spent = {"ai": _money(40), "tools": _money(0), "human": _money(0)}
+    refs = [{**t, "ref": f"{t['ref']}_{run_id}"} for t in timeline]
+    patch = {"timeline": refs, "nodes": nodes, "spent": spent}
+    db.execute("UPDATE runs SET projection = projection || %s WHERE id = %s", (Jsonb(patch), run_id))
+    # (task, via, status, verdict)
+    tasks = [
+        ("ht_net", "network", "resolved", "REVISION_REQUIRED"),
+        ("ht_old", "network", "resolved", None),  # decided before verdicts were recorded
+        ("ht_rej", "network", "rejected", "REJECTED"),
+        ("ht_out", "network", "timeout", None),
+        ("ht_team", "team", "resolved", "APPROVED"),
+    ]
+    for task_id, via, status, verdict in tasks:
+        payload = Jsonb({"claimed_via": via, "pay": 300})
+        result = Jsonb({"outcome": status, **({"verdict": verdict} if verdict else {})})
+        db.execute(
+            "INSERT INTO run_tasks (id, run_id, node_id, kind, status, payload, result, decided_by, "
+            "decided_at) VALUES (%s, %s, 'review', 'human', %s, %s, %s, 'uid', now())",
+            (f"{task_id}_{run_id}", run_id, status, payload, result),
+        )
+    db.commit()
+
+
+def _projection(db, run_id: str) -> dict:
+    db.commit()
+    return db.execute("SELECT projection FROM runs WHERE id = %s", (run_id,)).fetchone()["projection"]
+
+
+def test_runs_settled_before_the_fix_name_the_network_review_s_verdict(ana, ben, db):
+    """Migration 015: the entry that resolved a network-claimed task is titled by its verdict (unknown: kept);
+    nothing else changes, not the spend. A run settled after the fix is left alone; running it twice changes
+    nothing."""
+    _settled_run(db, ana.org_id, "run_a", titled=False)
+    _settled_run(db, ben.org_id, "run_b", titled=True)  # settled after the fix: nothing to repair
+    before_a, before_b = _projection(db, "run_a"), _projection(db, "run_b")
+    migration = (app_db.MIGRATIONS_DIR / "015_network_review_verdict_titles.sql").read_text("utf-8")
+    db.execute(migration)
+    db.commit()
+
+    after = _projection(db, "run_a")
+    assert [t["title"] for t in after["timeline"]] == [
+        "Created task ht_net",
+        "Sent back with corrections",  # the verdict names the decision
+        "Resolved the task",  # no verdict recorded: kept
+        "Rejected the task",  # not a "Resolved the task" entry: kept
+        "The task timed out",
+        "Resolved the task",  # the team's entry: not a network claim
+    ]
+    pairs = zip(before_a["timeline"], after["timeline"], strict=True)
+    retitled = [{**t, "title": a["title"]} for t, a in pairs]
+    assert after == {**before_a, "timeline": retitled}  # the spend, the steps and the entries as posted
+    assert _projection(db, "run_b") == before_b
+
+    db.execute(migration)
+    db.commit()
+    assert _projection(db, "run_a") == after and _projection(db, "run_b") == before_b

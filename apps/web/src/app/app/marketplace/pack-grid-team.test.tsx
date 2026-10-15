@@ -54,6 +54,9 @@ describe("PackGrid team packs", () => {
     const card = screen.getByRole("link", { name: /Invoice nudges/ });
     expect(within(card).getByText("Built by your team")).toBeInTheDocument();
     expect(within(card).queryByText("Not yet certified")).toBeNull();
+    // The badge sits in the card's corner; a card with nothing to badge has no corner (see pack-grid.test).
+    expect(within(card).getByTestId("pack-badges")).toContainElement(within(card).getByText("Built by your team"));
+    expect(within(screen.getByRole("link", { name: /Reconciliation/ })).queryByTestId("pack-badges")).toBeNull();
     await userEvent.click(screen.getByRole("button", { name: /Built by your team/ }));
     expect(screen.getByRole("link", { name: /Invoice nudges/ })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /Reconciliation/ })).toBeNull();

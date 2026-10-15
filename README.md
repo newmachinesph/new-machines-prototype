@@ -1,4 +1,54 @@
-# New Machines demo app
+# New Machines
+
+New Machines runs business workflows as **workflow packs**: versioned definitions whose steps are AI agents,
+app actions (Shopify, Stripe, Google Sheets and others), approvals and human reviews. Every run is metered
+(AI, tools, reviewer pay), stays within the budget and the monthly cap the business sets, and leaves a
+hash-chained **work receipt** of each step it took.
+
+## What's in this repo
+
+| Path | What it is |
+|------|------------|
+| `apps/api` | FastAPI service and the workflow runtime: a generic Temporal workflow (`PackRunner`) walks a pack's steps; agents run on Google ADK; the Tool Gateway applies policy to every app call; Postgres holds state |
+| `apps/web` | Customer app (Next.js): the **business workspace** (marketplace, runs, approvals, connections, reviewers, usage), the **reviewer portal** (claim and review tasks, earnings) and the **Developer Studio** (build agents and workflow packs) |
+| `apps/ops` | Operator console (Next.js): tenants, spend caps, connectors, definitions, guardrails, memory, run receipts |
+| `definitions/` | Agents, packs, connectors, model profiles and policies as YAML, validated against `definitions/_schemas` and applied at API startup |
+| `scripts/` | `smoke_recon.py`: drives a full reconciliation run end to end and checks its receipt |
+| `compose.yaml` | Local Postgres (pgvector) and Temporal dev server |
+
+Two workspaces share one codebase: `demo` (synthetic data, simulated billing, for showing the product) and
+`live` (each business signs up, connects its own apps or uses simulated data per app, and is billed for real
+usage). `NM_WORKSPACE` selects it for a deployment.
+
+## Quick start
+
+Prerequisites: Docker, Python 3.14 with `uv`, Node 22 or newer with `pnpm`.
+
+```bash
+docker compose up -d                                         # Postgres + Temporal
+
+# API with the runtime on 8400 (from apps/api; a fake model provider, no keys needed)
+NM_RUNTIME=temporal NM_EMBEDDED_WORKER=1 NM_DEFS_AUTO_APPLY=1 AUTH_MODE=dev \
+  ALLOWED_ORIGINS=http://localhost:3100,http://localhost:3400 uv run uvicorn app.main:app --port 8400
+
+# customer app on 3100 and operator console on 3400 (each from its folder, after pnpm install)
+pnpm dev --port 3100                                         # apps/web
+pnpm dev                                                     # apps/ops
+```
+
+The web apps read `NEXT_PUBLIC_*` settings from `.env.local` in their folder; `.env.example` lists the names.
+`NEXT_PUBLIC_AUTH_MOCK=1` signs in without Firebase for local work.
+
+## Checks
+
+| App | Commands |
+|-----|----------|
+| API (`apps/api`) | `uv run pytest -q`, `uv run ruff check .`, `uv run ruff format --check .` |
+| Web, ops (`apps/web`, `apps/ops`) | `pnpm test`, `pnpm lint`, `pnpm typecheck`, `pnpm format:check`; `pnpm e2e` for the Playwright suite |
+
+The API contract is generated: after changing a route or model, run `uv run python scripts/export_openapi.py`
+in `apps/api`, then `pnpm api:gen` in `apps/web` and `apps/ops` to regenerate their typed clients.
+Parallel API runs can each use their own database: set `NM_TEST_DATABASE_URL` to a different database name.
 
 ## Local stack
 
@@ -58,8 +108,7 @@ uv run --project apps/api python scripts/smoke_recon.py --model-env test   # fak
 uv run --project apps/api python scripts/smoke_recon.py --model-env dev    # real model provider
 ```
 
-`--model-env dev` reads the provider key (`ANTHROPIC_API_KEY`) from `demo-app/.env`; the script never prints
-values. Model profiles and the provider mapping per environment live in `definitions/models.yaml`.
+`--model-env dev` reads the model provider's key from `demo-app/.env`; the script never prints values. Model profiles and the provider mapping per environment live in `definitions/models.yaml`.
 `--live` swaps the sandbox connectors for live ones, and works only once that is set up: `COMPOSIO_API_KEY`
 and `DEMO_USER_UID` in `demo-app/.env`, Shopify, Stripe and Google Sheets accounts connected in Composio for
 that user, and a real spreadsheet ID in place of the sandbox default `sandbox-reconciliation-sheet-00000001`
@@ -160,12 +209,23 @@ definitionsApplied}` for a quick check; it never returns connection strings or k
 `stopped` or `not_embedded`. With the runtime off, `database` and `temporal` read `off`. Each check is
 bounded (about 3 s) and both run at once, so the route answers within about 4 s during an outage.
 
+## Deploy
+
+| Piece | Where | How |
+|-------|-------|-----|
+| API + embedded worker | Cloud Run `nm-api` | Cloud Build image, then `gcloud run deploy` (above); delete the previous revision afterwards |
+| Customer app | Firebase App Hosting | `firebase deploy --only apphosting --project <project>` from `apps/web` |
+| Operator console | Firebase App Hosting | the same command from `apps/ops` |
+
+App Hosting builds from the folder it runs in, so never leave a local `.env.local` there when deploying: its
+values would be uploaded with the source. Production settings live in each app's `apphosting.yaml` and in
+Secret Manager.
+
 ## Known limits
 
-- Memory items are not scoped to a tenant: every org reads and writes the same memory spaces.
-- Live tool calls are not idempotent across retries: a connector step retried after a timeout may repeat a
-  write in the live app (sandbox calls are unaffected).
+- A live app action that succeeds but times out before it is recorded can repeat when the step retries.
+  Recorded results are reused on retry; sandbox calls are unaffected.
+- Connector data in workflow history is not encrypted yet. Add an encrypting payload codec (key in Secret
+  Manager) before a paying business connects a real account.
 - A run has no overall deadline; only each human task or approval times out (24 hours by default).
 - With Postgres down, real-run endpoints answer 500 rather than 503.
-- What a reviewer sees in a human task (order and payment details) is not redacted for PII; do that before
-  running on live data.
