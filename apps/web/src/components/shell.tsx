@@ -644,9 +644,10 @@ export function StartRunMenu() {
   const hired = (usePacks().data ?? []).filter((p) => p.installed);
   return (
     <MenuRoot>
-      <MenuTrigger className="inline-flex h-8 items-center gap-1.5 rounded-md bg-ink px-3 text-sm font-medium text-paper hover:bg-grey-900 data-[popup-open]:bg-grey-900">
+      {/* On a phone the button is its icon, so the page title in the top bar is not cut short. */}
+      <MenuTrigger className="inline-flex size-10 items-center justify-center gap-1.5 rounded-md bg-ink text-sm font-medium whitespace-nowrap text-paper hover:bg-grey-900 data-[popup-open]:bg-grey-900 sm:h-8 sm:w-auto sm:px-3">
         <Plus className="size-4" strokeWidth={2} aria-hidden />
-        {t("startRun")}
+        <span className="sr-only sm:not-sr-only">{t("startRun")}</span>
       </MenuTrigger>
       <MenuPopup className="w-72">
         <MenuLabel>{t("choosePack")}</MenuLabel>
