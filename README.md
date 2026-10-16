@@ -155,12 +155,13 @@ replay, after in-flight runs have finished.
 ### Run the Exception Desk against the demo database
 
 The Order-to-Cash Exception Desk's connector (`custom-business-app`) is `driver: mcp`: besides its sandbox
-files it carries, per tool, the MongoDB aggregation or update the official
+files it carries, per read tool, the MongoDB aggregation the official
 [MongoDB MCP server](https://www.npmjs.com/package/mongodb-mcp-server) runs against the demo database
-`nm_demo` (loaded by `scripts/demo_data`). Start the server over streamable HTTP, then point the worker at it:
+`nm_demo` (loaded by `scripts/demo_data`). Start the server read-only over streamable HTTP, then point the
+worker at it:
 
 ```bash
-npx -y mongodb-mcp-server@3.1.0 --transport http --httpHost 127.0.0.1 --httpPort 8085 \
+npx -y mongodb-mcp-server@3.1.0 --transport http --httpHost 127.0.0.1 --httpPort 8085 --readOnly \
   --maxDocumentsPerQuery 2000 --connectionString mongodb://127.0.0.1:27017/nm_demo
 NM_CONNECTOR_MODE=auto NM_MCP_URL=http://127.0.0.1:8085/mcp uv run ... python -m app.worker
 ```
@@ -169,10 +170,11 @@ In `auto` mode a `driver: mcp` connector reads the database when `NM_MCP_URL` is
 `tools/list`, and its sandbox file otherwise; `live` always calls the server (a run fails rather than falling
 back) and `sandbox` never does. Other connectors keep their Composio behaviour. The server's default
 `--maxDocumentsPerQuery` (100) cuts a window of orders short, and the driver reports such a read as a failed
-call rather than returning part of it, so raise the limit as above. Add `--readOnly` to refuse the two note
-writes (`add_ledger_note`, `add_warehouse_note`), which then fail at their approval. The
-gated `tests/test_mcp_driver_live.py` runs every read and a note write against the server when `NM_MCP_URL`
-is set.
+call rather than returning part of it, so raise the limit as above. The server stays `--readOnly`: the reads
+are live, while the two note writes (`add_ledger_note`, `add_warehouse_note`) carry no `mcp` mapping and
+answer from their sandbox responses in every mode, so a ledger or warehouse note is recorded in the run's
+receipt but never written to Mongo. The gated `tests/test_mcp_driver_live.py` runs every read against the
+server when `NM_MCP_URL` is set.
 
 ## Build the API image
 

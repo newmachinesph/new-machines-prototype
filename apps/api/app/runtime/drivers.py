@@ -230,16 +230,19 @@ def is_route_changed(result: ToolResult | None) -> bool:
 
 
 def driver_for(
-    connector_def: dict, mode: str, pack: str | None = None
+    connector_def: dict, mode: str, pack: str | None = None, tool: dict | None = None
 ) -> SandboxDriver | ComposioDriver | McpDriver:
     """`connector_def` is the connector body. mode: sandbox | live | auto (live if connected). `pack` is the
     run's pack key, for its own sandbox data. A `driver: mcp` connector runs on the MCP server instead of
-    Composio (`auto`: when NM_MCP_URL is set and the server answers)."""
+    Composio (`auto`: when NM_MCP_URL is set and the server answers), except that a `tool` of its without an
+    `mcp` mapping (its writes, with the server read-only) answers from its sandbox response in every mode."""
     if mode == "sandbox":
         return SandboxDriver(pack=pack)
     if mode not in ("live", "auto"):
         raise ValueError(f"unknown connector mode {mode!r}")
     if connector_def.get("driver") == MCP:
+        if tool is not None and tool.get("mcp") is None:
+            return SandboxDriver(pack=pack)
         return _mcp_driver_for(connector_def, mode, pack)
     if mode == "live":
         return ComposioDriver()

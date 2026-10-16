@@ -128,12 +128,15 @@ def _mode_of(snapshot: dict, mode: str) -> str:
     return str(snapshot.get("connector_mode") or mode)
 
 
-def driver_of(snapshot: dict, connector_key: str, connector: dict, mode: str) -> Driver:
+def driver_of(
+    snapshot: dict, connector_key: str, connector: dict, mode: str, tool: dict | None = None
+) -> Driver:
     """The driver for one call. A live-workspace run (`routing: org`) follows the org's connection row for the
     app now (`routes.current_route`); any other run keeps the connector mode its snapshot pins, else `mode`
-    (the worker's NM_CONNECTOR_MODE)."""
+    (the worker's NM_CONNECTOR_MODE). `tool`, when known, lets an mcp connector answer its unmapped tools
+    from sandbox data (see `drivers.driver_for`)."""
     if not _org_routed(snapshot):
-        return driver_for(connector, _mode_of(snapshot, mode), pack=_pack_key(snapshot))
+        return driver_for(connector, _mode_of(snapshot, mode), pack=_pack_key(snapshot), tool=tool)
     return _route_driver(snapshot, connector_key, connector, _route(snapshot, connector_key))
 
 
@@ -142,7 +145,10 @@ def runs_simulated(snapshot: dict, tool_ref: str, mode: str) -> bool:
     else by the connector mode the snapshot pins (a sandbox test) or the worker's `mode` ("auto" checks the
     connection now). A forecast: the call itself checks again."""
     found = find_tool(snapshot, tool_ref)
-    return found is not None and isinstance(driver_of(snapshot, found[0], found[1], mode), SandboxDriver)
+    if found is None:
+        return False
+    connector_key, connector, tool = found
+    return isinstance(driver_of(snapshot, connector_key, connector, mode, tool=tool), SandboxDriver)
 
 
 def _install_of(snapshot: dict) -> str | None:
@@ -228,9 +234,8 @@ def call_tool(
             ok=False, data=None, mocked=False, error="invalid arguments: " + "; ".join(errors)
         )
     if route is None:
-        return decision, driver_for(connector, _mode_of(snapshot, mode), pack=_pack_key(snapshot)).execute(
-            connector_key, tool, args
-        )
+        driver = driver_for(connector, _mode_of(snapshot, mode), pack=_pack_key(snapshot), tool=tool)
+        return decision, driver.execute(connector_key, tool, args)
     return decision, _route_driver(snapshot, connector_key, connector, route).execute(
         connector_key, tool, args
     )

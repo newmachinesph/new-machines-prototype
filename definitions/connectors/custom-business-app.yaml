@@ -1,8 +1,9 @@
 # The business's custom app: its store orders and payments, the ledger (sales orders, customers, payments posted),
 # the warehouse (served orders) and the sales app (each seller's sales). One order keeps the same id in every
-# section. Runs on sandbox data, or on the demo database through the MongoDB MCP server (`driver: mcp`): each
-# read's `mcp` block is the aggregation that turns the app's raw documents into the tool's response contract (the
-# same shape as its sandbox file), and each write pushes a note onto the order. The slugs are placeholders.
+# section. Runs on sandbox data, or reads the demo database through the MongoDB MCP server (`driver: mcp`):
+# each read's `mcp` block is the aggregation that turns the app's raw documents into the tool's response contract
+# (the same shape as its sandbox file). The two writes carry no `mcp` block: they are recorded, not written to the
+# database, and answer from their sandbox responses in every mode. The slugs are placeholders.
 kind: connector
 key: custom-business-app
 app: Custom Business App
@@ -368,6 +369,7 @@ tools:
             delivered: {$ifNull: [{$toBool: "$delivered"}, false]}
             closed: {$ifNull: [{$toBool: "$closed"}, false]}
 
+  # The writes are recorded in the run's receipt, not written to the database: no `mcp` block, sandbox answers.
   - id: add_ledger_note
     slug: CUSTOM_BUSINESS_APP_ADD_LEDGER_NOTE
     action_class: write
@@ -387,14 +389,6 @@ tools:
           minLength: 1
           maxLength: 1000
           description: The note, in plain text.
-    mcp:
-      tool: update-many
-      collection: accounting_sales_orders
-      filter: {_id: "{{order_id}}"}
-      update:
-        $push:
-          notesList: {content: "{{note}}", createdDate: {$date: "{{now}}"}, userName: Exception Desk}
-      result: {ok: true, order_id: "{{order_id}}"}
 
   - id: add_warehouse_note
     slug: CUSTOM_BUSINESS_APP_ADD_WAREHOUSE_NOTE
@@ -415,13 +409,5 @@ tools:
           minLength: 1
           maxLength: 1000
           description: The note, in plain text.
-    mcp:
-      tool: update-many
-      collection: warehouse_served_orders
-      filter: {_id: "{{order_id}}"}
-      update:
-        $push:
-          notesList: {content: "{{note}}", createdDate: {$date: "{{now}}"}, userName: Exception Desk}
-      result: {ok: true, order_id: "{{order_id}}"}
 
 defaults: {read: permit, write: require_approval, delete: deny, money: deny}

@@ -388,9 +388,15 @@ def test_only_an_mcp_connector_maps_tools(fixture_bundle):
     )
 
 
-def test_every_tool_of_an_mcp_connector_must_be_mapped(fixture_bundle):
+def test_a_read_of_an_mcp_connector_must_be_mapped_but_a_write_need_not(fixture_bundle):
     bad = mutated(fixture_bundle, "connector", "shop", lambda b, f: b.update(driver="mcp"))
-    only_error(bad, mentions="must map to an MCP call", kind="connector")
+    only_error(bad, mentions="read must map to an MCP call", kind="connector")
+
+    def unmapped_write(body, files):
+        body["driver"] = "mcp"
+        body["tools"][0]["action_class"] = "write"
+
+    assert validate_bundle(mutated(fixture_bundle, "connector", "shop", unmapped_write)) == []
 
 
 def test_a_read_needs_a_result_key_and_a_query(fixture_bundle):
@@ -480,18 +486,63 @@ def test_the_date_strings_the_pipelines_produce_are_the_fixture_s_iso_format():
 
 
 @pytest.mark.parametrize(("connector", "tool_id"), WRITES)
-def test_each_write_pushes_a_dated_note_and_answers_like_its_sandbox_file(connector, tool_id):
-    tool = _tool(connector, tool_id)
-    spec = tool["mcp"]
-    assert spec["tool"] == "update-many" and spec["filter"] == {"_id": "{{order_id}}"}
-    note = spec["update"]["$push"]["notesList"]
-    assert note["content"] == "{{note}}" and note["createdDate"] == {"$date": "{{now}}"}
+def test_each_write_has_no_mapping_and_answers_from_its_sandbox_file(connector, tool_id, monkeypatch):
+    """The server is read-only: a note is recorded, not written, in every connector mode."""
+    monkeypatch.setenv("NM_MCP_URL", "http://127.0.0.1:1/mcp")
+    monkeypatch.setattr(drivers.McpDriver, "is_available", lambda self: True)
+    body, tool = sp.body("connector", connector), _tool(connector, tool_id)
+    assert "mcp" not in tool
     sandbox = json.loads(
         (settings.defs_dir() / "connectors" / "sandbox" / connector / f"{tool_id}.json").read_text("utf-8")
     )
-    values = mcp.call_values(tool, {"order_id": "ORD-260917", "note": "Please confirm."})
-    assert mcp.render(spec["result"], values) == sandbox
-    assert mcp.placeholders(spec) == {"order_id", "note", mcp.NOW}
+    for mode in ("sandbox", "live", "auto"):
+        driver = drivers.driver_for(body, mode, pack=PACK, tool=tool)
+        assert isinstance(driver, drivers.SandboxDriver) and driver.pack == PACK, mode
+        result = driver.execute(connector, tool, {"order_id": "ORD-260917", "note": "Please confirm."})
+        assert result == drivers.ToolResult(ok=True, data=sandbox, mocked=True), mode
+
+
+def test_in_live_mode_the_reads_go_to_the_server_and_the_writes_to_sandbox(monkeypatch):
+    monkeypatch.setenv("NM_MCP_URL", "http://127.0.0.1:1/mcp")
+    monkeypatch.setattr(drivers.McpDriver, "is_available", lambda self: True)
+    body = sp.body("connector", CONNECTOR)
+    snapshot = {
+        "defs": {"connector": {CONNECTOR: {"body": body}}, "pack": {PACK: {"body": {"slug": PACK}}}},
+    }
+    for mode in ("live", "auto"):
+        for _, tool_id in READS:
+            tool = _tool(CONNECTOR, tool_id)
+            assert isinstance(drivers.driver_for(body, mode, tool=tool), drivers.McpDriver), (mode, tool_id)
+            assert not gateway.runs_simulated(snapshot, f"{CONNECTOR}.{tool_id}", mode), (mode, tool_id)
+        for _, tool_id in WRITES:
+            tool = _tool(CONNECTOR, tool_id)
+            chosen = drivers.driver_for(body, mode, pack=PACK, tool=tool)
+            assert isinstance(chosen, drivers.SandboxDriver) and chosen.pack == PACK, (mode, tool_id)
+            assert gateway.runs_simulated(snapshot, f"{CONNECTOR}.{tool_id}", mode), (mode, tool_id)
+    # Without the tool, the connector as a whole still counts as live (the catalog's per-connector view).
+    assert isinstance(drivers.driver_for(body, "live"), drivers.McpDriver)
+
+
+def test_a_write_call_through_the_gateway_is_recorded_as_mocked(monkeypatch):
+    monkeypatch.setenv("NM_MCP_URL", "http://127.0.0.1:1/mcp")
+    monkeypatch.setattr(drivers.McpDriver, "is_available", lambda self: True)
+    snapshot = {
+        "defs": {
+            "connector": {CONNECTOR: {"body": sp.body("connector", CONNECTOR)}},
+            "contract": {PACK: {"body": {"authorization": {"tool_capabilities": ["business.write"]}}}},
+            "pack": {PACK: {"body": {"slug": PACK}}},
+        }
+    }
+    decision, result = gateway.call_tool(
+        snapshot=snapshot,
+        tool_ref=f"{CONNECTOR}.add_ledger_note",
+        args={"order_id": "ORD-260917", "note": "Please confirm."},
+        approved=True,
+        mode="live",
+    )
+    assert decision.verdict == gateway.PERMIT
+    assert result is not None and result.ok and result.mocked is True
+    assert result.data == {"ok": True, "order_id": "ORD-260917"}
 
 
 def test_the_fixture_bundle_connector_stays_on_composio():

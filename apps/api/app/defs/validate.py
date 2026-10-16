@@ -274,10 +274,11 @@ class _Checker:
             self.err(d, f"{at}.config.inputs: agent {agent_key!r} gets no inputs, so this step must map some")
 
     def connector(self, d: Definition) -> None:
-        """A `driver: mcp` connector maps every tool to one MCP call (`mcp`): a read names the key its
-        documents come back under and a query (a pipeline or a filter), a write the update and the filter it
-        applies to. Every `{{placeholder}}` in the mapping names an argument of the tool's input schema (or
-        `now`, the call time). A connector on any other driver carries no mapping."""
+        """A `driver: mcp` connector maps its tools to MCP calls (`mcp`): a read must, naming the key its
+        documents come back under and a query (a pipeline or a filter); a write may, with the update and the
+        filter it applies to, or carry no mapping and answer from its sandbox response in every mode. Every
+        `{{placeholder}}` in a mapping names an argument of the tool's input schema (or `now`, the call time).
+        A connector on any other driver carries no mapping."""
         is_mcp = d.body.get("driver") == MCP_DRIVER
         for i, tool in enumerate(d.body["tools"]):
             at = f"tools[{i}] ({tool['id']}).mcp"
@@ -287,7 +288,8 @@ class _Checker:
                     self.err(d, f"{at}: only a `driver: {MCP_DRIVER}` connector maps tools to MCP calls")
                 continue
             if spec is None:
-                self.err(d, f"{at}: a `driver: {MCP_DRIVER}` connector's tool must map to an MCP call")
+                if tool["action_class"] == "read":
+                    self.err(d, f"{at}: a `driver: {MCP_DRIVER}` connector's read must map to an MCP call")
                 continue
             if tool["action_class"] == "read":
                 if "result_key" not in spec:

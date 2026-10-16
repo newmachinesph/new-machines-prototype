@@ -1,11 +1,10 @@
 """The Exception Desk connector against a running MongoDB MCP server (NM_MCP_URL) holding the demo database:
 every read answers the shape its sandbox fixture records, the planted cases come back with the fixture's
-amounts, and a note write lands on its order. Skipped without NM_MCP_URL; the write part needs a server
-started without `--readOnly` (it removes the note it adds)."""
+amounts, and the two note writes answer from sandbox data without reaching the read-only server. Skipped
+without NM_MCP_URL."""
 
 import json
 import os
-import uuid
 
 import pytest
 
@@ -96,31 +95,19 @@ def test_the_planted_cases_carry_the_fixture_s_amounts(driver):
     assert "credit memo" in customers["DEMO-CUST-DSP-1"]["notes"][0]
 
 
-def test_a_note_write_lands_on_the_order_and_a_missing_order_fails(driver):
-    client = mcp.McpClient(settings.mcp_url(), token=settings.mcp_token())
-    if "update-many" not in client.list_tools():
-        pytest.skip("the server is read-only")
-    tool = _tool(CONNECTOR, "add_warehouse_note")
-    note = f"Exception desk check {uuid.uuid4()}"
-    try:
-        result = driver.execute(CONNECTOR, tool, {"order_id": "DEMO-SNP-1", "note": note})
-        assert result == drivers.ToolResult(
-            ok=True, data={"ok": True, "order_id": "DEMO-SNP-1"}, mocked=False
-        )
-        served = _by_order(_rows(driver, CONNECTOR, "list_served_orders", WINDOW))
-        assert note in served["DEMO-SNP-1"]["notes"]
-    finally:
-        client.call_tool(
-            "update-many",
-            {
-                "connectionId": mcp.CONNECTION_ID,
-                "database": driver.database,
-                "collection": "warehouse_served_orders",
-                "filter": {"_id": "DEMO-SNP-1"},
-                "update": {"$pull": {"notesList": {"content": note}}},
-            },
-        )
-    missing = driver.execute(CONNECTOR, tool, {"order_id": "DEMO-NO-SUCH-ORDER", "note": note})
-    assert missing.ok is False and missing.error == "ToolError: the update matched no document"
+def test_the_server_is_read_only_and_a_note_write_answers_from_sandbox(driver):
+    """The two writes carry no mapping: they never reach the server, which registers no write tools."""
+    tools = mcp.McpClient(settings.mcp_url(), token=settings.mcp_token()).list_tools()
+    assert "find" in tools and "aggregate" in tools
+    assert not {"update-many", "insert-many", "delete-many"} & set(tools), "start the server with --readOnly"
+    body = sp.body("connector", CONNECTOR)
+    for tool_id in ("add_ledger_note", "add_warehouse_note"):
+        tool = _tool(CONNECTOR, tool_id)
+        chosen = drivers.driver_for(body, "live", pack=PACK, tool=tool)
+        assert isinstance(chosen, drivers.SandboxDriver)
+        result = chosen.execute(CONNECTOR, tool, {"order_id": "DEMO-SNP-1", "note": "Exception desk check"})
+        recorded = settings.defs_dir() / "connectors" / "sandbox" / CONNECTOR / f"{tool_id}.json"
+        expected = json.loads(recorded.read_text("utf-8"))
+        assert result == drivers.ToolResult(ok=True, data=expected, mocked=True)
     served = _by_order(_rows(driver, CONNECTOR, "list_served_orders", WINDOW))
-    assert note not in served["DEMO-SNP-1"]["notes"]
+    assert "Exception desk check" not in served["DEMO-SNP-1"]["notes"]
