@@ -846,3 +846,14 @@ def test_an_adk_agent_calls_offered_tools_through_the_gateway(runtime_env):
         ],
     }
     _assert_sealed(conn, run_id, snapshot, "COMPLETED")
+
+
+def test_a_granted_approval_unlocks_its_target_and_what_it_also_unlocks():
+    """One approval can cover a chain of writes: its `granted` target plus `config.also_unlocks`."""
+    from app.worker.workflow import unlocked_nodes
+
+    routes = {"granted": "send", "denied": "failed", "timeout": "failed"}
+    assert unlocked_nodes({"routes": routes, "config": {"title": "Send"}}) == ["send"]
+    also = {"title": "Send", "also_unlocks": ["notes", "holds"]}
+    assert unlocked_nodes({"routes": routes, "config": also}) == ["send", "notes", "holds"]
+    assert unlocked_nodes({"routes": {}, "config": {"also_unlocks": ["notes", 3, ""]}}) == ["notes"]

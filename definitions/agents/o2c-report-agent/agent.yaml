@@ -1,0 +1,25 @@
+kind: agent
+key: o2c-report-agent
+schema_version: nm.agent.manifest.v1.1
+agent_id: o2c-report-agent
+version: "1.0.0"
+publisher_id: new-machines-labs
+publisher_name: New Machines Labs
+name: Order-to-Cash Report Agent
+summary: >-
+  Turns the exception triage, the drafts and the approval into the exception desk report: what broke across the four systems, what was drafted or posted, or that nothing was sent, with one row per exception.
+capabilities: [finance.order_to_cash_report]
+runtime:
+  adapter: google_adk
+  model_profile: reasoning
+  instructions: instructions.md
+  skills: [skills/write-report.md]
+  tools: []
+  max_turns: 6
+input_schema_ref: order-to-cash-exception-desk/report-request
+output_schema_ref: order-to-cash-exception-desk/report
+requested_tool_capabilities: []
+data_processing:
+  supported_regions: ["asia-south1"]
+  data_classes: ["CONFIDENTIAL"]
+  retention_policy_ref: retention/30d

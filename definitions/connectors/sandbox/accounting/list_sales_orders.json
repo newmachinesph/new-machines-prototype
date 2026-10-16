@@ -1,0 +1,42 @@
+{
+  "sales_orders": [
+    {
+      "id": "ORD-260917",
+      "invoice_number": "INV-2026-0004",
+      "invoice_date": "2026-09-17T02:00:00Z",
+      "customer_id": "CUST-1002",
+      "customer_name": "Joel Pangilinan - JP Mini Mart",
+      "payment_terms_days": 15,
+      "account_manager": null,
+      "account_manager_email": null,
+      "grand_total": 4320.0,
+      "total_payment_received": 4320.0,
+      "balance": 0.0,
+      "currency": "PHP",
+      "paid": true,
+      "delivered": true,
+      "delivery_date": "2026-09-19T06:10:00Z",
+      "is_from_ecommerce": true,
+      "created_at": "2026-09-17T01:35:00Z"
+    },
+    {
+      "id": "ORD-260918",
+      "invoice_number": "INV-2026-0005",
+      "invoice_date": "2026-09-18T02:00:00Z",
+      "customer_id": "CUST-1007",
+      "customer_name": "Grace Lumibao - Lumibao Fresh Produce",
+      "payment_terms_days": 15,
+      "account_manager": null,
+      "account_manager_email": null,
+      "grand_total": 7850.5,
+      "total_payment_received": 7850.5,
+      "balance": 0.0,
+      "currency": "PHP",
+      "paid": true,
+      "delivered": true,
+      "delivery_date": "2026-09-21T06:10:00Z",
+      "is_from_ecommerce": true,
+      "created_at": "2026-09-18T01:35:00Z"
+    }
+  ]
+}

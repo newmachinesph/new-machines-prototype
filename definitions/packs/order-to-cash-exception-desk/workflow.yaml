@@ -1,0 +1,277 @@
+# The order-to-cash exception desk graph. Values starting with "=" are CEL over the run state
+# (input, nodes.<id>.output, memory; `item` inside a for_each). Routes name the next node for each outcome.
+# One approval covers every write: its grant unlocks the customer drafts and, through `also_unlocks`, the
+# finance and warehouse notes that follow. A refused or expired approval ends with the report, not a failure.
+kind: workflow
+key: order-to-cash-exception-desk
+schema_version: nm.workflow.v1
+workflow_id: order-to-cash-exception-desk
+version: "1"
+entry_node_id: start
+default_policy_ref: policy/default
+work_contract_ref: order-to-cash-exception-desk
+limits:
+  max_duration_s: 172800
+  max_cost_minor: 3000
+  currency: USD
+  max_parallel_nodes: 1
+  max_total_node_attempts: 60
+
+nodes:
+  - id: start
+    type: trigger
+    version: "1"
+    config: {}
+    routes: {next: recall}
+
+  - id: recall
+    type: memory
+    version: "1"
+    config:
+      op: recall
+      space: o2c-policy
+      query: payment terms grace dispute credit memo pending confirm balance finance sign-off account manager seller released warehouse
+      limit: 10
+    routes: {next: orders}
+
+  # An order keeps the same id in every system, so each read covers the window and the 60 days before it:
+  # an older invoice that is still open, or an older order still in the warehouse, is checked too.
+  - id: orders
+    type: connector
+    version: "1"
+    config:
+      tool: ecommerce.list_orders
+      args:
+        since: =timestamp(input.since + "T00:00:00Z") - duration("1440h")
+        until: =input.until + "T23:59:59Z"
+        limit: 500
+    routes: {next: payments, denied: failed, error: failed}
+
+  - id: payments
+    type: connector
+    version: "1"
+    config:
+      tool: ecommerce.list_payments
+      args:
+        since: =timestamp(input.since + "T00:00:00Z") - duration("1440h")
+        until: =input.until + "T23:59:59Z"
+    routes: {next: sales_orders, denied: failed, error: failed}
+
+  - id: sales_orders
+    type: connector
+    version: "1"
+    config:
+      tool: accounting.list_sales_orders
+      args:
+        since: =timestamp(input.since + "T00:00:00Z") - duration("1440h")
+        until: =input.until + "T23:59:59Z"
+    routes: {next: customers, denied: failed, error: failed}
+
+  - id: customers
+    type: connector
+    version: "1"
+    config:
+      tool: accounting.list_customers
+      args: {}
+    routes: {next: served, denied: failed, error: failed}
+
+  - id: served
+    type: connector
+    version: "1"
+    config:
+      tool: warehouse.list_served_orders
+      args:
+        since: =timestamp(input.since + "T00:00:00Z") - duration("1440h")
+        until: =input.until + "T23:59:59Z"
+    routes: {next: sales, denied: failed, error: failed}
+
+  - id: sales
+    type: connector
+    version: "1"
+    config:
+      tool: salesapp.list_sales
+      args:
+        since: =timestamp(input.since + "T00:00:00Z") - duration("1440h")
+        until: =input.until + "T23:59:59Z"
+    routes: {next: triage, denied: failed, error: failed}
+
+  - id: triage
+    type: agent
+    version: "1"
+    config:
+      agent: o2c-triage-agent
+      task: >-
+        Follow every order across the store, the ledger, the warehouse and the sales app, list each break as
+        an exception with the evidence from each system and the action the policy in rules calls for, and
+        count the orders that agree. Days are counted up to as_of; an unpaid invoice is chased only
+        grace_days after its terms. Submit the result in the required shape.
+      inputs:
+        orders: =nodes.orders.output
+        payments: =nodes.payments.output
+        sales_orders: =nodes.sales_orders.output
+        customers: =nodes.customers.output
+        served_orders: =nodes.served.output
+        sales: =nodes.sales.output
+        as_of: =input.until
+        grace_days: =input.grace_days
+        rules: =memory
+      output_schema: order-to-cash-exception-desk/triage
+    routes: {next: check}
+
+  - id: check
+    type: decision
+    version: "1"
+    config:
+      rules: o2c-exceptions
+    routes: {nothing: report, exceptions: draft, blocked: failed}
+
+  - id: draft
+    type: agent
+    version: "1"
+    config:
+      agent: collections-writer
+      task: >-
+        Write one polite collection reminder per shipped-but-not-paid exception, highest balance first and at
+        most max_messages of them, from its account manager to the customer, stating the invoice, the amount
+        in pesos, the delivery, the payment terms and how late it is. Submit the result in the required shape.
+      inputs:
+        exceptions: =nodes.triage.output.exceptions.filter(e, e.recommended_action == 'draft_collection_message')
+        max_messages: =input.max_messages
+        company_name: =input.company_name
+        rules: =memory
+      output_schema: order-to-cash-exception-desk/drafts
+    routes: {next: approve}
+
+  # The one human touchpoint. Its summary counts what each write will do, with the pesos at stake. The grant
+  # unlocks the drafts step it routes to and, with `also_unlocks`, the two note steps after it.
+  - id: approve
+    type: approval
+    version: "1"
+    config:
+      title: Send reminders and post notes
+      also_unlocks: [ledger_notes, warehouse_notes]
+      summary: >-
+        =(size(nodes.draft.output.drafts) == 0 ? 'No collection reminder to send' : 'Save ' +
+        string(size(nodes.draft.output.drafts)) + (size(nodes.draft.output.drafts) == 1 ? ' collection reminder'
+        : ' collection reminders') + ' as Gmail drafts for ' +
+        string(nodes.triage.output.totals.shipped_not_paid.count) + ' shipped-but-not-paid ' +
+        (nodes.triage.output.totals.shipped_not_paid.count == 1 ? 'invoice' : 'invoices') + ' (₱' +
+        string(nodes.triage.output.totals.shipped_not_paid.amount_minor / 100) + '.' +
+        (nodes.triage.output.totals.shipped_not_paid.amount_minor % 100 < 10 ? '0' : '') +
+        string(nodes.triage.output.totals.shipped_not_paid.amount_minor % 100) + ' outstanding)') + '; post ' +
+        string(nodes.triage.output.totals.payment_pending_confirmation.count +
+        nodes.triage.output.totals.disputed.count) + ' finance ' +
+        (nodes.triage.output.totals.payment_pending_confirmation.count + nodes.triage.output.totals.disputed.count
+        == 1 ? 'note' : 'notes') + ' in Accounting (' +
+        string(nodes.triage.output.totals.payment_pending_confirmation.count) + ' ' +
+        (nodes.triage.output.totals.payment_pending_confirmation.count == 1 ? 'payment' : 'payments') +
+        ' pending confirmation, ₱' +
+        string(nodes.triage.output.totals.payment_pending_confirmation.amount_minor / 100) + '.' +
+        (nodes.triage.output.totals.payment_pending_confirmation.amount_minor % 100 < 10 ? '0' : '') +
+        string(nodes.triage.output.totals.payment_pending_confirmation.amount_minor % 100) + '; ' +
+        string(nodes.triage.output.totals.disputed.count) + ' disputed, ₱' +
+        string(nodes.triage.output.totals.disputed.amount_minor / 100) + '.' +
+        (nodes.triage.output.totals.disputed.amount_minor % 100 < 10 ? '0' : '') +
+        string(nodes.triage.output.totals.disputed.amount_minor % 100) + ') and ' +
+        string(size(nodes.triage.output.exceptions.filter(e, e.recommended_action == 'nudge_warehouse'))) +
+        ' warehouse ' + (size(nodes.triage.output.exceptions.filter(e, e.recommended_action ==
+        'nudge_warehouse')) == 1 ? 'nudge' : 'nudges') + ' (' +
+        string(nodes.triage.output.totals.paid_not_shipped.count) + ' paid ' +
+        (nodes.triage.output.totals.paid_not_shipped.count == 1 ? 'order' : 'orders') + ' waiting, ₱' +
+        string(nodes.triage.output.totals.paid_not_shipped.amount_minor / 100) + '.' +
+        (nodes.triage.output.totals.paid_not_shipped.amount_minor % 100 < 10 ? '0' : '') +
+        string(nodes.triage.output.totals.paid_not_shipped.amount_minor % 100) + ').' +
+        (nodes.triage.output.sign_off_note == '' ? '' : ' ' + nodes.triage.output.sign_off_note)
+      timeout_s: 86400
+    routes: {granted: send_drafts, denied: report, timeout: report}
+
+  - id: send_drafts
+    type: connector
+    version: "1"
+    config:
+      tool: gmail.create_draft
+      for_each: =nodes.draft.output.drafts
+      args:
+        recipient_email: =item.to
+        subject: =item.subject
+        body: =item.body
+    routes: {ok: ledger_notes, denied: report, error: failed}
+
+  - id: ledger_notes
+    type: connector
+    version: "1"
+    config:
+      tool: accounting.add_order_note
+      for_each: >-
+        =nodes.triage.output.exceptions.filter(e, e.recommended_action == 'confirm_payment' ||
+        e.recommended_action == 'escalate_finance')
+      args:
+        order_id: =item.order_id
+        note: >-
+          ='Exception desk: ' + item.evidence + (item.recommended_action == 'confirm_payment' ? ' Please
+          confirm the payment and post it; no reminder was sent.' : ' Flagged for finance; no reminder was
+          sent.')
+    routes: {ok: warehouse_notes, denied: report, error: failed}
+
+  - id: warehouse_notes
+    type: connector
+    version: "1"
+    config:
+      tool: warehouse.add_order_note
+      for_each: =nodes.triage.output.exceptions.filter(e, e.recommended_action == 'nudge_warehouse')
+      args:
+        order_id: =item.order_id
+        note: "='Exception desk: ' + item.evidence + ' Please release the order or note why it is held.'"
+    routes: {ok: report, denied: report, error: failed}
+
+  # Reached from every path: nothing found, the approval refused or expired, a write refused, or all written.
+  - id: report
+    type: agent
+    version: "1"
+    config:
+      agent: o2c-report-agent
+      task: >-
+        Write the exception desk report: what broke across the four systems, what was drafted or posted after
+        the approval, or that nothing was sent when it was not granted, with one row per exception. Submit
+        the result in the required shape.
+      inputs:
+        triage: =nodes.triage.output
+        drafts: "=has(nodes.draft) ? nodes.draft.output.drafts : []"
+        approval: "=has(nodes.approve) ? nodes.approve.output : null"
+        drafts_created: >-
+          =has(nodes.send_drafts) && has(nodes.send_drafts.output.results) ? size(nodes.send_drafts.output.results)
+          : 0
+        finance_notes: >-
+          =has(nodes.ledger_notes) && has(nodes.ledger_notes.output.results) ? size(nodes.ledger_notes.output.results)
+          : 0
+        warehouse_notes: >-
+          =has(nodes.warehouse_notes) && has(nodes.warehouse_notes.output.results) ?
+          size(nodes.warehouse_notes.output.results) : 0
+      output_schema: order-to-cash-exception-desk/report
+    routes: {next: verify}
+
+  - id: verify
+    type: verification
+    version: "1"
+    config:
+      schema: order-to-cash-exception-desk/report
+      value: =nodes.report.output
+      checks:
+        - =size(nodes.report.output.rows) == size(nodes.triage.output.exceptions)
+        - =nodes.report.output.clean_count == nodes.triage.output.clean_count
+        - =!nodes.report.output.sent || nodes.report.output.actions.reminders_drafted == size(nodes.draft.output.drafts)
+        - =nodes.report.output.sent || nodes.report.output.actions.reminders_drafted == 0
+    routes: {pass: done, fail: failed}
+
+  - id: done
+    type: end
+    version: "1"
+    config:
+      status: COMPLETED
+      deliverable: =nodes.report.output
+
+  - id: failed
+    type: end
+    version: "1"
+    config:
+      status: FAILED

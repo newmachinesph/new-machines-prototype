@@ -1,0 +1,28 @@
+{
+  "customers": [
+    {
+      "id": "CUST-1002",
+      "name": "Joel Pangilinan - JP Mini Mart",
+      "email": "joel.pangilinan@example.com",
+      "phone": "+63 917 000 1002",
+      "payment_terms_days": 15,
+      "balance_current": 0.0,
+      "balance_overdue": 5480.0,
+      "account_manager": null,
+      "account_manager_email": null,
+      "notes": []
+    },
+    {
+      "id": "CUST-1007",
+      "name": "Grace Lumibao - Lumibao Fresh Produce",
+      "email": "grace.lumibao@example.com",
+      "phone": "+63 917 000 1007",
+      "payment_terms_days": 15,
+      "balance_current": 0.0,
+      "balance_overdue": 0.0,
+      "account_manager": null,
+      "account_manager_email": null,
+      "notes": []
+    }
+  ]
+}

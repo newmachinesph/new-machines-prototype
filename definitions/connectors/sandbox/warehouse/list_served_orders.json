@@ -1,0 +1,26 @@
+{
+  "served_orders": [
+    {
+      "id": "ORD-260917",
+      "customer_name": "Joel Pangilinan - JP Mini Mart",
+      "created_at": "2026-09-17T01:40:00Z",
+      "released": true,
+      "release_date": "2026-09-19T00:30:00Z",
+      "delivered": true,
+      "delivered_at": "2026-09-19T06:10:00Z",
+      "delivery_count": 1,
+      "notes": []
+    },
+    {
+      "id": "ORD-260918",
+      "customer_name": "Grace Lumibao - Lumibao Fresh Produce",
+      "created_at": "2026-09-18T01:40:00Z",
+      "released": true,
+      "release_date": "2026-09-21T00:30:00Z",
+      "delivered": true,
+      "delivered_at": "2026-09-21T06:10:00Z",
+      "delivery_count": 1,
+      "notes": []
+    }
+  ]
+}

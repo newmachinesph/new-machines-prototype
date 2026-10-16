@@ -35,3 +35,6 @@ Thumbs.db
 
 # Local scratch
 .scratch/
+
+# Demo dataset exports (derived from production data; never committed)
+scripts/demo_data/out/

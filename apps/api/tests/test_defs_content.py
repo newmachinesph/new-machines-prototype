@@ -391,6 +391,21 @@ def test_connector_defaults_and_classes(bundle):
             ("send_email", "write", "mail.send", "GMAIL_SEND_EMAIL"),
         ],
         "googlecalendar": [("list_events", "read", "calendar.read", "GOOGLECALENDAR_EVENTS_LIST")],
+        "ecommerce": [
+            ("list_orders", "read", "orders.read", "ECOMMERCE_LIST_ORDERS"),
+            ("list_payments", "read", "payments.read", "ECOMMERCE_LIST_PAYMENTS"),
+        ],
+        "accounting": [
+            ("list_sales_orders", "read", "ledger.read", "ACCOUNTING_LIST_SALES_ORDERS"),
+            ("list_customers", "read", "customers.read", "ACCOUNTING_LIST_CUSTOMERS"),
+            ("list_customer_payments", "read", "ledger.read", "ACCOUNTING_LIST_CUSTOMER_PAYMENTS"),
+            ("add_order_note", "write", "ledger.write", "ACCOUNTING_ADD_ORDER_NOTE"),
+        ],
+        "warehouse": [
+            ("list_served_orders", "read", "fulfilment.read", "WAREHOUSE_LIST_SERVED_ORDERS"),
+            ("add_order_note", "write", "fulfilment.write", "WAREHOUSE_ADD_ORDER_NOTE"),
+        ],
+        "salesapp": [("list_sales", "read", "sales.read", "SALESAPP_LIST_SALES")],
     }
     assert {c.key for c in bundle.of("connector")} == set(expected)
     for key, tools in expected.items():

@@ -1,0 +1,36 @@
+{
+  "orders": [
+    {
+      "id": "ORD-260917",
+      "reference": "NP-2609-004",
+      "customer_id": "CUST-1002",
+      "customer_name": "Joel Pangilinan - JP Mini Mart",
+      "order_date": "2026-09-17T01:30:00Z",
+      "status": "completed",
+      "paid": true,
+      "scanned_out": true,
+      "out_for_delivery_at": "2026-09-19T00:45:00Z",
+      "delivered_at": "2026-09-19T06:10:00Z",
+      "grand_total": 4320.0,
+      "currency": "PHP",
+      "seller_email": "celeste.a.abad@example.com",
+      "payment_method": "GCash"
+    },
+    {
+      "id": "ORD-260918",
+      "reference": "NP-2609-005",
+      "customer_id": "CUST-1007",
+      "customer_name": "Grace Lumibao - Lumibao Fresh Produce",
+      "order_date": "2026-09-18T01:30:00Z",
+      "status": "completed",
+      "paid": true,
+      "scanned_out": true,
+      "out_for_delivery_at": "2026-09-21T00:45:00Z",
+      "delivered_at": "2026-09-21T06:10:00Z",
+      "grand_total": 7850.5,
+      "currency": "PHP",
+      "seller_email": "celeste.a.abad@example.com",
+      "payment_method": "Bank transfer"
+    }
+  ]
+}

@@ -31,6 +31,7 @@ SEED_PACKS = {
     "support-inbox-triage": "Support Inbox Triage",
     "weekly-expense-check": "Weekly Expense Check",
     "meeting-follow-ups": "Meeting Follow-ups",
+    "order-to-cash-exception-desk": "Order-to-Cash Exception Desk",
 }
 USERS = {
     "ana": {"sub": "uid_ana", "email": "ana@example.com", "email_verified": True, "name": "Ana Reyes"},

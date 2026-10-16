@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Exception triage",
+  "description": "Every order checked across the four systems: the exceptions found, what to do about each, and the totals per kind.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["summary", "exceptions", "clean_count", "totals", "sign_off_note"],
+  "properties": {
+    "summary": {"type": "string", "minLength": 1, "description": "Two or three plain sentences with the counts and peso totals."},
+    "exceptions": {
+      "type": "array",
+      "description": "One per order with a break, in kind order then longest outstanding first.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "order_id", "kind", "customer_id", "customer_name", "customer_email", "invoice_number",
+          "amount_minor", "currency", "reference_date", "due_date", "delivered_on", "days_outstanding",
+          "account_manager", "account_manager_email", "evidence", "recommended_action"
+        ],
+        "properties": {
+          "order_id": {"type": "string", "minLength": 1, "description": "The order's id, the same in every system."},
+          "kind": {"enum": ["paid_not_shipped", "shipped_not_paid", "payment_pending_confirmation", "disputed"]},
+          "customer_id": {"type": "string", "minLength": 1},
+          "customer_name": {"type": "string", "minLength": 1},
+          "customer_email": {"type": ["string", "null"], "description": "From the accounting customer record. Null when it has none."},
+          "invoice_number": {"type": ["string", "null"], "description": "The accounting invoice number. Null when the order is not invoiced."},
+          "amount_minor": {"type": "integer", "minimum": 0, "description": "The amount at stake in centavos: the open balance, or the paid total for an order not shipped."},
+          "currency": {"type": "string", "pattern": "^[A-Z]{3}$"},
+          "reference_date": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$", "description": "The invoice date, or the order date for an order not shipped."},
+          "due_date": {"type": ["string", "null"], "pattern": "^\\d{4}-\\d{2}-\\d{2}$", "description": "Invoice date plus the customer's payment terms. Null for an order not shipped."},
+          "delivered_on": {"type": ["string", "null"], "pattern": "^\\d{4}-\\d{2}-\\d{2}$", "description": "When the warehouse delivered the order. Null when it has not."},
+          "days_outstanding": {"type": "integer", "minimum": 0, "description": "Days from the reference date to the last day checked."},
+          "account_manager": {"type": ["string", "null"], "description": "Accounting's account manager, else the sales app seller, else null."},
+          "account_manager_email": {"type": ["string", "null"], "description": "Accounting's, else the sales app seller's, else the store's seller email, else null."},
+          "evidence": {"type": "string", "minLength": 1, "description": "One sentence naming the systems that disagree and what each shows."},
+          "recommended_action": {
+            "enum": ["nudge_warehouse", "draft_collection_message", "confirm_payment", "escalate_finance", "none"]
+          }
+        }
+      }
+    },
+    "clean_count": {"type": "integer", "minimum": 0, "description": "Orders that agree across every system."},
+    "totals": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["paid_not_shipped", "shipped_not_paid", "payment_pending_confirmation", "disputed", "currency"],
+      "properties": {
+        "paid_not_shipped": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["count", "amount_minor"],
+          "properties": {"count": {"type": "integer", "minimum": 0}, "amount_minor": {"type": "integer", "minimum": 0}}
+        },
+        "shipped_not_paid": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["count", "amount_minor"],
+          "properties": {"count": {"type": "integer", "minimum": 0}, "amount_minor": {"type": "integer", "minimum": 0}}
+        },
+        "payment_pending_confirmation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["count", "amount_minor"],
+          "properties": {"count": {"type": "integer", "minimum": 0}, "amount_minor": {"type": "integer", "minimum": 0}}
+        },
+        "disputed": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["count", "amount_minor"],
+          "properties": {"count": {"type": "integer", "minimum": 0}, "amount_minor": {"type": "integer", "minimum": 0}}
+        },
+        "currency": {"type": "string", "pattern": "^[A-Z]{3}$"}
+      }
+    },
+    "sign_off_note": {
+      "type": "string",
+      "description": "One sentence naming each shipped-but-not-paid balance above ₱20,000 that needs finance's sign-off before its reminder, with its amount; empty when there is none."
+    }
+  }
+}

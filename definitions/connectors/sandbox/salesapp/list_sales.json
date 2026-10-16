@@ -1,0 +1,30 @@
+{
+  "sales": [
+    {
+      "id": "ORD-260917",
+      "seller_name": "Celeste A. Abad",
+      "seller_email": "celeste.a.abad@example.com",
+      "customer_id": "CUST-1002",
+      "customer_name": "Joel Pangilinan - JP Mini Mart",
+      "date": "2026-09-17T01:30:00Z",
+      "total": 4320.0,
+      "currency": "PHP",
+      "paid": true,
+      "delivered": true,
+      "closed": true
+    },
+    {
+      "id": "ORD-260918",
+      "seller_name": "Celeste A. Abad",
+      "seller_email": "celeste.a.abad@example.com",
+      "customer_id": "CUST-1007",
+      "customer_name": "Grace Lumibao - Lumibao Fresh Produce",
+      "date": "2026-09-18T01:30:00Z",
+      "total": 7850.5,
+      "currency": "PHP",
+      "paid": true,
+      "delivered": true,
+      "closed": true
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+kind: agent
+key: o2c-triage-agent
+schema_version: nm.agent.manifest.v1.1
+agent_id: o2c-triage-agent
+version: "1.0.0"
+publisher_id: new-machines-labs
+publisher_name: New Machines Labs
+name: Order-to-Cash Triage Agent
+summary: >-
+  Follows each order across the store, the ledger, the warehouse and the sales app, names every break with the evidence from each system and the action the collection policy calls for, so a reviewer can confirm it.
+capabilities: [finance.order_to_cash]
+runtime:
+  adapter: google_adk
+  model_profile: reasoning
+  instructions: instructions.md
+  skills: [skills/classify-orders.md]
+  tools: []
+  max_turns: 6
+input_schema_ref: order-to-cash-exception-desk/input
+output_schema_ref: order-to-cash-exception-desk/triage
+requested_tool_capabilities: []
+data_processing:
+  supported_regions: ["asia-south1"]
+  data_classes: ["CONFIDENTIAL"]
+  retention_policy_ref: retention/30d

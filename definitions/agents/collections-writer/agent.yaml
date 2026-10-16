@@ -1,0 +1,25 @@
+kind: agent
+key: collections-writer
+schema_version: nm.agent.manifest.v1.1
+agent_id: collections-writer
+version: "1.0.0"
+publisher_id: new-machines-labs
+publisher_name: New Machines Labs
+name: Collections Writer
+summary: >-
+  Writes one polite collection reminder per shipped-but-not-paid order, from the customer's account manager, stating the invoice, the peso amount, the delivery and the terms. It never offers discounts or new due dates, and it only drafts: a person sends.
+capabilities: [finance.collections_draft]
+runtime:
+  adapter: google_adk
+  model_profile: reasoning
+  instructions: instructions.md
+  skills: [skills/write-reminders.md]
+  tools: []
+  max_turns: 6
+input_schema_ref: order-to-cash-exception-desk/draft-request
+output_schema_ref: order-to-cash-exception-desk/drafts
+requested_tool_capabilities: []
+data_processing:
+  supported_regions: ["asia-south1"]
+  data_classes: ["CONFIDENTIAL"]
+  retention_policy_ref: retention/30d

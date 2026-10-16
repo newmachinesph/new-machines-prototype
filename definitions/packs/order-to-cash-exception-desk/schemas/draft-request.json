@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Collection draft request",
+  "description": "What the collections writer is asked to draft: the shipped-but-not-paid exceptions, how many reminders at most, the business name and the collection policy.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["exceptions", "max_messages", "company_name", "rules"],
+  "properties": {
+    "exceptions": {
+      "type": "array",
+      "description": "The exceptions whose recommended action is draft_collection_message (the triage exception shape).",
+      "items": {"type": "object"}
+    },
+    "max_messages": {"type": "integer", "minimum": 0, "description": "Most reminders to draft, highest balance first."},
+    "company_name": {"type": "string", "minLength": 1},
+    "rules": {"type": "array", "description": "The collection policy recalled from memory.", "items": {"type": "object"}}
+  }
+}

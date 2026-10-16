@@ -43,6 +43,13 @@ PACKS = {
         "records": ["#1003", "#1005", "#1088", "18f3a0c1d2e41103"],
         "feedback": "Checked each proposed refund decision against the policy.",
     },
+    # No reviewer: the run goes triage -> one approval -> writes -> report.
+    "order-to-cash-exception-desk": {
+        "input": {"since": "2026-09-16", "until": "2026-10-16"},
+        "budget": 2500,
+        "records": None,
+        "feedback": None,
+    },
 }
 WAIT_SECONDS = 180
 # Run statuses the run can never leave; reaching one that was not awaited fails the smoke at once.
@@ -106,42 +113,54 @@ def drive(api, pack: str, model_env: str) -> int:
     run_id = res.json()["id"]
     print("started", run_id, "pack", pack)
 
-    poll(api, run_id, {"WAITING_FOR_HUMAN"})
-    tasks = [t for t in api.get("/v1/human-tasks/eligible").json() if t["runId"] == run_id]
-    if not tasks:
-        fail("run is waiting for a human but no eligible task was listed")
-    task = tasks[0]
-    full = api.get(f"/v1/human-tasks/{task['id']}").json()
-    records = [r["id"] for r in full["records"]]
-    print("human task", task["id"], "records", records)
-    if model_env == "test" and records != spec["records"]:
-        fail(f"review records {records}, expected {spec['records']}")
-    if api.post(f"/v1/human-tasks/{task['id']}:claim").status_code >= 300:
-        fail("claim failed")
-    sub = api.post(
-        f"/v1/human-tasks/{task['id']}:submit",
-        json={
-            "verdict": "APPROVED",
-            "feedbackText": spec["feedback"],
-            "recordCalls": {r: "explained" for r in records},
-        },
-    )
-    if sub.status_code >= 300:
-        fail(f"submit returned {sub.status_code}: {sub.text[:300]}")
-    print("submitted", sub.json().get("state"))
+    if spec["records"] is not None:  # the pack has a reviewer step
+        poll(api, run_id, {"WAITING_FOR_HUMAN"})
+        tasks = [t for t in api.get("/v1/human-tasks/eligible").json() if t["runId"] == run_id]
+        if not tasks:
+            fail("run is waiting for a human but no eligible task was listed")
+        task = tasks[0]
+        full = api.get(f"/v1/human-tasks/{task['id']}").json()
+        records = [r["id"] for r in full["records"]]
+        print("human task", task["id"], "records", records)
+        if model_env == "test" and records != spec["records"]:
+            fail(f"review records {records}, expected {spec['records']}")
+        if api.post(f"/v1/human-tasks/{task['id']}:claim").status_code >= 300:
+            fail("claim failed")
+        sub = api.post(
+            f"/v1/human-tasks/{task['id']}:submit",
+            json={
+                "verdict": "APPROVED",
+                "feedbackText": spec["feedback"],
+                "recordCalls": {r: "explained" for r in records},
+            },
+        )
+        if sub.status_code >= 300:
+            fail(f"submit returned {sub.status_code}: {sub.text[:300]}")
+        print("submitted", sub.json().get("state"))
 
-    poll(api, run_id, {"WAITING_FOR_EVENT"})
-    approvals = [
-        a for a in api.get("/v1/approvals").json() if a["runId"] == run_id and a["status"] == "PENDING"
-    ]
-    if not approvals:
-        fail("run is waiting for an event but no pending approval was listed")
-    apr = approvals[0]
-    print("approval", apr["id"], "|", apr["summary"])
-    if api.post(f"/v1/approvals/{apr['id']}:approve").status_code >= 300:
-        fail("approve failed")
+    # Grant every approval the run raises, one write step each (the exception desk raises four).
+    approved: set[str] = set()
+    deadline = time.time() + WAIT_SECONDS
+    while True:
+        final = poll(api, run_id, {"WAITING_FOR_EVENT"} | TERMINAL)
+        if final["status"] in TERMINAL:
+            break
+        approvals = [
+            a
+            for a in api.get("/v1/approvals").json()
+            if a["runId"] == run_id and a["status"] == "PENDING" and a["id"] not in approved
+        ]
+        if not approvals:  # the last grant is still being taken up
+            if time.time() > deadline:
+                fail("run is waiting for an event but no pending approval was listed")
+            time.sleep(0.5)
+            continue
+        apr = approvals[0]
+        print("approval", apr["id"], "|", apr["summary"])
+        if api.post(f"/v1/approvals/{apr['id']}:approve").status_code >= 300:
+            fail("approve failed")
+        approved.add(apr["id"])
 
-    final = poll(api, run_id, TERMINAL)
     receipt = api.get(f"/v1/workflow-runs/{run_id}/receipt").json()
     print("\nnode statuses")
     for node in final["nodes"]:

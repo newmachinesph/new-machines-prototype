@@ -192,6 +192,7 @@ class _Checker:
                     self.err(d, f"{at}.routes.{label}: target node {target!r} does not exist")
             self.node_refs(d, n, at)
             self.decision_routes(d, n, at)
+            self.approval_unlocks(d, n, at, by_id)
             for where, expr in _cel_strings(n["config"], f"{at}.config"):
                 if (msg := compile_cel(expr)) is not None:
                     self.err(d, f"{where}: CEL does not compile: {msg}")
@@ -211,6 +212,24 @@ class _Checker:
             self.err(
                 d, f"{at}.routes: decision {rules.key!r} can take route {route!r}, which this node lacks"
             )
+
+    def approval_unlocks(self, d: Definition, n: dict, at: str, by_id: dict) -> None:
+        """An approval's `also_unlocks` lets one grant cover a chain of writes: every entry must name a
+        connector node of this workflow, so a grant never unlocks a missing node or one that makes no call."""
+        if n["type"] != "approval":
+            return
+        also = (n.get("config") or {}).get("also_unlocks")
+        if also is None:
+            return
+        if not isinstance(also, list):
+            self.err(d, f"{at}.config.also_unlocks: must be a list of node ids")
+            return
+        for i, target in enumerate(also):
+            where = f"{at}.config.also_unlocks[{i}]"
+            if not isinstance(target, str) or target not in by_id:
+                self.err(d, f"{where}: node {target!r} does not exist")
+            elif by_id[target]["type"] != "connector":
+                self.err(d, f"{where}: node {target!r} is not a connector node")
 
     def node_refs(self, d: Definition, n: dict, at: str) -> None:
         cfg = n["config"]

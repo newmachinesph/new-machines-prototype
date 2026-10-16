@@ -1,0 +1,28 @@
+{
+  "payments": [
+    {
+      "id": "PAY-0004",
+      "order_id": "ORD-260917",
+      "customer_id": "CUST-1002",
+      "amount": 4320.0,
+      "currency": "PHP",
+      "mode_of_payment": "GCash",
+      "status": "confirmed",
+      "payment_date": "2026-09-17T03:05:00Z",
+      "created_at": "2026-09-17T03:00:00Z",
+      "reference": "GCASH-000004"
+    },
+    {
+      "id": "PAY-0005",
+      "order_id": "ORD-260918",
+      "customer_id": "CUST-1007",
+      "amount": 7850.5,
+      "currency": "PHP",
+      "mode_of_payment": "Bank transfer",
+      "status": "confirmed",
+      "payment_date": "2026-09-30T03:05:00Z",
+      "created_at": "2026-09-30T03:00:00Z",
+      "reference": "BANK-000005"
+    }
+  ]
+}

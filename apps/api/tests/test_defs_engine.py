@@ -112,6 +112,31 @@ def test_agent_tool_not_in_any_connector(bundle):
     only_error(bad, mentions="shop.missing", kind="agent")
 
 
+def _with_approval(bundle: Bundle, also_unlocks) -> Bundle:
+    """The fixture workflow with an approval that unlocks a write step and `also_unlocks` more."""
+
+    def edit(body, files):
+        routes = {"granted": "write", "denied": "finish", "timeout": "finish"}
+        config = {"title": "Write it", "also_unlocks": also_unlocks}
+        body["nodes"].insert(
+            3, {"id": "approve", "type": "approval", "version": "1", "config": config, "routes": routes}
+        )
+        write = {"tool": "shop.list_orders", "args": {}}
+        body["nodes"].insert(
+            4,
+            {"id": "write", "type": "connector", "version": "1", "config": write, "routes": {"ok": "finish"}},
+        )
+
+    return mutated(bundle, "workflow", "demo-pack", edit)
+
+
+def test_an_approval_may_also_unlock_other_connector_nodes(bundle):
+    assert validate_bundle(_with_approval(bundle, ["write"])) == []
+    only_error(_with_approval(bundle, ["ghost"]), mentions="'ghost' does not exist", kind="workflow")
+    only_error(_with_approval(bundle, ["analyse"]), mentions="not a connector node", kind="workflow")
+    only_error(_with_approval(bundle, "write"), mentions="must be a list", kind="workflow")
+
+
 def _team_agent_needing_thread(bundle: Bundle, *, maps: dict | None) -> Bundle:
     """The fixture pack running an org-built copy of helper-agent whose input schema requires thread_id."""
     key = "org-abc--helper"

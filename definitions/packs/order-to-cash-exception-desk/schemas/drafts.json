@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Collection drafts",
+  "description": "One collection message per shipped-but-not-paid exception, from its account manager, ready to save as an email draft.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["drafts"],
+  "properties": {
+    "drafts": {
+      "type": "array",
+      "minItems": 0,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["to", "subject", "body", "order_id", "account_manager"],
+        "properties": {
+          "to": {"type": "string", "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$", "description": "The customer's email address."},
+          "subject": {"type": "string", "minLength": 1, "maxLength": 150},
+          "body": {"type": "string", "minLength": 1, "maxLength": 4000},
+          "order_id": {"type": "string", "minLength": 1, "description": "The exception's order id."},
+          "account_manager": {"type": "string", "minLength": 1, "description": "Who the message is from."}
+        }
+      }
+    }
+  }
+}

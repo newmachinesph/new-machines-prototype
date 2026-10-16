@@ -1,0 +1,72 @@
+kind: pack
+key: order-to-cash-exception-desk
+slug: order-to-cash-exception-desk
+name: Order-to-Cash Exception Desk
+version: 1.0.0
+publisher: New Machines Labs
+function: finance-ops
+industries: [manufacturing, retail-commerce]
+outcome: Every order followed from store to warehouse to ledger, with each break found and acted on after one approval.
+description: >-
+  Reads your orders, payments, invoices, deliveries and sales from four systems and follows each order
+  across them. It finds payments waiting to be confirmed, orders shipped but not paid past their terms,
+  orders paid but not shipped and disputed invoices, and applies your collection policy to each. It drafts a
+  collection reminder from each account manager for the largest overdue balances, then asks you once. On
+  your approval it saves the reminders as Gmail drafts, flags the pending payments and disputes for finance
+  and notes the waiting orders for the warehouse. Nothing is sent and no money moves.
+risk_class: medium
+price_note: "About $0.80 to $3.00 of AI work per run. No reviewer time: you approve the actions yourself."
+workflow: order-to-cash-exception-desk
+contract: order-to-cash-exception-desk
+agents: [o2c-triage-agent, collections-writer, o2c-report-agent]
+connectors: [ecommerce, accounting, warehouse, salesapp, gmail]
+human_review: One approval before anything is written. If it is not granted, the run ends with the report and nothing is sent or posted.
+# How the run page shows the result. Strings starting with "=" are CEL over {deliverable, mocked} (the end
+# node's deliverable, and whether any tool call used sandbox data; item fields also see `item`).
+# Amounts are centavos; the facts show them as pesos.
+deliverable_view:
+  kind: Exception desk report
+  summary: >-
+    =deliverable.summary + (mocked ? ' Made on sandbox data: no draft or note reached a real system.' : '')
+  facts:
+    - label: Exceptions
+      value: =string(size(deliverable.rows))
+    - label: Payments pending confirmation
+      value: >-
+        =string(deliverable.totals.payment_pending_confirmation.count) + ' · ₱' +
+        string(deliverable.totals.payment_pending_confirmation.amount_minor / 100) + '.' +
+        (deliverable.totals.payment_pending_confirmation.amount_minor % 100 < 10 ? '0' : '') +
+        string(deliverable.totals.payment_pending_confirmation.amount_minor % 100)
+    - label: Shipped, not paid
+      value: >-
+        =string(deliverable.totals.shipped_not_paid.count) + ' · ₱' +
+        string(deliverable.totals.shipped_not_paid.amount_minor / 100) + '.' +
+        (deliverable.totals.shipped_not_paid.amount_minor % 100 < 10 ? '0' : '') +
+        string(deliverable.totals.shipped_not_paid.amount_minor % 100)
+    - label: Paid, not shipped
+      value: >-
+        =string(deliverable.totals.paid_not_shipped.count) + ' · ₱' +
+        string(deliverable.totals.paid_not_shipped.amount_minor / 100) + '.' +
+        (deliverable.totals.paid_not_shipped.amount_minor % 100 < 10 ? '0' : '') +
+        string(deliverable.totals.paid_not_shipped.amount_minor % 100)
+    - label: Disputed
+      value: >-
+        =string(deliverable.totals.disputed.count) + ' · ₱' +
+        string(deliverable.totals.disputed.amount_minor / 100) + '.' +
+        (deliverable.totals.disputed.amount_minor % 100 < 10 ? '0' : '') +
+        string(deliverable.totals.disputed.amount_minor % 100)
+    - label: Reminders drafted
+      value: =string(deliverable.actions.reminders_drafted)
+    - label: Finance notes
+      value: =string(deliverable.actions.finance_notes)
+    - label: Warehouse notes
+      value: =string(deliverable.actions.warehouse_notes)
+  items:
+    from: =deliverable.rows
+    label: >-
+      =item.order_id + ' — ' + item.customer_name + ' — ' + (item.kind == 'paid_not_shipped' ? 'Paid, not
+      shipped' : (item.kind == 'shipped_not_paid' ? 'Shipped, not paid' : (item.kind ==
+      'payment_pending_confirmation' ? 'Payment pending confirmation' : 'Disputed invoice')))
+    detail: >-
+      =item.note + ' Action: ' + item.action + ' (' + (item.outcome == 'drafted' ? 'drafted' : (item.outcome ==
+      'noted' ? 'noted' : (item.outcome == 'not_sent' ? 'not sent' : 'listed only'))) + ').'
