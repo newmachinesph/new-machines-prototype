@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { PageHeader } from "@/components/ui";
 import { MembersSection, TokensSection } from "./access";
+import { PublisherSection } from "./publisher";
 import { PoliciesSection, WorkspaceSection } from "./workspace";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -45,6 +46,9 @@ export default async function SettingsPage() {
           </div>
           <div id="workspace" className="scroll-mt-24 lg:scroll-mt-20">
             <WorkspaceSection />
+          </div>
+          <div id="publishing" className="scroll-mt-24 lg:scroll-mt-20">
+            <PublisherSection />
           </div>
         </div>
       </div>

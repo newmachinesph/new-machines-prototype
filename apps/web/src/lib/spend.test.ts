@@ -66,9 +66,46 @@ describe("spendSplit", () => {
     expect(split.held.amountMinor).toBe(0);
   });
 
+  it("sums the month's publisher fees, which the agents figure includes", () => {
+    const fee = (amount: number) => ({
+      listingId: "lst_1",
+      name: "Tax filing",
+      publisher: "Harbor Cafe",
+      kind: "pack_run" as const,
+      quantity: 1,
+      unit: usd(amount),
+      amount: usd(amount),
+    });
+    const spent = { ai: usd(100), tools: usd(0), human: usd(0) };
+    const ledger = [
+      txn({ kind: "run", amount: usd(350), spent, fees: [fee(250)] }),
+      txn({ kind: "run", at: "2026-09-30T23:00:00Z", amount: usd(999), spent, fees: [fee(999)] }),
+    ];
+    const split = spendSplit(org(350), ledger, "2026-10");
+    expect(split.fees.amountMinor).toBe(250);
+    expect(split.agents.amountMinor).toBe(350);
+    expect(split.agentsExclFees.amountMinor).toBe(100);
+  });
+
+  it("never lets the agents figure without fees go below zero", () => {
+    const fee = {
+      listingId: "l",
+      name: "T",
+      publisher: "H",
+      kind: "pack_run" as const,
+      quantity: 1,
+      unit: usd(900),
+      amount: usd(900),
+    };
+    const split = spendSplit(org(100), [txn({ kind: "run", amount: usd(100), fees: [fee] })], "2026-10");
+    expect(split.agentsExclFees.amountMinor).toBe(0);
+  });
+
   it("is all zero for a new workspace", () => {
     const split = spendSplit(org(0), [], "2026-10");
-    expect([split.plan, split.agents, split.reviewers, split.held].map((m) => m.amountMinor)).toEqual([0, 0, 0, 0]);
+    expect([split.plan, split.agents, split.reviewers, split.held, split.fees].map((m) => m.amountMinor)).toEqual([
+      0, 0, 0, 0, 0,
+    ]);
   });
 });
 

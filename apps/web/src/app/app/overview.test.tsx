@@ -178,6 +178,42 @@ describe("Overview in a new workspace", () => {
     expect(within(budget).getByText("Reviewer pay").closest("div")).toHaveTextContent("$3.00");
     expect(within(budget).getByText(/days? left in/)).toBeInTheDocument();
   });
+
+  it("takes publisher fees out of the agents figure and shows them as a labelled line", () => {
+    data.packs = [{ ...RECON, installed: true }];
+    data.runs = [RUN];
+    const fee = {
+      listingId: "l1",
+      name: "Tax filing",
+      publisher: "Harbor Cafe",
+      kind: "pack_run" as const,
+      quantity: 1,
+      unit: usd(100),
+      amount: usd(100),
+    };
+    data.usage = {
+      org: org(250),
+      ledger: [
+        {
+          id: "t1",
+          at: "2026-10-11T10:00:00Z",
+          kind: "run",
+          description: "Run",
+          amount: usd(250),
+          status: "POSTED",
+          lines: [],
+          spent: { ai: usd(150), tools: usd(0), human: usd(0) },
+          fees: [fee],
+        },
+      ],
+    };
+    renderWithIntl(<Overview />);
+    const budget = screen.getByRole("heading", { name: "Budget" }).closest("section")!;
+    expect(within(budget).getByText("Agents, models and tools").closest("div")).toHaveTextContent("$1.50");
+    const feeLine = within(budget).getByText("Publisher fees").closest("div")!;
+    expect(feeLine).toHaveTextContent("$1.00");
+    expect(feeLine).toHaveTextContent("Simulated");
+  });
 });
 
 describe("Overview in the demo workspace", () => {

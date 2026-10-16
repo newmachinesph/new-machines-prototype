@@ -11,7 +11,7 @@ from typing import Any
 
 from pydantic import ValidationError
 
-from app import live_connections, ops_state, workspace
+from app import live_connections, ops_state, publisher_stats, workspace
 from app.defs import registry
 from app.errors import NO_CHANGE, ApiProblem
 from app.models.common import Money, money_text
@@ -84,7 +84,7 @@ CATEGORIES = {
 }
 UNCATEGORIZED = "Other"
 # The overview fields still read from fixtures in the live workspace.
-LIVE_SIMULATED_FIELDS = ["kpis.platformDailyCap", "kpis.incidentsOpen"]
+LIVE_SIMULATED_FIELDS = ["kpis.platformDailyCap", "kpis.incidentsOpen", "publisherEarningsMonth"]
 PLATFORM_DAILY_CAP = "platform_daily_ai_cap"
 
 # One row per org with its counts. Each subquery is correlated on `o.id`, so it reads that org's rows only.
@@ -546,6 +546,7 @@ def overview(conn, now: datetime) -> OpsOverview:
         platform_daily_cap=Money(amount_minor=_platform_daily_cap()),
         incidents_open=0,
     )
+    in_review, earned = publisher_stats.ops_numbers(conn, now)
     attention = _cap_items(orgs, spent, at) + _connector_items(_connectors(conn, now), at)
     return OpsOverview(
         kpis=kpis,
@@ -555,4 +556,6 @@ def overview(conn, now: datetime) -> OpsOverview:
         simulated_fields=list(LIVE_SIMULATED_FIELDS),
         top_packs=_top_packs(conn, now),
         spend_month=Money(amount_minor=sum(spent.values())),
+        listings_in_review=in_review,
+        publisher_earnings_month=Money(amount_minor=earned),
     )

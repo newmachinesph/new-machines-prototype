@@ -13,7 +13,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",
-    "e2e": "cross-env NEXT_DIST_DIR=.next-e2e NEXT_PUBLIC_AUTH_MOCK=1 ALLOW_AUTH_MOCK_BUILD=1 next build && cross-env NEXT_DIST_DIR=.next-e2e NEXT_PUBLIC_AUTH_MOCK=1 ALLOW_AUTH_MOCK_BUILD=1 playwright test",
+    "e2e": "cross-env NEXT_DIST_DIR=.next-e2e NEXT_PUBLIC_AUTH_MOCK=1 ALLOW_AUTH_MOCK_BUILD=1 NEXT_PUBLIC_TOURS=off next build && cross-env NEXT_DIST_DIR=.next-e2e NEXT_PUBLIC_AUTH_MOCK=1 ALLOW_AUTH_MOCK_BUILD=1 playwright test",
     "api:gen": "openapi-ts"
   },
   "dependencies": {
@@ -26,8 +26,10 @@
     "elkjs": "0.12.0",
     "firebase": "13.0.0",
     "lucide-react": "1.55.0",
+    "motion": "13.5.0",
     "next": "16.4.0",
     "next-intl": "4.14.9",
+    "nextstepjs": "2.3.0",
     "nuqs": "2.10.2",
     "react": "19.3.0",
     "react-dom": "19.3.0",

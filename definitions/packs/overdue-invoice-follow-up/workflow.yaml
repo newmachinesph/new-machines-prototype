@@ -97,7 +97,7 @@ nodes:
     version: "1"
     config:
       title: Save the reminder emails as drafts
-      summary: ='Create ' + string(size(nodes.draft.output.drafts)) + ' email drafts in Gmail'
+      summary: "=size(nodes.draft.output.drafts) == 1 ? 'Create 1 email draft in Gmail' : 'Create ' + string(size(nodes.draft.output.drafts)) + ' email drafts in Gmail'"
       timeout_s: 86400
     routes: {granted: send, denied: failed, timeout: failed}
 

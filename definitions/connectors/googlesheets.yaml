@@ -34,4 +34,28 @@ tools:
             type: array
             items: {type: [string, number, boolean, "null"]}
 
+  - id: read_rows
+    slug: GOOGLESHEETS_BATCH_GET
+    version: "20261001_00"
+    action_class: read
+    capability: sheets.read
+    description: Read the values in one or more ranges of a spreadsheet, row by row.
+    input_schema:
+      type: object
+      additionalProperties: false
+      required: [spreadsheet_id, ranges]
+      properties:
+        spreadsheet_id:
+          type: string
+          minLength: 30
+          maxLength: 200
+          pattern: ^[a-zA-Z0-9_-]+$
+          description: The spreadsheet id from its URL.
+        ranges:
+          type: array
+          minItems: 1
+          maxItems: 5
+          items: {type: string, minLength: 1}
+          description: Ranges in A1 notation, such as Expenses!A:E.
+
 defaults: {read: permit, write: require_approval, delete: deny, money: deny}

@@ -38,7 +38,13 @@ vi.mock("./start-run-form", () => ({
     defaultPack,
     blocked,
   }: {
-    packs: { slug: string; inputs: string[]; perRunCap?: { amountMinor: number } }[];
+    packs: {
+      slug: string;
+      inputs: string[];
+      perRunCap?: { amountMinor: number };
+      maxBudget?: { amountMinor: number };
+      packFee?: { amountMinor: number };
+    }[];
     defaultPack?: string;
     blocked: Record<string, { text: string; href?: string } | undefined>;
   }) => (
@@ -49,6 +55,11 @@ vi.mock("./start-run-form", () => ({
       {packs.map((p) => (
         <p key={p.slug}>
           {p.slug} inputs: {p.inputs.join(", ") || "none"}; cap: {p.perRunCap?.amountMinor ?? "none"}
+        </p>
+      ))}
+      {packs.map((p) => (
+        <p key={`${p.slug}-terms`}>
+          {p.slug} max: {p.maxBudget?.amountMinor ?? "none"}; fee: {p.packFee?.amountMinor ?? "none"}
         </p>
       ))}
       {Object.entries(blocked).map(([slug, r]) => (
@@ -118,7 +129,8 @@ describe("StartRunPage", () => {
       "href",
       "/app/marketplace/catalog-localization-en-ja",
     );
-    expect(screen.getByText(/form with order-payment-reconciliation, preselecting nothing/)).toBeInTheDocument();
+    // No other pack is chosen in its place: the form waits until this one is added.
+    expect(screen.queryByText(/form with/)).not.toBeInTheDocument();
   });
 
   it("explains an unknown pack and links to the marketplace", () => {
@@ -133,6 +145,17 @@ describe("StartRunPage", () => {
     renderWithIntl(<StartRunPage />, { locale: "ja" });
     expect(screen.getByRole("status")).toHaveTextContent("Catalog Localizationはまだ追加されていないため");
     expect(screen.getByRole("link", { name: "このパックを追加" })).toBeInTheDocument();
+  });
+
+  it("passes each pack's maximum budget and its publisher's fee per run", () => {
+    data.packs = [
+      { ...RECON, maxBudget: usd(1000), listing: { fee: usd(250), feeUnit: "run" } },
+      { ...LOCALIZATION, installed: true, listing: { fee: usd(30), feeUnit: "call" } },
+    ];
+    data.conns = [];
+    renderWithIntl(<StartRunPage />);
+    expect(screen.getByText(/order-payment-reconciliation max: 1000; fee: 250/)).toBeInTheDocument();
+    expect(screen.getByText(/catalog-localization-en-ja max: none; fee: none/)).toBeInTheDocument();
   });
 
   it("offers inputs from sandbox apps too, and passes each pack's per-run cap", () => {

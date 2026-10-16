@@ -10,6 +10,7 @@
     "cancel": "キャンセル",
     "close": "閉じる",
     "retry": "再試行",
+    "couldNotLoad": "読み込めませんでした",
     "leaveUnsaved": "未保存の変更があります。保存せずにこのページを離れますか？",
     "goToOverview": "概要へ移動",
     "simulated": "シミュレーション",
@@ -100,7 +101,8 @@
         "runs": "実行",
         "needsYou": "対応が必要",
         "packs": "ワークフローパック",
-        "tasks": "レビュータスク"
+        "tasks": "レビュータスク",
+        "actions": "操作"
       }
     },
     "signedInAsUser": "{who}としてサインイン中",
@@ -119,6 +121,7 @@
     "studio": "スタジオのホーム",
     "studioAgents": "エージェント",
     "studioPacks": "ワークフローパック",
+    "studioPublisher": "提供元",
     "crumbNew": "新規",
     "crumbTask": "タスク",
     "developerStudio": "デベロッパースタジオ"
@@ -130,6 +133,7 @@
     "VERIFYING": "検証中",
     "COMPLETED": "完了",
     "FAILED": "失敗",
+    "DECLINED": "却下",
     "CANCELLED": "取り消し済み",
     "NEEDS_ATTENTION": "要確認"
   },
@@ -170,6 +174,7 @@
       "evaluatorTitle": "評価者の推奨",
       "rules": "ルール",
       "aiModel": "AIモデル",
+      "decisionModel": "判断モデル",
       "chainVerdict": "：{verdict}",
       "verdict": {
         "APPROVED": "承認",
@@ -252,13 +257,22 @@
       "filterStatus": "ステータスで絞り込む",
       "filterPack": "パックで絞り込む",
       "allPacks": "すべてのパック",
+      "listingCheck": "掲載チェック",
       "sandboxTest": "サンドボックスでのテスト",
+      "lede": {
+        "WAITING_FOR_HUMAN": "レビュアーの対応を待っています。",
+        "WAITING_FOR_EVENT": "続行する前に、あなたの承認を待っています。",
+        "RUNNING": "実行中です。",
+        "VERIFYING": "結果を確認しています。",
+        "starting": "開始しています。"
+      },
       "filters": {
         "all": "すべて",
         "needs": "対応が必要",
         "active": "進行中",
         "done": "完了",
-        "failed": "失敗"
+        "failed": "失敗",
+        "declined": "却下"
       },
       "outcomeTooltip": "実行が今どの段階にあるかを示します。順に、実行済み、検証済み、受け入れ済み、精算対象です。この実行に不要な段階は表示しません。",
       "outcome": "成果",
@@ -286,7 +300,6 @@
       "canvasHelp": "ステップまたはタイムラインのイベントを選ぶと、実行者、費用、関連する記録を確認できます。ドラッグするとワークフローの続きが見られます。",
       "timeline": "タイムライン",
       "pacificTime": "時刻は太平洋時間です",
-      "localTime": "時刻はお使いのタイムゾーン（{zone}）です",
       "legendAgent": "AIエージェント",
       "legendApp": "アプリ操作",
       "jumpTo": "移動先",
@@ -297,6 +310,7 @@
       "agentsAndModels": "エージェントとモデル",
       "tools": "ツール",
       "reviewerPay": "レビュアー報酬",
+      "publisherFees": "提供元の手数料",
       "totalSoFar": "ここまでの合計",
       "budget": "予算",
       "upTo": "上限 {amount}",
@@ -362,6 +376,7 @@
       "limitations": "制限事項",
       "billable": "課金される理由",
       "agentsTools": "エージェントとツール",
+      "publisherFees": "提供元の手数料",
       "total": "合計",
       "basis": "課金の基準",
       "basisValue": "{accepted, select, done {独立した検証に合格し、あなたが受け入れました。} pending {独立した検証に合格しました。あなたの受け入れを待っています。} failed {独立した検証に合格しました。あなたの受け入れは得られませんでした。} blocked {独立した検証に合格しました。あなたの受け入れは得られませんでした。} other {独立した検証に合格しました。このパックでは、あなたの受け入れは求められません。}}",
@@ -396,6 +411,10 @@
     },
     "codes": {
       "aiModel": "AIモデル",
+      "stopped": {
+        "spendCap": "停止：今月の支出上限に達しました。",
+        "budgetExceeded": "停止：この実行の予算を使い切りました。"
+      },
       "createdTask": "レビュータスクを作成しました",
       "pinnedVersions": "この実行のパックとポリシーのバージョンを固定しました",
       "waitingApproval": "承認待ち",
@@ -404,7 +423,9 @@
         "reasoning": "時間をかけて段階的に考えます",
         "fast": "素早く軽めに考えます",
         "read": "読み取りのみ",
-        "write": "変更できます"
+        "write": "変更できます",
+        "rules": "ルール",
+        "decisionModel": "判断モデル"
       },
       "map": {
         "ACTION_CLASS_PERMITTED": "許可：この種類の操作はポリシーで認められています",
@@ -428,6 +449,18 @@
         "CASES_PROPOSED": "判断が必要な案件を提案しました",
         "NOTHING_OVERDUE": "期限切れのものはありません",
         "REMINDERS_PLANNED": "リマインダーを予定しました",
+        "DECISION_MODEL_UNAVAILABLE": "判断モデルを利用できませんでした",
+        "LEADS_FOUND": "見込み客からの問い合わせと思われるメールがあります",
+        "NO_LEADS": "見込み客からの問い合わせと思われるメールはありません",
+        "EMAILS_SORTED": "メールを種類ごとに分類しました",
+        "NO_EMAILS": "返信が必要な顧客メールはありません",
+        "CASES_NEED_A_PERSON": "担当者の確認が必要なケースがあります",
+        "REPLIES_PLANNED": "返信を計画しました",
+        "NO_EXPENSES": "今週の経費はありません",
+        "ODD_ITEMS_FOUND": "通常と異なる経費があります",
+        "ALL_ORDINARY": "すべての経費は通常の範囲です",
+        "NO_MEETINGS": "フォローアップが必要な会議はありません",
+        "FOLLOW_UPS_PLANNED": "フォローアップを計画しました",
         "REFERENCE_MISMATCH": "参照番号が一致しません",
         "AMOUNT_DELTA": "金額が異なります",
         "PAYOUT_NOT_FOUND": "入金が見つかりません",
@@ -449,6 +482,10 @@
     "unreachable": "New Machines に接続できません。接続を確認して、もう一度お試しください。",
     "generic": "問題が発生しました。",
     "contract": "New Machines から、このページが想定していないデータが届きました。再読み込みしてください。",
+    "codes": {
+      "PUBLISHER_PROFILE_REQUIRED": "提出する前に、設定で公開をオンにしてください。",
+      "SUBMISSION_OPEN": "このエージェントまたはパックには、審査を待っているバージョンがすでにあります。"
+    },
     "pageCouldNotLoad": "このページを読み込めませんでした",
     "notFound": {
       "title": "このアドレスには何もありません",
@@ -513,6 +550,7 @@
   "overview": {
     "budget": "予算",
     "daysLeft": "{month}は残り{n, plural, other {#日}}",
+    "publisherFees": "提供元の手数料",
     "billing": "請求",
     "spent": "今月の利用額",
     "cap": "月間上限",
@@ -593,6 +631,7 @@
     "card": {
       "approvedToast": "承認し、送信待ちにしました",
       "approvedToastBody": "{to}宛てのメール1通です。シミュレーションのため、デモの外には何も送られません。",
+      "approvedToastBodyLive": "{to}宛てのメール1通です。",
       "approveFailed": "承認できませんでした",
       "declinedToast": "却下しました",
       "declinedToastBody": "何も送信されていません。実行はこの請求書をスキップとして完了します。",
@@ -741,7 +780,7 @@
   },
   "memory": {
     "title": "メモリ",
-    "lede": "エージェントが学んだ、あなたの事業の進め方です。人が承認するまでメモリにはならず、記録システムの内容は常にメモリより優先されます。",
+    "lede": "エージェントが把握している、あなたの事業の進め方です。ワークスペースに最初から入っているポリシーと、エージェントが実行から学び、人が承認した内容が含まれます。記録システムの内容は常にメモリより優先されます。",
     "inUse": "使用中",
     "count": "{n, plural, other {#件}}",
     "none": "使用中のメモリはありません。エージェントは記録システムだけを頼りにします。",
@@ -815,7 +854,7 @@
       "allIndustries": "すべての業界",
       "buildOwn": "ここにないパックが必要なときは、デベロッパースタジオで自分で作れます。",
       "buildOwnCta": "パックを作る",
-      "priceNote": "価格は1回の実行あたりの見積りです。レビュアーへの支払いは、実行で必要になったときだけです。",
+      "priceNote": "価格は1回の実行あたりの見積りです。レビュアーへの支払いは、実行で必要になったときだけです。提供元の手数料はシミュレーションです。実際のお金は動きません。",
       "search": "パックを検索",
       "searchPlaceholder": "成果、提供元、カテゴリでパックを検索",
       "noMatch": "一致するパックがありません。",
@@ -825,6 +864,7 @@
       "team": "チームが作成",
       "reviewerWhenNeeded": "必要に応じてレビュアー",
       "perRun": "1回の実行あたり{price}",
+      "perRunPlusFee": "1回の実行あたり{price}＋手数料",
       "perRunUnset": "価格未設定"
     },
     "price": {
@@ -866,7 +906,7 @@
       "notCertified": "未認証",
       "whoWorks": "作業を担当するのは",
       "humanReviewers": "人間のレビュアー",
-      "passport": "Trust Passport",
+      "passport": "トラストパスポート",
       "passportBadge": "デモ用サンプルであり、保証ではありません",
       "passportIntro": "{date}に{by}がテストしました。対象は{cohort}の{n}件のレコードバッチです。この数値はそのサンプルについてのみ示します。",
       "outOf": "{value}/{total}",
@@ -918,6 +958,7 @@
       "capabilitiesNote": "機能を要求しても、許可されたことにはなりません。操作はその都度、ポリシーに照らして確認されます。",
       "capTitle": "1回の実行あたりの上限額",
       "capNote": "レビュアー報酬を含め、この金額を超えそうになると実行は停止し、確認します。",
+      "capAboveUse": "このパックの実行で使える額は最大{amount}です。",
       "reviewers": "人間のレビュアー",
       "pool": {
         "team": "チームのみ",
@@ -939,6 +980,7 @@
       "perRunLabel": "1回の実行あたり",
       "perRunValue": "{price}とレビュアー報酬。{cap}を超える前に実行を止めて確認します",
       "perRunUnset": "エージェントの価格は未設定、ほかにレビュアー報酬。{cap}を超える前に実行を止めて確認します",
+      "feeNote": "見積りとは別に毎回の実行に加算され、上限にも含まれます。",
       "region": "データの地域",
       "agree": "このパックの業務契約と支払条件に同意します。",
       "readContract": "契約を読む",
@@ -985,7 +1027,8 @@
       "shipments_read": "出荷の読み取り",
       "dispute_draft": "チャージバック証拠の下書き",
       "catalog_read": "カタログの読み取り",
-      "catalog_draft": "カタログ文の下書き"
+      "catalog_draft": "カタログ文の下書き",
+      "team_assist": "チームの業務を支援"
     },
     "detail": {
       "allAgents": "すべてのエージェント",
@@ -1013,6 +1056,24 @@
       "notUsed": "このエージェントを使うWorkflow Packはまだありません。"
     }
   },
+  "listedMarket": {
+    "by": "提供元: {publisher}",
+    "noFee": "手数料なし",
+    "perRun": "1回の実行あたり{amount}",
+    "perCall": "1回の呼び出しあたり{amount}",
+    "viewPacks": "パック",
+    "viewAgents": "エージェント",
+    "viewsLabel": "パックかエージェントを表示",
+    "version": "バージョン{version}",
+    "agentsEmpty": "ほかの提供元が掲載しているエージェントはまだありません。",
+    "useInStudio": "スタジオで使う",
+    "fee": "手数料",
+    "updateTitle": "アップデートがあります",
+    "updateBody": "バージョン{version}が利用できます。更新するまで、実行はバージョン{installedVersion}のまま動きます。",
+    "update": "更新する",
+    "updateConfirm": "バージョン{version}に更新しますか？",
+    "updated": "バージョン{version}に更新しました。"
+  },
   "runs": {
     "new": {
       "title": "実行を開始",
@@ -1038,7 +1099,12 @@
       "changeCap": "1回あたりの上限を変更",
       "noHiredPacks": "実行を開始する前に、パックを追加してください。",
       "noChoice": "指定しない",
-      "perRunCap": "このパックの1回あたりの支出上限は{cap}です。"
+      "perRunCap": "このパックの1回あたりの支出上限は{cap}です。",
+      "perRunCapWithFee": "このパックの1回あたりの支出上限は{cap}です。この上限には、予算とは別にかかる提供元の手数料（1回あたり{fee}）も含まれます。",
+      "maxBudget": "このパックで1回の実行に設定できる予算は{max}までです。",
+      "noRoom": "提供元の手数料（1回あたり{fee}）を差し引くと、このパックの1回あたりの上限{cap}のうち実行に使える額が{min}未満になります。実行を開始するには上限を引き上げてください。",
+      "budgetTooHigh": "このパックで1回の実行に設定できる予算は{max}までです。より低い予算を選んでください。",
+      "budgetRequired": "この実行の予算を選んでください。"
     },
     "empty": "まだ実行はありません。追加したパックの実行を開始すると、その作業をここで追えます。",
     "startRun": "実行を開始"
@@ -1071,7 +1137,7 @@
         "spend_cap": "支出上限",
         "region": "データの地域"
       },
-      "note": "ブロックされた操作を強制的に通すボタンはありません。許可するには、ここでポリシーを変更します。変更は記録されます。"
+      "note": "ブロックされた操作を強制的に通すボタンはありません。ポリシーはここで確認できますが、ワークスペースから変更することはできません。"
     },
     "workspace": {
       "title": "ワークスペース",
@@ -1103,7 +1169,7 @@
       },
       "roleHelp": {
         "Member": "実行を開始し、ポリシーで許可された操作を承認します。",
-        "Admin": "加えて、ポリシー、接続、請求を変更できます。"
+        "Admin": "加えて、メンバーの招待と、接続や請求の管理ができます。"
       },
       "send": "招待を送信",
       "sentToast": "招待を送信しました",
@@ -1155,6 +1221,36 @@
       "done": "完了",
       "copyByHand": "トークンを選択しました。Ctrl+C または ⌘C でコピーしてください。"
     }
+  },
+  "publisherFees": {
+    "title": "提供元の手数料",
+    "by": "{name}（{publisher}）",
+    "perRun": "実行ごと",
+    "calls": "{quantity}回の呼び出し × {unit}",
+    "total": "提供元の手数料の合計",
+    "simulated": "シミュレーション：実際のお金は動きません",
+    "show": "手数料の内訳を表示",
+    "hide": "手数料の内訳を隠す"
+  },
+  "publisherSettings": {
+    "title": "マーケットプレイスに公開",
+    "intro": "エージェントやパックを、ほかのワークスペースのマーケットプレイスに掲載できます。New Machines が各バージョンを審査してから掲載します。",
+    "turnOn": "公開をオンにする",
+    "turnOff": "公開をオフにする",
+    "turnOffConfirm": "公開をオフにしますか？",
+    "turnOffBody": "公開をオフにすると、新しい提出を受け付けなくなります。掲載済みの項目は、New Machines が掲載を取り下げるまで掲載されたままです。",
+    "edit": "編集",
+    "save": "保存",
+    "cancel": "キャンセル",
+    "name": "提供元名",
+    "nameHint": "掲載情報に表示されます。1～80文字。",
+    "description": "説明",
+    "payout": "支払い先の情報",
+    "payoutHint": "シミュレーション：実際のお金は動きません",
+    "simulated": "シミュレーション",
+    "savedOn": "公開をオンにしました。",
+    "savedOff": "公開をオフにしました。",
+    "nameRequired": "提供元名を入力してください。"
   },
   "reviewers": {
     "title": "レビュアー",
@@ -1232,6 +1328,7 @@
     "heldNoteMany": "進行中の{n}件の実行のために保留しています。それぞれ実行の完了時に解放されます。",
     "heldNone": "現在、保留中の金額はありません。",
     "agentsToolsNoteNoPlan": "実行ステップごとに計量します。レビュアー報酬は別に計上します。",
+    "publisherFeesLine": "提供元の手数料（別に計上）: {fees}",
     "reviewerPayAbsorbed": "うち{absorbed}はNew Machinesが負担しました。",
     "planValueFree": "{plan}、プラン料金なし（シミュレーション）",
     "paymentValueLive": "なし。請求はシミュレーションのため、カードに課金されることはありません。",
@@ -1441,7 +1538,7 @@
       "paidOut": "入金日",
       "source": "入金元",
       "batch": "バッチ",
-      "noticed": "Finance Agent の気づき:",
+      "noticed": "Finance Agent の気づき：",
       "yourCall": "{id} についての判断",
       "calls": {
         "match": "同じ支払い",
@@ -1450,6 +1547,17 @@
       },
       "notePlaceholder": "このレコードの修正（任意）",
       "noteLabel": "{id} の修正"
+    },
+    "item": {
+      "label": "項目{index}、{id}",
+      "heading": "項目 {index} / {total}",
+      "reference": "参照",
+      "date": "日付",
+      "amount": "金額",
+      "related": "関連する参照",
+      "noted": "エージェントのメモ：",
+      "notePlaceholder": "この項目へのメモ（任意）",
+      "noteLabel": "{id} へのメモ"
     },
     "runSubmitted": {
       "continuesTitle": "レビューを記録しました。実行はこのレビューをもとに進みます。",
@@ -1714,6 +1822,11 @@
     "duplicate": "ステップを複製",
     "remove": "ステップを削除"
   },
+  "paletteListed": {
+    "heading": "ほかのワークスペースから",
+    "by": "提供元: {publisher} · {fee}",
+    "feeNote": "このエージェントを呼び出すたびに、その手数料が実行の費用に加算されます。"
+  },
   "studioPalette": {
     "search": "ステップを検索",
     "help": "ステップをキャンバスにドラッグするか、選んで選択中のステップの隣に追加します。",
@@ -1786,6 +1899,82 @@
     "notAdded": "未追加",
     "addToWorkspace": "ワークスペースに追加",
     "versionHead": "バージョン"
+  },
+  "studioPublisher": {
+    "title": "提供元",
+    "intro": "ほかのワークスペース向けに掲載しているエージェントとパックの、インストール数、実行数、収益です。",
+    "earningsMonth": "今月の収益",
+    "simulated": "シミュレーション：実際のお金は動きません。",
+    "payouts": "支払い履歴",
+    "noPayouts": "支払いはまだありません。",
+    "empty": "掲載しているものはまだありません。エージェントまたはパックのページから審査に提出してください。",
+    "toAgents": "エージェント",
+    "toPacks": "パック",
+    "columns": {
+      "name": "名前",
+      "kind": "種類",
+      "status": "状態",
+      "price": "手数料",
+      "installs": "インストール数",
+      "runs": "実行数（30日）",
+      "earnings": "今月の収益"
+    },
+    "kind": {
+      "agent": "エージェント",
+      "pack": "パック"
+    },
+    "status": {
+      "pending": "掲載待ち",
+      "listed": "掲載中",
+      "unlisted": "掲載停止"
+    },
+    "version": {
+      "checking": "チェック中",
+      "checks_failed": "チェック不合格",
+      "in_review": "審査中",
+      "approved": "承認済み",
+      "changes_requested": "修正の依頼あり",
+      "rejected": "却下"
+    },
+    "perRun": "1回の実行あたり{price}",
+    "perCall": "1回の呼び出しあたり{price}",
+    "noFee": "手数料なし",
+    "listedPrice": "掲載中の手数料",
+    "priceInReview": "審査中の手数料",
+    "inReview": "審査中: {price}",
+    "versions": "バージョン",
+    "versionLabel": "バージョン{n}",
+    "submittedBy": "{at}に{by}が提出",
+    "note": "審査チームからのメモ",
+    "openRun": "サンドボックスの実行を開く",
+    "checkWaiting": "チェックは、あなたのワークスペースのレビュー担当者を待っています。",
+    "checkWaitingLink": "実行を開いて確認する",
+    "back": "提供元に戻る",
+    "managersOnlyTitle": "公開の情報を見られるのはオーナーと管理者だけです",
+    "managersOnlyBody": "掲載や収益については、このワークスペースのオーナーか管理者に確認してください。",
+    "backToStudio": "スタジオに戻る",
+    "checks": "チェック項目",
+    "check": {
+      "definition": "定義",
+      "agents": "エージェント",
+      "sandbox": "サンドボックスの実行"
+    },
+    "checkState": {
+      "passed": "合格",
+      "failed": "不合格",
+      "running": "実行中"
+    },
+    "checkDetail": {
+      "definition": "定義のチェックで問題は見つかりませんでした。",
+      "agents": "パック内のエージェントは、すべてプラットフォームのものか掲載中のものです。",
+      "sandboxRunning": "このバージョンのサンドボックス実行が進行中です。",
+      "sandboxPassed": "このバージョンのサンドボックス実行が完了しました。"
+    },
+    "notFoundTitle": "この掲載は見つかりません",
+    "notFoundBody": "ほかのワークスペースの掲載か、リンクが古い可能性があります。",
+    "card": "提供元",
+    "cardCount": "{n, plural, other {出品#件}}",
+    "cardBody": "{n, plural, other {出品#件}}、今月の収益{amount}（シミュレーション）"
   },
   "studioEditor": {
     "untitled": "無題のパック",
@@ -1907,6 +2096,43 @@
     "noStartTitle": "何も変更されていません",
     "noStart": "ファイルに開始ステップがないため、何もインポートしませんでした。"
   },
+  "studioSubmit": {
+    "button": "審査に提出",
+    "saveFirst": "先に変更を保存してください",
+    "title": "{name}を審査に提出",
+    "needsProfile": "先に設定で公開を有効にしてください。",
+    "openSettings": "設定を開く",
+    "pricePerRun": "1回の実行あたりの手数料",
+    "pricePerCall": "1回の呼び出しあたりの手数料",
+    "priceHelp": "米ドルで入力します。手数料なしにする場合は0を入力してください。手数料はシミュレーションです。実際のお金は動きません。",
+    "noFee": "手数料なし",
+    "split": "あなたが80%、New Machinesが20%を受け取ります。",
+    "youGet": "あなたの取り分は{amount}",
+    "sandboxNote": "このバージョンのサンドボックステストを実行します。このバージョンで完了済みのテストがある場合は、それを再利用します。",
+    "input": "サンドボックステストの入力",
+    "budget": "テスト実行の予算",
+    "budgetHelp": "任意です。米ドルで入力します。空欄の場合はパック自体の予算を使います。",
+    "submit": "審査に提出",
+    "checking": "チェックを実行中",
+    "waitingSandbox": "サンドボックスの実行を待っています",
+    "openRun": "実行を開く",
+    "sent": "審査に提出しました",
+    "checksFailed": "不合格のチェックがあります。実行を開いて理由を確認し、修正してから再提出してください。",
+    "resultTitle": "自動チェック",
+    "openListing": "掲載ページを開く",
+    "failed": "提出できませんでした",
+    "checks": {
+      "definition": "定義",
+      "agents": "エージェント",
+      "sandbox": "サンドボックステスト"
+    },
+    "state": {
+      "passed": "合格",
+      "failed": "不合格",
+      "running": "実行中"
+    },
+    "close": "閉じる"
+  },
   "studioTest": {
     "open": "サンドボックスでテスト",
     "title": "サンドボックスでテスト",
@@ -1925,5 +2151,85 @@
     "sandboxUnavailable": "この環境ではプラットフォームのサンドボックスコネクタを使用していないため、テスト実行を開始できません。",
     "spendCap": "ワークスペースの月間支出上限に達しています。テスト実行も上限に計上されます。",
     "seeUsage": "利用状況を見る"
+  },
+  "tour": {
+    "common": {
+      "next": "次へ",
+      "back": "戻る",
+      "done": "完了",
+      "skip": "ツアーをスキップ",
+      "stepOf": "ステップ {n}/{total}",
+      "replay": "ツアーを見る"
+    },
+    "welcome": {
+      "ask": {
+        "title": "ほしい成果から始める",
+        "body": "任せたい作業を書くと、合うパックを提案します。実行は、どのページでも上部のボタンから開始できます。"
+      },
+      "marketplace": {
+        "title": "マーケットプレイスでパックを探す",
+        "body": "ワークフローパックは、ひとつの業務に必要なエージェント、ツール、レビューをまとめたものです。必要なパックをここで追加できます。"
+      },
+      "runs": {
+        "title": "実行の様子を確認",
+        "body": "実行ごとに、進行中のステップ、生成された成果、かかった費用を確認できます。"
+      },
+      "approvals": {
+        "title": "書き込む前に、人が承認",
+        "body": "実行がアプリ内のデータを変更する前には、その操作を人が承認するまで、ここで待機します。"
+      },
+      "usage": {
+        "title": "支出と上限",
+        "body": "今月の支出を月間上限と比べ、その内訳を確認できます。上限を超える前に実行は停止します。請求はシミュレーションで、お金は動きません。"
+      },
+      "help": {
+        "title": "このツアーはいつでも見直せます",
+        "body": "アカウントメニューでは、言語の切り替えやサインアウトができます。このツアーも、ここからいつでも見直せます。"
+      }
+    },
+    "studio": {
+      "intro": {
+        "title": "自社のエージェントとパック",
+        "body": "スタジオでは、チームで自社専用のエージェントとワークフローパックを作成します。ここで作成したものは、自社の人だけが見られます。"
+      },
+      "agents": {
+        "title": "エージェントを作る",
+        "body": "エージェントは、与えられたツールを使ってひとつの種類の作業をこなします。最近作成したエージェントがここに表示されます。"
+      },
+      "packs": {
+        "title": "ワークフローパックを作る",
+        "body": "パックは、ひとつの業務に必要なエージェント、ツール、レビューを順番に並べたものです。保存すると、マーケットプレイスの「チームが作成」に表示されます。"
+      },
+      "publisher": {
+        "title": "ほかのワークスペースにも提供する",
+        "body": "エージェントやパックの準備ができたら、そのページから審査に提出します。提供元のページで、掲載の状況と収益を確認できます。"
+      }
+    },
+    "run": {
+      "steps": {
+        "title": "実行のステップ",
+        "body": "ワークフローの各ステップを順番に、担当（エージェント、アプリ、レビュアー、ポリシーチェック）とあわせて表示します。選ぶと詳細が見られます。"
+      },
+      "step": {
+        "title": "ステップの内容",
+        "body": "選択中のステップの担当、結果、費用、根拠となる記録を確認できます。"
+      },
+      "attention": {
+        "title": "あなたの対応が必要なとき",
+        "body": "承認や判断を待っているステップは、対応先へのリンクとともにここに表示されます。アプリを変更する操作は、人が承認するまで行われません。"
+      },
+      "timeline": {
+        "title": "すべての経過を順番に",
+        "body": "タイムラインには、レビューや承認も含めて、各イベントとその担当が記録されます。"
+      },
+      "cost": {
+        "title": "かかった費用",
+        "body": "エージェントとモデル、ツール、レビュアー報酬にかかった額を、実行の予算と比べて確認できます。請求はシミュレーションで、お金は動きません。"
+      },
+      "receipt": {
+        "title": "作業レシート",
+        "body": "すべてのステップを改ざんを検知できる形で記録したものです。提供元の手数料と、この実行が使った定義の正確なバージョンも確認できます。"
+      }
+    }
   }
 }

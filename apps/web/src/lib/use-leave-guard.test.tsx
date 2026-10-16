@@ -1,8 +1,9 @@
 import { fireEvent, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { useEffect } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { renderWithIntl } from "@/test/intl";
-import { useLeaveGuard } from "./use-leave-guard";
+import { hasUnsavedWork, useConfirmLeave, useLeaveGuard } from "./use-leave-guard";
 
 const followed = vi.fn();
 const PROMPT = "You have unsaved changes. Leave this page without saving them?";
@@ -88,6 +89,39 @@ describe("useLeaveGuard", () => {
     rerender(<Page dirty={false} />);
     expect(unload()).toBe(false);
     await userEvent.click(screen.getByRole("link", { name: "Packs" }));
+    expect(confirm).not.toHaveBeenCalled();
+  });
+
+  it("lets navigation in code ask too, only while some page holds unsaved work", () => {
+    let mayLeave: () => boolean = () => true;
+    function Away() {
+      const check = useConfirmLeave();
+      useEffect(() => {
+        mayLeave = check;
+      });
+      return null;
+    }
+    const { rerender } = renderWithIntl(
+      <>
+        <Page dirty />
+        <Away />
+      </>,
+    );
+    expect(hasUnsavedWork()).toBe(true);
+    expect(mayLeave()).toBe(false);
+    expect(confirm).toHaveBeenCalledWith(PROMPT);
+    confirm.mockReturnValue(true);
+    expect(mayLeave()).toBe(true);
+
+    confirm.mockClear();
+    rerender(
+      <>
+        <Page dirty={false} />
+        <Away />
+      </>,
+    );
+    expect(hasUnsavedWork()).toBe(false);
+    expect(mayLeave()).toBe(true);
     expect(confirm).not.toHaveBeenCalled();
   });
 

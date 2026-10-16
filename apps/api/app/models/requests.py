@@ -40,6 +40,10 @@ class SubmitReviewRequest(RequestModel):
     verdict: ReviewVerdict
     feedback_text: str = Field(min_length=1, max_length=4000)
     record_calls: dict[str, str]
+    # A note on an item, keyed by the record id the reviewer was shown; the run reads it under the item's ref.
+    record_notes: dict[str, Annotated[str, Field(max_length=1000)]] = Field(
+        default_factory=dict, max_length=100
+    )
 
 
 class MemoryReviewRequest(RequestModel):

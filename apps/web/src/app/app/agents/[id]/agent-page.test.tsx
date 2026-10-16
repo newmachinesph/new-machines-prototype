@@ -107,4 +107,23 @@ describe("AgentPage", () => {
     renderWithIntl(<AgentPage id="finance-agent" />, { locale: "ja" });
     expect(screen.getByText("高速モデル")).toBeInTheDocument();
   });
+
+  it("names a listed agent's publisher once, with its fee", () => {
+    state.result = ok({
+      ...finance,
+      publisher: "Harbor Cafe",
+      version: "2",
+      certified: false,
+      listing: {
+        listingId: "lst_1",
+        publisher: "Harbor Cafe",
+        fee: { amountMinor: 30, currency: "USD" },
+        feeUnit: "call",
+        version: 2,
+      },
+    });
+    renderWithIntl(<AgentPage id="finance-agent" />);
+    expect(screen.getByText("Version 2")).toBeInTheDocument();
+    expect(screen.getAllByText(/Harbor Cafe/)).toHaveLength(1);
+  });
 });

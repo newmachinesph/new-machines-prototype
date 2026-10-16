@@ -48,12 +48,15 @@ export function CollapsibleSection({
   aside,
   children,
   className,
+  "data-tour": tour,
 }: {
   id?: string;
   title: string;
   aside?: ReactNode;
   children: ReactNode;
   className?: string;
+  /** A product tour step's target. */
+  "data-tour"?: string;
 }) {
   const t = useTranslations("run.technical");
   const [open, setOpen] = useState(false);
@@ -81,7 +84,7 @@ export function CollapsibleSection({
     };
   }, [id]);
   return (
-    <section id={id} className={cn("panel", className)} aria-label={title}>
+    <section id={id} className={cn("panel", className)} aria-label={title} data-tour={tour}>
       <div className="flex items-center justify-between gap-3 border-b border-rule px-5 py-2.5 md:py-3.5">
         <h2 className="h-section">{title}</h2>
         <div className="flex items-center gap-2">

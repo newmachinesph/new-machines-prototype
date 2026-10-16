@@ -77,10 +77,15 @@ Environment variables (all optional, read at call time by `apps/api/app/settings
 | `NM_RUNTIME` | `off` (`temporal` enables the real runtime) |
 | `TEMPORAL_TARGET` / `TEMPORAL_NAMESPACE` | `127.0.0.1:7243` / `default` |
 | `NM_TASK_QUEUE` | `nm-packs` |
+| `NM_WORKFLOW_ID_PREFIX` | empty (prepended to every run workflow id; give each database sharing one dev Temporal server its own, e.g. `qa-c-`) |
 | `NM_MODEL_ENV` | `test` (`test`, `dev`, `prod`) |
 | `NM_CONNECTOR_MODE` | `sandbox` (`auto`, `sandbox`, `live`); demo workspace only |
 | `NM_WEB_ORIGIN` | first `ALLOWED_ORIGINS` entry, else `http://localhost:3100` (where app sign-in links return) |
 | `COMPOSIO_API_KEY` | unset (live workspace: real app connections; demo: the `live`/`auto` connector modes) |
+| `JEV_API_KEY` | unset (the decision model's key; never commit it) |
+| `NM_JEV` | unset: `fake` when `NM_MODEL_ENV=test`, else `live` with a key, else `off` (`off`, `fake`, `live`) |
+| `NM_JEV_URL` / `NM_JEV_MODEL` | `https://api.typesafe.ai/v1/systemone` / `jev-latest` (https only) |
+| `NM_JEV_USD_PER_MTOK_IN` / `NM_JEV_USD_PER_MTOK_OUT` | `3.0` / `15.0` (prices a call when the endpoint reports no cost; at least 0.001 USD a call) |
 | `NM_DEFS_DIR` | `<repo>/definitions` |
 | `NM_DEFS_AUTO_APPLY` | unset |
 
@@ -179,7 +184,8 @@ Environment variables (names only; put secrets in Secret Manager):
 - `NM_WORKER_CONCURRENCY` (concurrent activities, default 8), `NM_DB_POOL_MAX` (Postgres pool, default 8;
   activity threads never exceed it)
 - `NM_MODEL_ENV`, `NM_CONNECTOR_MODE`, `MODEL_API_KEY`, `COMPOSIO_API_KEY`, `DEMO_USER_UID`, `AUTH_MODE`,
-  `FIREBASE_PROJECT_ID`, `ALLOWED_ORIGINS`, `OPS_ADMIN_EMAILS`, `OPS_SUPPORT_EMAILS`
+  `FIREBASE_PROJECT_ID`, `ALLOWED_ORIGINS`, `OPS_ADMIN_EMAILS`, `OPS_SUPPORT_EMAILS`, `JEV_API_KEY` (a secret),
+  `NM_JEV`
 
 Deploy flags that matter:
 

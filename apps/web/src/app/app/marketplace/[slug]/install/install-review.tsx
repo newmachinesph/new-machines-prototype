@@ -4,19 +4,20 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useId, useRef, useState } from "react";
 import { Checkbox, Choices, Modal, ModalClose, focusAfterClose, useToast } from "@/components/base";
-import { Button, ButtonLink, Callout, KeyValues, MockTag, Section } from "@/components/ui";
+import { Button, ButtonLink, Callout, KeyValues, MockTag, Section, SimTag } from "@/components/ui";
 import { useErrorText } from "@/lib/api/use-error-text";
 import { cn } from "@/lib/cn";
 import { usd } from "@/lib/format";
+import { useFeeLabel } from "@/lib/listing-fee";
 import { useAgentById, useInstallPack } from "@/lib/queries/catalog";
 import { useIsLive, useOrgId } from "@/lib/queries/me";
 import { useOrgReviewers } from "@/lib/queries/reviewers";
+import { capCeiling, capChoices, packRunFee, startCap } from "@/lib/run-budget";
 import { useFormat } from "@/lib/use-format";
 import type { Pack } from "@/lib/types";
 import { useCapabilityLabel } from "@/app/app/agents/capability-label";
 import { usePerRunPrice } from "../../per-run";
 
-const CAPS = [500, 2000, 5000];
 const POOLS = ["team_then_network", "team", "network"] as const;
 type Pool = (typeof POOLS)[number];
 
@@ -75,14 +76,19 @@ function CapChoices({
 export function InstallReview({ pack: p, settings = false }: { pack: Pack; settings?: boolean }) {
   const t = useTranslations("marketplace.install");
   const tc = useTranslations("common");
+  const tl = useTranslations("listedMarket");
+  const feeLabel = useFeeLabel();
   const { money, list } = useFormat();
   const perRun = usePerRunPrice();
   const label = useCapabilityLabel();
   const errorText = useErrorText();
   const live = useIsLive();
-  const startCap = p.perRunCap?.amountMinor ?? 2000;
-  const caps = [...new Set([...CAPS, startCap])].sort((a, b) => a - b);
-  const [cap, setCap] = useState(startCap);
+  // No cap above the pack's maximum budget with its fee on top: a run could never use it (see run-budget).
+  const capTerms = { maxBudget: p.maxBudget, perRunCap: p.perRunCap, packFee: packRunFee(p) };
+  const firstCap = startCap(capTerms);
+  const caps = capChoices(capTerms, firstCap);
+  const ceiling = capCeiling(capTerms);
+  const [cap, setCap] = useState(firstCap);
   const [pool, setPool] = useState<Pool>(p.reviewerPool ?? "team_then_network");
   const [agree, setAgree] = useState(false);
   const [hired, setHired] = useState<string | null>(null);
@@ -187,6 +193,9 @@ export function InstallReview({ pack: p, settings = false }: { pack: Pack; setti
             <p id={capNoteId} className="mt-3 text-sm text-muted">
               {t("capNote")}
             </p>
+            {ceiling !== undefined && cap > ceiling ? (
+              <p className="mt-1.5 text-sm text-muted">{t("capAboveUse", { amount: money(ceiling) })}</p>
+            ) : null}
           </div>
         </Section>
 
@@ -235,6 +244,20 @@ export function InstallReview({ pack: p, settings = false }: { pack: Pack; setti
                     </span>
                   ),
                 },
+                // A listed pack's fee is charged on every run, on top of the estimate, and counts toward the cap.
+                ...(p.listing && p.listing.fee.amountMinor > 0
+                  ? [
+                      {
+                        label: tl("fee"),
+                        value: (
+                          <>
+                            <span className="tnum">{feeLabel(p.listing)}</span> <SimTag />
+                            <span className="mt-0.5 block text-xs leading-snug text-muted">{t("feeNote")}</span>
+                          </>
+                        ),
+                      },
+                    ]
+                  : []),
                 { label: t("region"), value: list(p.regions) },
               ]}
             />

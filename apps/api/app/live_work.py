@@ -3,10 +3,14 @@ except that earnings also include the network reviews the actor did for other or
 
 A run starts only for a pack the org has hired whose apps are all connected, with an input that matches the
 pack's input schema (naming the org's own sheet when it writes to its own Google Sheets account) and a budget
-within the hire's per-run cap, while the month's spend is below the workspace's monthly cap."""
+that, with any publisher fee paid up front, is within the hire's per-run cap, while the month's spend is below
+the workspace's monthly cap."""
 
-from app import db, live_catalog, live_connections, real_runs, workspace
+import logging
+
+from app import db, fees, listing_pins, live_catalog, live_connections, real_runs, workspace
 from app.auth import Actor
+from app.defs import registry
 from app.defs.current import latest_bodies
 from app.errors import ApiProblem, ProblemIssue
 from app.models.common import Money, money_text
@@ -19,6 +23,8 @@ from app.runtime import routes
 from app.runtime.memory import READABLE_BY_ORG, SHARED_SOURCES
 from app.store import iso
 from app.worker.activities import pay_minor  # one reading of a task's pay: earnings and the run's cost
+
+log = logging.getLogger(__name__)
 
 MEMORY_LIMIT = 200
 EARNINGS_LIMIT = 100
@@ -56,50 +62,106 @@ def _check_real_sheet(org_id: str, slug: str, pack: dict, schema: dict | None, i
     raise real_runs.invalid_input(schema, [issue])
 
 
-def check_spend(org_id: str) -> None:
-    """409 SPEND_CAP once this month's spend has reached the workspace's monthly cap."""
+def check_spend(org_id: str, upfront_minor: int = 0) -> None:
+    """409 SPEND_CAP once this month's spend has reached the workspace's monthly cap, or when a listed pack's
+    per-run fee (`upfront_minor`, paid at the start) would take it over."""
     org = workspace.organization(org_id)
-    cap = org.monthly_cap.amount_minor
-    if org.month_spent.amount_minor >= cap:
+    cap, spent = org.monthly_cap.amount_minor, org.month_spent.amount_minor
+    if spent >= cap:
         raise ApiProblem(
             409,
             "SPEND_CAP",
             f"This month's spend has reached the workspace's monthly cap of {money_text(cap)}. "
             "New runs start again next month.",
         )
+    if upfront_minor and spent + upfront_minor > cap:
+        raise ApiProblem(
+            409,
+            "SPEND_CAP",
+            f"This run's publisher fee of {money_text(upfront_minor)} would take this month's spend over the "
+            f"workspace's monthly cap of {money_text(cap)}.",
+        )
+
+
+PACK_UNAVAILABLE = (
+    "This Workflow Pack is no longer available from its publisher (for example, its listing was withdrawn), "
+    "so new runs cannot start. Earlier runs and their results stay."
+)
+
+
+def _listed_terms(org_id: str, slug: str, pack_key: str, pack_version: int, defs, pack: dict):
+    """(held, pack body, input schema, pack fee) of a run: the approved listing version and pins the org's
+    installation of another workspace's listed pack holds (None for the platform's or its own), the body of
+    the pack version the run will pin (whose apps and sheet the start checks), the input schema of what the
+    run will pin, and the fee at that listing version. 409 PACK_UNAVAILABLE when the installation holds a
+    version no longer available."""
+    try:
+        with db.connect() as conn:
+            held = listing_pins.installed_bundle(conn, org_id, slug)
+            if held is None:
+                schema = live_catalog.input_schema(defs, pack)
+                upfront = fees.pack_fee_minor(conn, org_id, pack_key, pack_version)
+            else:
+                schema = listing_pins.pinned_input_schema(conn, org_id, slug, held.pins)
+                version = held.pins[("pack", pack_key)]
+                pinned = registry.get_version(conn, "pack", pack_key, version)
+                if pinned is None:
+                    raise listing_pins.Unavailable(f"pack/{pack_key}@{version} is not in the registry")
+                pack = pinned.body
+                upfront = fees.pack_fee_minor(conn, org_id, pack_key, version, held.listing_version_id)
+    except listing_pins.Unavailable as exc:  # any other error is a bug, never "unavailable"
+        log.error("Cannot pin %s for %s: %s", slug, org_id, exc)
+        raise ApiProblem(409, "PACK_UNAVAILABLE", PACK_UNAVAILABLE) from None
+    return held, pack, schema, upfront
+
+
+def _check_run_cap(run_cap: int, budget_minor: int, upfront_minor: int, name: str) -> None:
+    """409 RUN_BUDGET_OVER_CAP when the budget, with the pack's per-run fee paid up front, is over the per-run
+    spending cap set when the pack was added."""
+    if budget_minor + upfront_minor <= run_cap:
+        return
+    cap = money_text(run_cap)
+    if upfront_minor:
+        detail = (
+            f"The budget and the publisher fee of {money_text(upfront_minor)} come to more than the spending "
+            f"cap of {cap} per run set when {name} was added. Lower the budget or raise the cap."
+        )
+    else:
+        detail = (
+            f"The budget is over the spending cap of {cap} per run set when {name} was added. Lower the "
+            "budget or raise the cap."
+        )
+    raise ApiProblem(409, "RUN_BUDGET_OVER_CAP", detail)
 
 
 def start_run(body: StartRunRequest, actor: Actor) -> Run:
     """Start a real run for the actor's org after the hire, connection, input and spend checks. Only a pack
-    the org may see can start (the platform's or its own). The run pins the persisted ops connector settings
-    (`ops_state.snapshot_policy`)."""
+    the org may see can start (the platform's, its own, or another workspace's listed one). The run pins the
+    persisted ops connector settings (`ops_state.snapshot_policy`); a run of a listed pack pins the versions
+    its installation holds, checks that version's apps and sheet, and pays its per-run fee up front, within
+    the per-run cap (with the budget) and the monthly cap."""
     defs = live_catalog.definitions(actor.org_id)
     version = defs.pack(body.pack_slug)
     if version is None:
         raise ApiProblem(404, "NOT_FOUND", f"No Workflow Pack called {body.pack_slug}.")
-    pack, slug = version.body, live_catalog.slug_of(version)
-    name = str(pack.get("name") or slug)
+    slug = live_catalog.slug_of(version)
+    name = str(version.body.get("name") or slug)
     hire = live_catalog.installation(actor.org_id, slug)
     if hire is None:
         raise ApiProblem(409, "PACK_NOT_HIRED", f"Add {name} before starting a run.")
+    held, pack, schema, upfront = _listed_terms(
+        actor.org_id, slug, version.key, int(hire["pack_version"]), defs, version.body
+    )
     missing = live_connections.missing_apps(actor.org_id, [str(c) for c in pack.get("connectors") or []])
     if missing:
         raise ApiProblem(
             409, "APPS_NOT_CONNECTED", f"Connect {_and(missing)} before starting a run of {name}."
         )
-    schema = live_catalog.input_schema(defs, pack)
     inp = real_runs.check_input(slug, body.input, schema)
     _check_real_sheet(actor.org_id, slug, pack, schema, inp)
-    run_cap = int(hire["cap_minor"])
-    if body.budget_minor > run_cap:
-        raise ApiProblem(
-            409,
-            "RUN_BUDGET_OVER_CAP",
-            f"The budget is over the spending cap of {money_text(run_cap)} per run set when {name} was "
-            "added. Lower the budget or raise the cap.",
-        )
-    check_spend(actor.org_id)
-    return real_runs.start_real_run(body.model_copy(update={"pack_slug": slug}), actor, None, inp)
+    _check_run_cap(int(hire["cap_minor"]), body.budget_minor, upfront, name)
+    check_spend(actor.org_id, upfront)
+    return real_runs.start_real_run(body.model_copy(update={"pack_slug": slug}), actor, None, inp, held=held)
 
 
 # --- memory ---------------------------------------------------------------------------------------------

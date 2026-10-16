@@ -15,7 +15,7 @@ TenantPlan = Literal["Starter", "Pro", "Enterprise"]
 TenantStatus = Literal["active", "trial", "suspended", "churned"]
 TenantHealth = Literal["healthy", "watch", "at_risk"]
 AuditTargetType = Literal[
-    "tenant", "pack", "connector", "reviewer", "guardrail", "incident", "definition", "memory"
+    "tenant", "pack", "connector", "reviewer", "guardrail", "incident", "definition", "memory", "listing"
 ]
 
 # Every ops mutation names why it was made; surrounding whitespace is dropped before the length check.
@@ -515,6 +515,10 @@ class OpsOverview(Model):
     # runs spent this calendar month.
     top_packs: list[PackCount] | Opt = None
     spend_month: Money | Opt = None
+    # Live workspace only: listing versions waiting for review, and every publisher's share of fees this
+    # calendar month (simulated).
+    listings_in_review: int | Opt = None
+    publisher_earnings_month: Money | Opt = None
 
 
 # Definitions (config as code) --------------------------------------------------------------------------

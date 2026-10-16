@@ -13,7 +13,7 @@ from typing import Any
 
 import psycopg
 
-from app import db, run_tasks, settings
+from app import db, fees, run_tasks, settings
 from app.errors import ApiProblem
 from app.models.common import Money, money_text
 from app.models.org import (
@@ -26,6 +26,7 @@ from app.models.org import (
     PendingInvitation,
     Policy,
 )
+from app.models.publishing import FeeItem
 from app.models.requests import CreatedToken
 from app.models.runs import Spent
 from app.run_tasks import OPEN_STATUSES
@@ -308,8 +309,10 @@ def _part(name: str) -> str:
 
 
 _AI, _TOOLS, _HUMAN = _part("ai"), _part("tools"), _part("human")
-# A run's spend (AI, tools and human review) read from its projection, as SQL over the `runs` table.
-RUN_SPENT_SQL = f"({_AI} + {_TOOLS} + {_HUMAN})"
+# A run's publisher fees (sub-project D), correlated on an unaliased `runs`.
+RUN_FEES_SQL = "COALESCE((SELECT SUM(f.amount_minor) FROM fee_lines f WHERE f.run_id = runs.id), 0)"
+# A run's spend (AI, tools, human review and publisher fees), as SQL over the `runs` table.
+RUN_SPENT_SQL = f"({_AI} + {_TOOLS} + {_HUMAN} + {RUN_FEES_SQL})"
 RUN_AI_SPENT_SQL = _AI  # the AI part alone
 
 
@@ -514,24 +517,28 @@ def revoke_token(org_id: str, user_id: str, token_id: str) -> None:
 # --- usage and attention -------------------------------------------------------------------------------
 
 
-def _ledger_txn(row: dict) -> LedgerTxn:
-    ai, tools, human = int(row["ai"]), int(row["tools"]), int(row["human"])
+def _ledger_txn(row: dict, fee_items: list[FeeItem]) -> LedgerTxn:
+    ai, tools, human, fee_total = int(row["ai"]), int(row["tools"]), int(row["human"]), int(row["fees"])
+    lines = [
+        LedgerLine(account="AI usage", debit=ai),
+        LedgerLine(account="Tool usage", debit=tools),
+        LedgerLine(account="Human review", debit=human),
+    ]
+    if fee_total:
+        lines.append(LedgerLine(account="Publisher fees", debit=fee_total))
     return LedgerTxn(
         id=f"txn_{row['id']}",
         at=iso(row["created_at"]),
         kind="run",
         description=row["title"] or row["pack_slug"],
         run_id=row["id"],
-        amount=Money(amount_minor=ai + tools + human),
+        amount=Money(amount_minor=ai + tools + human + fee_total),
         status="POSTED" if row["status"] in TERMINAL_RUN_STATUSES else "PENDING",
-        lines=[
-            LedgerLine(account="AI usage", debit=ai),
-            LedgerLine(account="Tool usage", debit=tools),
-            LedgerLine(account="Human review", debit=human),
-        ],
+        lines=lines,
         spent=Spent(
             ai=Money(amount_minor=ai), tools=Money(amount_minor=tools), human=Money(amount_minor=human)
         ),
+        fees=fee_items or None,
     )
 
 
@@ -541,11 +548,12 @@ def usage(org_id: str) -> tuple[Organization, list[LedgerTxn]]:
         org = _organization(conn, org_id)
         rows = conn.execute(
             f"SELECT id, pack_slug, status, created_at, projection ->> 'title' AS title, {_AI} AS ai, "
-            f"{_TOOLS} AS tools, {_HUMAN} AS human FROM runs WHERE org_id = %s "
+            f"{_TOOLS} AS tools, {_HUMAN} AS human, {RUN_FEES_SQL} AS fees FROM runs WHERE org_id = %s "
             "ORDER BY created_at DESC, id DESC LIMIT %s",
             (org_id, LEDGER_LIMIT),
         ).fetchall()
-    return org, [_ledger_txn(r) for r in rows]
+        items = fees.items(conn, [r["id"] for r in rows], org_id)
+    return org, [_ledger_txn(r, items.get(r["id"], [])) for r in rows]
 
 
 def _open_tasks(conn, org_id: str, kind: str) -> dict | None:

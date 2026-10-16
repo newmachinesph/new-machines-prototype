@@ -1,0 +1,14 @@
+kind: memory_space
+key: support-policies
+name: Support policies
+description: How this business answers customer emails, for the agents that sort them and draft replies.
+retention_days: 365
+readers: ["*"]
+writers: [support-agent]
+
+seed_items:
+  - A question gets a short, helpful reply; when the answer is not known, the reply says a person will answer within one working day.
+  - A complaint gets an apology and a promise that a person will look into it within one working day. The reply never admits fault or offers compensation.
+  - A refund request is acknowledged, and the reply says a person will check the order. It never promises a refund or an amount.
+  - Spam gets no reply and no case.
+  - Support hours are Monday to Friday, 9:00 to 17:00.

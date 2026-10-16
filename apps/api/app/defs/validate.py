@@ -9,7 +9,9 @@ import celpy
 from jsonschema import Draft202012Validator
 
 from app import settings
+from app.defs import owners
 from app.defs.model import Bundle, DefError, Definition, path_for
+from app.defs.owners import SEPARATOR
 
 SCHEMA_FILES = {
     "taxonomy": "nm.taxonomy.v1",
@@ -41,6 +43,8 @@ NODE_REFS = {
     "decision": ("rules", "decision_rules"),
     "memory": ("space", "memory_space"),
 }
+
+LISTING_CHECK = "listing-check"  # the reserved name of a submission's check pack (see studio.CHECK_NAME)
 
 # kinds with a same-named cross-reference method on _Checker
 CROSS_REF_KINDS = {"pack", "workflow", "contract", "agent", "decision_rules"}
@@ -187,9 +191,26 @@ class _Checker:
                 if target not in by_id:
                     self.err(d, f"{at}.routes.{label}: target node {target!r} does not exist")
             self.node_refs(d, n, at)
+            self.decision_routes(d, n, at)
             for where, expr in _cel_strings(n["config"], f"{at}.config"):
                 if (msg := compile_cel(expr)) is not None:
                     self.err(d, f"{where}: CEL does not compile: {msg}")
+
+    def decision_routes(self, d: Definition, n: dict, at: str) -> None:
+        """A decision whose rules ask the decision model must route every outcome it can take, its fallback
+        included, so a model failure always ends somewhere safe instead of in a configuration error."""
+        if n["type"] != "decision":
+            return
+        rules = self.ok_get("decision_rules", str((n.get("config") or {}).get("rules")))
+        if rules is None or not rules.body.get("evaluator"):
+            return
+        body = rules.body
+        wanted = {r["route"] for r in body["rules"]} | {body["default"]["route"]}
+        wanted.add(body["evaluator"]["on_error"]["route"])
+        for route in sorted(wanted - set(n.get("routes") or {})):
+            self.err(
+                d, f"{at}.routes: decision {rules.key!r} can take route {route!r}, which this node lacks"
+            )
 
     def node_refs(self, d: Definition, n: dict, at: str) -> None:
         cfg = n["config"]
@@ -198,10 +219,38 @@ class _Checker:
             ref = cfg.get(field)
             if not isinstance(ref, str) or not self.has(kind, ref):
                 self.err(d, f"{at}.config.{field}: {kind} {ref!r} does not exist")
+            elif n["type"] == "agent":
+                self.agent_inputs(d, cfg, ref, at)
         elif n["type"] == "connector":
             ref = cfg.get("tool")
             if not isinstance(ref, str) or self.connector_tool(ref) is None:
                 self.err(d, f"{at}.config.tool: connector tool {ref!r} does not exist")
+
+    def agent_inputs(self, d: Definition, cfg: dict, agent_key: str, at: str) -> None:
+        """An org-built agent's step must hand the agent something: a missing or empty `inputs` is a problem,
+        and so is any input the agent's input schema requires that the step does not map. A Studio-built
+        agent's schema (shared/agent-input) requires nothing, so the first rule is what catches its empty
+        step. Inputs given as one expression cannot be checked before the run. Platform agents are left
+        alone: their `input_schema_ref` names a pack's run or result shape, not what their step maps. A
+        submission's listing-check pack is exempt: it hands the agent the publisher's sample as it is,
+        whatever the agent asks for."""
+        if SEPARATOR not in agent_key or owners.name_of(d.key) == LISTING_CHECK:
+            return
+        given = cfg.get("inputs")
+        if isinstance(given, str):
+            return
+        given = given if isinstance(given, dict) else {}
+        agent = self.ok_get("agent", agent_key)
+        schema = self.ok_get("schema", str(agent.body.get("input_schema_ref"))) if agent else None
+        missing = [n for n in (schema.body.get("required") or [] if schema else []) if n not in given]
+        for name in missing:
+            self.err(
+                d,
+                f"{at}.config.inputs.{name}: agent {agent_key!r} requires the input {name!r}, "
+                "which this step does not map",
+            )
+        if not given and not missing:
+            self.err(d, f"{at}.config.inputs: agent {agent_key!r} gets no inputs, so this step must map some")
 
     def contract(self, d: Definition) -> None:
         for field in ("input_schema_ref", "output_schema_ref"):
@@ -232,6 +281,14 @@ class _Checker:
         for i, rule in enumerate(d.body["rules"]):
             if (msg := compile_cel(rule["when"].removeprefix("="))) is not None:
                 self.err(d, f"rules[{i}].when: CEL does not compile: {msg}")
+        evaluator = d.body.get("evaluator")
+        if not evaluator:
+            return
+        exprs = [(f"evaluator.{k}", evaluator[k]) for k in ("for_each", "ref", "keep") if k in evaluator]
+        exprs += [(f"evaluator.state[{i}]", e) for i, e in enumerate(evaluator["state"])]
+        for where, expr in exprs:
+            if (msg := compile_cel(expr.removeprefix("="))) is not None:
+                self.err(d, f"{where}: CEL does not compile: {msg}")
 
     def pack_capabilities(self, pack: Definition) -> None:
         """contract.authorization.tool_capabilities must cover every tool the pack's workflow can use."""

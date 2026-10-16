@@ -1,0 +1,18 @@
+# Where a meeting follow-up run goes after planning. Rules run in order; the first whose `when` is true wins.
+kind: decision_rules
+key: meeting-follow-ups
+
+question: Are there meetings to follow up?
+
+rules:
+  - when: size(nodes.plan.output.messages) == 0
+    verdict: APPROVED
+    route: nothing
+    reason_code: NO_MEETINGS
+    explanation: No meeting that day had someone from outside your team to follow up with.
+
+default:
+  verdict: APPROVED
+  route: planned
+  reason_code: FOLLOW_UPS_PLANNED
+  explanation: Follow-ups are planned, and you approve them before any draft is saved.

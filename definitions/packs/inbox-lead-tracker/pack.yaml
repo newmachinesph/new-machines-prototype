@@ -1,0 +1,39 @@
+kind: pack
+key: inbox-lead-tracker
+slug: inbox-lead-tracker
+name: Inbox Lead Tracker
+version: 1.0.0
+publisher: New Machines Labs
+function: sales-ops
+industries: [professional-services, media-content]
+outcome: Every real enquiry in your inbox added to your leads sheet, with who asked, what for and how soon.
+description: >-
+  Checks the last week of your inbox and asks the decision model which emails are real enquiries from
+  potential customers and how soon each sender wants an answer. It picks out the name, company and request of
+  each enquiry and, once you approve, adds one row per lead to the Leads tab of your Google Sheet. It never
+  replies to or changes your email. Each email's sender, subject and text are sent to the decision model to
+  sort it; if the decision model is not available, nothing is added.
+risk_class: low
+price_note: About $0.05 to $0.40 of AI work per run. No reviewer time.
+workflow: inbox-lead-tracker
+contract: inbox-lead-tracker
+agents: [lead-agent]
+connectors: [gmail, googlesheets]
+human_review: No reviewer. You approve the rows before anything is added to your sheet.
+# How the run page shows the result. Strings starting with "=" are CEL over {deliverable, mocked}.
+deliverable_view:
+  kind: Leads
+  summary: >-
+    =size(deliverable.leads) == 0 ? deliverable.summary + (mocked ? ' This is sandbox data.' : '') :
+    (size(deliverable.leads) == 1 ? '1 lead was found'
+    : string(size(deliverable.leads)) + ' leads were found') + (mocked ? ' in sandbox email. No row was added
+    to a real sheet.' : ' and added to your sheet.')
+  facts:
+    - label: Leads found
+      value: =string(size(deliverable.leads))
+    - label: Urgent
+      value: =string(size(deliverable.leads.filter(l, l.urgency == 'urgent')))
+  items:
+    from: =deliverable.leads
+    label: "=item.name + ' — ' + item.company"
+    detail: "=item.request + ' (' + item.urgency + ')'"

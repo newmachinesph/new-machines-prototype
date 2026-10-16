@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 
 /**
  * The link a click is about to follow, when it is one to ask about: a plain left click on a same-origin link that
@@ -18,14 +18,31 @@ function guardedLink(e: MouseEvent): HTMLAnchorElement | null {
   return link;
 }
 
+/** The guards holding unsaved work right now, for navigation that is not a link click (`router.push`). */
+const dirtyGuards = new Set<symbol>();
+
+export const hasUnsavedWork = () => dirtyGuards.size > 0;
+
+/**
+ * For code that navigates without a link, such as a menu action calling `router.push`: returns a check that is true
+ * when it may go, asking first when a page holds unsaved work.
+ */
+export function useConfirmLeave(): () => boolean {
+  const t = useTranslations("common");
+  return useCallback(() => !hasUnsavedWork() || window.confirm(t("leaveUnsaved")), [t]);
+}
+
 /**
  * Asks before unsaved work is lost: on reload or tab close (`beforeunload`), and before an in-app link is followed
- * (sidebar, breadcrumbs, menus), which the browser's own prompt does not cover. A "no" stops the link.
+ * (sidebar, breadcrumbs, menus), which the browser's own prompt does not cover. A "no" stops the link. Navigation
+ * in code asks through `useConfirmLeave`.
  */
 export function useLeaveGuard(dirty: boolean) {
   const t = useTranslations("common");
   useEffect(() => {
     if (!dirty) return;
+    const token = Symbol("dirty");
+    dirtyGuards.add(token);
     const warn = (e: BeforeUnloadEvent) => e.preventDefault();
     const ask = (e: MouseEvent) => {
       if (!guardedLink(e)) return;
@@ -38,6 +55,7 @@ export function useLeaveGuard(dirty: boolean) {
     // The capture phase on the document runs before React and the link see the click.
     document.addEventListener("click", ask, true);
     return () => {
+      dirtyGuards.delete(token);
       window.removeEventListener("beforeunload", warn);
       document.removeEventListener("click", ask, true);
     };

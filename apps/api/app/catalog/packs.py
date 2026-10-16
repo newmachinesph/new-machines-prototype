@@ -10,11 +10,21 @@ from app.runtime.routes import NONE, Route, org_routes
 Access = Literal["read", "write (approval)", "write"]
 
 
-def connector_access(body: dict) -> Access:
-    """The marketplace access label: read when every tool only reads, write when the connector's defaults
-    permit every other action class it has, write (approval) otherwise."""
-    tools = body.get("tools") if isinstance(body.get("tools"), list) else []
-    classes = {t.get("action_class") for t in tools if isinstance(t, dict)} - {"read"}
+def connector_access(body: dict, contract: dict | None = None) -> Access:
+    """The marketplace access label of one pack's use of a connector: read when every tool the pack may call
+    only reads, write when the connector's defaults permit every other action class among them, write
+    (approval) otherwise. The tools are the connector's whose capability the pack's contract authorizes
+    (`tool_capabilities`, which the gateway enforces for workflow nodes and agent steps alike); without a
+    contract, all of the connector's tools."""
+    tools = (
+        [t for t in body.get("tools") or [] if isinstance(t, dict)]
+        if isinstance(body.get("tools"), list)
+        else []
+    )
+    caps = ((contract or {}).get("authorization") or {}).get("tool_capabilities")
+    if isinstance(caps, list):
+        tools = [t for t in tools if t.get("capability") in caps]
+    classes = {t.get("action_class") for t in tools} - {"read"}
     if not classes:
         return "read"
     defaults = body.get("defaults") if isinstance(body.get("defaults"), dict) else {}
@@ -50,22 +60,33 @@ class SandboxForecast:
 
 
 def pack_connectors(
-    keys: list[str], connectors: dict[str, dict], sandboxed: SandboxForecast
+    keys: list[str],
+    connectors: dict[str, dict],
+    sandboxed: SandboxForecast,
+    contract: dict | None = None,
 ) -> list[PackConnector]:
     """The pack definition's connector keys as marketplace connectors, labelled mocked when their calls
-    would serve sandbox data."""
+    would serve sandbox data, with the access the pack's own contract gives it."""
     out = []
     for key in keys:
         body = connectors.get(key) or {}
         out.append(
             PackConnector(
-                app=str(body.get("app") or key), access=connector_access(body), mocked=sandboxed(key, body)
+                app=str(body.get("app") or key),
+                access=connector_access(body, contract),
+                mocked=sandboxed(key, body),
             )
         )
     return out
 
 
-def with_definition(pack: Pack, body: dict, connectors: dict[str, dict], sandboxed: SandboxForecast) -> Pack:
+def with_definition(
+    pack: Pack,
+    body: dict,
+    connectors: dict[str, dict],
+    sandboxed: SandboxForecast,
+    contracts: dict[str, dict] | None = None,
+) -> Pack:
     """`pack` with `function`, `industries`, `agents` and `connectors` from its pack definition `body`."""
     update: dict = {
         "function": body.get("function"),
@@ -74,5 +95,11 @@ def with_definition(pack: Pack, body: dict, connectors: dict[str, dict], sandbox
     if isinstance(body.get("agents"), list):
         update["agents"] = [str(a) for a in body["agents"]]
     if isinstance(body.get("connectors"), list):
-        update["connectors"] = pack_connectors([str(c) for c in body["connectors"]], connectors, sandboxed)
+        ref = body.get("contract") or ""
+        update["connectors"] = pack_connectors(
+            [str(c) for c in body["connectors"]],
+            connectors,
+            sandboxed,
+            (contracts or {}).get(str(ref)),
+        )
     return pack.model_copy(update=update)

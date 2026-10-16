@@ -1,0 +1,19 @@
+{
+  "kind": "calendar#events",
+  "summary": "Sample calendar",
+  "timeZone": "UTC",
+  "items": [
+    {
+      "id": "sandboxevent0001",
+      "status": "confirmed",
+      "summary": "Sample planning call",
+      "start": {"dateTime": "2026-10-15T09:00:00Z"},
+      "end": {"dateTime": "2026-10-15T09:30:00Z"},
+      "organizer": {"email": "you@example.com", "self": true},
+      "attendees": [
+        {"email": "you@example.com", "self": true, "responseStatus": "accepted"},
+        {"email": "guest@example.com", "displayName": "Sample Guest", "responseStatus": "accepted"}
+      ]
+    }
+  ]
+}

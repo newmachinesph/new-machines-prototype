@@ -4,34 +4,48 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { QueryState } from "@/components/query-state";
-import { RunView } from "@/components/run-view";
+import { useCodes } from "@/components/run-codes";
 import { Skeleton } from "@/components/skeleton";
-import { PageHeader, RunStatusPill, SimTag } from "@/components/ui";
+import { PageHeader, Pill, RunStatusPill, SimTag } from "@/components/ui";
 import { ApiError } from "@/lib/api/errors";
 import { usePackName } from "@/lib/queries/catalog";
 import { useRun } from "@/lib/queries/runs";
+import type { Run } from "@/lib/types";
+import { NamedRunView } from "./named-run-view";
+
+/** The summary the API gives a run until it ends; the header says what the run is doing instead. */
+const PLACEHOLDER = "Starting.";
+const LEDE_STATES = ["WAITING_FOR_HUMAN", "WAITING_FOR_EVENT", "RUNNING", "VERIFYING"] as const;
 
 export function RunPage({ id }: { id: string }) {
   // The same label the run list gives a sandbox test, so the run reads the same wherever it is seen.
   const t = useTranslations("run.list");
+  const { line } = useCodes();
   const run = useRun(id);
   const packName = usePackName(run.data?.packSlug);
   if (run.error instanceof ApiError && run.error.status === 404) notFound();
+  const lede = (r: Run): string => {
+    if (r.summary !== PLACEHOLDER) return line(r.summary);
+    const state = LEDE_STATES.find((s) => s === r.status);
+    const started = r.nodes.some((n) => n.status !== "CREATED");
+    return state && (state !== "RUNNING" || started) ? t(`lede.${state}`) : t("lede.starting");
+  };
   return (
     <QueryState query={run} skeleton={<RunSkeleton />}>
       {(r) => (
         <>
           <title>{`${r.title} | New Machines`}</title>
-          <PageHeader title={r.title} lede={r.summary}>
+          <PageHeader title={r.title} lede={lede(r)}>
             <div className="mb-2 flex flex-wrap items-center gap-2 text-sm text-muted">
               <Link href={`/app/marketplace/${r.packSlug}`} className="hover:text-ink">
                 {packName ?? <Skeleton className="inline-block h-4 w-40 align-middle" />}
               </Link>
-              <RunStatusPill status={r.status} />
+              <RunStatusPill status={r.status} stopReason={r.stopReason} />
               {r.sandboxTest ? <SimTag>{t("sandboxTest")}</SimTag> : null}
+              {r.listingCheck ? <Pill tone="quiet">{t("listingCheck")}</Pill> : null}
             </div>
           </PageHeader>
-          <RunView run={r} />
+          <NamedRunView run={r} />
         </>
       )}
     </QueryState>

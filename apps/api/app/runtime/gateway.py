@@ -99,6 +99,12 @@ def _org_routed(snapshot: dict) -> bool:
     return snapshot.get("routing") == routes.ORG_ROUTING
 
 
+def _pack_key(snapshot: dict) -> str | None:
+    """The key of the pack a run pins (a run snapshot pins exactly one), for its own sandbox data."""
+    packs = list((snapshot.get("defs") or {}).get("pack") or {})
+    return packs[0] if len(packs) == 1 else None
+
+
 def _route_driver(snapshot: dict, connector_key: str, connector: dict, route: routes.Route) -> Driver:
     """The driver a live-workspace run's route gives: nothing runs for an app with no usable connection, or
     for one whose route is not the one pinned when the run started."""
@@ -108,7 +114,7 @@ def _route_driver(snapshot: dict, connector_key: str, connector: dict, route: ro
         return RouteChangedDriver(str(connector.get("app") or connector_key))
     if route.mode == "composio":
         return ComposioDriver(user_id=route.user_id, account_id=route.account_id)
-    return SandboxDriver()
+    return SandboxDriver(pack=_pack_key(snapshot))
 
 
 def _route(snapshot: dict, connector_key: str) -> routes.Route:
@@ -126,7 +132,7 @@ def driver_of(snapshot: dict, connector_key: str, connector: dict, mode: str) ->
     app now (`routes.current_route`); any other run keeps the connector mode its snapshot pins, else `mode`
     (the worker's NM_CONNECTOR_MODE)."""
     if not _org_routed(snapshot):
-        return driver_for(connector, _mode_of(snapshot, mode))
+        return driver_for(connector, _mode_of(snapshot, mode), pack=_pack_key(snapshot))
     return _route_driver(snapshot, connector_key, connector, _route(snapshot, connector_key))
 
 
@@ -221,7 +227,9 @@ def call_tool(
             ok=False, data=None, mocked=False, error="invalid arguments: " + "; ".join(errors)
         )
     if route is None:
-        return decision, driver_for(connector, _mode_of(snapshot, mode)).execute(connector_key, tool, args)
+        return decision, driver_for(connector, _mode_of(snapshot, mode), pack=_pack_key(snapshot)).execute(
+            connector_key, tool, args
+        )
     return decision, _route_driver(snapshot, connector_key, connector, route).execute(
         connector_key, tool, args
     )

@@ -164,7 +164,11 @@ def test_the_live_overview_marks_only_the_fixture_fields_simulated(live_ops: Tes
     res = live_ops.get("/v1/ops/overview", headers=OPS)
     assert res.status_code == 200, res.text
     body = res.json()
-    assert body["simulatedFields"] == ["kpis.platformDailyCap", "kpis.incidentsOpen"]
+    assert body["simulatedFields"] == [
+        "kpis.platformDailyCap",
+        "kpis.incidentsOpen",
+        "publisherEarningsMonth",
+    ]
     assert body["kpis"]["activeTenants"] == 4 and len(body["runsByHour"]) == 24
     assert body["topPacks"][0] == {"slug": OPR, "name": "Order & Payment Reconciliation", "runs": 7}
     assert set(body["spendMonth"]) == {"amountMinor", "currency"}

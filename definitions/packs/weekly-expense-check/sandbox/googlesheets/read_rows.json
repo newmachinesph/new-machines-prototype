@@ -1,0 +1,22 @@
+{
+  "spreadsheetId": "sandbox-expenses-sheet-0000000000001",
+  "valueRanges": [
+    {
+      "range": "Expenses!A1:E11",
+      "majorDimension": "ROWS",
+      "values": [
+        ["Date", "Description", "Amount", "Paid by", "Receipt"],
+        ["2026-10-05", "Train to client site", "48.50", "Alex Tan", "yes"],
+        ["2026-10-06", "Design tool subscription", "24.00", "Alex Tan", "yes"],
+        ["2026-10-06", "Team lunch with client", "48.00", "Sam Lee", "yes"],
+        ["2026-10-07", "Printer paper and toner", "62.15", "Sam Lee", "yes"],
+        ["2026-10-08", "Taxi from airport", "60.00", "Alex Tan", "no"],
+        ["2026-10-09", "Hotel, two nights", "615.00", "Alex Tan", "yes"],
+        ["2026-10-09", "Video call plan, monthly", "24.00", "Sam Lee", "yes"],
+        ["2026-10-10", "Team lunch with client", "48.00", "Sam Lee", "yes"],
+        ["2026-10-12", "Conference ticket", "350.00", "Alex Tan", "yes"],
+        ["2026-10-02", "Courier to supplier", "18.40", "Sam Lee", "no"]
+      ]
+    }
+  ]
+}

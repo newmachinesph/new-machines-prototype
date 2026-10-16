@@ -25,7 +25,8 @@ from app.worker import activities
 
 PACK = "order-payment-reconciliation"
 START = {"packSlug": PACK, "input": "2026-10-06..2026-10-12", "budgetMinor": 2000}
-SEED_MEMORY = 10  # seed items of the retail-commerce (4) and customer-accounts (6) memory spaces
+# Seed items: retail-commerce (4), customer-accounts (6), expense-policy (4), support-policies (5).
+SEED_MEMORY = 19
 MISMATCHES = [
     {
         "order_id": "#1004",
@@ -474,6 +475,7 @@ def test_every_real_pack_detail_carries_its_input_schema(api):
     ):
         detail = api.get(f"/v1/workflow-packs/{pack}").json()
         assert detail["inputSchema"]["required"] == required, pack
+        assert detail["maxBudget"]["amountMinor"] == (1500 if pack == OVERDUE else 2500), pack
     assert "inputSchema" not in api.get("/v1/workflow-packs/weekly-inventory-report").json()
 
 
@@ -777,7 +779,7 @@ def test_fixture_human_tasks_still_work_with_the_runtime_on(api, rec):
 
 def test_taxonomy_comes_from_the_registry(api):
     taxonomy = api.get("/v1/catalog/taxonomy").json()
-    assert len(taxonomy["functions"]) == 5 and len(taxonomy["industries"]) == 3
+    assert len(taxonomy["functions"]) == 6 and len(taxonomy["industries"]) == 4
     assert taxonomy["functions"][0] == {"id": "finance-ops", "name": "Finance operations"}
 
 
@@ -793,7 +795,12 @@ def test_packs_carry_function_and_industries(api):
 
 def test_memory_lists_real_items_first(api):
     items = api.get("/v1/memory").json()
-    spaces = {"Retail & Commerce company knowledge", "Customer accounts policies"}
+    spaces = {
+        "Retail & Commerce company knowledge",
+        "Customer accounts policies",
+        "Expense policy",
+        "Support policies",
+    }
     real = [m for m in items if m["scopeName"] in spaces]
     assert len(real) == SEED_MEMORY and items[: len(real)] == real
     assert {m["scopeName"] for m in real} == spaces
@@ -822,7 +829,7 @@ def test_demo_memory_leaves_out_other_orgs_and_quarantined_items(api, db):
 
 def test_taxonomy_reads_the_definition_files_when_the_runtime_is_off(client):
     taxonomy = client.get("/v1/catalog/taxonomy").json()
-    assert len(taxonomy["functions"]) == 5 and len(taxonomy["industries"]) == 3
+    assert len(taxonomy["functions"]) == 6 and len(taxonomy["industries"]) == 4
     assert client.get(f"/v1/workflow-packs/{PACK}").json()["function"] == "finance-ops"
 
 

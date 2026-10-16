@@ -3,20 +3,68 @@
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Confirm, useToast } from "@/components/base";
 import { QueryState } from "@/components/query-state";
 import { Skeleton } from "@/components/skeleton";
-import { ActorGlyph, ButtonLink, KeyValues, MockTag, PageHeader, Pill, Section } from "@/components/ui";
+import {
+  ActorGlyph,
+  Button,
+  ButtonLink,
+  Callout,
+  KeyValues,
+  MockTag,
+  PageHeader,
+  Pill,
+  Section,
+} from "@/components/ui";
 import { ApiError } from "@/lib/api/errors";
-import { useAgentById, useAgents, usePack } from "@/lib/queries/catalog";
+import type { MarketplaceListing } from "@/lib/api/gen/types.gen";
+import { useErrorText } from "@/lib/api/use-error-text";
+import { useFeeLabel } from "@/lib/listing-fee";
+import { useAgentById, useAgents, usePack, useUpgradePack } from "@/lib/queries/catalog";
 import { useIsLive } from "@/lib/queries/me";
+import { shownVersion } from "@/lib/shown-version";
 import { useFormat } from "@/lib/use-format";
 import { useCapabilityLabel } from "@/app/app/agents/capability-label";
 import { usePerRunPrice } from "../per-run";
 import { SandboxTrial, TRIAL_ID } from "./sandbox-trial";
 
+/** A newer version of a pack the workspace added. Runs keep their version until someone in the workspace updates it. */
+function UpdateCallout({ slug, listing }: { slug: string; listing: MarketplaceListing }) {
+  const t = useTranslations("listedMarket");
+  const toast = useToast();
+  const errorText = useErrorText();
+  const { upgrade, isPending, ready } = useUpgradePack(slug);
+  const installed = listing.installedVersion;
+  return (
+    <Callout
+      tone="info"
+      title={t("updateTitle")}
+      action={
+        <Confirm
+          trigger={<Button disabled={isPending || !ready}>{t("update")}</Button>}
+          title={t("updateConfirm", { version: listing.version })}
+          description={null}
+          confirmLabel={t("update")}
+          onConfirm={() =>
+            upgrade({
+              onSuccess: () => toast(t("updated", { version: listing.version })),
+              onError: (e) => toast(errorText(e), undefined, "blocked"),
+            })
+          }
+        />
+      }
+    >
+      {installed === undefined ? null : t("updateBody", { version: listing.version, installedVersion: installed })}
+    </Callout>
+  );
+}
+
 export function PackPage({ slug }: { slug: string }) {
   const t = useTranslations("marketplace.pack");
   const tc = useTranslations("common");
+  const tl = useTranslations("listedMarket");
+  const fee = useFeeLabel();
   const { money, list } = useFormat();
   const perRun = usePerRunPrice();
   const label = useCapabilityLabel();
@@ -62,11 +110,17 @@ export function PackPage({ slug }: { slug: string }) {
                   }
                 >
                   <div className="mb-2 flex flex-wrap items-center gap-2 text-sm text-muted">
-                    <span>{t("publisherVersion", { publisher: p.publisher, version: p.version })}</span>
+                    <span>{t("publisherVersion", { publisher: p.publisher, version: shownVersion(p) })}</span>
                     {p.installed ? <Pill tone="ink">{t("hired")}</Pill> : null}
                     {!p.certified ? <Pill tone="quiet">{t("notCertified")}</Pill> : null}
                   </div>
                 </PageHeader>
+
+                {p.listing?.updateAvailable ? (
+                  <div className="mb-6">
+                    <UpdateCallout slug={p.slug} listing={p.listing} />
+                  </div>
+                ) : null}
 
                 <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
                   <div className="space-y-6">
@@ -83,7 +137,7 @@ export function PackPage({ slug }: { slug: string }) {
                                   {a.name}
                                 </Link>{" "}
                                 <span className="text-xs font-normal text-muted">
-                                  {a.version}, {a.publisher}
+                                  {t("publisherVersion", { publisher: a.publisher, version: shownVersion(a) })}
                                 </span>
                               </div>
                               <p className="mt-1 pl-5 text-sm text-grey-700">{a.summary}</p>
@@ -190,6 +244,12 @@ export function PackPage({ slug }: { slug: string }) {
                                 );
                               })(),
                             },
+                            ...(p.listing
+                              ? [
+                                  // The publisher is named in the header; the costs add only the fee.
+                                  { label: tl("fee"), value: <span className="tnum">{fee(p.listing)}</span> },
+                                ]
+                              : []),
                             {
                               label: tc("reviewerPay"),
                               value: p.estimate.humanMax.amountMinor ? (

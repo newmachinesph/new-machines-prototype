@@ -119,8 +119,14 @@ def system_info(timeout: float = 3.0) -> None:
     )
 
 
+def workflow_id(run_id: str) -> str:
+    """The Temporal workflow id of a run: the run id behind NM_WORKFLOW_ID_PREFIX. Built only here."""
+    return f"{settings.workflow_id_prefix()}{run_id}"
+
+
 def start_run(run_id: str, snapshot: dict, input: dict) -> None:
-    """Start PackRunner with workflow id = run id."""
+    """Start PackRunner with workflow id = workflow_id(run id). The input carries the bare run id: the
+    worker records events against it, so only Temporal's own id has the prefix."""
     from app.worker.workflow import RunInput  # the worker modules load only when a real run starts
 
     client = get_client()
@@ -128,7 +134,7 @@ def start_run(run_id: str, snapshot: dict, input: dict) -> None:
         client.start_workflow(
             WORKFLOW,
             RunInput(run_id=run_id, snapshot=snapshot, input=input),
-            id=run_id,
+            id=workflow_id(run_id),
             task_queue=settings.task_queue(),
         )
     )
@@ -138,17 +144,17 @@ def signal_human(
     run_id: str, task_id: str, outcome: str, note: str, resolutions: list[dict] | None = None
 ) -> None:
     """`human_result(task_id, outcome resolved|rejected, note, resolutions)`."""
-    handle = get_client().get_workflow_handle(run_id)
+    handle = get_client().get_workflow_handle(workflow_id(run_id))
     _wait(handle.signal("human_result", args=[task_id, outcome, note, resolutions or []]))
 
 
 def terminate_run(run_id: str, reason: str) -> None:
     """Terminate the run's workflow (a start the API gave up on). Raises when there is no such workflow."""
-    handle = get_client().get_workflow_handle(run_id)
+    handle = get_client().get_workflow_handle(workflow_id(run_id))
     _wait(handle.terminate(reason=reason))
 
 
 def signal_approval(run_id: str, task_id: str, decision: str, by: str) -> None:
     """`approval(task_id, decision granted|denied, by)`."""
-    handle = get_client().get_workflow_handle(run_id)
+    handle = get_client().get_workflow_handle(workflow_id(run_id))
     _wait(handle.signal("approval", args=[task_id, decision, by]))

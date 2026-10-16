@@ -27,6 +27,7 @@ describe("targetHref", () => {
       "/definitions/schema/order-payment-reconciliation/input",
     );
     expect(targetHref("memory", "mem_12")).toBe("/memory");
+    expect(targetHref("listing", "lst_0123456789ab")).toBe("/listings/lst_0123456789ab");
   });
 });
 

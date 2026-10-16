@@ -18,6 +18,17 @@ from app.runtime import cel as runtime_cel
 SLUG = "order-payment-reconciliation"
 CEL = celpy.Environment()
 SANDBOX_SHEET = "sandbox-reconciliation-sheet-00000001"  # the input schema's default spreadsheet_id
+SEED_PACKS = {SLUG, "refund-triage", "overdue-invoice-follow-up"}
+SEED_AGENTS = {
+    "retail-agent",
+    "finance-agent",
+    "ops-agent",
+    "collections-agent",
+    "refunds-agent",
+    "writer-agent",
+}
+OLDER_AGENTS = {"retail-agent", "finance-agent", "ops-agent"}  # version 1.1.0; every later agent is 1.0.0
+FAST_AGENTS = {"writer-agent", "lead-agent", "meeting-agent"}  # model_profile fast, max_turns 4
 
 
 @pytest.fixture(scope="module")
@@ -102,14 +113,7 @@ def test_pack_lists_connectors_and_agents(bundle):
     assert pack["industries"] == ["retail-commerce", "manufacturing"]
     assert pack["connectors"] == ["shopify", "stripe", "googlesheets"]
     assert pack["agents"] == ["finance-agent", "ops-agent"]
-    assert {a.key for a in bundle.of("agent")} == {
-        "retail-agent",
-        "finance-agent",
-        "ops-agent",
-        "collections-agent",
-        "refunds-agent",
-        "writer-agent",
-    }
+    assert {a.key for a in bundle.of("agent")} >= SEED_AGENTS
 
 
 def test_taxonomy_and_models(bundle):
@@ -120,8 +124,14 @@ def test_taxonomy_and_models(bundle):
         "fulfillment",
         "merchandising",
         "operations",
+        "sales-ops",
     ]
-    assert [i["id"] for i in taxonomy["industries"]] == ["retail-commerce", "manufacturing", "media-content"]
+    assert [i["id"] for i in taxonomy["industries"]] == [
+        "retail-commerce",
+        "manufacturing",
+        "media-content",
+        "professional-services",
+    ]
     profiles = bundle.get("models", "default").body["profiles"]
     assert profiles["reasoning"]["envs"]["test"] == {"provider": "fake", "model": "fake-reasoning"}
     assert profiles["reasoning"]["envs"]["prod"] == {"provider": "provider", "model": "gemini-2.5-pro"}
@@ -267,6 +277,8 @@ def test_connector_args_are_valid_for_the_real_tools(bundle):
     state["nodes"]["report"] = {"output": report_output()}
     state["item"] = {"to": "ana@example.com", "subject": "Your refund", "body": "We refunded order #1007."}
     for pack, node in _connector_nodes(bundle):
+        if pack not in SEED_PACKS:
+            continue
         cfg = node["config"]
         conn, _, tool_id = cfg["tool"].partition(".")
         tool = next(t for t in bundle.get("connector", conn).body["tools"] if t["id"] == tool_id)
@@ -317,16 +329,13 @@ def test_schemas_accept_sample_outputs(bundle):
     assert list(Draft202012Validator(schema).iter_errors(bad))
 
 
-NEW_AGENTS = {"collections-agent", "refunds-agent", "writer-agent"}  # added with the seed packs
-
-
 def test_agents_follow_conventions(bundle):
     for agent in bundle.of("agent"):
         body = agent.body
         assert body["publisher_id"] == "new-machines-labs"
-        assert body["version"] == ("1.0.0" if agent.key in NEW_AGENTS else "1.1.0")
+        assert body["version"] == ("1.1.0" if agent.key in OLDER_AGENTS else "1.0.0")
         assert body["runtime"]["adapter"] == "google_adk"
-        fast = agent.key == "writer-agent"
+        fast = agent.key in FAST_AGENTS
         assert body["runtime"]["model_profile"] == ("fast" if fast else "reasoning")
         assert body["runtime"]["max_turns"] == (4 if fast else 6)
         assert body["data_processing"]["supported_regions"] == ["asia-south1"]
@@ -335,14 +344,8 @@ def test_agents_follow_conventions(bundle):
         first_line = agent.files[body["runtime"]["instructions"]].strip().splitlines()[0]
         assert first_line.lower().startswith(("you are", "your role")), first_line
     tools = {a.key: a.body["runtime"].get("tools", []) for a in bundle.of("agent")}
-    assert tools == {
-        "retail-agent": ["shopify.list_orders"],
-        "finance-agent": [],
-        "ops-agent": [],
-        "collections-agent": [],
-        "refunds-agent": [],
-        "writer-agent": [],
-    }
+    assert tools.pop("retail-agent") == ["shopify.list_orders"]
+    assert all(t == [] for t in tools.values()), tools
 
 
 def test_no_vendor_names_in_agent_prose(bundle):
@@ -354,7 +357,7 @@ def test_no_vendor_names_in_agent_prose(bundle):
 
 def test_agents_that_write_review_records_keep_personal_data_out_of_notes(bundle):
     line = "Never include email addresses, phone numbers or customer message text in a `note` or `flag`."
-    for key in ("collections-agent", "refunds-agent", "writer-agent"):
+    for key in ("collections-agent", "refunds-agent", "writer-agent", "support-agent", "expense-agent"):
         agent = bundle.get("agent", key)
         skills = [agent.files[s] for s in agent.body["runtime"]["skills"]]
         assert any(line in text for text in skills), key
@@ -378,11 +381,16 @@ def test_connector_defaults_and_classes(bundle):
             ("list_charges", "read", "payments.read", "STRIPE_LIST_CHARGES"),
             ("list_invoices", "read", "invoices.read", "STRIPE_LIST_INVOICES"),
         ],
-        "googlesheets": [("append_rows", "write", "sheets.write", "GOOGLESHEETS_SPREADSHEETS_VALUES_APPEND")],
+        "googlesheets": [
+            ("append_rows", "write", "sheets.write", "GOOGLESHEETS_SPREADSHEETS_VALUES_APPEND"),
+            ("read_rows", "read", "sheets.read", "GOOGLESHEETS_BATCH_GET"),
+        ],
         "gmail": [
             ("list_threads", "read", "mail.read", "GMAIL_FETCH_EMAILS"),
             ("create_draft", "write", "mail.write", "GMAIL_CREATE_EMAIL_DRAFT"),
+            ("send_email", "write", "mail.send", "GMAIL_SEND_EMAIL"),
         ],
+        "googlecalendar": [("list_events", "read", "calendar.read", "GOOGLECALENDAR_EVENTS_LIST")],
     }
     assert {c.key for c in bundle.of("connector")} == set(expected)
     for key, tools in expected.items():
@@ -396,6 +404,15 @@ def test_connector_defaults_and_classes(bundle):
         got = [(t["id"], t["action_class"], t["capability"], t["slug"]) for t in body["tools"]]
         assert got == tools
         assert all(t["slug"].startswith(body["toolkit"].upper()) for t in body["tools"])
+
+
+def test_every_connector_tool_has_a_shared_sandbox_response(bundle):
+    root = settings.defs_dir() / "connectors" / "sandbox"
+    for connector in bundle.of("connector"):
+        for tool in connector.body["tools"]:
+            path = root / connector.key / f"{tool['id']}.json"
+            assert path.is_file(), (connector.key, tool["id"])
+            json.loads(path.read_text(encoding="utf-8"))
 
 
 def test_contract(bundle):

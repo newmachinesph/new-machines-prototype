@@ -1,6 +1,7 @@
 import { fireEvent, screen, within } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { RUN_1042 } from "@/data/runs-recon";
+import { money, sumMoney, usd } from "@/lib/format";
 import type { Run } from "@/lib/types";
 import { renderWithIntl } from "@/test/intl";
 import { RunView } from "./run-view";
@@ -8,7 +9,10 @@ import { RunView } from "./run-view";
 const me = vi.hoisted(() => ({ userId: "pwGlMEou0WQsM6aQvlgggXtXa5C3" }));
 vi.mock("@/lib/queries/me", () => ({ useMe: () => ({ data: me }) }));
 vi.mock("@/lib/queries/tasks", () => ({ useTask: () => ({ data: undefined, isPending: false }) }));
-vi.mock("@/lib/queries/runs", () => ({ useReceipt: () => ({}) }));
+const receipt = vi.hoisted(() => ({ value: {} as unknown }));
+vi.mock("@/lib/queries/runs", () => ({ useReceipt: () => receipt.value }));
+// The receipt has its own tests; here only the Cost card reads its fees.
+vi.mock("./work-receipt", () => ({ WorkReceipt: () => null }));
 // The canvas has its own tests and needs a measured container; the page around it is what this tests.
 vi.mock("./run-canvas", () => ({ RunCanvas: () => <div data-testid="canvas" /> }));
 
@@ -48,6 +52,28 @@ const live: Run = {
 };
 
 describe("RunView", () => {
+  beforeEach(() => {
+    receipt.value = {};
+  });
+
+  it("adds the run's publisher fees to the Cost card and its total", () => {
+    const fee = { listingId: "lst_1", name: "Tax filing", publisher: "Harbor Cafe", kind: "pack_run" };
+    receipt.value = {
+      data: { fees: [{ ...fee, quantity: 1, unit: usd(250), amount: usd(250) }] },
+    };
+    renderWithIntl(<RunView run={live} />);
+    const cost = screen.getByText("Total so far").closest("section") as HTMLElement;
+    const row = within(cost).getByText("Publisher fees").parentElement as HTMLElement;
+    expect(row).toHaveTextContent("$2.50");
+    const total = sumMoney(live.spent.ai, live.spent.human, live.spent.tools, usd(250));
+    expect(within(cost).getByText("Total so far").parentElement).toHaveTextContent(money(total));
+  });
+
+  it("shows no publisher fee row for a run without fees", () => {
+    renderWithIntl(<RunView run={live} />);
+    expect(screen.queryByText("Publisher fees")).not.toBeInTheDocument();
+  });
+
   it("writes timeline codes as sentences and names the viewer, keeping refs behind a toggle", () => {
     renderWithIntl(<RunView run={live} />);
     expect(screen.getByText("Needs a person: Some orders and payments do not match")).toBeInTheDocument();
@@ -95,12 +121,10 @@ describe("RunView", () => {
     expect(screen.getByRole("button", { name: "Hide Run details" })).toHaveAttribute("aria-expanded", "true");
   });
 
-  it("shows times in the viewer's zone and says so", () => {
+  it("shows times in the business's zone, as everywhere else in the app, and says so", () => {
     renderWithIntl(<RunView run={live} />);
-    const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    expect(zone).toBeTruthy();
-    expect(screen.getByText(/^Times in your time zone \(.+\)$/)).toBeInTheDocument();
-    expect(screen.queryByText("Times in Pacific time")).not.toBeInTheDocument();
+    expect(screen.getByText("Times in Pacific time (PT)")).toBeInTheDocument();
+    expect(screen.queryByText(/Times in your time zone/)).not.toBeInTheDocument();
   });
 
   it("keeps the run's ids under technical details and tells agents from app actions in the legend", () => {

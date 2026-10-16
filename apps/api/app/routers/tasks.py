@@ -51,24 +51,27 @@ def find_task(task_id: str) -> HumanTask:
 
 def _generic_record(item: dict) -> RedactedRecord:
     """A shared review item ({ref, date, amount_minor, currency, flag, note, counterpart_ref?}, the
-    `shared/review-items` schema) as a reviewer record keyed by its `ref`."""
-    ref = str(item["ref"])
-    counterpart = str(item.get("counterpart_ref") or "None")
+    `shared/review-items` schema) as a reviewer record keyed by its `ref`. An item with no amount (a support
+    email) or no counterpart leaves that text empty. A support email's ref may be the sender's address, so
+    the refs show with contact details hidden, like the notes (`_indexed_records` renames such an id)."""
+    ref = redacted(str(item["ref"]))
+    counterpart = redacted(str(item.get("counterpart_ref") or ""))
     amount = int(item.get("amount_minor") or 0)
     order = OrderSide(
         ref=ref,
         date=str(item.get("date") or ""),
         customer="Hidden",
-        amount=money_text(amount, str(item.get("currency") or "USD")),
+        amount=money_text(amount, str(item.get("currency") or "USD")) if amount else "",
         payment_ref=counterpart,
     )
     payment = PaymentSide(ref=counterpart, date="", payer="Hidden", amount="", batch="")
     return RedactedRecord(
-        id=ref,
+        id=str(item["ref"]),
         order=order,
         payment=payment,
         flag=redacted(str(item.get("flag") or "Needs review")),
         agent_note=redacted(str(item.get("note") or "")),
+        kind="item",
     )
 
 
@@ -103,6 +106,7 @@ def _record(item: dict, index: int) -> RedactedRecord:
         payment=payment,
         flag=str(item.get("kind") or "mismatch").replace("_", " ").capitalize(),
         agent_note=str(item.get("explanation") or ""),
+        kind="reconciliation",
     )
 
 
@@ -112,10 +116,34 @@ def _state(row: dict) -> str:
     return "CLAIMED" if (row["payload"] or {}).get("claimed_by") else "OFFERED"
 
 
-def _indexed_records(payload: dict) -> list[tuple[int, RedactedRecord]]:
-    """The records a task shows, as the org's own reviewers see them, each with its position in `show`."""
+def _shown_items(payload: dict) -> list[tuple[int, dict]]:
+    """The items a task shows that are records, each with its position in `show`."""
     shown = payload.get("show") if isinstance(payload.get("show"), list) else []
-    return [(i, _record(item, i)) for i, item in enumerate(shown) if isinstance(item, dict)]
+    return [(i, item) for i, item in enumerate(shown) if isinstance(item, dict)]
+
+
+def _renamed(
+    indexed: list[tuple[int, RedactedRecord]], renames: Callable[[str], bool]
+) -> list[tuple[int, RedactedRecord]]:
+    """`indexed` with each id `renames` picks replaced by `record-<position in show>`, made unique against
+    every other shown id. `_shown_ids` maps a renamed id back."""
+    picked = {i for i, record in indexed if renames(record.id)}
+    taken = {record.id for i, record in indexed if i not in picked}
+    out = []
+    for i, record in indexed:
+        if i in picked:
+            record_id = _free_id(f"record-{i + 1}", taken)
+            taken.add(record_id)
+            record = record.model_copy(update={"id": record_id})
+        out.append((i, record))
+    return out
+
+
+def _indexed_records(payload: dict) -> list[tuple[int, RedactedRecord]]:
+    """The records a task shows, as the org's own reviewers see them, each with its position in `show`. An id
+    with contact details in it (an item whose ref is an email address) is renamed (`_renamed`)."""
+    indexed = [(i, _record(item, i)) for i, item in _shown_items(payload)]
+    return _renamed(indexed, lambda record_id: redacted(record_id) != record_id)
 
 
 def _records(payload: dict) -> list[RedactedRecord]:
@@ -188,27 +216,19 @@ def _free_id(base: str, taken: set[str]) -> str:
 
 
 def _network_records(payload: dict, org_name: str | None) -> list[RedactedRecord]:
-    """The records as a network reviewer sees them (`_network_record`). An id that names the org is replaced
-    by `record-<position in show>`, made unique against every other shown id; `_shown_ids` maps it back."""
-    indexed = _indexed_records(payload)
-    named = {i for i, record in indexed if without_name(record.id, org_name) != record.id}
-    taken = {record.id for i, record in indexed if i not in named}
-    records = []
-    for i, record in indexed:
-        record_id = record.id
-        if i in named:
-            record_id = _free_id(f"record-{i + 1}", taken)
-            taken.add(record_id)
-        records.append(_network_record(record, record_id, org_name))
-    return records
+    """The records as a network reviewer sees them (`_network_record`). An id that names the org is renamed
+    too (`_renamed`)."""
+    indexed = _renamed(
+        _indexed_records(payload), lambda record_id: without_name(record_id, org_name) != record_id
+    )
+    return [_network_record(record, org_name) for _, record in indexed]
 
 
-def _network_record(record: RedactedRecord, record_id: str, org_name: str | None) -> RedactedRecord:
-    """A record as a network reviewer sees it, under `record_id`: the org's name and contact details scrubbed
-    from its notes, and the org's name from its references."""
+def _network_record(record: RedactedRecord, org_name: str | None) -> RedactedRecord:
+    """A record as a network reviewer sees it: the org's name and contact details scrubbed from its notes, and
+    the org's name from its references."""
     return record.model_copy(
         update={
-            "id": record_id,
             "order": _unnamed(record.order, org_name),
             "payment": _unnamed(record.payment, org_name),
             "flag": scrub(record.flag, org_name),
@@ -278,8 +298,9 @@ def id_map(shown_ids: list[str], real_ids: list[str]) -> dict[str, str]:
 
 
 def _shown_ids(row: dict) -> dict[str, str]:
-    """The record ids the reviewer was shown -> the records' real ids (they differ only in a network copy)."""
-    real = [record.id for record in _records(row["payload"] or {})]
+    """The record ids the reviewer was shown -> the records' real ids (they differ where an id was renamed:
+    one with contact details in it, or in a network copy one that names the org)."""
+    real = [_record(item, i).id for i, item in _shown_items(row["payload"] or {})]
     return id_map([record.id for record in real_task(row).records], real)
 
 
@@ -361,10 +382,16 @@ def claim_human_task(task_id: str, actor: CurrentActor) -> HumanTask:
 
 
 def _submit_real(row: dict, body: SubmitReviewRequest, actor: Actor) -> HumanTask:
-    """Record the review on the run task, then signal `human_result` to its workflow."""
+    """Record the review on the run task, then signal `human_result` to its workflow. Item notes follow the
+    general note, each under the item's real id, so a renamed id never reaches the run."""
     outcome = OUTCOMES[body.verdict]
-    note = body.feedback_text[:MAX_TEXT]
     shown = _shown_ids(row)
+    item_notes = [
+        f"{real}: {text}"
+        for shown_id, real in shown.items()
+        if (text := body.record_notes.get(shown_id, "").strip())
+    ]
+    note = "\n\n".join([body.feedback_text, *item_notes])[:MAX_TEXT]
     calls = [(shown[rid], call) for rid, call in body.record_calls.items() if rid in shown][:MAX_RESOLUTIONS]
     resolutions = [
         {"order_id": record_id[:MAX_TEXT], "resolution": call[:MAX_TEXT], "note": ""}

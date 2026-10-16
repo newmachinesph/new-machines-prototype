@@ -1,18 +1,18 @@
 "use client";
 
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRef, useState } from "react";
-import { INTL_TAGS, resolveLocale } from "@/i18n/locales";
 import { cn } from "@/lib/cn";
 import { sumMoney } from "@/lib/format";
+import { useReceipt } from "@/lib/queries/runs";
 import type { NodeType, Run } from "@/lib/types";
 import { useFormat } from "@/lib/use-format";
-import { useViewerTimeZone, zoneName } from "@/lib/use-viewer-time-zone";
 import { Checkbox } from "./base";
 import { NodeInspector } from "./node-inspector";
 import { RunCanvas } from "./run-canvas";
 import { useCodes, useWho } from "./run-codes";
+import { isSettled, useAutoTour } from "./tour/use-auto-tour";
 import { CollapsibleSection, TechnicalDetails } from "./run-disclosures";
 import { WorkReceipt } from "./work-receipt";
 import {
@@ -47,9 +47,7 @@ export function RunView({ run }: { run: Run }) {
   const t = useTranslations("run.view");
   const tCanvas = useTranslations("run.canvas");
   const tt = useTranslations("run.technical");
-  const locale = INTL_TAGS[resolveLocale(useLocale())];
   const { money, dateTime, timeSec } = useFormat();
-  const { zone, known } = useViewerTimeZone();
   const { line } = useCodes();
   const who = useWho();
   const [selected, setSelected] = useState(() => defaultNode(run));
@@ -64,8 +62,15 @@ export function RunView({ run }: { run: Run }) {
   const [hideSystem, setHideSystem] = useState(false);
   const [technical, setTechnical] = useState(false);
   const node = run.nodes.find((n) => n.id === selected) ?? run.nodes[0];
-  const total = sumMoney(run.spent.ai, run.spent.human, run.spent.tools);
+  // Publisher fees are on the receipt (WorkReceipt reads the same cached query), not in `run.spent`.
+  const receipt = useReceipt(run.id, run.status);
+  const fees = receipt.data?.fees ?? [];
+  const feeTotal = sumMoney(...fees.map((f) => f.amount));
+  const total = sumMoney(run.spent.ai, run.spent.human, run.spent.tools, feeTotal);
   const events = hideSystem ? run.timeline.filter((e) => e.actor !== "system") : run.timeline;
+  // The run has loaded by the time this renders; the tour waits for the receipt too, or its step would be dropped.
+  // A receipt that fails or is not fetched at all counts as settled.
+  useAutoTour("run", isSettled(receipt));
 
   const deliverable = run.deliverable ? (
     <ButtonLink href={`/app/runs/${run.id}/evidence`} className="w-full">
@@ -86,19 +91,21 @@ export function RunView({ run }: { run: Run }) {
   return (
     <div className="space-y-5">
       {run.attention ? (
-        <Callout
-          tone={run.attention.tone}
-          title={run.attention.title}
-          action={
-            run.attention.href ? (
-              <ButtonLink href={run.attention.href} variant="secondary" className="h-8">
-                {run.attention.cta}
-              </ButtonLink>
-            ) : undefined
-          }
-        >
-          {run.attention.body}
-        </Callout>
+        <div data-tour="run-attention">
+          <Callout
+            tone={run.attention.tone}
+            title={run.attention.title}
+            action={
+              run.attention.href ? (
+                <ButtonLink href={run.attention.href} variant="secondary" className="h-8">
+                  {run.attention.cta}
+                </ButtonLink>
+              ) : undefined
+            }
+          >
+            {line(run.attention.body)}
+          </Callout>
+        </div>
       ) : null}
       {run.recovered ? (
         <Callout tone="info" title={t("recovered")}>
@@ -131,6 +138,7 @@ export function RunView({ run }: { run: Run }) {
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_400px] 2xl:grid-cols-[minmax(0,1fr)_460px]">
         <section
           id={ANCHORS.steps}
+          data-tour="run-steps"
           className="panel scroll-mt-24 overflow-hidden lg:scroll-mt-20 xl:col-span-2 2xl:col-span-1"
           aria-label={t("workflow")}
         >
@@ -189,17 +197,14 @@ export function RunView({ run }: { run: Run }) {
         </section>
 
         <Section
+          data-tour="run-timeline"
           className="order-3 self-start xl:order-none"
           title={
             <span id={ANCHORS.timeline} className="scroll-mt-24 lg:scroll-mt-20">
               {t("timeline")}
             </span>
           }
-          aside={
-            <span className="text-xs text-muted">
-              {known ? t("localTime", { zone: zoneName(zone, locale, new Date(run.startedAt)) }) : t("pacificTime")}
-            </span>
-          }
+          aside={<span className="text-xs text-muted">{t("pacificTime")}</span>}
         >
           <div className="flex flex-wrap gap-x-6 border-b border-rule px-5 py-1 sm:gap-y-2 sm:py-3">
             <Checkbox checked={hideSystem} onCheckedChange={setHideSystem} className="py-2.5 sm:py-0">
@@ -213,7 +218,7 @@ export function RunView({ run }: { run: Run }) {
             {events.map((e, i) => (
               <li key={i} className="relative grid grid-cols-[72px_16px_1fr] gap-x-3 pb-4 last:pb-0">
                 <time className="tnum pt-px text-right text-xs text-muted" dateTime={e.at}>
-                  {timeSec(e.at, zone)}
+                  {timeSec(e.at)}
                 </time>
                 <span className="relative flex justify-center pt-[3px]">
                   <ActorGlyph actor={e.actor} className="relative z-10 size-3" />
@@ -252,7 +257,12 @@ export function RunView({ run }: { run: Run }) {
         </Section>
 
         <div className="order-2 space-y-5 self-start xl:order-none 2xl:sticky 2xl:top-20 2xl:col-start-2 2xl:row-span-2 2xl:row-start-1 2xl:max-h-[calc(100dvh-6rem)] 2xl:[scrollbar-width:thin] 2xl:[scrollbar-color:var(--color-grey-200)_transparent] 2xl:overflow-y-auto">
-          <section ref={inspector} className="panel scroll-mt-24 lg:scroll-mt-20" aria-label={t("selectedStep")}>
+          <section
+            ref={inspector}
+            data-tour="run-step"
+            className="panel scroll-mt-24 lg:scroll-mt-20"
+            aria-label={t("selectedStep")}
+          >
             <div className="border-b border-rule px-5 py-3">
               <h2 className="h-section">{t("selectedStep")}</h2>
             </div>
@@ -261,6 +271,7 @@ export function RunView({ run }: { run: Run }) {
             </div>
           </section>
           <Section
+            data-tour="run-cost"
             title={
               <span id={ANCHORS.cost} className="scroll-mt-24 lg:scroll-mt-20">
                 {t("cost")}
@@ -274,6 +285,9 @@ export function RunView({ run }: { run: Run }) {
                   { label: t("agentsAndModels"), value: <span className="tnum">{money(run.spent.ai)}</span> },
                   { label: t("tools"), value: <span className="tnum">{money(run.spent.tools)}</span> },
                   { label: t("reviewerPay"), value: <span className="tnum">{money(run.spent.human)}</span> },
+                  ...(fees.length
+                    ? [{ label: t("publisherFees"), value: <span className="tnum">{money(feeTotal)}</span> }]
+                    : []),
                   { label: t("totalSoFar"), value: <span className="tnum font-semibold">{money(total)}</span> },
                   {
                     label: t("budget"),
@@ -289,7 +303,7 @@ export function RunView({ run }: { run: Run }) {
                 rows={[
                   {
                     label: t("started"),
-                    value: t("startedBy", { when: dateTime(run.startedAt, zone), name: who(run.startedBy, "buyer") }),
+                    value: t("startedBy", { when: dateTime(run.startedAt), name: who(run.startedBy, "buyer") }),
                   },
                   { label: t("input"), value: run.input },
                 ]}

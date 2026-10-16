@@ -11,6 +11,7 @@ import { AttentionQueue } from "./attention-queue";
 import { AuditFeed } from "./audit-feed";
 import { KpiStrip } from "./kpi-strip";
 import { fieldTag } from "./logic";
+import { PublishingStats } from "./publishing-stats";
 import { QuickActions } from "./quick-actions";
 import { RunsChart, type ChartTag } from "./runs-chart";
 import { TopPacks } from "./top-packs";
@@ -54,6 +55,7 @@ export function CommandView() {
         {(o) => (
           <div className="space-y-4">
             <KpiStrip overview={o} live={live} />
+            <PublishingStats overview={o} />
             <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
               <Section title="Needs attention" aside={<span className="label tnum">{o.attention.length} open</span>}>
                 <AttentionQueue items={o.attention} />

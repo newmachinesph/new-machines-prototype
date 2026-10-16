@@ -49,4 +49,30 @@ tools:
           maxLength: 4000
           description: The plain-text body.
 
+  - id: send_email
+    slug: GMAIL_SEND_EMAIL
+    version: "20261010_00"
+    action_class: write
+    capability: mail.send
+    description: Send a plain-text email from the connected account. It is sent at once.
+    input_schema:
+      type: object
+      additionalProperties: false
+      required: [recipient_email, subject, body]
+      properties:
+        recipient_email:
+          type: string
+          minLength: 3
+          description: The address the email is to.
+        subject:
+          type: string
+          minLength: 1
+          maxLength: 150
+          description: The subject line.
+        body:
+          type: string
+          minLength: 1
+          maxLength: 4000
+          description: The plain-text body.
+
 defaults: {read: permit, write: require_approval, delete: deny, money: deny}

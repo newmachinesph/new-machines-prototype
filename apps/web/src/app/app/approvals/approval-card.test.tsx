@@ -5,7 +5,8 @@ import type { Approval } from "@/lib/types";
 import { renderWithIntl } from "@/test/intl";
 import { ApprovalCard } from "./approval-card";
 
-const state = vi.hoisted(() => ({ toast: vi.fn() }));
+const state = vi.hoisted(() => ({ toast: vi.fn(), demo: true }));
+vi.mock("@/lib/queries/me", () => ({ useIsDemo: () => state.demo }));
 vi.mock("@/lib/queries/workspace", () => ({
   useDecideApproval: () => ({
     mutate: (_vars: unknown, opts?: { onSuccess?: () => void }) => opts?.onSuccess?.(),
@@ -46,7 +47,10 @@ const fixture: Approval = {
 };
 
 describe("ApprovalCard", () => {
-  beforeEach(() => state.toast.mockClear());
+  beforeEach(() => {
+    state.toast.mockClear();
+    state.demo = true;
+  });
 
   it("shows a real run's step as an action, not an email", () => {
     renderWithIntl(<ApprovalCard approval={real(false)} onDecide={() => {}} />);
@@ -104,6 +108,25 @@ describe("ApprovalCard", () => {
     expect(screen.getByRole("heading", { name: "The email, exactly as it will be sent" })).toBeInTheDocument();
     expect(screen.getByText("ap@fernway-goods.example")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Approve and send" })).toBeInTheDocument();
+  });
+
+  it("says nothing leaves the demo only in the demo workspace", async () => {
+    const user = userEvent.setup();
+    const { unmount } = renderWithIntl(<ApprovalCard approval={fixture} onDecide={() => {}} />);
+    await user.click(screen.getByRole("button", { name: "Approve and send" }));
+    expect(state.toast).toHaveBeenLastCalledWith(
+      "Approved and queued to send",
+      "One email to ap@fernway-goods.example. Simulated: nothing leaves the demo.",
+      "sim",
+    );
+    unmount();
+    // QA F-22: a live workspace is not the demo, so its toast never says so.
+    state.demo = false;
+    renderWithIntl(<ApprovalCard approval={fixture} onDecide={() => {}} />);
+    await user.click(screen.getByRole("button", { name: "Approve and send" }));
+    const [title, body] = state.toast.mock.lastCall ?? [];
+    expect(title).toBe("Approved and queued to send");
+    expect(String(body ?? "")).not.toMatch(/demo/i);
   });
 
   it("speaks Japanese", () => {

@@ -338,15 +338,77 @@ _HIDDEN = (
 )
 
 
+# A `listed_definitions` row `l` is trusted only when its listing is listed by the same publisher and the
+# publisher owns the key privately: a row naming a platform key, another org's key or an unlisted listing is
+# never seen, and so never duplicates a key the viewer gets another way.
+_TRUSTED_LISTING = (
+    "JOIN listings ls ON ls.id = l.listing_id AND ls.status = 'listed' "
+    "AND ls.publisher_org_id = l.publisher_org_id "
+    "JOIN definition_owners o ON o.kind = l.kind AND o.key = l.key AND o.owner_kind = 'org' "
+    "AND o.owner_id = l.publisher_org_id AND o.visibility = 'private'"
+)
+# The approved version of every definition another workspace has listed (sub-project D), for org %(org)s.
+_LISTED = (
+    f"SELECT {_V_COLUMNS} FROM listed_definitions l {_TRUSTED_LISTING} JOIN definition_versions v "
+    "ON v.kind = l.kind AND v.key = l.key AND v.version = l.version "
+    "WHERE %(org)s::text IS NOT NULL AND l.publisher_org_id <> %(org)s"
+)
+
+
 def latest_visible(conn, org_id: str | None) -> list[Version]:
-    """The latest version of every definition `org_id` may see: the platform's, marketplace ones, and the
-    org's own private ones. None sees no org's private definitions (the ops console, the file export)."""
+    """The version of every definition `org_id` may see, by kind then key: the latest of the platform's and
+    the org's own, and the approved version of what other workspaces have listed (`listed_definitions`;
+    their drafts never). None sees no org's definitions (the ops console, the file export)."""
     rows = conn.execute(
-        f"SELECT DISTINCT ON (v.kind, v.key) {_V_COLUMNS} FROM definition_versions v WHERE NOT {_HIDDEN} "
-        "ORDER BY v.kind, v.key, v.version DESC",
+        f"(SELECT DISTINCT ON (v.kind, v.key) {_V_COLUMNS} FROM definition_versions v WHERE NOT {_HIDDEN} "
+        f"ORDER BY v.kind, v.key, v.version DESC) UNION ALL ({_LISTED}) ORDER BY kind, key",
         {"org": org_id},
     ).fetchall()
     return [_version(r) for r in rows]
+
+
+def visible_version(conn, kind: str, key: str, org_id: str | None) -> Version | None:
+    """The version of kind/key that `org_id` may use: the latest when it is the platform's (or not private)
+    or the org's own, the listed version when another workspace has listed it, else None."""
+    if _usable_latest(conn, kind, key, org_id):
+        return latest(conn, kind, key)
+    if org_id is None:
+        return None
+    row = conn.execute(
+        f"SELECT l.version FROM listed_definitions l {_TRUSTED_LISTING} "
+        "WHERE l.kind = %(kind)s AND l.key = %(key)s AND l.publisher_org_id <> %(org)s",
+        {"kind": kind, "key": key, "org": org_id},
+    ).fetchone()
+    return get_version(conn, kind, key, row["version"]) if row else None
+
+
+def _usable_latest(conn, kind: str, key: str, org_id: str | None) -> bool:
+    """Whether `org_id` may use any version of kind/key: it is the platform's (or not private) or its own."""
+    owner = owner_of(conn, kind, key)
+    return owner.visibility != "private" or (org_id is not None and owner == owners.org_owner(org_id))
+
+
+def pinnable_version(conn, kind: str, key: str, version: int, org_id: str) -> Version | None:
+    """Version `version` of kind/key when `org_id` may pin it: any version of the platform's or the org's own;
+    of another workspace's definition only one that an approved version of a listed listing exposes (its
+    `definitions`), never a draft. None otherwise."""
+    if not _usable_latest(conn, kind, key, org_id):
+        row = conn.execute(
+            "SELECT 1 FROM listing_versions lv JOIN listings ls ON ls.id = lv.listing_id "
+            "JOIN definition_owners o ON o.kind = %(kind)s AND o.key = %(key)s AND o.owner_kind = 'org' "
+            "AND o.owner_id = ls.publisher_org_id AND o.visibility = 'private' "
+            "WHERE lv.status = 'approved' AND ls.status = 'listed' AND ls.publisher_org_id <> %(org)s "
+            "AND lv.definitions @> %(ref)s LIMIT 1",
+            {
+                "kind": kind,
+                "key": key,
+                "org": org_id,
+                "ref": Jsonb([{"kind": kind, "key": key, "version": version}]),
+            },
+        ).fetchone()
+        if row is None:
+            return None
+    return get_version(conn, kind, key, version)
 
 
 # A version row `v` that an org or a developer owns (`owner_of(...).kind != "platform"`).
@@ -395,18 +457,3 @@ def org_owned_keys(conn) -> set[tuple[str, str]]:
     """(kind, key) of every definition any org owns: what teams built in their Studio."""
     rows = conn.execute("SELECT kind, key FROM definition_owners WHERE owner_kind = 'org'").fetchall()
     return {(r["kind"], r["key"]) for r in rows}
-
-
-def hidden_from(conn, refs: list[tuple[str, str]], org_id: str) -> list[tuple[str, str]]:
-    """The (kind, key) pairs of `refs` that `org_id` may not see, sorted."""
-    if not refs:
-        return []
-    rows = conn.execute(
-        "SELECT o.kind, o.key FROM definition_owners o "
-        "JOIN unnest(%(kinds)s::text[], %(keys)s::text[]) AS r(kind, key) "
-        "ON o.kind = r.kind AND o.key = r.key "
-        "WHERE o.visibility = 'private' AND (o.owner_kind <> 'org' OR o.owner_id IS DISTINCT FROM %(org)s) "
-        "ORDER BY o.kind, o.key",
-        {"kinds": [kind for kind, _ in refs], "keys": [key for _, key in refs], "org": org_id},
-    ).fetchall()
-    return [(r["kind"], r["key"]) for r in rows]

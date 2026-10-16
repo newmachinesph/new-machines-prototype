@@ -22,6 +22,7 @@ def test_a_sandbox_test_runs_the_pack_without_adding_it(db, ana, starts):  # noq
     assert res.status_code == 202, res.text
     run = res.json()
     assert run["sandboxTest"] is True and run["packSlug"] == key
+    assert "listingCheck" not in run  # the builder's own test is not a listing check
     assert starts.calls[-1][1:] == (ana.org_id, AS_OF)
     assert run["budget"]["amountMinor"] == 1500  # the pack's maximum
     [listed] = ana.get("/v1/workflow-runs").json()

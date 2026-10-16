@@ -1,11 +1,15 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
+import { PublisherFeeRows } from "@/components/publisher-fee-rows";
+import type { FeeItem } from "@/lib/api/gen";
 import { Amount, ButtonLink, EmptyState, Id, KeyValues, PageHeader, Pill, Section, SimTag } from "@/components/ui";
 import { QueryState } from "@/components/query-state";
 import { Skeleton } from "@/components/skeleton";
 import { useNow } from "@/lib/clock";
+import { usd } from "@/lib/format";
 import { useIsDemo } from "@/lib/queries/me";
 import { useUsage } from "@/lib/queries/workspace";
 import { monthOf, spendSplit } from "@/lib/spend";
@@ -23,6 +27,35 @@ function UsageHeader() {
       lede={demo ? t("lede") : t("ledeLive")}
       actions={<SimTag className="px-2 py-1 text-xs">{t("simulated")}</SimTag>}
     />
+  );
+}
+
+/** The itemized publisher fees behind a run's "Publisher fees" ledger line, folded until asked for. */
+function FeeItems({ txnId, fees }: { txnId: string; fees: FeeItem[] }) {
+  const t = useTranslations("publisherFees");
+  const [open, setOpen] = useState(false);
+  const regionId = `fees-${txnId}`;
+  return (
+    <div className="mx-5 mb-3 text-xs">
+      <button
+        type="button"
+        className="link inline-flex min-h-10 items-center py-2 sm:min-h-8 sm:py-1"
+        aria-expanded={open}
+        aria-controls={open ? regionId : undefined}
+        onClick={() => setOpen((v) => !v)}
+      >
+        {open ? t("hide") : t("show")}
+      </button>
+      {open ? (
+        <div id={regionId} className="mt-1">
+          <div className="flex items-center justify-between gap-2">
+            <span className="label">{t("title")}</span>
+            <SimTag>{t("simulated")}</SimTag>
+          </div>
+          <PublisherFeeRows fees={fees} />
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -86,6 +119,7 @@ function Ledger({ ledger }: { ledger: LedgerTxn[] }) {
                 ))}
               </tbody>
             </table>
+            {txn.fees && txn.fees.length > 0 ? <FeeItems txnId={txn.id} fees={txn.fees} /> : null}
           </details>
         </li>
       ))}
@@ -137,10 +171,17 @@ function UsageBody({ ORG, LEDGER }: { ORG: Organization; LEDGER: LedgerTxn[] }) 
           </div>
           <div className="bg-paper px-5 py-4">
             <div className="label">{tc("agentsModelsTools")}</div>
-            <Amount value={split.agents} className="mt-1 block text-2xl font-semibold tracking-tight" />
+            {/* Publisher fees get their own line here rather than being folded into this figure. */}
+            <Amount value={split.agentsExclFees} className="mt-1 block text-2xl font-semibold tracking-tight" />
             <div className="mt-1.5 text-xs text-muted">
               {hasPlanFee ? t("agentsToolsNote", { plan: money(split.plan) }) : t("agentsToolsNoteNoPlan")}
             </div>
+            {split.fees.amountMinor > 0 ? (
+              <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs">
+                <span>{t("publisherFeesLine", { fees: money(split.fees) })}</span>
+                <SimTag />
+              </div>
+            ) : null}
           </div>
           <div className="bg-paper px-5 py-4">
             <div className="label">{t("reviewerPay")}</div>

@@ -7,6 +7,7 @@ import {
   Brain,
   Check,
   ChevronRight,
+  Compass,
   Hammer,
   ChevronsUpDown,
   LogOut,
@@ -18,6 +19,7 @@ import {
   Plug,
   Plus,
   Search,
+  Send,
   Settings,
   Store,
   UserCheck,
@@ -30,16 +32,19 @@ import {
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { usePathname } from "next/navigation";
-import { useEffect, useId, type ReactNode } from "react";
+import { useEffect, useId, useRef, type ReactNode, type RefObject } from "react";
 import { Mark } from "@/design-system/logo/Mark";
 import { useSession } from "@/lib/auth/session";
 import { ClockProvider } from "@/lib/clock";
 import { cn } from "@/lib/cn";
 import { useAgentName, usePackName, usePacks } from "@/lib/queries/catalog";
+import { useCanBuild } from "@/app/studio/can-build";
 import { useIsDemo, useIsLive, useMe } from "@/lib/queries/me";
 import { useOrg } from "@/lib/queries/org";
+import { useStudioListing } from "@/lib/queries/publishing";
 import { useStudioAgent, useStudioPack } from "@/lib/queries/studio";
 import { useEligibleTasks } from "@/lib/queries/tasks";
+import { tourFor } from "@/lib/tour/tours";
 import { useApprovals, useMemory } from "@/lib/queries/workspace";
 import { useUi } from "@/stores/ui";
 import {
@@ -55,9 +60,10 @@ import {
   Tooltip,
   useToast,
 } from "./base";
-import { CommandPalette } from "./command-palette";
+import { CommandPalette, type PaletteAction } from "./command-palette";
 import { LanguageMenuItems } from "./language-switch";
 import { PackIcon } from "./pack-icon";
+import { useTour } from "./tour/tour-context";
 
 type PageKey =
   | "overview"
@@ -75,13 +81,24 @@ type PageKey =
   | "studio"
   | "studioAgents"
   | "studioPacks"
+  | "studioPublisher"
   | "developerStudio"
   | "reviewerPortal";
 type CrumbKey = "crumbDeliverable" | "crumbHire" | "crumbStartRun" | "crumbNew" | "crumbTask";
 type GroupKey = "work" | "setup" | "account" | "other";
 
 /** `label` is a key under `nav`. */
-type Item = { href: string; label: PageKey; icon: LucideIcon; exact?: boolean; liveOnly?: boolean };
+type Item = {
+  href: string;
+  label: PageKey;
+  icon: LucideIcon;
+  exact?: boolean;
+  liveOnly?: boolean;
+  /** Shown to owners and admins only (publishing). */
+  managersOnly?: boolean;
+  /** The link's `data-tour` value, for a product tour step that points at it. */
+  tour?: string;
+};
 /** A labelled run of sidebar links; `label` is a key under `nav.groups`. A single unlabelled group is a plain list. */
 type Group = { label?: GroupKey; items: Item[] };
 
@@ -90,9 +107,9 @@ const BUSINESS_NAV: Group[] = [
     label: "work",
     items: [
       { href: "/app", label: "overview", icon: House, exact: true },
-      { href: "/app/runs", label: "runs", icon: Workflow },
-      { href: "/app/approvals", label: "approvals", icon: ListChecks },
-      { href: "/app/marketplace", label: "marketplace", icon: Store },
+      { href: "/app/runs", label: "runs", icon: Workflow, tour: "nav-runs" },
+      { href: "/app/approvals", label: "approvals", icon: ListChecks, tour: "nav-approvals" },
+      { href: "/app/marketplace", label: "marketplace", icon: Store, tour: "nav-marketplace" },
       { href: "/app/agents", label: "agents", icon: Bot },
     ],
   },
@@ -107,7 +124,7 @@ const BUSINESS_NAV: Group[] = [
   {
     label: "account",
     items: [
-      { href: "/app/usage", label: "usage", icon: CircleDollarSign },
+      { href: "/app/usage", label: "usage", icon: CircleDollarSign, tour: "nav-usage" },
       { href: "/app/settings", label: "settings", icon: Settings },
     ],
   },
@@ -136,6 +153,7 @@ const STUDIO_NAV: Group[] = [
       { href: "/studio", label: "studio", icon: House, exact: true },
       { href: "/studio/agents", label: "studioAgents", icon: Bot },
       { href: "/studio/packs", label: "studioPacks", icon: Workflow },
+      { href: "/studio/publisher", label: "studioPublisher", icon: Send, managersOnly: true },
     ],
   },
 ];
@@ -147,8 +165,11 @@ const HOME: Record<ShellMode, string> = { business: "/app", work: "/work", studi
 
 /** The pages a view offers, in the sidebar and the command palette alike. Reviewer management and the
  * Developer Studio exist only in a live workspace, so the demo's navigation is unchanged. */
-const navFor = (mode: ShellMode, live: boolean): Group[] =>
-  NAV[mode].map((g) => ({ ...g, items: g.items.filter((item) => live || !item.liveOnly) }));
+const navFor = (mode: ShellMode, live: boolean, manager: boolean): Group[] =>
+  NAV[mode].map((g) => ({
+    ...g,
+    items: g.items.filter((item) => (live || !item.liveOnly) && (manager || !item.managersOnly)),
+  }));
 
 type Crumb = { label: string; href?: string; mono?: boolean };
 
@@ -197,11 +218,22 @@ function Breadcrumbs({ path, mode }: { path: string; mode: ShellMode }) {
   const studioAgent = useStudioAgent(studio?.[1] === "agents" ? studioKey : undefined);
   const studioPack = useStudioPack(studio?.[1] === "packs" ? studioKey : undefined);
   // The record's name once it has loaded. Until then a Studio key, <org namespace>--<name>, reads as its name part.
-  const studioName = studioAgent.data?.draft.name ?? studioPack.data?.draft.name ?? studioKey?.split("--").pop();
+  const listingId = /^\/studio\/publisher\/([^/]+)/.exec(path)?.[1];
+  const studioListing = useStudioListing(listingId);
+  const studioName =
+    studioAgent.data?.draft.name ??
+    studioPack.data?.draft.name ??
+    studioListing.data?.name ??
+    studioKey?.split("--").pop();
   const packName = usePackName(slug);
   const agentName = useAgentName(agentId);
   const t = useTranslations("nav");
-  const crumbs = crumbsFor(path, mode, packName ?? agentName ?? studioName, t);
+  // An added pack's install page holds its settings in the live workspace (see InstallPage), so it is no "Add".
+  const added = usePacks().data?.some((p) => p.slug === slug && p.installed) ?? false;
+  const settings = useIsLive() && added && /^\/app\/marketplace\/[^/]+\/install$/.test(path);
+  const crumbs = crumbsFor(path, mode, packName ?? agentName ?? studioName, (key) =>
+    t(settings && key === "crumbHire" ? "settings" : key),
+  );
   // A single crumb only names the page. When the page carries its own heading, the shell hides it (see
   // AppShell), so the name shows once; a trail stays, since it is how a person gets back up. The reviewer
   // portal's pages keep theirs, so its top bar is never empty.
@@ -258,6 +290,7 @@ function NavLink({
       href={item.href}
       onClick={onNavigate}
       aria-current={active ? "page" : undefined}
+      data-tour={item.tour}
       className={cn(
         "group flex h-8 items-center gap-2.5 rounded-md px-2.5 text-sm whitespace-nowrap transition-colors",
         active ? "bg-grey-100 font-medium text-ink" : "text-grey-700 hover:bg-grey-50 hover:text-ink",
@@ -291,8 +324,29 @@ function usePerson() {
   return { name, known, role: me ? t(`roles.${me.role}`) : "" };
 }
 
-function WorkspaceMenu({ mode }: { mode: ShellMode }) {
+/**
+ * Replays the current area's tour: the run tour on a run page, the welcome tour (on the overview) elsewhere in the
+ * workspace, the Studio tour in the Studio. Undefined where there is none (the reviewer portal).
+ */
+function useReplayTour(): ((opener: Element | null) => void) | undefined {
+  const area = tourFor(usePathname());
+  const { replay } = useTour();
+  const setDrawerOpen = useUi((s) => s.setDrawerOpen);
+  if (!area) return undefined;
+  return (opener) => {
+    // The drawer is a modal of its own; the tour takes over the page.
+    setDrawerOpen(false);
+    replay(area.name, { href: area.href, opener });
+  };
+}
+
+/** `returnFocusTo` is where focus goes after a tour started from this menu: its own trigger, unless that leaves the
+ * page with the menu (in the drawer). */
+function WorkspaceMenu({ mode, returnFocusTo }: { mode: ShellMode; returnFocusTo?: RefObject<HTMLElement | null> }) {
   const work = mode === "work";
+  const trigger = useRef<HTMLButtonElement>(null);
+  const replayTour = useReplayTour();
+  const tTour = useTranslations("tour.common");
   const live = useIsLive();
   const { signOut } = useSession();
   const toast = useToast();
@@ -312,8 +366,10 @@ function WorkspaceMenu({ mode }: { mode: ShellMode }) {
   return (
     <MenuRoot>
       <MenuTrigger
+        ref={trigger}
         className="flex min-h-10 w-full items-center gap-2.5 rounded-md px-2 py-1 text-left hover:bg-grey-50 data-[popup-open]:bg-grey-100"
         aria-label={t("switchWorkspace", { name: label })}
+        data-tour="account-menu"
       >
         <span
           className={cn(
@@ -385,6 +441,12 @@ function WorkspaceMenu({ mode }: { mode: ShellMode }) {
           <div className="truncate px-2.5 pb-1.5 text-sm text-grey-700">
             {demo ? t("signedInAs") : person.known ? t("signedInAsUser", { who: person.known }) : t("signedIn")}
           </div>
+          {replayTour ? (
+            <MenuItem onClick={() => replayTour((returnFocusTo ?? trigger).current)}>
+              <Compass className="size-4 text-grey-500" strokeWidth={1.75} aria-hidden />
+              {tTour("replay")}
+            </MenuItem>
+          ) : null}
           <MenuItem onClick={() => void signOut().catch(() => toast(t("signOutFailed"), t("tryAgain"), "blocked"))}>
             <LogOut className="size-4 text-grey-500" strokeWidth={1.75} aria-hidden />
             {t("signOut")}
@@ -410,7 +472,7 @@ function useNavCounts(mode: ShellMode): Record<string, number | undefined> {
 function NavGroups({ mode, path, onNavigate }: { mode: ShellMode; path: string; onNavigate?: () => void }) {
   const counts = useNavCounts(mode);
   const t = useTranslations("nav.groups");
-  const groups = navFor(mode, useIsLive());
+  const groups = navFor(mode, useIsLive(), useCanBuild());
   // The sidebar and the drawer both render this list; each needs its own ids.
   const uid = useId();
   return groups.map((g, i) => {
@@ -542,6 +604,7 @@ function MobileNav({ mode, path }: { mode: ShellMode; path: string }) {
   const setOpen = useUi((s) => s.setDrawerOpen);
   const t = useTranslations("nav");
   const close = () => setOpen(false);
+  const openButton = useRef<HTMLButtonElement>(null);
 
   // Any page change closes it, including browser back and links in the workspace menu.
   // Store state outlives navigation, so this runs in an effect, never during render.
@@ -560,6 +623,7 @@ function MobileNav({ mode, path }: { mode: ShellMode; path: string }) {
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
       <Dialog.Trigger
+        ref={openButton}
         aria-label={t("openNavigation")}
         className="-ml-2.5 grid size-10 shrink-0 place-items-center rounded-md text-grey-700 hover:bg-grey-100 data-[popup-open]:bg-grey-100 lg:hidden"
       >
@@ -572,7 +636,7 @@ function MobileNav({ mode, path }: { mode: ShellMode; path: string }) {
           <div className="flex items-center gap-1 px-3 pt-3">
             {/* A pick in the workspace menu closes the drawer even when it links to the current page. */}
             <div className="min-w-0 flex-1" onClickCapture={(e) => (e.target as HTMLElement).closest("a") && close()}>
-              <WorkspaceMenu mode={mode} />
+              <WorkspaceMenu mode={mode} returnFocusTo={openButton} />
             </div>
             <Dialog.Close
               aria-label={t("closeNavigation")}
@@ -672,18 +736,23 @@ export function AppShell({ children, mode = "business" }: { children: ReactNode;
   const live = useIsLive();
   const path = usePathname();
   const t = useTranslations("nav");
-  const pages = navFor(mode, live)
+  const pages = navFor(mode, live, useCanBuild())
     .flatMap((g) => g.items)
     .map(({ href, label, icon }) => ({ href, label: t(label), icon }));
+  const tTour = useTranslations("tour.common");
+  const replayTour = useReplayTour();
+  const actions: PaletteAction[] = replayTour
+    ? [{ id: "tour", label: tTour("replay"), icon: Compass, run: replayTour }]
+    : [];
   return (
     <ClockProvider live={live}>
       {/* A page with its own heading is named once: the top bar's single crumb hides (a trail of crumbs stays). */}
       <div className="flex min-h-dvh [&:has(main_h1)_.page-crumb]:hidden">
         <Sidebar mode={mode} path={path} />
-        <CommandPalette pages={pages} />
+        <CommandPalette pages={pages} actions={actions} />
         <div className="min-w-0 flex-1">
           <TopBar mode={mode} path={path} />
-          <main id="main" className="px-4 py-6 sm:px-6 lg:px-8 lg:py-7">
+          <main id="main" tabIndex={-1} className="px-4 py-6 outline-none sm:px-6 lg:px-8 lg:py-7">
             <div className="mx-auto max-w-[2000px]">{children}</div>
           </main>
         </div>

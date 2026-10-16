@@ -27,6 +27,7 @@ import {
 } from "@/lib/queries/studio";
 import { useLeaveGuard } from "@/lib/use-leave-guard";
 import { useCanBuild } from "../../can-build";
+import { SubmitButton } from "../../submit-dialog";
 import { DetailsForm, type DetailsFocus } from "./details-form";
 import { EditorCanvas } from "./editor-canvas";
 import { countByStep, isDetailsIssue, IssuesPanel, type ServerIssue } from "./issues-panel";
@@ -358,6 +359,15 @@ function Workbench({ packKey, version, latest, onReload }: EditorProps) {
               inputFields={details.inputFields ?? []}
               budgetMinor={details.budgetMinor}
             />
+            {packKey ? (
+              <SubmitButton
+                kind="pack"
+                keyName={packKey}
+                name={details.name}
+                dirty={dirty}
+                inputFields={details.inputFields ?? []}
+              />
+            ) : null}
             <Button variant="secondary" onClick={onValidate} disabled={validate.isPending || !orgId}>
               {t("validate")}
             </Button>

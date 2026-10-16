@@ -116,4 +116,32 @@ describe("NodeInspector copy from the API", () => {
     expect(screen.queryByText("Policy codes")).not.toBeInTheDocument();
     expect(screen.getByText("policy/default")).toBeInTheDocument();
   });
+
+  it("names the decision model in plain words and never by its product name", () => {
+    const node: RunNode = {
+      ...live,
+      subtitle: "Decision model",
+      decision: {
+        ...live.decision!,
+        evaluator: { kind: "jev", label: "Decision model", configVersion: "lead-screen@v1" },
+        chain: [
+          { kind: "jev", verdict: "PASS", note: "Answered for 5 items; 3 kept." },
+          { kind: "rules", verdict: "APPROVED", note: "Some emails look like real enquiries." },
+        ],
+      },
+    };
+    renderWithIntl(<NodeInspector node={node} />);
+    expect(screen.getAllByText("Decision model").length).toBeGreaterThan(0);
+    expect(screen.getByText("Answered for 5 items; 3 kept.")).toBeInTheDocument();
+    expect(document.body.textContent).not.toMatch(/\bjev\b|typesafe|openrouter/i);
+  });
+
+  it("names the decision model in Japanese", () => {
+    const node: RunNode = {
+      ...live,
+      decision: { ...live.decision!, chain: [{ kind: "jev", verdict: "ERROR", note: "The decision model could not be reached." }] },
+    };
+    renderWithIntl(<NodeInspector node={node} />, { locale: "ja" });
+    expect(screen.getAllByText("判断モデル").length).toBeGreaterThan(0);
+  });
 });

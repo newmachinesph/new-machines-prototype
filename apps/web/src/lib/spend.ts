@@ -8,8 +8,13 @@ const BUYER_CHARGES = "Buyer charges";
 export type SpendSplit = {
   /** The month's plan fee (none on a trial). */
   plan: Money;
-  /** Agents, models and tools: the month's spend less the plan and the reviewer pay the buyer paid. */
+  /** Agents, models and tools: the month's spend less the plan and the reviewer pay the buyer paid. It includes
+   * the publisher fees (`fees`). */
   agents: Money;
+  /** `agents` without the publisher fees, which are shown as their own line wherever the split is shown. */
+  agentsExclFees: Money;
+  /** Publisher fees charged this month (simulated). */
+  fees: Money;
   /** Reviewer pay charged to the buyer this month. */
   reviewers: Money;
   /** All reviewer pay this month, including what New Machines absorbed. */
@@ -37,6 +42,7 @@ export function spendSplit(org: Organization, ledger: LedgerTxn[], month: string
   let reviewerPayments = 0;
   let absorbed = 0;
   let held = 0;
+  let fees = 0;
   const heldRuns: string[] = [];
   for (const txn of ledger) {
     if (!txn.at.startsWith(month)) continue;
@@ -48,6 +54,7 @@ export function spendSplit(org: Organization, ledger: LedgerTxn[], month: string
       if (txn.lines.some((l) => l.account === BUYER_CHARGES && l.debit)) reviewers += amount;
       else absorbed += amount;
     }
+    for (const f of txn.fees ?? []) fees += f.amount.amountMinor;
     const human = txn.spent?.human.amountMinor ?? 0;
     if (human > 0) {
       reviewerPayments += 1;
@@ -59,9 +66,12 @@ export function spendSplit(org: Organization, ledger: LedgerTxn[], month: string
       if (txn.runId) heldRuns.push(txn.runId);
     }
   }
+  const agents = Math.max(0, org.monthSpent.amountMinor - plan - reviewers);
   return {
     plan: usd(plan),
-    agents: usd(Math.max(0, org.monthSpent.amountMinor - plan - reviewers)),
+    agents: usd(agents),
+    agentsExclFees: usd(Math.max(0, agents - fees)),
+    fees: usd(fees),
     reviewers: usd(reviewers),
     reviewerPayTotal: usd(reviewerPayTotal),
     reviewerPayments,

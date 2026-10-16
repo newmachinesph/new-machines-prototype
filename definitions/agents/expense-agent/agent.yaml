@@ -1,0 +1,25 @@
+kind: agent
+key: expense-agent
+schema_version: nm.agent.manifest.v1.1
+agent_id: expense-agent
+version: "1.0.0"
+publisher_id: new-machines-labs
+publisher_name: New Machines Labs
+name: Expense Agent
+summary: >-
+  Reads a week of expenses from your sheet, puts each one in a category and flags anything unusual against your expense policy: missing receipts, items over the limit and likely duplicates. It never changes your expense rows.
+capabilities: [finance.expenses]
+runtime:
+  adapter: google_adk
+  model_profile: reasoning
+  instructions: instructions.md
+  skills: [skills/check-expenses.md]
+  tools: []
+  max_turns: 6
+input_schema_ref: shared/agent-input
+output_schema_ref: weekly-expense-check/report
+requested_tool_capabilities: []
+data_processing:
+  supported_regions: ["asia-south1"]
+  data_classes: ["CONFIDENTIAL"]
+  retention_policy_ref: retention/30d

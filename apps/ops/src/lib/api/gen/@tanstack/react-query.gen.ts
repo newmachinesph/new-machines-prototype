@@ -3,8 +3,8 @@
 import { queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { acceptInvitation, addOrgReviewer, allowGrant, approveApproval, claimHumanTask, connectConnection, createStudioAgent, createStudioPack, createToken, declineApproval, declineInvitation, disconnectConnection, getAgent, getCatalogTaxonomy, getHumanTask, getMe, getOrganization, getReviewerProfile, getStudioAgent, getStudioPack, getStudioPackWorkflow, getStudioPalette, getUsage, getWorkflowPack, getWorkflowRun, getWorkflowRunReceipt, importStudioWorkflow, installWorkflowPack, inviteMember, listAgents, listApprovals, listAttention, listConnections, listEarnings, listEligibleHumanTasks, listMembers, listMemory, listOrgReviewers, listPolicies, listStudioAgents, listStudioPacks, listTokens, listWorkflowPacks, listWorkflowRuns, opsAddConnector, opsAddMemoryItem, opsApprovePack, opsApproveReviewer, opsCertifyPack, opsCreatePack, opsCreateTenant, opsDeclareIncident, opsDeleteMemoryItem, opsDeprecatePack, opsDisableConnector, opsEnableConnector, opsExportDefinition, opsGetBilling, opsGetDefinition, opsGetHealth, opsGetMe, opsGetOverview, opsGetPack, opsGetRun, opsGetRuntimeStatus, opsGetTenant, opsHealthCheckConnector, opsListAudit, opsListAvailableToolkits, opsListConnectors, opsListDefinitions, opsListGuardrails, opsListMemoryItems, opsListMemorySpaces, opsListPacks, opsListReviewers, opsListRuns, opsListTeam, opsListTenants, opsPublishDefinition, opsReactivateTenant, opsReinstateReviewer, opsRejectPack, opsRepublishPack, opsSetConnectorDefaults, opsSetGuardrail, opsSetReviewerLevel, opsSetTenantPlan, opsSetTenantSpendCap, opsSubmitPack, opsSuspendReviewer, opsSuspendTenant, opsUpdateIncident, opsValidateDefinition, type Options, removeOrgReviewer, retractMemory, reviewMemoryCandidate, revokeGrant, revokeToken, saveStudioAgent, saveStudioPack, setReviewerNetwork, startWorkflowRun, submitHumanTask, suggestWorkflowPack, syncConnection, testStudioPack, updateReviewerProfile, validateStudioAgent, validateStudioPack } from '../sdk.gen';
-import type { AcceptInvitationData, AcceptInvitationError, AcceptInvitationResponse, AddOrgReviewerData, AddOrgReviewerError, AddOrgReviewerResponse, AllowGrantData, AllowGrantError, AllowGrantResponse, ApproveApprovalData, ApproveApprovalError, ApproveApprovalResponse, ClaimHumanTaskData, ClaimHumanTaskError, ClaimHumanTaskResponse, ConnectConnectionData, ConnectConnectionError, ConnectConnectionResponse, CreateStudioAgentData, CreateStudioAgentError, CreateStudioAgentResponse, CreateStudioPackData, CreateStudioPackError, CreateStudioPackResponse, CreateTokenData, CreateTokenError, CreateTokenResponse, DeclineApprovalData, DeclineApprovalError, DeclineApprovalResponse, DeclineInvitationData, DeclineInvitationError, DeclineInvitationResponse, DisconnectConnectionData, DisconnectConnectionError, DisconnectConnectionResponse, GetAgentData, GetAgentError, GetAgentResponse, GetCatalogTaxonomyData, GetCatalogTaxonomyError, GetCatalogTaxonomyResponse, GetHumanTaskData, GetHumanTaskError, GetHumanTaskResponse, GetMeData, GetMeError, GetMeResponse, GetOrganizationData, GetOrganizationError, GetOrganizationResponse, GetReviewerProfileData, GetReviewerProfileError, GetReviewerProfileResponse, GetStudioAgentData, GetStudioAgentError, GetStudioAgentResponse, GetStudioPackData, GetStudioPackError, GetStudioPackResponse, GetStudioPackWorkflowData, GetStudioPackWorkflowError, GetStudioPackWorkflowResponse, GetStudioPaletteData, GetStudioPaletteError, GetStudioPaletteResponse, GetUsageData, GetUsageError, GetUsageResponse, GetWorkflowPackData, GetWorkflowPackError, GetWorkflowPackResponse, GetWorkflowRunData, GetWorkflowRunError, GetWorkflowRunReceiptData, GetWorkflowRunReceiptError, GetWorkflowRunReceiptResponse, GetWorkflowRunResponse, ImportStudioWorkflowData, ImportStudioWorkflowError, ImportStudioWorkflowResponse, InstallWorkflowPackData, InstallWorkflowPackError, InstallWorkflowPackResponse, InviteMemberData, InviteMemberError, InviteMemberResponse, ListAgentsData, ListAgentsError, ListAgentsResponse, ListApprovalsData, ListApprovalsError, ListApprovalsResponse, ListAttentionData, ListAttentionError, ListAttentionResponse, ListConnectionsData, ListConnectionsError, ListConnectionsResponse, ListEarningsData, ListEarningsError, ListEarningsResponse, ListEligibleHumanTasksData, ListEligibleHumanTasksError, ListEligibleHumanTasksResponse, ListMembersData, ListMembersError, ListMembersResponse, ListMemoryData, ListMemoryError, ListMemoryResponse, ListOrgReviewersData, ListOrgReviewersError, ListOrgReviewersResponse, ListPoliciesData, ListPoliciesError, ListPoliciesResponse, ListStudioAgentsData, ListStudioAgentsError, ListStudioAgentsResponse, ListStudioPacksData, ListStudioPacksError, ListStudioPacksResponse, ListTokensData, ListTokensError, ListTokensResponse, ListWorkflowPacksData, ListWorkflowPacksError, ListWorkflowPacksResponse, ListWorkflowRunsData, ListWorkflowRunsError, ListWorkflowRunsResponse, OpsAddConnectorData, OpsAddConnectorError, OpsAddConnectorResponse, OpsAddMemoryItemData, OpsAddMemoryItemError, OpsAddMemoryItemResponse, OpsApprovePackData, OpsApprovePackError, OpsApprovePackResponse, OpsApproveReviewerData, OpsApproveReviewerError, OpsApproveReviewerResponse, OpsCertifyPackData, OpsCertifyPackError, OpsCertifyPackResponse, OpsCreatePackData, OpsCreatePackError, OpsCreatePackResponse, OpsCreateTenantData, OpsCreateTenantError, OpsCreateTenantResponse, OpsDeclareIncidentData, OpsDeclareIncidentError, OpsDeclareIncidentResponse, OpsDeleteMemoryItemData, OpsDeleteMemoryItemError, OpsDeleteMemoryItemResponse, OpsDeprecatePackData, OpsDeprecatePackError, OpsDeprecatePackResponse, OpsDisableConnectorData, OpsDisableConnectorError, OpsDisableConnectorResponse, OpsEnableConnectorData, OpsEnableConnectorError, OpsEnableConnectorResponse, OpsExportDefinitionData, OpsExportDefinitionError, OpsExportDefinitionResponse, OpsGetBillingData, OpsGetBillingError, OpsGetBillingResponse, OpsGetDefinitionData, OpsGetDefinitionError, OpsGetDefinitionResponse, OpsGetHealthData, OpsGetHealthError, OpsGetHealthResponse, OpsGetMeData, OpsGetMeError, OpsGetMeResponse, OpsGetOverviewData, OpsGetOverviewError, OpsGetOverviewResponse, OpsGetPackData, OpsGetPackError, OpsGetPackResponse, OpsGetRunData, OpsGetRunError, OpsGetRunResponse, OpsGetRuntimeStatusData, OpsGetRuntimeStatusError, OpsGetRuntimeStatusResponse, OpsGetTenantData, OpsGetTenantError, OpsGetTenantResponse, OpsHealthCheckConnectorData, OpsHealthCheckConnectorError, OpsHealthCheckConnectorResponse, OpsListAuditData, OpsListAuditError, OpsListAuditResponse, OpsListAvailableToolkitsData, OpsListAvailableToolkitsError, OpsListAvailableToolkitsResponse, OpsListConnectorsData, OpsListConnectorsError, OpsListConnectorsResponse, OpsListDefinitionsData, OpsListDefinitionsError, OpsListDefinitionsResponse, OpsListGuardrailsData, OpsListGuardrailsError, OpsListGuardrailsResponse, OpsListMemoryItemsData, OpsListMemoryItemsError, OpsListMemoryItemsResponse, OpsListMemorySpacesData, OpsListMemorySpacesError, OpsListMemorySpacesResponse, OpsListPacksData, OpsListPacksError, OpsListPacksResponse, OpsListReviewersData, OpsListReviewersError, OpsListReviewersResponse, OpsListRunsData, OpsListRunsError, OpsListRunsResponse, OpsListTeamData, OpsListTeamError, OpsListTeamResponse, OpsListTenantsData, OpsListTenantsError, OpsListTenantsResponse, OpsPublishDefinitionData, OpsPublishDefinitionError, OpsPublishDefinitionResponse, OpsReactivateTenantData, OpsReactivateTenantError, OpsReactivateTenantResponse, OpsReinstateReviewerData, OpsReinstateReviewerError, OpsReinstateReviewerResponse, OpsRejectPackData, OpsRejectPackError, OpsRejectPackResponse, OpsRepublishPackData, OpsRepublishPackError, OpsRepublishPackResponse, OpsSetConnectorDefaultsData, OpsSetConnectorDefaultsError, OpsSetConnectorDefaultsResponse, OpsSetGuardrailData, OpsSetGuardrailError, OpsSetGuardrailResponse, OpsSetReviewerLevelData, OpsSetReviewerLevelError, OpsSetReviewerLevelResponse, OpsSetTenantPlanData, OpsSetTenantPlanError, OpsSetTenantPlanResponse, OpsSetTenantSpendCapData, OpsSetTenantSpendCapError, OpsSetTenantSpendCapResponse, OpsSubmitPackData, OpsSubmitPackError, OpsSubmitPackResponse, OpsSuspendReviewerData, OpsSuspendReviewerError, OpsSuspendReviewerResponse, OpsSuspendTenantData, OpsSuspendTenantError, OpsSuspendTenantResponse, OpsUpdateIncidentData, OpsUpdateIncidentError, OpsUpdateIncidentResponse, OpsValidateDefinitionData, OpsValidateDefinitionError, OpsValidateDefinitionResponse, RemoveOrgReviewerData, RemoveOrgReviewerError, RemoveOrgReviewerResponse, RetractMemoryData, RetractMemoryError, RetractMemoryResponse, ReviewMemoryCandidateData, ReviewMemoryCandidateError, ReviewMemoryCandidateResponse, RevokeGrantData, RevokeGrantError, RevokeGrantResponse, RevokeTokenData, RevokeTokenError, RevokeTokenResponse, SaveStudioAgentData, SaveStudioAgentError, SaveStudioAgentResponse, SaveStudioPackData, SaveStudioPackError, SaveStudioPackResponse, SetReviewerNetworkData, SetReviewerNetworkError, SetReviewerNetworkResponse, StartWorkflowRunData, StartWorkflowRunError, StartWorkflowRunResponse, SubmitHumanTaskData, SubmitHumanTaskError, SubmitHumanTaskResponse, SuggestWorkflowPackData, SuggestWorkflowPackError, SuggestWorkflowPackResponse, SyncConnectionData, SyncConnectionError, SyncConnectionResponse, TestStudioPackData, TestStudioPackError, TestStudioPackResponse, UpdateReviewerProfileData, UpdateReviewerProfileError, UpdateReviewerProfileResponse, ValidateStudioAgentData, ValidateStudioAgentError, ValidateStudioAgentResponse, ValidateStudioPackData, ValidateStudioPackError, ValidateStudioPackResponse } from '../types.gen';
+import { acceptInvitation, addOrgReviewer, allowGrant, approveApproval, claimHumanTask, connectConnection, createStudioAgent, createStudioPack, createToken, declineApproval, declineInvitation, disablePublisher, disconnectConnection, getAgent, getCatalogTaxonomy, getHumanTask, getMe, getOrganization, getPublisher, getReviewerProfile, getStudioAgent, getStudioEarnings, getStudioListing, getStudioPack, getStudioPackWorkflow, getStudioPalette, getUsage, getWorkflowPack, getWorkflowRun, getWorkflowRunReceipt, importStudioWorkflow, installWorkflowPack, inviteMember, listAgents, listApprovals, listAttention, listConnections, listEarnings, listEligibleHumanTasks, listMembers, listMemory, listOrgReviewers, listPolicies, listStudioAgents, listStudioListings, listStudioPacks, listTokens, listWorkflowPacks, listWorkflowRuns, opsAddConnector, opsAddMemoryItem, opsApproveListing, opsApprovePack, opsApproveReviewer, opsCertifyPack, opsCreatePack, opsCreateTenant, opsDeclareIncident, opsDeleteMemoryItem, opsDeprecatePack, opsDisableConnector, opsEnableConnector, opsExportDefinition, opsGetBilling, opsGetDefinition, opsGetHealth, opsGetListing, opsGetMe, opsGetOverview, opsGetPack, opsGetRun, opsGetRuntimeStatus, opsGetTenant, opsHealthCheckConnector, opsListAudit, opsListAvailableToolkits, opsListConnectors, opsListDefinitions, opsListGuardrails, opsListListings, opsListMemoryItems, opsListMemorySpaces, opsListPacks, opsListReviewers, opsListRuns, opsListTeam, opsListTenants, opsPublishDefinition, opsReactivateTenant, opsReinstateReviewer, opsRejectListing, opsRejectPack, opsRelistListing, opsRepublishPack, opsRequestListingChanges, opsSetConnectorDefaults, opsSetGuardrail, opsSetReviewerLevel, opsSetTenantPlan, opsSetTenantSpendCap, opsSubmitPack, opsSuspendReviewer, opsSuspendTenant, opsUnlistListing, opsUpdateIncident, opsValidateDefinition, type Options, removeOrgReviewer, retractMemory, reviewMemoryCandidate, revokeGrant, revokeToken, savePublisher, saveStudioAgent, saveStudioPack, setReviewerNetwork, startWorkflowRun, submitHumanTask, submitStudioAgent, submitStudioPack, suggestWorkflowPack, syncConnection, testStudioPack, updateReviewerProfile, upgradeWorkflowPack, validateStudioAgent, validateStudioPack } from '../sdk.gen';
+import type { AcceptInvitationData, AcceptInvitationError, AcceptInvitationResponse, AddOrgReviewerData, AddOrgReviewerError, AddOrgReviewerResponse, AllowGrantData, AllowGrantError, AllowGrantResponse, ApproveApprovalData, ApproveApprovalError, ApproveApprovalResponse, ClaimHumanTaskData, ClaimHumanTaskError, ClaimHumanTaskResponse, ConnectConnectionData, ConnectConnectionError, ConnectConnectionResponse, CreateStudioAgentData, CreateStudioAgentError, CreateStudioAgentResponse, CreateStudioPackData, CreateStudioPackError, CreateStudioPackResponse, CreateTokenData, CreateTokenError, CreateTokenResponse, DeclineApprovalData, DeclineApprovalError, DeclineApprovalResponse, DeclineInvitationData, DeclineInvitationError, DeclineInvitationResponse, DisablePublisherData, DisablePublisherError, DisablePublisherResponse, DisconnectConnectionData, DisconnectConnectionError, DisconnectConnectionResponse, GetAgentData, GetAgentError, GetAgentResponse, GetCatalogTaxonomyData, GetCatalogTaxonomyError, GetCatalogTaxonomyResponse, GetHumanTaskData, GetHumanTaskError, GetHumanTaskResponse, GetMeData, GetMeError, GetMeResponse, GetOrganizationData, GetOrganizationError, GetOrganizationResponse, GetPublisherData, GetPublisherError, GetPublisherResponse, GetReviewerProfileData, GetReviewerProfileError, GetReviewerProfileResponse, GetStudioAgentData, GetStudioAgentError, GetStudioAgentResponse, GetStudioEarningsData, GetStudioEarningsError, GetStudioEarningsResponse, GetStudioListingData, GetStudioListingError, GetStudioListingResponse, GetStudioPackData, GetStudioPackError, GetStudioPackResponse, GetStudioPackWorkflowData, GetStudioPackWorkflowError, GetStudioPackWorkflowResponse, GetStudioPaletteData, GetStudioPaletteError, GetStudioPaletteResponse, GetUsageData, GetUsageError, GetUsageResponse, GetWorkflowPackData, GetWorkflowPackError, GetWorkflowPackResponse, GetWorkflowRunData, GetWorkflowRunError, GetWorkflowRunReceiptData, GetWorkflowRunReceiptError, GetWorkflowRunReceiptResponse, GetWorkflowRunResponse, ImportStudioWorkflowData, ImportStudioWorkflowError, ImportStudioWorkflowResponse, InstallWorkflowPackData, InstallWorkflowPackError, InstallWorkflowPackResponse, InviteMemberData, InviteMemberError, InviteMemberResponse, ListAgentsData, ListAgentsError, ListAgentsResponse, ListApprovalsData, ListApprovalsError, ListApprovalsResponse, ListAttentionData, ListAttentionError, ListAttentionResponse, ListConnectionsData, ListConnectionsError, ListConnectionsResponse, ListEarningsData, ListEarningsError, ListEarningsResponse, ListEligibleHumanTasksData, ListEligibleHumanTasksError, ListEligibleHumanTasksResponse, ListMembersData, ListMembersError, ListMembersResponse, ListMemoryData, ListMemoryError, ListMemoryResponse, ListOrgReviewersData, ListOrgReviewersError, ListOrgReviewersResponse, ListPoliciesData, ListPoliciesError, ListPoliciesResponse, ListStudioAgentsData, ListStudioAgentsError, ListStudioAgentsResponse, ListStudioListingsData, ListStudioListingsError, ListStudioListingsResponse, ListStudioPacksData, ListStudioPacksError, ListStudioPacksResponse, ListTokensData, ListTokensError, ListTokensResponse, ListWorkflowPacksData, ListWorkflowPacksError, ListWorkflowPacksResponse, ListWorkflowRunsData, ListWorkflowRunsError, ListWorkflowRunsResponse, OpsAddConnectorData, OpsAddConnectorError, OpsAddConnectorResponse, OpsAddMemoryItemData, OpsAddMemoryItemError, OpsAddMemoryItemResponse, OpsApproveListingData, OpsApproveListingError, OpsApproveListingResponse, OpsApprovePackData, OpsApprovePackError, OpsApprovePackResponse, OpsApproveReviewerData, OpsApproveReviewerError, OpsApproveReviewerResponse, OpsCertifyPackData, OpsCertifyPackError, OpsCertifyPackResponse, OpsCreatePackData, OpsCreatePackError, OpsCreatePackResponse, OpsCreateTenantData, OpsCreateTenantError, OpsCreateTenantResponse, OpsDeclareIncidentData, OpsDeclareIncidentError, OpsDeclareIncidentResponse, OpsDeleteMemoryItemData, OpsDeleteMemoryItemError, OpsDeleteMemoryItemResponse, OpsDeprecatePackData, OpsDeprecatePackError, OpsDeprecatePackResponse, OpsDisableConnectorData, OpsDisableConnectorError, OpsDisableConnectorResponse, OpsEnableConnectorData, OpsEnableConnectorError, OpsEnableConnectorResponse, OpsExportDefinitionData, OpsExportDefinitionError, OpsExportDefinitionResponse, OpsGetBillingData, OpsGetBillingError, OpsGetBillingResponse, OpsGetDefinitionData, OpsGetDefinitionError, OpsGetDefinitionResponse, OpsGetHealthData, OpsGetHealthError, OpsGetHealthResponse, OpsGetListingData, OpsGetListingError, OpsGetListingResponse, OpsGetMeData, OpsGetMeError, OpsGetMeResponse, OpsGetOverviewData, OpsGetOverviewError, OpsGetOverviewResponse, OpsGetPackData, OpsGetPackError, OpsGetPackResponse, OpsGetRunData, OpsGetRunError, OpsGetRunResponse, OpsGetRuntimeStatusData, OpsGetRuntimeStatusError, OpsGetRuntimeStatusResponse, OpsGetTenantData, OpsGetTenantError, OpsGetTenantResponse, OpsHealthCheckConnectorData, OpsHealthCheckConnectorError, OpsHealthCheckConnectorResponse, OpsListAuditData, OpsListAuditError, OpsListAuditResponse, OpsListAvailableToolkitsData, OpsListAvailableToolkitsError, OpsListAvailableToolkitsResponse, OpsListConnectorsData, OpsListConnectorsError, OpsListConnectorsResponse, OpsListDefinitionsData, OpsListDefinitionsError, OpsListDefinitionsResponse, OpsListGuardrailsData, OpsListGuardrailsError, OpsListGuardrailsResponse, OpsListListingsData, OpsListListingsError, OpsListListingsResponse, OpsListMemoryItemsData, OpsListMemoryItemsError, OpsListMemoryItemsResponse, OpsListMemorySpacesData, OpsListMemorySpacesError, OpsListMemorySpacesResponse, OpsListPacksData, OpsListPacksError, OpsListPacksResponse, OpsListReviewersData, OpsListReviewersError, OpsListReviewersResponse, OpsListRunsData, OpsListRunsError, OpsListRunsResponse, OpsListTeamData, OpsListTeamError, OpsListTeamResponse, OpsListTenantsData, OpsListTenantsError, OpsListTenantsResponse, OpsPublishDefinitionData, OpsPublishDefinitionError, OpsPublishDefinitionResponse, OpsReactivateTenantData, OpsReactivateTenantError, OpsReactivateTenantResponse, OpsReinstateReviewerData, OpsReinstateReviewerError, OpsReinstateReviewerResponse, OpsRejectListingData, OpsRejectListingError, OpsRejectListingResponse, OpsRejectPackData, OpsRejectPackError, OpsRejectPackResponse, OpsRelistListingData, OpsRelistListingError, OpsRelistListingResponse, OpsRepublishPackData, OpsRepublishPackError, OpsRepublishPackResponse, OpsRequestListingChangesData, OpsRequestListingChangesError, OpsRequestListingChangesResponse, OpsSetConnectorDefaultsData, OpsSetConnectorDefaultsError, OpsSetConnectorDefaultsResponse, OpsSetGuardrailData, OpsSetGuardrailError, OpsSetGuardrailResponse, OpsSetReviewerLevelData, OpsSetReviewerLevelError, OpsSetReviewerLevelResponse, OpsSetTenantPlanData, OpsSetTenantPlanError, OpsSetTenantPlanResponse, OpsSetTenantSpendCapData, OpsSetTenantSpendCapError, OpsSetTenantSpendCapResponse, OpsSubmitPackData, OpsSubmitPackError, OpsSubmitPackResponse, OpsSuspendReviewerData, OpsSuspendReviewerError, OpsSuspendReviewerResponse, OpsSuspendTenantData, OpsSuspendTenantError, OpsSuspendTenantResponse, OpsUnlistListingData, OpsUnlistListingError, OpsUnlistListingResponse, OpsUpdateIncidentData, OpsUpdateIncidentError, OpsUpdateIncidentResponse, OpsValidateDefinitionData, OpsValidateDefinitionError, OpsValidateDefinitionResponse, RemoveOrgReviewerData, RemoveOrgReviewerError, RemoveOrgReviewerResponse, RetractMemoryData, RetractMemoryError, RetractMemoryResponse, ReviewMemoryCandidateData, ReviewMemoryCandidateError, ReviewMemoryCandidateResponse, RevokeGrantData, RevokeGrantError, RevokeGrantResponse, RevokeTokenData, RevokeTokenError, RevokeTokenResponse, SavePublisherData, SavePublisherError, SavePublisherResponse, SaveStudioAgentData, SaveStudioAgentError, SaveStudioAgentResponse, SaveStudioPackData, SaveStudioPackError, SaveStudioPackResponse, SetReviewerNetworkData, SetReviewerNetworkError, SetReviewerNetworkResponse, StartWorkflowRunData, StartWorkflowRunError, StartWorkflowRunResponse, SubmitHumanTaskData, SubmitHumanTaskError, SubmitHumanTaskResponse, SubmitStudioAgentData, SubmitStudioAgentError, SubmitStudioAgentResponse, SubmitStudioPackData, SubmitStudioPackError, SubmitStudioPackResponse, SuggestWorkflowPackData, SuggestWorkflowPackError, SuggestWorkflowPackResponse, SyncConnectionData, SyncConnectionError, SyncConnectionResponse, TestStudioPackData, TestStudioPackError, TestStudioPackResponse, UpdateReviewerProfileData, UpdateReviewerProfileError, UpdateReviewerProfileResponse, UpgradeWorkflowPackData, UpgradeWorkflowPackError, UpgradeWorkflowPackResponse, ValidateStudioAgentData, ValidateStudioAgentError, ValidateStudioAgentResponse, ValidateStudioPackData, ValidateStudioPackError, ValidateStudioPackResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -66,7 +66,8 @@ export const getWorkflowPackQueryKey = (options: Options<GetWorkflowPackData>) =
  *
  * One pack. `inputSchema` is the JSON Schema of the input a run takes: for every pack in the live
  * workspace, and in the demo workspace for a pack that runs for real (the runtime is on and it has a
- * definition).
+ * definition). `maxBudget` is the most one run may be given (422 BUDGET_TOO_HIGH above it): on every live
+ * pack that sets one, and on the demo detail of a pack that runs for real.
  */
 export const getWorkflowPackOptions = (options: Options<GetWorkflowPackData>) => queryOptions<GetWorkflowPackResponse, GetWorkflowPackError, GetWorkflowPackResponse, ReturnType<typeof getWorkflowPackQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
@@ -166,6 +167,26 @@ export const installWorkflowPackMutation = (options?: Partial<Options<InstallWor
     const mutationOptions: UseMutationOptions<InstallWorkflowPackResponse, InstallWorkflowPackError, Options<InstallWorkflowPackData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await installWorkflowPack({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Upgrade Workflow Pack
+ *
+ * Move an added pack listed by another workspace to its newest approved version. Until then its runs keep
+ * the version pinned when it was added. Live workspace only.
+ */
+export const upgradeWorkflowPackMutation = (options?: Partial<Options<UpgradeWorkflowPackData>>): UseMutationOptions<UpgradeWorkflowPackResponse, UpgradeWorkflowPackError, Options<UpgradeWorkflowPackData>> => {
+    const mutationOptions: UseMutationOptions<UpgradeWorkflowPackResponse, UpgradeWorkflowPackError, Options<UpgradeWorkflowPackData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await upgradeWorkflowPack({
                 ...options,
                 ...fnOptions,
                 throwOnError: true
@@ -1210,6 +1231,175 @@ export const saveStudioPackMutation = (options?: Partial<Options<SaveStudioPackD
     return mutationOptions;
 };
 
+/**
+ * Disable Publisher
+ *
+ * Turn publishing off: no new submissions. Listings stay as they are; New Machines unlists them. Owners
+ * and admins only (403 POLICY_DENIED).
+ */
+export const disablePublisherMutation = (options?: Partial<Options<DisablePublisherData>>): UseMutationOptions<DisablePublisherResponse, DisablePublisherError, Options<DisablePublisherData>> => {
+    const mutationOptions: UseMutationOptions<DisablePublisherResponse, DisablePublisherError, Options<DisablePublisherData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await disablePublisher({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const getPublisherQueryKey = (options: Options<GetPublisherData>) => createQueryKey('getPublisher', options);
+
+/**
+ * Get Publisher
+ *
+ * The workspace's publisher profile. `enabled` is false until an owner or admin turns publishing on.
+ * Payout details are simulated: no money moves. Owners and admins only (403 POLICY_DENIED).
+ */
+export const getPublisherOptions = (options: Options<GetPublisherData>) => queryOptions<GetPublisherResponse, GetPublisherError, GetPublisherResponse, ReturnType<typeof getPublisherQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getPublisher({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getPublisherQueryKey(options)
+});
+
+/**
+ * Save Publisher
+ *
+ * Turn publishing on, or update the profile. Owners and admins only (403 POLICY_DENIED).
+ */
+export const savePublisherMutation = (options?: Partial<Options<SavePublisherData>>): UseMutationOptions<SavePublisherResponse, SavePublisherError, Options<SavePublisherData>> => {
+    const mutationOptions: UseMutationOptions<SavePublisherResponse, SavePublisherError, Options<SavePublisherData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await savePublisher({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Submit Studio Agent
+ *
+ * Submit the agent's saved version for the marketplace at a per-call price. Owners and admins of a
+ * workspace with a publisher profile. The automatic checks run first: the definition checks (422 with each
+ * problem; nothing is recorded) and a sandbox call of the agent through the agent runtime. The version waits
+ * in `checking` until that run ends, then in `in_review` for New Machines.
+ */
+export const submitStudioAgentMutation = (options?: Partial<Options<SubmitStudioAgentData>>): UseMutationOptions<SubmitStudioAgentResponse, SubmitStudioAgentError, Options<SubmitStudioAgentData>> => {
+    const mutationOptions: UseMutationOptions<SubmitStudioAgentResponse, SubmitStudioAgentError, Options<SubmitStudioAgentData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await submitStudioAgent({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Submit Studio Pack
+ *
+ * Submit the pack's saved version for the marketplace at a per-run price. Owners and admins of a
+ * workspace with a publisher profile. Every agent in the pack must be the platform's or listed (422
+ * PRIVATE_AGENTS names the agents that need to be listed first, each with where it stands: not submitted,
+ * in review, unlisted or not approved). The automatic checks run the definition checks and a
+ * sandbox test run with `input` and `budgetMinor` (a completed sandbox test of this version is reused). The
+ * version waits in `checking` until that run ends, then in `in_review` for New Machines.
+ */
+export const submitStudioPackMutation = (options?: Partial<Options<SubmitStudioPackData>>): UseMutationOptions<SubmitStudioPackResponse, SubmitStudioPackError, Options<SubmitStudioPackData>> => {
+    const mutationOptions: UseMutationOptions<SubmitStudioPackResponse, SubmitStudioPackError, Options<SubmitStudioPackData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await submitStudioPack({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const listStudioListingsQueryKey = (options: Options<ListStudioListingsData>) => createQueryKey('listStudioListings', options);
+
+/**
+ * List Studio Listings
+ *
+ * The workspace's listings: status, the newest submission, installs, runs in the last 30 days and this
+ * month's earnings (simulated). Owners and admins only (403 POLICY_DENIED).
+ */
+export const listStudioListingsOptions = (options: Options<ListStudioListingsData>) => queryOptions<ListStudioListingsResponse, ListStudioListingsError, ListStudioListingsResponse, ReturnType<typeof listStudioListingsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await listStudioListings({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: listStudioListingsQueryKey(options)
+});
+
+export const getStudioListingQueryKey = (options: Options<GetStudioListingData>) => createQueryKey('getStudioListing', options);
+
+/**
+ * Get Studio Listing
+ *
+ * One of the workspace's listings with every submitted version, its checks and the review notes. Owners
+ * and admins only (403 POLICY_DENIED).
+ */
+export const getStudioListingOptions = (options: Options<GetStudioListingData>) => queryOptions<GetStudioListingResponse, GetStudioListingError, GetStudioListingResponse, ReturnType<typeof getStudioListingQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getStudioListing({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getStudioListingQueryKey(options)
+});
+
+export const getStudioEarningsQueryKey = (options: Options<GetStudioEarningsData>) => createQueryKey('getStudioEarnings', options);
+
+/**
+ * Get Studio Earnings
+ *
+ * The publisher share of this month's fees and the simulated payouts of earlier months. Simulated: no
+ * money moves. Owners and admins only (403 POLICY_DENIED).
+ */
+export const getStudioEarningsOptions = (options: Options<GetStudioEarningsData>) => queryOptions<GetStudioEarningsResponse, GetStudioEarningsError, GetStudioEarningsResponse, ReturnType<typeof getStudioEarningsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getStudioEarnings({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getStudioEarningsQueryKey(options)
+});
+
 export const opsListPacksQueryKey = (options?: Options<OpsListPacksData>) => createQueryKey('opsListPacks', options);
 
 /**
@@ -1484,6 +1674,143 @@ export const opsHealthCheckConnectorMutation = (options?: Partial<Options<OpsHea
     const mutationOptions: UseMutationOptions<OpsHealthCheckConnectorResponse, OpsHealthCheckConnectorError, Options<OpsHealthCheckConnectorData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await opsHealthCheckConnector({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const opsListListingsQueryKey = (options?: Options<OpsListListingsData>) => createQueryKey('opsListListings', options);
+
+/**
+ * Ops List Listings
+ *
+ * Every workspace's listings, newest change first. `status=in_review` is the review queue (a version
+ * waits for a decision); `pending`, `listed` and `unlisted` filter on the listing.
+ */
+export const opsListListingsOptions = (options?: Options<OpsListListingsData>) => queryOptions<OpsListListingsResponse, OpsListListingsError, OpsListListingsResponse, ReturnType<typeof opsListListingsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await opsListListings({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: opsListListingsQueryKey(options)
+});
+
+export const opsGetListingQueryKey = (options: Options<OpsGetListingData>) => createQueryKey('opsGetListing', options);
+
+/**
+ * Ops Get Listing
+ *
+ * One listing: its versions with check results and sandbox run, the newest version's diff against the
+ * approved one, the price and the ops history.
+ */
+export const opsGetListingOptions = (options: Options<OpsGetListingData>) => queryOptions<OpsGetListingResponse, OpsGetListingError, OpsGetListingResponse, ReturnType<typeof opsGetListingQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await opsGetListing({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: opsGetListingQueryKey(options)
+});
+
+/**
+ * Decide
+ *
+ * Approve the version in review: it becomes the listed version. The reason is the note the publisher sees.
+ */
+export const opsApproveListingMutation = (options?: Partial<Options<OpsApproveListingData>>): UseMutationOptions<OpsApproveListingResponse, OpsApproveListingError, Options<OpsApproveListingData>> => {
+    const mutationOptions: UseMutationOptions<OpsApproveListingResponse, OpsApproveListingError, Options<OpsApproveListingData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await opsApproveListing({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Decide
+ *
+ * Send the version in review back to the publisher with a note of what to change.
+ */
+export const opsRequestListingChangesMutation = (options?: Partial<Options<OpsRequestListingChangesData>>): UseMutationOptions<OpsRequestListingChangesResponse, OpsRequestListingChangesError, Options<OpsRequestListingChangesData>> => {
+    const mutationOptions: UseMutationOptions<OpsRequestListingChangesResponse, OpsRequestListingChangesError, Options<OpsRequestListingChangesData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await opsRequestListingChanges({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Decide
+ *
+ * Reject the version in review, with a note the publisher sees.
+ */
+export const opsRejectListingMutation = (options?: Partial<Options<OpsRejectListingData>>): UseMutationOptions<OpsRejectListingResponse, OpsRejectListingError, Options<OpsRejectListingData>> => {
+    const mutationOptions: UseMutationOptions<OpsRejectListingResponse, OpsRejectListingError, Options<OpsRejectListingData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await opsRejectListing({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Decide
+ *
+ * Take a listed agent or pack out of every other workspace's marketplace and Studio; new runs of it stop.
+ */
+export const opsUnlistListingMutation = (options?: Partial<Options<OpsUnlistListingData>>): UseMutationOptions<OpsUnlistListingResponse, OpsUnlistListingError, Options<OpsUnlistListingData>> => {
+    const mutationOptions: UseMutationOptions<OpsUnlistListingResponse, OpsUnlistListingError, Options<OpsUnlistListingData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await opsUnlistListing({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Decide
+ *
+ * List an unlisted agent or pack again at its approved version.
+ */
+export const opsRelistListingMutation = (options?: Partial<Options<OpsRelistListingData>>): UseMutationOptions<OpsRelistListingResponse, OpsRelistListingError, Options<OpsRelistListingData>> => {
+    const mutationOptions: UseMutationOptions<OpsRelistListingResponse, OpsRelistListingError, Options<OpsRelistListingData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await opsRelistListing({
                 ...options,
                 ...fnOptions,
                 throwOnError: true

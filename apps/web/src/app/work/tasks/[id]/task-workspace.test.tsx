@@ -240,6 +240,110 @@ describe("TaskWorkspace pay terms", () => {
   });
 });
 
+describe("TaskWorkspace review items", () => {
+  // The support triage's review item as the API sends it: a Gmail thread, no money, a category flag.
+  const supportCase = {
+    id: "thread-18c2f",
+    kind: "item",
+    flag: "Complaint",
+    agentNote: "Sorted without the decision model; check the category and the planned reply.",
+    order: { ref: "thread-18c2f", date: "2026-10-14", customer: "Hidden", amount: "", paymentRef: "" },
+    payment: { ref: "", date: "", payer: "Hidden", amount: "", batch: "" },
+  };
+  const support = {
+    ...task,
+    packName: "Support Inbox Triage",
+    realRun: true,
+    via: "team",
+    pay: { amountMinor: 0, currency: "USD" },
+    records: [supportCase],
+  } as HumanTask;
+
+  async function claim(t: HumanTask, locale: "en" | "ja" = "en") {
+    const user = userEvent.setup();
+    renderWithIntl(<TaskWorkspace task={t} buyer={t.buyer} />, { locale });
+    await user.click(
+      screen.getByRole("button", { name: locale === "ja" ? "このタスクを引き受ける" : "Claim this task" }),
+    );
+    return user;
+  }
+
+  it("shows a support case as a plain item: its flag, date, note and reference, and no payment fields", async () => {
+    workspace.demo = false;
+    await claim(support);
+    const card = screen.getByRole("region", { name: "Item 1, thread-18c2f" });
+    expect(card).toHaveTextContent("Item 1 of 1");
+    expect(card).toHaveTextContent("Complaint");
+    expect(card).toHaveTextContent("2026-10-14");
+    expect(card).toHaveTextContent("thread-18c2f");
+    expect(card).toHaveTextContent("Sorted without the decision model; check the category and the planned reply.");
+    for (const finance of [/\$0\.00/, /Payment ref/, /Payout/, /Paid out/, /Batch/, /Finance Agent/, /None/])
+      expect(card).not.toHaveTextContent(finance);
+    expect(screen.queryByRole("radio", { name: "Same payment" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("radio", { name: "Real mismatch" })).not.toBeInTheDocument();
+  });
+
+  it("asks only for the verdict and feedback, and sends each item's note by the id it was shown", async () => {
+    workspace.demo = false;
+    const user = await claim(support);
+    expect(screen.getByRole("radio", { name: /Approve as is/ })).toBeChecked();
+    expect(screen.getByText("Write at least a sentence of feedback.")).toBeInTheDocument();
+    await user.type(screen.getByRole("textbox", { name: "Note on thread-18c2f" }), "Apologise first.");
+    await user.type(screen.getByRole("textbox", { name: "Feedback for the agent" }), "The replies look right.");
+    await user.click(screen.getByRole("button", { name: "Submit review" }));
+    expect(submitted.at(-1)).toMatchObject({
+      body: {
+        verdict: "APPROVED",
+        feedbackText: "The replies look right.",
+        recordCalls: {},
+        recordNotes: { "thread-18c2f": "Apologise first." },
+      },
+    });
+  });
+
+  it("sends a note on a renamed item under the id it was shown, which the API maps back", async () => {
+    workspace.demo = false;
+    // A network copy renames an id that names the org to its position; the note travels as data, not as text.
+    const renamed = {
+      ...supportCase,
+      id: "record-2",
+      order: { ...supportCase.order, ref: "the customer-77" },
+    };
+    const user = await claim({ ...support, via: "network", records: [supportCase, renamed] } as HumanTask);
+    await user.type(screen.getByRole("textbox", { name: "Note on record-2" }), "Refund it.");
+    await user.type(screen.getByRole("textbox", { name: "Feedback for the agent" }), "The replies look right.");
+    await user.click(screen.getByRole("button", { name: "Submit review" }));
+    const body = (submitted.at(-1) as { body: { feedbackText: string; recordNotes: Record<string, string> } }).body;
+    expect(body.recordNotes).toEqual({ "record-2": "Refund it." });
+    expect(body.feedbackText).toBe("The replies look right.");
+  });
+
+  it("shows an item's amount and related reference when it has them", async () => {
+    workspace.demo = false;
+    const refund = {
+      ...supportCase,
+      id: "#1003",
+      flag: "Proposed: approve",
+      order: { ...supportCase.order, ref: "#1003", amount: "$23.50", paymentRef: "ch_3Sandbox1003" },
+      payment: { ...supportCase.payment, ref: "ch_3Sandbox1003" },
+    };
+    await claim({ ...support, records: [refund] } as HumanTask);
+    const card = screen.getByRole("region", { name: "Item 1, #1003" });
+    expect(card).toHaveTextContent("$23.50");
+    expect(card).toHaveTextContent("ch_3Sandbox1003");
+    expect(screen.queryByRole("radio", { name: "Same payment" })).not.toBeInTheDocument();
+  });
+
+  it("reads the item card in Japanese", async () => {
+    workspace.demo = false;
+    await claim(support, "ja");
+    const card = screen.getByRole("region", { name: "項目1、thread-18c2f" });
+    expect(card).toHaveTextContent("項目 1 / 1");
+    expect(card).toHaveTextContent("エージェントのメモ："); // a full-width colon in Japanese
+    expect(card).not.toHaveTextContent("Finance Agent");
+  });
+});
+
 describe("TaskWorkspace team and network reviews", () => {
   const team = { ...task, realRun: true, via: "team", pay: { amountMinor: 0, currency: "USD" } } as HumanTask;
   const network = { ...task, realRun: true, via: "network", runId: "", pay: { amountMinor: 150, currency: "USD" } };

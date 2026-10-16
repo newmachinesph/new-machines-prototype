@@ -10,11 +10,20 @@ import { z } from "zod";
 import { Checkbox, Choices, Select, useToast } from "@/components/base";
 import { QueryState } from "@/components/query-state";
 import { Skeleton } from "@/components/skeleton";
-import { Button, ButtonLink, Callout } from "@/components/ui";
+import { Button, ButtonLink, Callout, SimTag } from "@/components/ui";
 import { type ApiError, type ApiIssue, toApiError } from "@/lib/api/errors";
 import { useErrorText } from "@/lib/api/use-error-text";
 import { usePack } from "@/lib/queries/catalog";
 import { useStartRun } from "@/lib/queries/runs";
+import {
+  MIN_RUN_BUDGET,
+  budgetChoices,
+  budgetLimit,
+  defaultBudget as defaultRunBudget,
+  packRunFee,
+} from "@/lib/run-budget";
+import { useNow } from "@/lib/clock";
+import { businessDay } from "@/lib/format";
 import type { Money } from "@/lib/types";
 import { useFormat } from "@/lib/use-format";
 import { createIdempotencyKeys, isDefiniteRejection } from "./idempotency";
@@ -27,18 +36,8 @@ import {
   validateInput,
 } from "./input-schema";
 
-const BUDGETS = [2000, 5000, 10000] as const;
-const DEFAULT_BUDGET = 5000;
-
-/** The budget a run starts with: the usual default, lowered to the pack's per-run cap when it has one. */
-export const defaultBudget = (pack?: StartablePack) =>
-  pack?.perRunCap ? Math.min(DEFAULT_BUDGET, pack.perRunCap.amountMinor) : DEFAULT_BUDGET;
-
-/** The budget choices, with the pack's per-run cap among them so the default is always one of them. */
-const budgetsFor = (pack?: StartablePack) => {
-  const cap = pack?.perRunCap?.amountMinor;
-  return cap && !(BUDGETS as readonly number[]).includes(cap) ? [...BUDGETS, cap].sort((a, b) => a - b) : [...BUDGETS];
-};
+/** The budget a run of `pack` starts with (see run-budget: never above what the API accepts). */
+export const defaultBudget = (pack?: StartablePack) => defaultRunBudget(pack ?? {});
 
 /** Translates a validation message. Pass `useTranslations("forms.startRun")` (or any function with these keys). */
 export type ValidationText = (key: "choosePack" | "needInput" | "noteTooLong") => string;
@@ -66,6 +65,12 @@ export type StartablePack = {
   inputs: string[];
   /** The spending cap per run chosen when the pack was hired (live workspaces). */
   perRunCap?: Money;
+  /** The most one run may be given (the pack's maximum). */
+  maxBudget?: Money;
+  /** Another workspace's fee per run, paid up front within the per-run cap. */
+  packFee?: Money;
+  /** The most a run may be given now, as the API works it out for an added pack. */
+  runBudgetLimit?: Money;
 };
 
 /** Why a run can't start, and the page that fixes it. `text` is shown as given. */
@@ -291,7 +296,8 @@ export function StartRunFields({
   const t = useTranslations("runs.new");
   const { money } = useFormat();
   const first = packs.find((p) => p.slug === defaultPack) ?? packs[0];
-  const fields = useMemo(() => inputFields(schema), [schema]);
+  const today = businessDay(useNow());
+  const fields = useMemo(() => inputFields(schema, today), [schema, today]);
   const form = useForm<StartRunValues>({
     resolver: useResolver(fields),
     shouldFocusError: true,
@@ -305,6 +311,16 @@ export function StartRunFields({
   const selectedSlug = useWatch({ control: form.control, name: "packSlug" });
   const pack = packs.find((p) => p.slug === selectedSlug);
   const { errors, isSubmitted } = form.formState;
+  const budgets = budgetChoices(pack ?? {});
+  // The fee leaves too little of the per-run cap for any budget the API would accept: say so, offer nothing.
+  const noRoom = !!pack && budgets.length === 0;
+  const budgetKey = budgets.join(",");
+  const fallback = pack && budgets.length ? defaultBudget(pack) : undefined;
+  // A limit learned after the form opened (the pack's detail) can rule out the chosen budget: move to the default.
+  useEffect(() => {
+    if (fallback === undefined || budgetKey.split(",").map(Number).includes(form.getValues("budgetMinor"))) return;
+    form.setValue("budgetMinor", fallback);
+  }, [budgetKey, fallback, form]);
 
   // Without a schema, the API's input errors belong to the free-text input when it is on screen.
   const onInput = !fields && !!pack?.inputs.length;
@@ -420,16 +436,51 @@ export function StartRunFields({
         render={({ field }) => (
           <fieldset>
             <legend className="mb-1.5 text-sm font-medium">{t("budget")}</legend>
-            <Choices
-              label={t("budget")}
-              layout="row"
-              value={String(field.value)}
-              onValueChange={(v) => field.onChange(Number(v))}
-              options={budgetsFor(pack).map((b) => ({ value: String(b), label: money(b) }))}
-            />
-            {pack?.perRunCap ? (
+            {noRoom && pack?.perRunCap ? (
+              <Callout
+                tone="warn"
+                title={
+                  <>
+                    {t("noRoom", {
+                      fee: money(pack.packFee ?? 0),
+                      cap: money(pack.perRunCap),
+                      min: money(MIN_RUN_BUDGET),
+                    })}{" "}
+                    <SimTag />
+                  </>
+                }
+                action={
+                  <ButtonLink
+                    href={`/app/marketplace/${pack.slug}/install`}
+                    variant="secondary"
+                    className="h-8 shrink-0"
+                  >
+                    {t("changeCap")}
+                  </ButtonLink>
+                }
+              />
+            ) : (
+              <Choices
+                label={t("budget")}
+                layout="row"
+                value={String(field.value)}
+                onValueChange={(v) => field.onChange(Number(v))}
+                options={budgets.map((b) => ({ value: String(b), label: money(b) }))}
+              />
+            )}
+            {pack?.maxBudget && budgetLimit(pack) === pack.maxBudget.amountMinor ? (
+              <p className="mt-1.5 text-xs text-muted">{t("maxBudget", { max: money(pack.maxBudget) })}</p>
+            ) : null}
+            {pack?.perRunCap && !noRoom ? (
               <p className="mt-1.5 text-xs text-muted">
-                {t("perRunCap", { cap: money(pack.perRunCap) })}{" "}
+                {pack.packFee
+                  ? t("perRunCapWithFee", { cap: money(pack.perRunCap), fee: money(pack.packFee) })
+                  : t("perRunCap", { cap: money(pack.perRunCap) })}{" "}
+                {pack.packFee ? (
+                  <>
+                    <SimTag />{" "}
+                  </>
+                ) : null}
                 <Link href={`/app/marketplace/${pack.slug}/install`} className="link">
                   {t("changeCap")}
                 </Link>
@@ -476,21 +527,35 @@ export function StartRunFields({
           }
         />
       ) : null}
-      <Button type="submit" className="h-10" disabled={pending || schemaPending || (!!refusal && refusalBlocks)}>
+      <Button
+        type="submit"
+        className="h-10"
+        disabled={pending || schemaPending || noRoom || (!!refusal && refusalBlocks)}
+      >
         {pending ? t("starting") : t("start")}
       </Button>
     </form>
   );
 }
 
-/** A start refused by the API, with the page that fixes it; null for errors a toast should report. */
+type RefusalKey = "hireThis" | "goConnections" | "seeUsage" | "changeCap" | "budgetTooHigh" | "budgetRequired";
+
+/**
+ * A start refused by the API, with the page that fixes it; null for errors a toast should report. `max` is the
+ * pack's maximum budget, formatted, when it is known: a budget over it is refused (BUDGET_TOO_HIGH).
+ */
 export function refusalFor(
   e: ApiError,
   slug: string,
-  t: (key: "hireThis" | "goConnections" | "seeUsage" | "changeCap") => string,
+  t: (key: RefusalKey, values?: Record<string, string>) => string,
+  max?: string,
 ): Refusal | null {
   const text = e.detail;
   switch (e.code) {
+    case "BUDGET_TOO_HIGH":
+      return { text: max ? t("budgetTooHigh", { max }) : text };
+    case "BUDGET_REQUIRED":
+      return { text: t("budgetRequired") };
     case "PACK_NOT_HIRED":
       return { text, href: `/app/marketplace/${slug}`, action: t("hireThis") };
     case "APPS_NOT_CONNECTED":
@@ -527,6 +592,22 @@ export function StartRunForm({
   const [issues, setIssues] = useState<ApiIssue[]>([]);
   const serverRefusal = refused?.slug === slug ? refused.refusal : null;
   const refusal = serverRefusal ?? blocked[slug] ?? null;
+  const { money } = useFormat();
+  // The detail names the pack's maximum where the list may not (the demo workspace's packs that run for real),
+  // and the maximum and limit of the version the workspace holds.
+  const held = detail.data;
+  const withTerms = held
+    ? packs.map((p) =>
+        p.slug === slug
+          ? {
+              ...p,
+              maxBudget: held.maxBudget ?? p.maxBudget,
+              runBudgetLimit: held.runBudgetLimit ?? p.runBudgetLimit,
+              packFee: held.runFee ? packRunFee(held) : p.packFee,
+            }
+          : p,
+      )
+    : packs;
 
   // Without the pack's detail there is no input schema to build the form from: report the failure (with
   // its retry) instead of a form whose Start can't send what the pack needs.
@@ -539,7 +620,7 @@ export function StartRunForm({
 
   return (
     <StartRunFields
-      packs={packs}
+      packs={withTerms}
       defaultPack={defaultPack}
       pending={start.isPending}
       schema={detail.data?.inputSchema}
@@ -566,7 +647,8 @@ export function StartRunForm({
                 setIssues(err.issues);
                 return;
               }
-              const r = refusalFor(err, v.packSlug, t);
+              const max = withTerms.find((p) => p.slug === v.packSlug)?.maxBudget;
+              const r = refusalFor(err, v.packSlug, t, max ? money(max) : undefined);
               if (r) setRefused({ slug: v.packSlug, refusal: r });
               else toast(t("failed"), errorText(err), "blocked");
             },

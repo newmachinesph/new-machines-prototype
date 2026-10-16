@@ -3,6 +3,7 @@ from typing import Any, Literal
 from pydantic import Field
 
 from app.models.common import Model, Money, Opt
+from app.models.publishing import MarketplaceListing
 from app.models.workforce import ReviewerPool
 
 
@@ -38,6 +39,8 @@ class Agent(SampleAgent):
     tools: list[str]  # connector tools it may call, `<connector>.<tool>`
     model_profile: Literal["reasoning", "fast"] | Opt = None
     used_by: list[AgentPackRef]
+    # Live workspace: another workspace's listed agent, with its publisher and per-call fee.
+    listing: MarketplaceListing | Opt = None
     source: Literal["definition", "sample"]
     # Live workspace: an agent the caller's org built in the Studio. Only that org sees it.
     built_by_team: bool | Opt = None
@@ -99,11 +102,22 @@ class Pack(Model):
     input_schema: dict[str, Any] | Opt = None
     # Live workspace, hired packs only: the per-run spending cap the org set when it hired the pack.
     per_run_cap: Money | Opt = None
+    # The most one run of the pack may be given (its Work Contract's `budget.maximum_minor`): a start with a
+    # higher budget is 422 BUDGET_TOO_HIGH. None when the contract sets no maximum. Read-only.
+    max_budget: Money | Opt = None
+    # Live workspace, hired packs only, read-only: the pack fee a run pays up front at the listing version the
+    # installation holds (0 for the platform's packs and the org's own), and the most a run may be given now,
+    # min(max_budget, per_run_cap - run_fee) and never below 0; a start above it is refused (409
+    # RUN_BUDGET_OVER_CAP, or 422 BUDGET_TOO_HIGH above max_budget).
+    run_fee: Money | Opt = None
+    run_budget_limit: Money | Opt = None
     # Live workspace, hired packs only: who reviews the hire's tasks.
     reviewer_pool: ReviewerPool | Opt = None
     # Live workspace: a pack the caller's org built in the Studio ("Built by your team"). Only that org sees
     # it, and it is not certified by New Machines.
     built_by_team: bool | Opt = None
+    # Live workspace: another workspace's listed pack, with its publisher and per-run fee.
+    listing: MarketplaceListing | Opt = None
 
 
 class Suggestion(Model):

@@ -11,8 +11,11 @@ import { ActorGlyph, ButtonLink, MockTag, Pill } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useAgentById, useAgents, usePacks, useTaxonomy } from "@/lib/queries/catalog";
 import { useIsLive } from "@/lib/queries/me";
+import { shownVersion } from "@/lib/shown-version";
+import { useFeeLabel } from "@/lib/listing-fee";
 import { useFormat } from "@/lib/use-format";
 import { useCanBuild } from "@/app/studio/can-build";
+import { ListedAgents } from "./listed-agents";
 import { usePerRunPrice } from "./per-run";
 
 // Sentinel values double as the `category` URL parameter, so they stay English; the labels shown are translated.
@@ -62,7 +65,10 @@ function FilterGroup({
 
 export function PackGrid() {
   const t = useTranslations("marketplace.grid");
+  const tl = useTranslations("listedMarket");
+  const fee = useFeeLabel();
   const { list } = useFormat();
+  const [mode, setMode] = useQueryState("view", parseAsString.withDefault("packs"));
   const perRun = usePerRunPrice();
   const packsQuery = usePacks();
   const agentsQuery = useAgents();
@@ -80,7 +86,11 @@ export function PackGrid() {
     <QueryState query={packsQuery} skeleton={<PackGridSkeleton />}>
       {(PACKS) => (
         <QueryState query={agentsQuery} skeleton={<PackGridSkeleton />}>
-          {() => {
+          {(AGENTS) => {
+            const listedAgents = AGENTS.filter((a) => a.listing);
+            // Listed agents exist in a live workspace only: the demo keeps its packs-only marketplace.
+            const showAgents = live || listedAgents.length > 0;
+            const agentsView = showAgents && mode === "agents";
             const categories = [...new Set(PACKS.map((p) => p.category))];
             const teamCount = PACKS.filter((p) => p.builtByTeam).length;
             // A ?category= kept from when the org still had a team pack names a view that is no longer offered.
@@ -121,30 +131,33 @@ export function PackGrid() {
                 <aside className="space-y-5 xl:sticky xl:top-20">
                   <p className="text-sm leading-relaxed text-grey-700">{t("intro")}</p>
                   {/* One filter bar: what to show, then the pack's function and industry (the taxonomy). */}
-                  <nav aria-label={t("filterLabel")} className="space-y-4 xl:space-y-5">
-                    <FilterGroup
-                      title={t("viewsLabel")}
-                      filters={views}
-                      active={view}
-                      onPick={(label) => setCat(label === ALL ? null : label)}
-                    />
-                    {functions.length > 0 ? (
+                  {/* The filters sort packs; the Agents view lists agents, so it has none (a kept ?category= is ignored). */}
+                  {agentsView ? null : (
+                    <nav aria-label={t("filterLabel")} className="space-y-4 xl:space-y-5">
                       <FilterGroup
-                        title={t("functionLabel")}
-                        filters={functions}
+                        title={t("viewsLabel")}
+                        filters={views}
                         active={view}
-                        onPick={(label) => setCat(label)}
+                        onPick={(label) => setCat(label === ALL ? null : label)}
                       />
-                    ) : null}
-                    {industries.length > 0 ? (
-                      <FilterGroup
-                        title={t("industryLabel")}
-                        filters={industryFilters}
-                        active={industry}
-                        onPick={(label) => setIndustry(label === ALL_INDUSTRIES ? null : label)}
-                      />
-                    ) : null}
-                  </nav>
+                      {functions.length > 0 ? (
+                        <FilterGroup
+                          title={t("functionLabel")}
+                          filters={functions}
+                          active={view}
+                          onPick={(label) => setCat(label)}
+                        />
+                      ) : null}
+                      {industries.length > 0 ? (
+                        <FilterGroup
+                          title={t("industryLabel")}
+                          filters={industryFilters}
+                          active={industry}
+                          onPick={(label) => setIndustry(label === ALL_INDUSTRIES ? null : label)}
+                        />
+                      ) : null}
+                    </nav>
+                  )}
                   {live && canBuild ? (
                     <div className="space-y-2 border-t border-rule pt-4">
                       <p className="text-sm leading-relaxed text-grey-700">{t("buildOwn")}</p>
@@ -159,103 +172,156 @@ export function PackGrid() {
                 </aside>
 
                 <div className="space-y-4">
-                  <label className="flex h-9 items-center gap-2 rounded-md border border-rule bg-paper px-3 focus-within:border-grey-500">
-                    <Search className="size-4 text-grey-500" strokeWidth={1.75} aria-hidden />
-                    <span className="sr-only">{t("search")}</span>
-                    <input
-                      name="q"
-                      type="search"
-                      value={q}
-                      onChange={(e) => setQ(e.target.value)}
-                      placeholder={t("searchPlaceholder")}
-                      className="w-full bg-transparent text-sm outline-none placeholder:text-grey-500"
-                    />
-                  </label>
-                  {shown.length === 0 ? (
-                    <p className="panel px-5 py-10 text-center text-sm text-muted">
-                      {t("noMatch")}{" "}
-                      <button
-                        type="button"
-                        className="link"
-                        onClick={() => {
-                          setQ(null);
-                          setCat(null);
-                          setIndustry(null);
-                        }}
-                      >
-                        {t("showAll")}
-                      </button>
-                    </p>
+                  {showAgents ? (
+                    <div
+                      role="group"
+                      aria-label={tl("viewsLabel")}
+                      className="inline-flex gap-1 rounded-md bg-grey-50 p-1"
+                    >
+                      {(["packs", "agents"] as const).map((m) => (
+                        <button
+                          key={m}
+                          type="button"
+                          aria-pressed={agentsView === (m === "agents")}
+                          onClick={() => setMode(m === "agents" ? "agents" : null)}
+                          className={cn(
+                            "min-h-8 rounded px-3 text-sm",
+                            agentsView === (m === "agents")
+                              ? "bg-paper font-medium text-ink shadow-sm"
+                              : "text-grey-700 hover:text-ink",
+                          )}
+                        >
+                          {m === "agents" ? tl("viewAgents") : tl("viewPacks")}
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+                  {agentsView ? (
+                    <ListedAgents agents={listedAgents} />
                   ) : (
-                    <ul className="grid [grid-template-columns:repeat(auto-fill,minmax(min(100%,360px),1fr))] gap-4">
-                      {shown.map((p) => {
-                        // Every app a sandbox mock: say so once for the card, not once per app.
-                        const allMocked = p.connectors.length > 0 && p.connectors.every((k) => k.mocked);
-                        const price = perRun(p.estimate);
-                        return (
-                          <li key={p.slug}>
-                            <Link
-                              href={`/app/marketplace/${p.slug}`}
-                              className="panel flex h-full flex-col p-5 transition-colors hover:border-grey-300"
-                            >
-                              <div className="flex items-start gap-3">
-                                <PackIcon slug={p.slug} />
-                                <div className="min-w-0 flex-1">
-                                  <div className="text-[15px] font-semibold">{p.name}</div>
-                                  <div className="mt-0.5 text-xs text-muted">
-                                    {t("publisherVersion", { publisher: p.publisher, version: p.version })}
-                                  </div>
-                                </div>
-                                {/* The corner exists only with a badge in it: empty, it would still take its gap. */}
-                                {p.builtByTeam || p.installed || !p.certified ? (
-                                  <span data-testid="pack-badges" className="flex shrink-0 flex-col items-end gap-1">
-                                    {p.builtByTeam ? <Pill tone="machine">{t("team")}</Pill> : null}
-                                    {p.installed ? (
-                                      <span className="flex items-center gap-1 text-xs font-medium">
-                                        <Check className="size-3.5" strokeWidth={2.25} aria-hidden />
-                                        {t("hired")}
+                    <>
+                      <label className="flex h-9 items-center gap-2 rounded-md border border-rule bg-paper px-3 focus-within:border-grey-500">
+                        <Search className="size-4 text-grey-500" strokeWidth={1.75} aria-hidden />
+                        <span className="sr-only">{t("search")}</span>
+                        <input
+                          name="q"
+                          type="search"
+                          value={q}
+                          onChange={(e) => setQ(e.target.value)}
+                          placeholder={t("searchPlaceholder")}
+                          className="w-full bg-transparent text-sm outline-none placeholder:text-grey-500"
+                        />
+                      </label>
+                      {shown.length === 0 ? (
+                        <p className="panel px-5 py-10 text-center text-sm text-muted">
+                          {t("noMatch")}{" "}
+                          <button
+                            type="button"
+                            className="link"
+                            onClick={() => {
+                              setQ(null);
+                              setCat(null);
+                              setIndustry(null);
+                            }}
+                          >
+                            {t("showAll")}
+                          </button>
+                        </p>
+                      ) : (
+                        <ul className="grid [grid-template-columns:repeat(auto-fill,minmax(min(100%,360px),1fr))] gap-4">
+                          {shown.map((p) => {
+                            // Every app a sandbox mock: say so once for the card, not once per app.
+                            const allMocked = p.connectors.length > 0 && p.connectors.every((k) => k.mocked);
+                            const price = perRun(p.estimate);
+                            return (
+                              <li key={p.slug}>
+                                <Link
+                                  href={`/app/marketplace/${p.slug}`}
+                                  className="panel flex h-full flex-col p-5 transition-colors hover:border-grey-300"
+                                >
+                                  <div className="flex items-start gap-3">
+                                    <PackIcon slug={p.slug} />
+                                    <div className="min-w-0 flex-1">
+                                      <div className="text-[15px] font-semibold">{p.name}</div>
+                                      <div className="mt-0.5 text-xs text-muted">
+                                        {p.listing ? (
+                                          // A listed pack is the publisher's own: its fee stays visible even once added.
+                                          <>
+                                            <span>{tl("by", { publisher: p.listing.publisher })}</span>
+                                            {" · "}
+                                            <span className="tnum">{fee(p.listing)}</span>
+                                          </>
+                                        ) : (
+                                          t("publisherVersion", { publisher: p.publisher, version: shownVersion(p) })
+                                        )}
+                                      </div>
+                                    </div>
+                                    {/* The corner exists only with a badge in it: empty, it would still take its gap. */}
+                                    {p.builtByTeam || p.installed || (!p.certified && !p.listing) ? (
+                                      <span
+                                        data-testid="pack-badges"
+                                        className="flex shrink-0 flex-col items-end gap-1"
+                                      >
+                                        {p.builtByTeam ? <Pill tone="machine">{t("team")}</Pill> : null}
+                                        {p.installed ? (
+                                          <span className="flex items-center gap-1 text-xs font-medium">
+                                            <Check className="size-3.5" strokeWidth={2.25} aria-hidden />
+                                            {t("hired")}
+                                          </span>
+                                        ) : p.certified || p.builtByTeam || p.listing ? null : (
+                                          <Pill tone="quiet">{t("notCertified")}</Pill>
+                                        )}
                                       </span>
-                                    ) : p.certified || p.builtByTeam ? null : (
-                                      <Pill tone="quiet">{t("notCertified")}</Pill>
-                                    )}
-                                  </span>
-                                ) : null}
-                              </div>
-                              <p className="mt-3 text-sm leading-relaxed text-grey-700">{p.outcome}</p>
-                              <div className="mt-4 mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted">
-                                <span className="flex items-center gap-1.5">
-                                  <ActorGlyph actor="machine" className="size-2.5" />
-                                  {list(p.agents.map((a) => agentById(a)?.name ?? a))}
-                                </span>
-                                {p.estimate.humanMax.amountMinor > 0 ? (
-                                  <span className="flex items-center gap-1.5">
-                                    <ActorGlyph actor="human" className="size-2.5" />
-                                    {t("reviewerWhenNeeded")}
-                                  </span>
-                                ) : null}
-                              </div>
-                              <div className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t border-rule pt-3 text-xs">
-                                <span className="flex flex-wrap items-center gap-1.5">
-                                  {p.connectors.map((k) => (
-                                    <span
-                                      key={k.app}
-                                      className="inline-flex items-center gap-1 rounded bg-grey-100 px-1.5 py-0.5 text-grey-700"
-                                    >
-                                      {k.app}
-                                      {k.mocked && !allMocked ? <MockTag className="ml-1 border-0 px-0 py-0" /> : null}
+                                    ) : null}
+                                  </div>
+                                  <p className="mt-3 text-sm leading-relaxed text-grey-700">{p.outcome}</p>
+                                  <div className="mt-4 mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted">
+                                    {/* Only agents the catalog names: a key would show its workspace's org id. */}
+                                    {p.agents.some((a) => agentById(a)) ? (
+                                      <span className="flex items-center gap-1.5">
+                                        <ActorGlyph actor="machine" className="size-2.5" />
+                                        {list(p.agents.flatMap((a) => agentById(a)?.name ?? []))}
+                                      </span>
+                                    ) : null}
+                                    {p.estimate.humanMax.amountMinor > 0 ? (
+                                      <span className="flex items-center gap-1.5">
+                                        <ActorGlyph actor="human" className="size-2.5" />
+                                        {t("reviewerWhenNeeded")}
+                                      </span>
+                                    ) : null}
+                                  </div>
+                                  <div className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t border-rule pt-3 text-xs">
+                                    <span className="flex flex-wrap items-center gap-1.5">
+                                      {p.connectors.map((k) => (
+                                        <span
+                                          key={k.app}
+                                          className="inline-flex items-center gap-1 rounded bg-grey-100 px-1.5 py-0.5 text-grey-700"
+                                        >
+                                          {k.app}
+                                          {k.mocked && !allMocked ? (
+                                            <MockTag className="ml-1 border-0 px-0 py-0" />
+                                          ) : null}
+                                        </span>
+                                      ))}
+                                      {allMocked ? <MockTag /> : null}
                                     </span>
-                                  ))}
-                                  {allMocked ? <MockTag /> : null}
-                                </span>
-                                <span className="tnum ml-auto whitespace-nowrap text-grey-700">
-                                  {price === null ? t("perRunUnset") : t("perRun", { price })}
-                                </span>
-                              </div>
-                            </Link>
-                          </li>
-                        );
-                      })}
-                    </ul>
+                                    <span className="tnum ml-auto whitespace-nowrap text-grey-700">
+                                      {/* A listed pack's fee (above) is charged on top of the estimate: say so, so the
+                                          card never reads as two prices for one run. */}
+                                      {price === null
+                                        ? t("perRunUnset")
+                                        : p.listing && p.listing.fee.amountMinor > 0
+                                          ? t("perRunPlusFee", { price })
+                                          : t("perRun", { price })}
+                                    </span>
+                                  </div>
+                                </Link>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      )}
+                    </>
                   )}
                 </div>
               </div>

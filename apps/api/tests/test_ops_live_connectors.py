@@ -49,7 +49,13 @@ def usage(defs):
 
 def test_each_definition_is_one_connector_with_its_settings_and_todays_usage(usage):
     entries = {e.id: e for e in ops_live.list_connectors(usage, NOW)}
-    assert list(entries) == ["gmail", "googlesheets", "shopify", "stripe"]  # never the ghost row
+    assert list(entries) == [
+        "gmail",
+        "googlecalendar",
+        "googlesheets",
+        "shopify",
+        "stripe",
+    ]  # never the ghost row
 
     shopify = entries["shopify"].model_dump(by_alias=True, exclude_none=True)
     assert shopify == {
@@ -119,7 +125,13 @@ def test_the_live_list_and_actions_return_the_real_entry(live_ops, defs):
     defs.commit()
     listed = live_ops.get("/v1/ops/connectors", headers=OPS)
     assert listed.status_code == 200, listed.text
-    assert [c["id"] for c in listed.json()] == ["gmail", "googlesheets", "shopify", "stripe"]
+    assert [c["id"] for c in listed.json()] == [
+        "gmail",
+        "googlecalendar",
+        "googlesheets",
+        "shopify",
+        "stripe",
+    ]
     assert all("lastHealthCheck" not in c for c in listed.json())
 
     res = live_ops.post("/v1/ops/connectors/stripe:disable", json={"reason": REASON}, headers=OPS)

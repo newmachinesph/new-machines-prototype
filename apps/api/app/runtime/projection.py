@@ -12,6 +12,7 @@ from typing import Any
 
 from psycopg.types.json import Jsonb
 
+from app.defs import owners
 from app.runtime import cel
 
 X_STEP = 210
@@ -35,6 +36,8 @@ TERMINAL_RUN_STATUSES = {"COMPLETED", "FAILED", "CANCELLED"}
 OPEN_ROW_STATUSES = {"open", "unreviewed"}
 SIMULATED_LIMITATION = "Simulated: connector data came from sandbox responses, not a live account."
 HUMAN_WORKFORCE = "Human workforce"  # `who` of the line that opens a review task (not of its decision)
+DECISION_MODEL_LABEL = "Decision model"  # product copy: never the model's or vendor's name
+_MODEL_ANSWERED = ("answered", "skipped")
 VIEW_ITEMS_MAX = 50  # a pack's deliverable view shows at most this many items
 VIEW_DETAIL_MAX = 160  # characters of an item's detail
 
@@ -76,6 +79,16 @@ def _version_ref(snapshot: dict, kind: str, key: str) -> str:
     return f"{key}@{version}" if version is not None else key
 
 
+def _agent_label(key: str, agent: dict) -> str:
+    """An agent step's label. A workspace's own agent (`<org namespace>--<name>`) shows its definition's name,
+    or its key's name part in words, so the label never carries the org id. A platform agent shows its key in
+    words ("finance-agent" as "Finance agent")."""
+    if owners.SEPARATOR not in key:
+        return key.replace("-", " ").capitalize()
+    name = str(agent.get("name") or "").strip()
+    return name or owners.name_of(key).replace("-", " ").capitalize()
+
+
 def _node_text(node: dict, snapshot: dict) -> tuple[str, str | None, str | None]:
     """(label, subtitle, pinned version ref) for a workflow node."""
     cfg, kind = node.get("config") or {}, node["type"]
@@ -93,17 +106,16 @@ def _node_text(node: dict, snapshot: dict) -> tuple[str, str | None, str | None]
     if kind == "agent":
         agent = _body(snapshot, "agent", cfg.get("agent", ""))
         profile = (agent.get("runtime") or {}).get("model_profile")
-        label = str(cfg.get("agent", "agent")).replace("-", " ").capitalize()
         return (
-            label,
-            f"{profile} model" if profile else None,
+            _agent_label(str(cfg.get("agent", "agent")), agent),
+            f"{str(profile).capitalize()} model" if profile else None,
             _version_ref(snapshot, "agent", cfg.get("agent", "")),
         )
     if kind == "decision":
         rules = _body(snapshot, "decision_rules", cfg.get("rules", ""))
         return (
             rules.get("question", "Decide"),
-            "Rules",
+            DECISION_MODEL_LABEL if rules.get("evaluator") else "Rules",
             _version_ref(snapshot, "decision_rules", cfg.get("rules", "")),
         )
     if cfg.get("title"):
@@ -357,6 +369,21 @@ def _on_tool_call(p: dict, event: dict, data: dict) -> None:
         _say(p, event, "machine", app, title, detail=detail or None, tone=None if ok else "blocked")
 
 
+def _decision_record(data: dict, verdict: str) -> tuple[dict, list[dict]]:
+    """The evaluator and chain of a decision event: the rules alone; or the decision model, then the rules;
+    or, when the step took its fallback, the model's error alone (the verdict is the fallback's)."""
+    config = str(data.get("rules_ref") or "1")
+    rules = {"kind": "rules", "verdict": verdict, "note": data.get("explanation", "")}
+    asked = data.get("evaluator")
+    if not isinstance(asked, dict) or asked.get("kind") != "jev":
+        return {"kind": "rules", "label": "Rules", "configVersion": config}, [rules]
+    evaluator = {"kind": "jev", "label": DECISION_MODEL_LABEL, "configVersion": config}
+    note = str(asked.get("note") or "")
+    if asked.get("status") in _MODEL_ANSWERED:
+        return evaluator, [{"kind": "jev", "verdict": "PASS", "note": note}, rules]
+    return evaluator, [{"kind": "jev", "verdict": "ERROR", "note": note}]
+
+
 def _on_decision(p: dict, event: dict, data: dict) -> None:
     node = _node(p, event["node_id"])
     if node is None:
@@ -371,10 +398,11 @@ def _on_decision(p: dict, event: dict, data: dict) -> None:
         "reasonCodes": list(raw.get("reason_codes") or ["RULES_EVALUATED"]),
         "actor": raw.get("actor") or "Policy engine",
     }
+    evaluator, chain = _decision_record(data, verdict)
     node["decision"] = {
         "question": data.get("question") or node["label"],
-        "evaluator": {"kind": "rules", "label": "Rules", "configVersion": str(data.get("rules_ref") or "1")},
-        "chain": [{"kind": "rules", "verdict": verdict, "note": data.get("explanation", "")}],
+        "evaluator": evaluator,
+        "chain": chain,
         "verdict": verdict,
         "reasonCodes": [data["reason_code"]],
         "explanation": data.get("explanation", ""),
@@ -383,6 +411,11 @@ def _on_decision(p: dict, event: dict, data: dict) -> None:
         "evaluatedAt": event["at"],
         "policy": policy,
     }
+    usage = data.get("usage")
+    cost = int(usage.get("cost_minor") or 0) if isinstance(usage, dict) else 0
+    if cost > 0:
+        _add_money(p["spent"], "ai", cost)
+        node["cost"] = _money(node.get("cost", _money(0))["amountMinor"] + cost)
     tone = (
         "ok"
         if verdict == "APPROVED"
@@ -610,11 +643,26 @@ def _on_run_completed(p: dict, event: dict, data: dict, view: dict | None = None
     _say(p, event, "system", "Workflow engine", "Completed the run", tone="ok")
 
 
+def _ended_by_declined_approval(p: dict, end_id: str | None) -> bool:
+    """Whether the run reached its end `end_id` by the `denied` route of an approval that was declined."""
+    nodes = {n["id"]: n for n in p["nodes"]}
+    return any(
+        e["to"] == end_id
+        and e.get("taken")
+        and e.get("label") == "denied"
+        and nodes.get(e["from"], {}).get("type") == "approval"
+        and nodes[e["from"]].get("status") == "REJECTED"
+        for e in p["edges"]
+    )
+
+
 def _on_run_failed(p: dict, event: dict, data: dict) -> None:
     p["status"] = "FAILED"
     p["endedAt"] = event["at"]
     reason = data.get("reason") or "The run stopped."
     p["summary"] = reason
+    if _ended_by_declined_approval(p, event.get("node_id")):
+        p["stopReason"] = "declined"
     p["attention"] = {"tone": "blocked", "title": "The run stopped", "body": reason}
     stages = p["stages"]
     if stages["executed"] == "pending":

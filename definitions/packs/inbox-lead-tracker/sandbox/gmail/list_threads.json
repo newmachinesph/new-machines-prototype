@@ -1,0 +1,61 @@
+{
+  "messages": [
+    {
+      "messageId": "19b2c0a1d2e30005",
+      "threadId": "19b2c0a1d2e30005",
+      "messageTimestamp": "2026-10-14T16:20:00Z",
+      "labelIds": ["INBOX", "UNREAD"],
+      "sender": "Maya Chen <maya.chen@brightleaf.example.com>",
+      "to": "hello@yourco.example.com",
+      "subject": "Quote for a team dinner for 40 on 12 November",
+      "messageText": "Hello, we are planning a team dinner for 40 people on 12 November and would like a quote by tomorrow if possible. Could you also tell us about vegetarian options? Maya Chen, Brightleaf Events",
+      "preview": {"subject": "Quote for a team dinner for 40 on 12 November", "body": "Hello, we are planning a team dinner for 40 people on 12 November and would like a quote by tomorrow if possible."}
+    },
+    {
+      "messageId": "19b2c0a1d2e30004",
+      "threadId": "19b2c0a1d2e30004",
+      "messageTimestamp": "2026-10-14T07:00:00Z",
+      "labelIds": ["INBOX", "CATEGORY_PROMOTIONS"],
+      "sender": "Daily Digest <news@digest.example.com>",
+      "to": "hello@yourco.example.com",
+      "subject": "Your weekly digest",
+      "messageText": "Top stories this week: five ideas for your next team offsite. Unsubscribe at any time.",
+      "preview": {"subject": "Your weekly digest", "body": "Top stories this week: five ideas for your next team offsite."}
+    },
+    {
+      "messageId": "19b2c0a1d2e30003",
+      "threadId": "19b2c0a1d2e30003",
+      "messageTimestamp": "2026-10-13T11:45:00Z",
+      "labelIds": ["INBOX"],
+      "sender": "Tom Okafor <tom@okaforlegal.example.com>",
+      "to": "hello@yourco.example.com",
+      "subject": "Pricing for monthly bookkeeping",
+      "messageText": "Hi, I run a small law firm (Okafor Legal) and we are looking for help with monthly bookkeeping from next month. Could you send your prices this week? Tom",
+      "preview": {"subject": "Pricing for monthly bookkeeping", "body": "Hi, I run a small law firm (Okafor Legal) and we are looking for help with monthly bookkeeping from next month."}
+    },
+    {
+      "messageId": "19b2c0a1d2e30002",
+      "threadId": "19b2c0a1d2e30002",
+      "messageTimestamp": "2026-10-12T02:10:00Z",
+      "labelIds": ["INBOX"],
+      "sender": "CloudHost Billing <billing@cloudhost.example.com>",
+      "to": "hello@yourco.example.com",
+      "subject": "Your receipt from CloudHost",
+      "messageText": "Thank you for your payment of 12.00 USD for October hosting.",
+      "preview": {"subject": "Your receipt from CloudHost", "body": "Thank you for your payment of 12.00 USD for October hosting."}
+    },
+    {
+      "messageId": "19b2c0a1d2e30001",
+      "threadId": "19b2c0a1d2e30001",
+      "messageTimestamp": "2026-10-10T09:30:00Z",
+      "labelIds": ["INBOX"],
+      "sender": "Aiko Sato <aiko.sato@example.com>",
+      "to": "hello@yourco.example.com",
+      "subject": "Question about your workshops",
+      "messageText": "Hi, I saw your website and would like to know more about your design workshops for small teams. No rush. Aiko",
+      "preview": {"subject": "Question about your workshops", "body": "Hi, I saw your website and would like to know more about your design workshops for small teams."}
+    }
+  ],
+  "nextPageToken": null,
+  "resultSizeEstimate": 5
+}

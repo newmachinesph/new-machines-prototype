@@ -2,7 +2,6 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { duration } from "@/lib/format";
 import { useFormat } from "@/lib/use-format";
-import { useViewerTimeZone } from "@/lib/use-viewer-time-zone";
 import { useTask } from "@/lib/queries/tasks";
 import type { DecisionRecord, PolicyVerdict, RunNode, ToolStatus } from "@/lib/types";
 import { useCodes } from "./run-codes";
@@ -76,7 +75,7 @@ function DecisionBlocks({ d }: { d: DecisionRecord }) {
               <span className="tnum mt-px w-4 shrink-0 text-xs text-muted">{i + 1}</span>
               <div>
                 <span className="font-medium">
-                  {c.kind === "rules" ? t("rules") : c.kind === "gemini" ? t("aiModel") : "Jev"}
+                  {c.kind === "rules" ? t("rules") : c.kind === "gemini" ? t("aiModel") : t("decisionModel")}
                 </span>
                 <span className="text-muted">{t("chainVerdict", { verdict: t(`verdict.${c.verdict}`) })}</span>
                 <div className="text-[13px] leading-snug text-grey-700">{clean(c.note)}</div>
@@ -134,7 +133,6 @@ function TaskLink({ id }: { id: string }) {
   const { data: task, isPending } = useTask(id);
   const t = useTranslations("run.inspector");
   const { money, dateTime, until } = useFormat();
-  const { zone } = useViewerTimeZone();
   if (isPending)
     return (
       <Block title={t("reviewerTask")} glyph="human">
@@ -159,7 +157,7 @@ function TaskLink({ id }: { id: string }) {
               },
               {
                 label: t("due"),
-                value: t("dueLine", { when: dateTime(task.deadline, zone), left: until(task.deadline) }),
+                value: t("dueLine", { when: dateTime(task.deadline), left: until(task.deadline) }),
               },
             ]}
           />

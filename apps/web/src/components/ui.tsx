@@ -151,8 +151,10 @@ const RUN_STATUS_TONE: Record<RunStatus, Tone> = {
   NEEDS_ATTENTION: "blocked",
 };
 
-export function RunStatusPill({ status }: { status: RunStatus }) {
+/** A run's status. A failed run that a person stopped by declining its approval reads "Declined", not "Failed". */
+export function RunStatusPill({ status, stopReason }: { status: RunStatus; stopReason?: "declined" | null }) {
   const t = useTranslations("status");
+  if (status === "FAILED" && stopReason === "declined") return <Pill tone="quiet">{t("DECLINED")}</Pill>;
   return (
     <Pill tone={RUN_STATUS_TONE[status]} live={status === "RUNNING"}>
       {t(status)}
@@ -352,6 +354,7 @@ export function Section({
   children,
   className,
   headingRef,
+  "data-tour": tour,
 }: {
   title?: ReactNode;
   aside?: ReactNode;
@@ -359,9 +362,11 @@ export function Section({
   className?: string;
   /** Makes the heading a focus target, for when the control a person used disappears. */
   headingRef?: Ref<HTMLHeadingElement>;
+  /** A product tour step's target. */
+  "data-tour"?: string;
 }) {
   return (
-    <section className={cn("panel", className)}>
+    <section className={cn("panel", className)} data-tour={tour}>
       {title ? (
         <div className="flex items-center justify-between gap-3 border-b border-rule px-5 py-3.5">
           <h2

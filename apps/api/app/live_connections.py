@@ -4,14 +4,14 @@ through Composio (`connect_live`, `sync`); NM_CONNECTOR_MODE does not decide her
 one org."""
 
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 from urllib.parse import urlencode
 
 from psycopg.types.json import Jsonb
 
 from app import composio_accounts, db, settings, workspace
-from app.defs import registry
+from app.defs import owners, registry
 from app.defs.current import latest_bodies
 from app.errors import ApiProblem
 from app.models.org import Connection, ConnectStarted, Grant, RevokedGrant
@@ -101,23 +101,122 @@ def pack_grants(connector: dict, pack_name: str, capabilities: set[str] | None =
 
 @dataclass(frozen=True)
 class _Packs:
-    """The latest pack definitions the org may see: bodies and versions by slug, from one read."""
+    """The pack definitions the org's grants come from: bodies and versions by slug, from one read."""
 
     bodies: dict[str, dict]
     versions: dict[str, int]
+    # The listing version each added listed pack's installation held when read (`installations`).
+    held: dict[str, str | None] = field(default_factory=dict)
+
+
+def _foreign(conn, kind: str, key: str, org_id: str) -> bool:
+    """Whether kind/key is another workspace's private definition: one the org sees only while it is
+    listed."""
+    owner = registry.owner_of(conn, kind, key)
+    return owner.visibility == "private" and owner != owners.org_owner(org_id)
+
+
+def _listed_bundle(conn, org_id: str, key: str, version: int) -> dict[tuple[str, str], int] | None:
+    """The definitions, by (kind, key), of the approved version of pack `key`'s listing that the org's
+    installation holds (`installations.listing_version_id`), when that version holds version `version` of the
+    pack and the listing is listed by the pack's private owner (the rule of `registry.pinnable_version`); None
+    otherwise, also when the installation holds no listing version (it fails closed). A version approved
+    again at the same pack version changes nothing until the org updates."""
+    row = conn.execute(
+        "SELECT lv.definitions FROM listing_versions lv JOIN listings ls ON ls.id = lv.listing_id "
+        "JOIN definition_owners o ON o.kind = 'pack' AND o.key = %(key)s AND o.owner_kind = 'org' "
+        "AND o.owner_id = ls.publisher_org_id AND o.visibility = 'private' "
+        "JOIN installations i ON i.org_id = %(org)s AND i.pack_slug = %(key)s "
+        "AND lv.id = i.listing_version_id "
+        "WHERE ls.kind = 'pack' AND ls.definition_key = %(key)s AND ls.status = 'listed' "
+        "AND ls.publisher_org_id <> %(org)s AND lv.status = 'approved' AND lv.definitions @> %(ref)s",
+        {"key": key, "org": org_id, "ref": Jsonb([{"kind": "pack", "key": key, "version": version}])},
+    ).fetchone()
+    if row is None:
+        return None
+    return {(str(d["kind"]), str(d["key"])): int(d["version"]) for d in row["definitions"]}
+
+
+def pinned_contract(conn, org_id: str, pack: registry.Version) -> registry.Version | None:
+    """The Work Contract the org's grants for `pack` (the version its installation pins) come from. Of
+    another workspace's listed pack: the contract in the approved bundle that holds that pack version, so a
+    newer approved version changes nothing until the org updates; None (it grants nothing) when no listed
+    bundle holds it. Of the platform's packs and the org's own: the contract the org may see."""
+    key = str(pack.body.get("contract") or "")
+    if not _foreign(conn, "pack", pack.key, org_id):
+        return registry.visible_version(conn, "contract", key, org_id)
+    bundle = _listed_bundle(conn, org_id, pack.key, pack.version)
+    if bundle is None:
+        return None
+    if ("contract", key) in bundle:
+        return registry.pinnable_version(conn, "contract", key, bundle[("contract", key)], org_id)
+    return (
+        None
+        if _foreign(conn, "contract", key, org_id)
+        else registry.visible_version(conn, "contract", key, org_id)
+    )
+
+
+def _pinned(
+    conn, org_id: str, latest: registry.Version, version: int
+) -> tuple[registry.Version, dict] | None:
+    """(pack at `version`, its contract body or None) of another workspace's listed pack the org pinned at
+    `version`; None when the org may no longer pin it (it then grants nothing)."""
+    pack = registry.pinnable_version(conn, "pack", latest.key, version, org_id)
+    if pack is None:
+        return None
+    contract = pinned_contract(conn, org_id, pack)
+    return pack, (contract.body if contract else None)
 
 
 def _definitions(conn, org_id: str) -> tuple[_Packs, dict[str, dict]]:
-    """(packs, contract bodies by key) the org may see, read on `conn`."""
+    """(packs, contract bodies by key) the org's grants come from, read on `conn`: what the org may see,
+    except that another workspace's listed pack the org added is read at the version its installation pins,
+    with the contract of that version's approved bundle."""
     visible = registry.latest_visible(conn, org_id)
-    packs = [v for v in visible if v.kind == "pack"]
+    packs = {str(v.body.get("slug") or v.key): v for v in visible if v.kind == "pack"}
+    contracts = {v.key: v.body for v in visible if v.kind == "contract"}
+    hires = conn.execute(
+        "SELECT pack_slug, pack_version, listing_version_id FROM installations WHERE org_id = %s "
+        "ORDER BY pack_slug",
+        (org_id,),
+    ).fetchall()
+    held: dict[str, str | None] = {}
+    for hire in hires:
+        slug, latest = hire["pack_slug"], packs.get(hire["pack_slug"])
+        if latest is None or not _foreign(conn, "pack", latest.key, org_id):
+            continue
+        held[slug] = hire["listing_version_id"]
+        pinned = _pinned(conn, org_id, latest, int(hire["pack_version"]))
+        contract_key = str(((pinned[0] if pinned else latest).body).get("contract") or "")
+        if _foreign(conn, "contract", contract_key, org_id):
+            contracts.pop(contract_key, None)  # never the newest approved contract of a pack pinned below it
+        if pinned is None:
+            packs.pop(slug)
+            continue
+        packs[slug] = pinned[0]
+        if pinned[1] is not None:
+            contracts[contract_key] = pinned[1]
     return (
         _Packs(
-            bodies={str(v.body.get("slug") or v.key): v.body for v in packs},
-            versions={str(v.body.get("slug") or v.key): v.version for v in packs},
+            bodies={slug: v.body for slug, v in packs.items()},
+            versions={slug: v.version for slug, v in packs.items()},
+            held=held,
         ),
-        {v.key: v.body for v in visible if v.kind == "contract"},
+        contracts,
     )
+
+
+def added_names(conn, org_id: str) -> dict[str, str]:
+    """{slug: name} of the packs the org added, the names its grants are keyed by: a listed pack under the
+    name of the version its installation holds. A pack it has not added holds no grants. Read on `conn`."""
+    packs, _ = _definitions(conn, org_id)
+    added = conn.execute("SELECT pack_slug FROM installations WHERE org_id = %s", (org_id,)).fetchall()
+    return {
+        r["pack_slug"]: str(packs.bodies[r["pack_slug"]].get("name") or r["pack_slug"])
+        for r in added
+        if r["pack_slug"] in packs.bodies
+    }
 
 
 def _read_packs(org_id: str) -> tuple[_Packs, dict[str, dict]]:
@@ -140,10 +239,17 @@ def _fresh(
     conn, org_id: str, packs: _Packs, contracts: dict[str, dict]
 ) -> tuple[dict[str, dict], dict[str, dict]]:
     """(pack bodies, contracts) to compute grants from, under the (org, app) lock: the ones read before it,
-    unless a save moved one of the org's added packs past the version read (a rename in between would write
-    grants under the old name); then both are read again, once, on `conn`."""
-    rows = conn.execute("SELECT pack_slug, pack_version FROM installations WHERE org_id = %s", (org_id,))
-    moved = any(packs.versions.get(r["pack_slug"], 0) < r["pack_version"] for r in rows.fetchall())
+    unless a save or an update moved one of the org's added packs past the version (or listing version) read
+    (a rename in between would write grants under the old name); then both are read again, once, on
+    `conn`."""
+    rows = conn.execute(
+        "SELECT pack_slug, pack_version, listing_version_id FROM installations WHERE org_id = %s", (org_id,)
+    )
+    moved = any(
+        packs.versions.get(r["pack_slug"], 0) < r["pack_version"]
+        or (r["pack_slug"] in packs.held and packs.held[r["pack_slug"]] != r["listing_version_id"])
+        for r in rows.fetchall()
+    )
     if not moved:
         return packs.bodies, contracts
     again, contracts = _definitions(conn, org_id)
@@ -687,6 +793,25 @@ def rename_install(conn, org_id: str, key: str, old: str, new: str) -> None:
         "UPDATE connections SET grants = %s, revoked_grants = %s WHERE org_id = %s AND app = %s",
         (Jsonb(renamed(row["grants"])), Jsonb(renamed(row["revoked_grants"])), org_id, key),
     )
+
+
+def regrant(conn, connectors: dict[str, dict], org_id: str, keys: set[str]) -> None:
+    """Recompute the grants of the org's connections to `keys` that keep grants (`KEEPS_GRANTS`) from its
+    added packs as they are pinned now, read on `conn` (so an installation moved in this transaction counts):
+    a grant the pinned versions no longer use goes, a new one comes, a revoked one stays revoked. Each app's
+    (org, app) lock before its row, in key order. Runs on the caller's connection and does not commit."""
+    packs, contracts = _definitions(conn, org_id)
+    for key in sorted(keys):
+        _lock(conn, org_id, key)
+        row = conn.execute(
+            "SELECT status FROM connections WHERE org_id = %s AND app = %s FOR UPDATE", (org_id, key)
+        ).fetchone()
+        if row is None or row["status"] not in KEEPS_GRANTS:
+            continue
+        grants = grants_for(conn, connectors, packs.bodies, contracts, org_id, key)
+        conn.execute(
+            "UPDATE connections SET grants = %s WHERE org_id = %s AND app = %s", (Jsonb(grants), org_id, key)
+        )
 
 
 def grant_pack(

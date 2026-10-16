@@ -3,15 +3,26 @@ import { expect, type BrowserContext, type Locator, type Page } from "@playwrigh
 
 export const MOCK_SESSION_KEY = "nm-mock-session";
 
-/** Start every page in the context already signed in (the mock session lives in sessionStorage). */
-export async function presignIn(context: BrowserContext) {
-  await context.addInitScript((key) => {
-    try {
-      sessionStorage.setItem(key, "1");
-    } catch {
-      /* storage unavailable on about:blank */
-    }
-  }, MOCK_SESSION_KEY);
+/** The product tours' "seen" keys (`nm.tour.<name>.v1`). */
+export const TOUR_SEEN_KEYS = ["welcome", "studio", "run"].map((name) => `nm.tour.${name}.v1`);
+
+/**
+ * Start every page in the context already signed in (the mock session lives in sessionStorage). The product tours
+ * count as seen, so none can open over a page under test even in a build with tours on; the tour spec passes
+ * `toursSeen: false`.
+ */
+export async function presignIn(context: BrowserContext, { toursSeen = true }: { toursSeen?: boolean } = {}) {
+  await context.addInitScript(
+    ({ key, tours }) => {
+      try {
+        sessionStorage.setItem(key, "1");
+        for (const tour of tours) localStorage.setItem(tour, "done");
+      } catch {
+        /* storage unavailable on about:blank */
+      }
+    },
+    { key: MOCK_SESSION_KEY, tours: toursSeen ? TOUR_SEEN_KEYS : [] },
+  );
 }
 
 export async function setLocale(context: BrowserContext, locale: "en" | "ja") {

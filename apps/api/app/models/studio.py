@@ -7,6 +7,7 @@ from typing import Annotated, Any, Literal
 from pydantic import ConfigDict, Field, StringConstraints
 
 from app.models.common import Model, Opt, RequestModel
+from app.models.publishing import MarketplaceListing
 
 ModelProfile = Literal["reasoning", "fast"]
 StepType = Literal[
@@ -206,6 +207,7 @@ class PaletteAgent(Model):
     model_profile: str | Opt = None
     output_schema_ref: str
     output_schema: dict[str, Any] | Opt = None  # for the field picker: nodes.<id>.output.<field>
+    listing: MarketplaceListing | Opt = None
 
 
 class PaletteTool(Model):

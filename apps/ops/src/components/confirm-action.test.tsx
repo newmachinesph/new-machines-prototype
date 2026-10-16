@@ -5,7 +5,7 @@ import { ApiError } from "@/lib/api/errors";
 import { ConfirmAction } from "./confirm-action";
 import { Button } from "./ui";
 
-function setup(onConfirm: (reason: string) => Promise<unknown> | void, extra: { destructive?: boolean } = {}) {
+function setup(onConfirm: (reason: string) => Promise<unknown> | void, extra: { destructive?: boolean; reasonLabel?: string } = {}) {
   render(
     <ConfirmAction
       trigger={<Button variant="danger">Suspend tenant</Button>}
@@ -31,6 +31,16 @@ describe("ConfirmAction", () => {
     expect(dialog).toHaveAccessibleName("Suspend Harbor & Pine Supply Co.?");
     expect(dialog).toHaveAccessibleDescription(/loses access to the app/);
     expect(within(dialog).getByRole("button", { name: "Suspend tenant" })).toHaveAttribute("type", "submit");
+  });
+
+  it("uses a custom reason label for the field and its validation message", async () => {
+    const onConfirm = vi.fn();
+    const user = setup(onConfirm, { reasonLabel: "Note for the publisher" });
+    const dialog = await open(user);
+    expect(screen.getByLabelText("Note for the publisher")).toBeInTheDocument();
+    await user.click(within(dialog).getByRole("button", { name: "Suspend tenant" }));
+    expect(await within(dialog).findByText(/Add a note for the publisher/)).toBeInTheDocument();
+    expect(onConfirm).not.toHaveBeenCalled();
   });
 
   it("requires a reason and does not call onConfirm without one", async () => {

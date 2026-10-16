@@ -1,0 +1,48 @@
+# Which inbox emails are real enquiries. The decision model answers two questions per email; `keep` picks the
+# leads; the rules then route on what was kept. Any decision-model failure takes on_error: nothing is written.
+kind: decision_rules
+key: lead-screen
+
+question: Which emails are real enquiries from potential customers?
+
+evaluator:
+  kind: jev
+  for_each: nodes.inbox.output.messages
+  ref: item.messageId
+  state:
+    - "'From: ' + (has(item.sender) ? item.sender : '')"
+    - "'Subject: ' + (has(item.subject) ? item.subject : '')"
+    - "'Text: ' + (has(item.messageText) ? item.messageText : '')"
+  questions:
+    is_lead:
+      type: noul
+      instructions: Is this email from a person or business who wants to buy, book or get a price for our services?
+      criteria:
+        "true": A real enquiry from a potential customer, such as a request for a quote, a booking or prices.
+        "false": Anything else, such as newsletters, receipts, notifications, job applications or spam.
+    urgency:
+      type: choice
+      instructions: How soon does the sender want an answer?
+      criteria:
+        urgent: They ask for an answer today or tomorrow.
+        soon: They ask for an answer this week or next week.
+        normal: They give no date, or a later one.
+  keep: answers.is_lead.value >= 0.7
+  on_error:
+    verdict: BLOCKED
+    route: failed
+    reason_code: DECISION_MODEL_UNAVAILABLE
+    explanation: The decision model was not available, so no email was sorted and nothing was added to your sheet.
+
+rules:
+  - when: size(jev.kept) == 0
+    verdict: APPROVED
+    route: nothing
+    reason_code: NO_LEADS
+    explanation: No email looked like a real enquiry, so there is nothing to add.
+
+default:
+  verdict: APPROVED
+  route: leads
+  reason_code: LEADS_FOUND
+  explanation: At least one email looks like a real enquiry; the details are prepared for your approval.

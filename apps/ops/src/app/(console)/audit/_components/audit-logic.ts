@@ -20,6 +20,8 @@ export function targetHref(type: AuditEntry["targetType"], id: string): string {
       return `/definitions/${id.split("/").map(encodeURIComponent).join("/")}`;
     case "memory":
       return "/memory";
+    case "listing":
+      return `/listings/${encodeURIComponent(id)}`;
   }
 }
 

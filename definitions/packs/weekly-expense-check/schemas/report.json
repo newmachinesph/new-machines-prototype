@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Weekly expense report",
+  "description": "One week of expenses, categorised and checked, with the summary rows and the email facts.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "summary", "week_start", "week_end", "currency", "total_minor", "expenses", "categories",
+    "review_items", "summary_rows", "email_facts"
+  ],
+  "properties": {
+    "summary": {"type": "string", "minLength": 1, "description": "One or two plain sentences."},
+    "week_start": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"},
+    "week_end": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"},
+    "currency": {"type": "string", "pattern": "^[A-Z]{3}$"},
+    "total_minor": {"type": "integer", "minimum": 0},
+    "expenses": {
+      "type": "array",
+      "maxItems": 200,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["row", "date", "description", "category", "amount_minor", "receipt"],
+        "properties": {
+          "row": {"type": "integer", "minimum": 2, "description": "The sheet row number."},
+          "date": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"},
+          "description": {"type": "string", "minLength": 1, "maxLength": 200},
+          "category": {"enum": ["Travel", "Meals", "Software", "Office", "Other"]},
+          "amount_minor": {"type": "integer", "minimum": 0},
+          "receipt": {"type": "boolean"}
+        }
+      }
+    },
+    "categories": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["category", "count", "amount_minor"],
+        "properties": {
+          "category": {"enum": ["Travel", "Meals", "Software", "Office", "Other"]},
+          "count": {"type": "integer", "minimum": 1},
+          "amount_minor": {"type": "integer", "minimum": 0}
+        }
+      }
+    },
+    "review_items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["ref", "date", "amount_minor", "currency", "flag", "note"],
+        "properties": {
+          "ref": {"type": "string", "pattern": "^Row \\d+$"},
+          "date": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"},
+          "amount_minor": {"type": "integer"},
+          "currency": {"type": "string", "pattern": "^[A-Z]{3}$"},
+          "flag": {"type": "string", "minLength": 1, "maxLength": 60},
+          "note": {"type": "string", "minLength": 1, "maxLength": 300}
+        }
+      }
+    },
+    "summary_rows": {
+      "type": "array",
+      "items": {"type": "array", "minItems": 4, "maxItems": 4, "items": {"type": "string"}}
+    },
+    "email_facts": {"type": "array", "items": {"type": "string", "minLength": 1, "maxLength": 500}}
+  }
+}

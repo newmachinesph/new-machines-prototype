@@ -137,9 +137,23 @@ describe("StartRunFields from an input schema", () => {
     });
   });
 
+  it("starts a date range at the last 7 days, in the business time zone", async () => {
+    const onSubmit = vi.fn();
+    renderWithIntl(fields({ onSubmit }));
+    // The demo clock reads 2026-10-12 09:40 Pacific.
+    expect(screen.getByLabelText("Since")).toHaveValue("2026-10-06");
+    expect(screen.getByLabelText("Until")).toHaveValue("2026-10-12");
+    await userEvent.click(screen.getByRole("button", { name: "Start run" }));
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({ input: { since: "2026-10-06", until: "2026-10-12" } }),
+    );
+  });
+
   it("names each missing required field instead of submitting", async () => {
     const onSubmit = vi.fn();
     renderWithIntl(fields({ onSubmit }));
+    fireEvent.change(screen.getByLabelText("Since"), { target: { value: "" } });
+    fireEvent.change(screen.getByLabelText("Until"), { target: { value: "" } });
     await userEvent.click(screen.getByRole("button", { name: "Start run" }));
     expect(await screen.findByText("Enter Since.")).toBeInTheDocument();
     expect(screen.getByText("Enter Until.")).toBeInTheDocument();
@@ -149,6 +163,7 @@ describe("StartRunFields from an input schema", () => {
 
   it("names a missing field in Japanese", async () => {
     renderWithIntl(fields(), { locale: "ja" });
+    fireEvent.change(screen.getByLabelText("Since"), { target: { value: "" } });
     await userEvent.click(screen.getByRole("button", { name: "実行を開始" }));
     expect(await screen.findByText("Sinceを入力してください。")).toBeInTheDocument();
   });
@@ -162,7 +177,10 @@ describe("StartRunFields from an input schema", () => {
     fireEvent.change(screen.getByLabelText("From"), { target: { value: "2026-10-01" } });
     await userEvent.click(screen.getByRole("button", { name: "Start run" }));
     expect(onSubmit).toHaveBeenCalledWith(
-      expect.objectContaining({ input: { dryRun: true, region: "us", limit: 20, range: { from: "2026-10-01" } } }),
+      // The range's end starts at today (the business day); its start is set here.
+      expect.objectContaining({
+        input: { dryRun: true, region: "us", limit: 20, range: { from: "2026-10-01", to: "2026-10-12" } },
+      }),
     );
   });
 
@@ -218,6 +236,16 @@ describe("refusalFor", () => {
     expect(refusal(409, "RUN_BUDGET_OVER_CAP")?.href).toBe("/app/marketplace/recon/install");
   });
 
+  it("states the pack's maximum when a budget is over it, and asks for a missing budget", () => {
+    const tr = (key: string, values?: Record<string, string>) => `${key}${values ? JSON.stringify(values) : ""}`;
+    const over = new ApiError(422, "BUDGET_TOO_HIGH", "The budget can be at most $10.00 for this pack.");
+    expect(refusalFor(over, "recon", tr as never, "$10.00")).toEqual({ text: 'budgetTooHigh{"max":"$10.00"}' });
+    // Without a known maximum, the API's own words (which name it).
+    expect(refusalFor(over, "recon", tr as never)).toEqual({ text: over.detail });
+    const missing = new ApiError(422, "BUDGET_REQUIRED", "Set a budget for this test run.");
+    expect(refusalFor(missing, "recon", tr as never)).toEqual({ text: "budgetRequired" });
+  });
+
   it("shows an unknown refusal's own words, and leaves server failures to the toast", () => {
     expect(refusal(409, "SOMETHING_NEW")).toEqual({ text: "detail of SOMETHING_NEW" });
     expect(refusal(503, "RUNTIME_UNAVAILABLE")).toBeNull();
@@ -252,6 +280,69 @@ describe("StartRunFields and the pack's per-run cap", () => {
     renderWithIntl(<StartRunFields packs={capped(10000)} onSubmit={onSubmit} pending={false} />);
     await userEvent.click(screen.getByRole("button", { name: "Start run" }));
     expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ budgetMinor: 5000 }));
+  });
+});
+
+describe("StartRunFields and the pack's maximum budget", () => {
+  const usd = (amountMinor: number) => ({ amountMinor, currency: "USD" as const });
+  const radios = () => screen.getAllByRole("radio").map((r) => r.getAttribute("aria-label") ?? r.textContent);
+
+  it("offers only budgets the pack allows, and starts at its maximum when no usual budget fits", async () => {
+    const onSubmit = vi.fn();
+    renderWithIntl(
+      <StartRunFields packs={[{ ...packs[0], maxBudget: usd(1000) }]} onSubmit={onSubmit} pending={false} />,
+    );
+    expect(screen.getAllByRole("radio")).toHaveLength(1);
+    expect(screen.getByRole("radio", { name: "$10.00" })).toBeChecked();
+    expect(screen.getByText("This pack allows a budget of at most $10.00 per run.")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Start run" }));
+    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ budgetMinor: 1000 }));
+  });
+
+  it("puts the maximum among the usual budgets below it", () => {
+    renderWithIntl(
+      <StartRunFields packs={[{ ...packs[0], maxBudget: usd(2500) }]} onSubmit={vi.fn()} pending={false} />,
+    );
+    expect(radios()).toHaveLength(2);
+    expect(screen.getByRole("radio", { name: "$20.00" })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "$25.00" })).toBeChecked();
+    expect(screen.queryByRole("radio", { name: "$50.00" })).toBeNull();
+  });
+
+  it("keeps the budget and the publisher's fee within the per-run cap", async () => {
+    const onSubmit = vi.fn();
+    const listed = { ...packs[0], maxBudget: usd(1000), perRunCap: usd(2000), packFee: usd(1500) };
+    renderWithIntl(<StartRunFields packs={[listed]} onSubmit={onSubmit} pending={false} />);
+    expect(screen.getByRole("radio", { name: "$5.00" })).toBeChecked();
+    expect(screen.getAllByRole("radio")).toHaveLength(1);
+    expect(screen.getByText(/including the publisher's fee of \$15\.00 per run/)).toBeInTheDocument();
+    expect(screen.getByText("Simulated")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Start run" }));
+    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ budgetMinor: 500 }));
+  });
+
+  it("says why no budget fits when the fee leaves too little of the cap, and holds the start", () => {
+    const tight = { ...packs[0], perRunCap: usd(500), packFee: usd(450) };
+    renderWithIntl(<StartRunFields packs={[tight]} onSubmit={vi.fn()} pending={false} />);
+    expect(screen.queryAllByRole("radio")).toHaveLength(0);
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "The publisher's fee of $4.50 per run leaves less than $1.00 of this pack's $5.00 cap per run",
+    );
+    expect(screen.getByRole("link", { name: "Change the per-run cap" })).toHaveAttribute(
+      "href",
+      "/app/marketplace/order-payment-reconciliation/install",
+    );
+    expect(screen.getByRole("button", { name: "Start run" })).toBeDisabled();
+  });
+
+  it("says the maximum in Japanese", () => {
+    renderWithIntl(
+      <StartRunFields packs={[{ ...packs[0], maxBudget: usd(200) }]} onSubmit={vi.fn()} pending={false} />,
+      {
+        locale: "ja",
+      },
+    );
+    expect(screen.getByText("このパックで1回の実行に設定できる予算は$2.00までです。")).toBeInTheDocument();
   });
 });
 
@@ -347,6 +438,35 @@ describe("StartRunForm", () => {
     expect(screen.getByText("page error: pack unavailable")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Start run" })).not.toBeInTheDocument();
     vi.mocked(console.error).mockRestore();
+  });
+
+  it("takes the pack's maximum from its detail, so the start never sends a budget over it", async () => {
+    detail.query = { isPending: false, isError: false, data: { maxBudget: { amountMinor: 1000, currency: "USD" } } };
+    start.mutate.mockClear();
+    renderWithIntl(<StartRunForm packs={packs} />);
+    expect(await screen.findByRole("radio", { name: "$10.00" })).toBeChecked();
+    await userEvent.click(screen.getByRole("button", { name: "Start run" }));
+    await waitFor(() => expect(start.mutate).toHaveBeenCalledTimes(1));
+    expect(start.mutate.mock.calls[0][0].body.budgetMinor).toBe(1000);
+  });
+
+  it("keeps the budget within the API's limit at the fee of the version the workspace holds", async () => {
+    // The list says the current listing's fee; the detail says what the held version charges and so the limit.
+    const usd = (amountMinor: number) => ({ amountMinor, currency: "USD" as const });
+    const listed = [{ ...packs[0], perRunCap: usd(2000), packFee: usd(100) }];
+    detail.query = {
+      isPending: false,
+      isError: false,
+      data: { maxBudget: usd(2500), runFee: usd(250), runBudgetLimit: usd(1750) },
+    };
+    start.mutate.mockClear();
+    renderWithIntl(<StartRunForm packs={listed} />);
+    expect(await screen.findByRole("radio", { name: "$17.50" })).toBeChecked();
+    expect(screen.queryByRole("radio", { name: "$20.00" })).toBeNull();
+    expect(screen.getByText(/\$2\.50/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Start run" }));
+    await waitFor(() => expect(start.mutate).toHaveBeenCalledTimes(1));
+    expect(start.mutate.mock.calls[0][0].body.budgetMinor).toBe(1750);
   });
 
   it("builds the overdue pack's form from its input schema: one As of date, sent as as_of", async () => {

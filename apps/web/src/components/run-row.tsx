@@ -13,20 +13,25 @@ import { useFormat } from "@/lib/use-format";
 import type { OutcomeStage, RunStatus, RunSummary, StageState } from "@/lib/types";
 import { Segmented, Select, Tooltip } from "./base";
 import { PackIcon } from "./pack-icon";
+import { useCodes } from "./run-codes";
 import { Skeleton } from "./skeleton";
-import { Id, RunStatusPill, SimTag } from "./ui";
+import { Id, Pill, RunStatusPill, SimTag } from "./ui";
 
 export type RowRun = RunSummary;
 
 // The key is the URL value and the message key under `run.list.filters`.
-type FilterKey = "all" | "needs" | "active" | "done" | "failed";
+type FilterKey = "all" | "needs" | "active" | "done" | "failed" | "declined";
 const FILTERS: { key: FilterKey; statuses?: RunStatus[] }[] = [
   { key: "all" },
   { key: "needs", statuses: ["NEEDS_ATTENTION", "WAITING_FOR_EVENT", "WAITING_FOR_HUMAN"] },
   { key: "active", statuses: ["RUNNING", "VERIFYING"] },
   { key: "done", statuses: ["COMPLETED"] },
   { key: "failed", statuses: ["FAILED", "CANCELLED"] },
+  { key: "declined", statuses: ["FAILED"] },
 ];
+
+/** A run you declined is FAILED with stop reason "declined"; its pill says Declined, so it filters apart. */
+const isDeclined = (r: RowRun) => r.status === "FAILED" && r.stopReason === "declined";
 
 function elapsed(r: RowRun, now: string, soFar: (d: string) => string) {
   const end = r.endedAt ?? now;
@@ -68,7 +73,7 @@ function OutcomeSummary({ stages }: { stages: RowRun["stages"] }) {
 function RunName({ r, open, pack, showId }: { r: RowRun; open: boolean; pack: string; showId?: boolean }) {
   const t = useTranslations("run.list");
   const packDiffers = pack.trim().toLowerCase() !== r.title.trim().toLowerCase();
-  const meta = r.sandboxTest || packDiffers || showId;
+  const meta = r.sandboxTest || r.listingCheck || packDiffers || showId;
   return (
     <div className="min-w-0">
       {open ? (
@@ -81,6 +86,7 @@ function RunName({ r, open, pack, showId }: { r: RowRun; open: boolean; pack: st
       {meta ? (
         <div className="mt-0.5 flex items-center gap-2 text-xs text-muted">
           {r.sandboxTest ? <SimTag className="shrink-0">{t("sandboxTest")}</SimTag> : null}
+          {r.listingCheck ? <Pill tone="quiet">{t("listingCheck")}</Pill> : null}
           {packDiffers ? <span className="truncate">{pack}</span> : null}
           {showId ? <Id className="hidden text-[11px] text-muted xl:inline">{r.id}</Id> : null}
         </div>
@@ -92,6 +98,7 @@ function RunName({ r, open, pack, showId }: { r: RowRun; open: boolean; pack: st
 export function RunsBrowser({ runs, linkable }: { runs: RowRun[]; linkable: string[] }) {
   const t = useTranslations("run.list");
   const { money, ago } = useFormat();
+  const { line } = useCodes();
   const now = useNow();
   const [q, setQ] = useQueryState("q", parseAsString.withDefault(""));
   const [filter, setFilter] = useQueryState("status", parseAsString.withDefault("all"));
@@ -102,7 +109,9 @@ export function RunsBrowser({ runs, linkable }: { runs: RowRun[]; linkable: stri
   const packs = useMemo(() => [...new Set(runs.map((r) => r.packSlug))], [runs]);
   const inFilter = (r: RowRun, key: string) => {
     const f = FILTERS.find((x) => x.key === key);
-    return !f?.statuses || f.statuses.includes(r.status);
+    if (!f?.statuses) return true;
+    if (key === "declined") return isDeclined(r);
+    return f.statuses.includes(r.status) && !(key === "failed" && isDeclined(r));
   };
   const needle = q.trim().toLowerCase();
   const scoped = runs.filter(
@@ -161,9 +170,9 @@ export function RunsBrowser({ runs, linkable }: { runs: RowRun[]; linkable: stri
                 <PackIcon slug={r.packSlug} className="size-8 shrink-0" />
                 <div className="min-w-0 flex-1">
                   <RunName r={r} open={open} pack={packName(r.packSlug)} />
-                  {r.summary ? <p className="mt-1 line-clamp-2 text-[13px] text-grey-700">{r.summary}</p> : null}
+                  {r.summary ? <p className="mt-1 line-clamp-2 text-[13px] text-grey-700">{line(r.summary)}</p> : null}
                   <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-muted">
-                    <RunStatusPill status={r.status} />
+                    <RunStatusPill status={r.status} stopReason={r.stopReason} />
                     <span className="tnum text-sm font-medium text-ink">{total(r)}</span>
                     <span>{ago(r.startedAt)}</span>
                     <span className="tnum">{elapsed(r, now, (d) => t("soFar", { duration: d }))}</span>
@@ -211,13 +220,13 @@ export function RunsBrowser({ runs, linkable }: { runs: RowRun[]; linkable: stri
                     </div>
                   </td>
                   <td className="px-3 py-3">
-                    <RunStatusPill status={r.status} />
+                    <RunStatusPill status={r.status} stopReason={r.stopReason} />
                   </td>
                   <td className="px-3 py-3">
                     <OutcomeSummary stages={r.stages} />
                   </td>
                   <td className="hidden max-w-[44ch] px-3 py-3 text-[13px] text-grey-700 2xl:table-cell">
-                    {r.summary}
+                    {line(r.summary)}
                   </td>
                   <td className="tnum hidden px-3 py-3 text-right text-grey-700 xl:table-cell">
                     {money(sumMoney(r.spent.ai, r.spent.tools))}

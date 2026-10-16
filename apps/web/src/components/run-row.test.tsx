@@ -1,4 +1,5 @@
 import { screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import type { RunSummary } from "@/lib/types";
@@ -40,6 +41,11 @@ describe("RunsBrowser", () => {
     renderWithIntl(<RunsBrowser runs={[run("run_1", { sandboxTest: true }), run("run_2")]} linkable={["run_1"]} />);
     expect(table().getAllByText("Sandbox test")).toHaveLength(1);
     expect(table().getByRole("link", { name: "Invoice nudges: run_1" })).toBeInTheDocument();
+  });
+
+  it("labels a listing check run and only that run", () => {
+    renderWithIntl(<RunsBrowser runs={[run("run_1", { listingCheck: true }), run("run_2")]} linkable={[]} />);
+    expect(table().getAllByText("Listing check")).toHaveLength(1);
   });
 
   it("explains the Outcome column only where the column is shown", () => {
@@ -109,5 +115,20 @@ describe("RunsBrowser", () => {
     expect(table().getByText("Verified: Not yet")).toBeInTheDocument();
     expect(table().getByText("Settlement eligible: On hold")).toBeInTheDocument();
     expect(screen.queryByText(/Not required/)).not.toBeInTheDocument();
+  });
+
+  it("keeps declined runs out of Failed and lists them under Declined", async () => {
+    renderWithIntl(
+      <RunsBrowser
+        runs={[run("run_1", { status: "FAILED" }), run("run_2", { status: "FAILED", stopReason: "declined" })]}
+        linkable={[]}
+      />,
+    );
+    await userEvent.click(screen.getByRole("button", { name: /^Failed/ }));
+    expect(table().getByText("Invoice nudges: run_1")).toBeInTheDocument();
+    expect(table().queryByText("Invoice nudges: run_2")).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: /^Declined/ }));
+    expect(table().getByText("Invoice nudges: run_2")).toBeInTheDocument();
+    expect(table().queryByText("Invoice nudges: run_1")).not.toBeInTheDocument();
   });
 });

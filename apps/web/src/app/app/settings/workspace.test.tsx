@@ -54,6 +54,15 @@ describe("PoliciesSection", () => {
   it("is translated", () => {
     renderWithIntl(<PoliciesSection />, { locale: "ja" });
     expect(screen.getByRole("heading", { level: 3, name: "ツールの操作 バージョン1" })).toBeInTheDocument();
+    expect(screen.getByText(/ワークスペースから変更することはできません/)).toBeInTheDocument();
+  });
+
+  // QA F-21: the page has no way to change a policy, so its note must not send people to one.
+  it("says the policies are read-only here, without pointing to an edit that does not exist", () => {
+    renderWithIntl(<PoliciesSection />);
+    expect(screen.queryByText(/change the policy here/)).toBeNull();
+    expect(screen.queryByRole("button", { name: /edit|change/i })).toBeNull();
+    expect(screen.getByText(/cannot be changed from the workspace/)).toBeInTheDocument();
   });
 });
 

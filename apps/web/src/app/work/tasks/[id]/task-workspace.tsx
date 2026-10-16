@@ -18,7 +18,12 @@ import type { HumanTask, RedactedRecord, ReviewVerdict } from "@/lib/types";
 
 type Phase = "offer" | "claimed" | "expired" | "validating" | "submitted" | "accepted" | "closed";
 type Call = "match" | "mismatch" | "pending";
-type Review = { verdict: ReviewVerdict; feedbackText: string; recordCalls: Record<string, Call> };
+type Review = {
+  verdict: ReviewVerdict;
+  feedbackText: string;
+  recordCalls: Record<string, Call>;
+  recordNotes: Record<string, string>;
+};
 /** A review submitted in this session, and when. The API's task carries no copy of it. */
 type Sent = { review: Review; at: string };
 
@@ -318,7 +323,11 @@ function ReviewSummary({ task, sent, linkEarnings }: { task: HumanTask; sent: Se
   if (sent) {
     const { review } = sent;
     rows.push({ label: t("verdict"), value: tTask(`verdict.${review.verdict}.label`) });
-    rows.push({ label: t("feedback"), value: review.feedbackText });
+    const itemNotes = task.records.flatMap((r) => {
+      const note = review.recordNotes[r.id];
+      return note ? [`${r.order.ref || r.id}: ${note}`] : [];
+    });
+    rows.push({ label: t("feedback"), value: [review.feedbackText, ...itemNotes].join("\n\n") });
     if (task.records.length > 0)
       rows.push({
         label: t("records"),
@@ -501,23 +510,27 @@ function Workspace({
   const t = useTranslations("task");
   const [calls, setCalls] = useState<Record<string, Call | undefined>>({});
   const [notes, setNotes] = useState<Record<string, string>>({});
+  // Only an order and its payment takes a call; any other item is reviewed through the verdict and notes.
+  const toCall = task.records.filter((r) => !isItem(r));
   // With records to correct, a correction is the likely answer; with none, approving is.
-  const [verdict, setVerdict] = useState<ReviewVerdict>(task.records.length > 0 ? "REVISION_REQUIRED" : "APPROVED");
+  const [verdict, setVerdict] = useState<ReviewVerdict>(toCall.length > 0 ? "REVISION_REQUIRED" : "APPROVED");
   const [feedback, setFeedback] = useState("");
-  const complete = task.records.every((r) => calls[r.id]) && feedback.trim().length >= 10;
+  const complete = toCall.every((r) => calls[r.id]) && feedback.trim().length >= 10;
 
   const send = () => {
     const recordCalls: Record<string, Call> = {};
-    for (const r of task.records) {
+    for (const r of toCall) {
       const call = calls[r.id];
       if (call) recordCalls[r.id] = call;
     }
-    // The general note comes first, then each record's correction.
-    const feedbackText = [feedback, ...task.records.map((r) => notes[r.id] ?? "")]
-      .map((part) => part.trim())
-      .filter(Boolean)
-      .join("\n\n");
-    onSubmit({ verdict, feedbackText, recordCalls });
+    // The general note comes first, then each record's correction. An item's note travels by the id it was
+    // shown, which the API maps back to the item's own (a network copy may rename it).
+    const noteOf = (r: RedactedRecord) => (notes[r.id] ?? "").trim();
+    const recordNotes: Record<string, string> = {};
+    for (const r of task.records) if (isItem(r) && noteOf(r)) recordNotes[r.id] = noteOf(r);
+    const corrections = task.records.filter((r) => !isItem(r)).map(noteOf);
+    const feedbackText = [feedback.trim(), ...corrections].filter(Boolean).join("\n\n");
+    onSubmit({ verdict, feedbackText, recordCalls, recordNotes });
   };
 
   return (
@@ -536,18 +549,29 @@ function Workspace({
             </div>
           </Section>
         ) : null}
-        {task.records.map((r, i) => (
-          <RecordCard
-            key={r.id}
-            index={i + 1}
-            total={task.records.length}
-            record={r}
-            call={calls[r.id]}
-            note={notes[r.id] ?? ""}
-            onCall={(c) => setCalls({ ...calls, [r.id]: c })}
-            onNote={(n) => setNotes({ ...notes, [r.id]: n })}
-          />
-        ))}
+        {task.records.map((r, i) =>
+          isItem(r) ? (
+            <ItemCard
+              key={r.id}
+              index={i + 1}
+              total={task.records.length}
+              record={r}
+              note={notes[r.id] ?? ""}
+              onNote={(n) => setNotes({ ...notes, [r.id]: n })}
+            />
+          ) : (
+            <RecordCard
+              key={r.id}
+              index={i + 1}
+              total={task.records.length}
+              record={r}
+              call={calls[r.id]}
+              note={notes[r.id] ?? ""}
+              onCall={(c) => setCalls({ ...calls, [r.id]: c })}
+              onNote={(n) => setNotes({ ...notes, [r.id]: n })}
+            />
+          ),
+        )}
       </div>
       <Section title={t("verdict.title")} className="xl:sticky xl:top-20">
         <div className="px-5 py-4">
@@ -582,7 +606,7 @@ function Workspace({
             <p className="mt-2 text-xs text-blocked">{t("feedback.expired")}</p>
           ) : !complete ? (
             <p className="mt-2 text-xs text-muted">
-              {t(task.records.length > 0 ? "feedback.incomplete" : "feedback.incompleteNoRecords")}
+              {t(toCall.length > 0 ? "feedback.incomplete" : "feedback.incompleteNoRecords")}
             </p>
           ) : null}
         </div>
@@ -592,6 +616,69 @@ function Workspace({
 }
 
 const CALLS: Call[] = ["match", "mismatch", "pending"];
+
+/**
+ * A shared review item (an invoice, a refund request, a support email...) rather than an order and its payment.
+ * A record without a kind is a demo fixture, which is always a reconciliation.
+ */
+const isItem = (r: RedactedRecord) => r.kind === "item";
+
+const NOTE_CLASS = "mt-3 h-9 w-full rounded-md border border-grey-300 px-3 text-sm outline-none focus:border-ink";
+
+/**
+ * One review item as a plain card: what it is flagged for, its reference and date, its amount and related
+ * reference when it has them, the agent's note, and an optional note for the item. No payment sides, and no
+ * call to make: the verdict covers the items.
+ */
+function ItemCard({
+  index,
+  total,
+  record: r,
+  note,
+  onNote,
+}: {
+  index: number;
+  total: number;
+  record: RedactedRecord;
+  note: string;
+  onNote: (n: string) => void;
+}) {
+  const t = useTranslations("task.item");
+  const rows = [
+    { label: t("reference"), value: <Id>{r.order.ref}</Id> },
+    ...(r.order.date ? [{ label: t("date"), value: r.order.date }] : []),
+    ...(r.order.amount
+      ? [{ label: t("amount"), value: <span className="tnum font-medium">{r.order.amount}</span> }]
+      : []),
+    ...(r.order.paymentRef ? [{ label: t("related"), value: <Id>{r.order.paymentRef}</Id> }] : []),
+  ];
+  return (
+    <section className="panel" aria-label={t("label", { index, id: r.id })}>
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-rule px-5 py-3">
+        <h2 className="h-section">{t("heading", { index, total })}</h2>
+        <Pill tone="human">{r.flag}</Pill>
+      </div>
+      <div className="px-5 py-3.5">
+        <KeyValues rows={rows} />
+      </div>
+      <div className="border-t border-rule px-5 py-3.5">
+        {r.agentNote ? (
+          <p className="text-sm">
+            <span className="text-muted">{t("noted")}</span> {r.agentNote}
+          </p>
+        ) : null}
+        <input
+          name={`note-${r.id}`}
+          value={note}
+          onChange={(e) => onNote(e.target.value)}
+          placeholder={t("notePlaceholder")}
+          aria-label={t("noteLabel", { id: r.id })}
+          className={NOTE_CLASS}
+        />
+      </div>
+    </section>
+  );
+}
 
 function RecordCard({
   index,
@@ -666,7 +753,7 @@ function RecordCard({
           onChange={(e) => onNote(e.target.value)}
           placeholder={t("notePlaceholder")}
           aria-label={t("noteLabel", { id: r.id })}
-          className="mt-3 h-9 w-full rounded-md border border-grey-300 px-3 text-sm outline-none focus:border-ink"
+          className={NOTE_CLASS}
         />
       </div>
     </section>

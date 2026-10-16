@@ -2,7 +2,7 @@
  * What the palette offers: every kind of step, then the registry's agents, app tools and memory spaces
  * (getStudioPalette), each as the step it adds. Pure: no React.
  */
-import type { Palette } from "@/lib/api/gen/types.gen";
+import type { MarketplaceListing, Palette } from "@/lib/api/gen/types.gen";
 import type { NewStep } from "./graph";
 import { isBlockedTool, isReadTool } from "./rules";
 
@@ -39,7 +39,15 @@ export const ADD_KINDS = Object.keys(BLANK_STEPS) as AddKind[];
 
 export type PaletteEntry =
   | { kind: "step"; key: string; add: AddKind; step: NewStep }
-  | { kind: "agent"; key: string; title: string; summary: string; team: boolean; step: NewStep }
+  | {
+      kind: "agent";
+      key: string;
+      title: string;
+      summary: string;
+      team: boolean;
+      listing?: MarketplaceListing;
+      step: NewStep;
+    }
   | { kind: "tool"; key: string; title: string; summary: string; writes: boolean; blocked: boolean; step: NewStep }
   | { kind: "space"; key: string; title: string; step: NewStep };
 
@@ -56,6 +64,7 @@ export function paletteEntries(palette: Palette): PaletteEntry[] {
     title: a.name,
     summary: a.summary,
     team: !!a.builtByTeam,
+    listing: a.listing,
     step: { type: "agent", config: { agent: a.key, inputs: {}, output_schema: a.outputSchemaRef } },
   }));
   // Anything but a read changes data (the API's rule); a blocked tool says only that it may not be used.

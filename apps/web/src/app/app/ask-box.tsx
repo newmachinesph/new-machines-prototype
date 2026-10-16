@@ -32,7 +32,7 @@ export function AskBox() {
   };
 
   return (
-    <section className="panel">
+    <section className="panel" data-tour="ask-box">
       <div className="flex items-center gap-3 px-4">
         <Search className="size-4 shrink-0 text-grey-500" strokeWidth={1.75} aria-hidden />
         <label htmlFor="ask" className="sr-only">

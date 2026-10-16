@@ -527,9 +527,31 @@ def test_a_generic_review_item_becomes_a_reviewer_record():
         "2026-09-22",
         "$1,250.00",
     )
-    assert record.order.payment_ref == "None" and record.payment.ref == "None"
+    # No counterpart: nothing to name, rather than the word "None".
+    assert record.order.payment_ref == "" and record.payment.ref == ""
     assert record.flag == "Overdue 21 days (firm)"
     assert record.agent_note == "21 days past due, so a firm reminder."
+    assert record.kind == "item"
+
+
+def test_a_support_case_is_an_item_with_no_amount():
+    """The support triage's review item: a Gmail thread, no money and a category flag. Its record says it is
+    an item, so the reviewer sees a plain card, not an order and its payment."""
+    item = {
+        "ref": "thread-18c2f",
+        "date": "2026-10-14",
+        "amount_minor": 0,
+        "currency": "USD",
+        "flag": "Complaint",
+        "note": "Sorted without the decision model; check the category and the planned reply.",
+    }
+    record = tasks._record(item, 0)
+    assert record.kind == "item"
+    assert (record.id, record.order.ref, record.order.date) == ("thread-18c2f", "thread-18c2f", "2026-10-14")
+    assert record.order.amount == ""  # no "$0.00"
+    assert record.order.payment_ref == "" and record.payment.ref == ""
+    assert "None" not in record.model_dump_json()
+    assert record.model_dump(by_alias=True)["kind"] == "item"
 
 
 def test_a_generic_review_item_names_its_counterpart():
@@ -605,6 +627,7 @@ def test_a_reconciliation_mismatch_keeps_its_record_shape():
         "explanation": "The charge is short by the card fee.",
     }
     record = tasks._record(item, 0)
+    assert record.kind == "reconciliation"
     assert record.id == "#1004" and record.flag == "Amount mismatch"
     assert (record.order.ref, record.order.amount, record.order.payment_ref) == (
         "#1004",

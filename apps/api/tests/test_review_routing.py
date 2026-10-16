@@ -420,6 +420,40 @@ def test_renamed_record_ids_never_collide_and_reach_the_run_as_their_real_ids(an
     ]
 
 
+def test_item_notes_reach_the_run_under_the_items_real_ids(ana, nina, db):
+    """A network reviewer notes items by the ids they were shown; the run reads each note under the item's
+    own ref, after the general note. A note on an id the reviewer was not shown is dropped."""
+    _task(db, ana.org_id, "network", payload=_leaky_payload())
+    shown = [r["id"] for r in nina.get(f"/v1/human-tasks/{_pid(db)}").json()["records"]]
+    assert shown == ["#1003", "record-2"]
+    assert nina.post(f"/v1/human-tasks/{_pid(db)}:claim").status_code == 200
+    notes = {"record-2": "  Refund it.  ", "#1003": "Fine.", "ghost": "Lost.", "record-1": " "}
+    review = {**REVIEW, "recordNotes": notes}
+    assert nina.post(f"/v1/human-tasks/{_pid(db)}:submit", json=review).status_code == 200
+    [stored] = _rows(db, "SELECT result->>'note' AS note FROM run_tasks")
+    assert stored["note"] == "Checked.\n\n#1003: Fine.\n\nANA'S WORKSPACE-77: Refund it."
+
+
+def test_no_reviewer_card_shows_an_email_address_and_notes_still_reach_the_item(ana, nina, db):
+    """A support email's item ref may be the sender's address: both copies show it hidden, under a
+    positional id, and a note on it reaches the run under the real ref."""
+    item = {**SHOWN[0], "ref": "jane.doe@example.com", "counterpart_ref": "thread for bob@example.com"}
+    _task(db, ana.org_id, "network", payload={"show": [SHOWN[0], item]})
+    team = tasks.real_task({**_rows(db, "SELECT * FROM run_tasks")[0], "via": "team", "run_title": "R"})
+    network = nina.get(f"/v1/human-tasks/{_pid(db)}")
+    for text in (team.model_dump_json(), network.text):
+        assert "@" not in text and "jane" not in text and "bob" not in text, text
+    [_, record] = network.json()["records"]
+    assert record["id"] == "record-2"
+    assert (record["order"]["ref"], record["payment"]["ref"]) == ("Hidden", "thread for Hidden")
+    assert [r.id for r in team.records] == ["#1003", "record-2"]
+    assert nina.post(f"/v1/human-tasks/{_pid(db)}:claim").status_code == 200
+    review = {**REVIEW, "recordNotes": {"record-2": "Spam."}}
+    assert nina.post(f"/v1/human-tasks/{_pid(db)}:submit", json=review).status_code == 200
+    [stored] = _rows(db, "SELECT result->>'note' AS note FROM run_tasks")
+    assert stored["note"] == "Checked.\n\njane.doe@example.com: Spam."
+
+
 def test_a_shown_id_standing_for_two_real_ids_is_dropped():
     assert tasks.id_map(["a", "b", "a"], ["x", "y", "z"]) == {"b": "y"}
     assert tasks.id_map(["a", "a"], ["x", "x"]) == {"a": "x"}

@@ -1,5 +1,6 @@
 """Environment access for the runtime stack. Every function reads os.environ at call time."""
 
+import math
 import os
 from pathlib import Path
 
@@ -47,8 +48,56 @@ def task_queue() -> str:
     return os.environ.get("NM_TASK_QUEUE", "nm-packs")
 
 
+def workflow_id_prefix() -> str:
+    """Prepended to every run workflow id. Empty in production; databases that share one dev Temporal
+    server give each its own prefix so their per-database run ids cannot collide."""
+    return os.environ.get("NM_WORKFLOW_ID_PREFIX", "")
+
+
 def model_env() -> str:
     return os.environ.get("NM_MODEL_ENV", "test")
+
+
+JEV_URL = "https://api.typesafe.ai/v1/systemone"
+JEV_MODEL = "jev-latest"
+
+
+def jev_api_key() -> str:
+    """The decision model's API key. Never log or return it in a response."""
+    return os.environ.get("JEV_API_KEY", "")
+
+
+def jev_url() -> str:
+    return os.environ.get("NM_JEV_URL") or JEV_URL
+
+
+def jev_model() -> str:
+    return os.environ.get("NM_JEV_MODEL") or JEV_MODEL
+
+
+JEV_USD_PER_MTOK_IN = 3.0  # conservative: used when the endpoint reports no cost
+JEV_USD_PER_MTOK_OUT = 15.0
+
+
+def jev_usd_per_mtok_in() -> float:
+    return _positive_float("NM_JEV_USD_PER_MTOK_IN", JEV_USD_PER_MTOK_IN)
+
+
+def jev_usd_per_mtok_out() -> float:
+    return _positive_float("NM_JEV_USD_PER_MTOK_OUT", JEV_USD_PER_MTOK_OUT)
+
+
+def jev_mode() -> str:
+    """off | fake | live. NM_JEV wins (any other set value is off); otherwise fake under the test model env,
+    live when a key is set."""
+    mode = os.environ.get("NM_JEV", "").strip().lower()
+    if mode in ("off", "fake", "live"):
+        return mode
+    if mode:
+        return "off"
+    if model_env() == "test":
+        return "fake"
+    return "live" if jev_api_key() else "off"
 
 
 def workspace_mode() -> str:
@@ -108,6 +157,14 @@ def _positive_int(name: str, default: int) -> int:
     except ValueError:
         return default
     return value if value >= 1 else default
+
+
+def _positive_float(name: str, default: float) -> float:
+    try:
+        value = float(os.environ.get(name, ""))
+    except ValueError:
+        return default
+    return value if math.isfinite(value) and value > 0 else default
 
 
 def embedded_worker() -> bool:

@@ -85,23 +85,44 @@ function kindOf(s: JsonSchema): FieldKind {
   }
 }
 
-/** The "(YYYY-MM-DD)" hint some schemas put in a date's description: the date input already sets the format. */
+/** The "(YYYY-MM-DD)" hint some schemas put in a date's description: the date input already sets the format, so
+ * the form shows one. A hint sharing its brackets with another note ("(YYYY-MM-DD, read in UTC)") keeps the note. */
 const DATE_FORMAT_HINT = /\s*\(\s*YYYY-MM-DD\s*\)/g;
+const DATE_FORMAT_LEAD = /\(\s*YYYY-MM-DD\s*,\s*/g;
 
 function describe(kind: FieldKind, s: JsonSchema): string | undefined {
   if (kind !== "date" || !s.description) return s.description;
-  return s.description.replace(DATE_FORMAT_HINT, "").trim() || undefined;
+  return s.description.replace(DATE_FORMAT_HINT, "").replace(DATE_FORMAT_LEAD, "(").trim() || undefined;
 }
 
-function initialOf(kind: FieldKind, s: JsonSchema): string | boolean {
+/** `day` (YYYY-MM-DD) moved by `days`. */
+function shiftDay(day: string, days: number): string {
+  const at = new Date(`${day}T12:00:00Z`);
+  at.setUTCDate(at.getUTCDate() + days);
+  return at.toISOString().slice(0, 10);
+}
+
+/** The first day of a range ("since", "from", "week_start"): a week back, so a range covers the last 7 days. */
+const RANGE_START = /(^|_)(since|from|start)$|^start/;
+
+/** A date field's first value when its schema has none, by its name, from `today`: a range's start a week back,
+ * a single "day" yesterday's (the usual day to look back on), anything else (an end, "as of") today. */
+function defaultDay(key: string, today: string): string {
+  const name = key.replace(/([a-z0-9])([A-Z])/g, "$1_$2").toLowerCase();
+  if (RANGE_START.test(name)) return shiftDay(today, -6);
+  if (name === "day") return shiftDay(today, -1);
+  return today;
+}
+
+function initialOf(kind: FieldKind, s: JsonSchema, key = "", today?: string): string | boolean {
   if (kind === "boolean") return s.default === true;
-  if (s.default === undefined || s.default === null) return "";
+  if (s.default === undefined || s.default === null) return kind === "date" && today ? defaultDay(key, today) : "";
   return kind === "json" ? JSON.stringify(s.default) : String(s.default);
 }
 
 type Group = { key: string; label: string; required: boolean; inner: Set<string> };
 
-function field(path: string[], s: JsonSchema, required: boolean, group?: Group): InputField {
+function field(path: string[], s: JsonSchema, required: boolean, group?: Group, today?: string): InputField {
   const kind = kindOf(s);
   const key = path[path.length - 1] ?? "";
   return {
@@ -121,12 +142,16 @@ function field(path: string[], s: JsonSchema, required: boolean, group?: Group):
           requiredInGroup: group.inner.has(key),
         }
       : {}),
-    initial: initialOf(kind, s),
+    initial: initialOf(kind, s, key, today),
   };
 }
 
-/** The form fields of an object input schema, or null when there is no such schema (use free text then). */
-export function inputFields(schema: unknown): InputField[] | null {
+/**
+ * The form fields of an object input schema, or null when there is no such schema (use free text then). With
+ * `today` (YYYY-MM-DD), a date field the schema gives no default starts at a sensible day (see defaultDay); an
+ * optional object's dates stay empty, so the object is still left out until someone fills it in.
+ */
+export function inputFields(schema: unknown, today?: string): InputField[] | null {
   if (!isRecord(schema)) return null;
   const root = schema as JsonSchema;
   if (typeOf(root) !== "object" && !isRecord(root.properties)) return null;
@@ -144,11 +169,12 @@ export function inputFields(schema: unknown): InputField[] | null {
       for (const [child, sub] of Object.entries(prop.properties)) {
         if (!isRecord(sub)) continue;
         // Only one level of nesting gets its own fields; deeper objects are entered as JSON.
-        const f = field([key, child], sub, group.required && group.inner.has(child), group);
+        const dayFrom = group.required ? today : undefined;
+        const f = field([key, child], sub, group.required && group.inner.has(child), group, dayFrom);
         out.push(typeOf(sub) === "object" ? { ...f, kind: "json", initial: initialOf("json", sub) } : f);
       }
     } else {
-      out.push(field([key], prop, required.has(key)));
+      out.push(field([key], prop, required.has(key), undefined, required.has(key) ? today : undefined));
     }
   }
   return out;

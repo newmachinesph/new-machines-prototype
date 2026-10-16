@@ -7,6 +7,7 @@ import {
   Brain,
   Building2,
   ChevronRight,
+  ClipboardCheck,
   FileCheck2,
   FileCode2,
   Gauge,
@@ -32,7 +33,7 @@ import { ApiError } from "@/lib/api/errors";
 import { env } from "@/lib/env";
 import { useSession } from "@/lib/auth/session";
 import { cn } from "@/lib/cn";
-import { useMe } from "@/lib/queries/ops";
+import { useMe, useOpsWorkspace } from "@/lib/queries/ops";
 import type { OpsRole } from "@/lib/types";
 import { useToast } from "./base";
 import { Skeleton } from "./skeleton";
@@ -56,6 +57,7 @@ export const NAV: NavGroup[] = [
     label: "Catalog",
     items: [
       { href: "/marketplace", label: "Marketplace", icon: Store },
+      { href: "/listings", label: "Review queue", icon: ClipboardCheck },
       { href: "/connectors", label: "Connectors", icon: Plug },
     ],
   },
@@ -164,6 +166,7 @@ function NavGroups({ path, onNavigate }: { path: string; onNavigate?: () => void
 }
 
 function SidebarBody({ path, onNavigate, close }: { path: string; onNavigate?: () => void; close?: ReactNode }) {
+  const live = useOpsWorkspace() === "live";
   return (
     <>
       <div className="flex items-start justify-between gap-2 px-3 pt-4">
@@ -174,7 +177,8 @@ function SidebarBody({ path, onNavigate, close }: { path: string; onNavigate?: (
         <NavGroups path={path} onNavigate={onNavigate} />
       </nav>
       <p className="border-t border-chrome-line px-5 py-3.5 text-xs leading-snug text-chrome-muted">
-        Staff only. Every change is recorded in the audit log. Demo environment: tenants and data are synthetic.
+        Staff only. Every change is recorded in the audit log.
+        {live ? null : " Demo environment: tenants and data are synthetic."}
       </p>
     </>
   );
@@ -282,11 +286,17 @@ function safeDecode(segment: string): string {
   }
 }
 
-/** A label, not a control: the sidebar footer says what the demo environment is. */
+/** A label, not a control: it says which environment the API serves (the workspace mode it reports). */
 function EnvironmentBadge() {
+  const live = useOpsWorkspace() === "live";
   return (
-    <span className="inline-block shrink-0 rounded-full border border-dashed border-sim/40 bg-sim-soft px-2.5 py-1 text-xs whitespace-nowrap text-sim">
-      Demo <span className="hidden sm:inline">environment</span>
+    <span
+      className={cn(
+        "inline-block shrink-0 rounded-full border px-2.5 py-1 text-xs whitespace-nowrap",
+        live ? "border-chrome-line bg-chrome-line/30 text-grey-700" : "border-dashed border-sim/40 bg-sim-soft text-sim",
+      )}
+    >
+      {live ? "Live" : "Demo"} <span className="hidden sm:inline">environment</span>
     </span>
   );
 }

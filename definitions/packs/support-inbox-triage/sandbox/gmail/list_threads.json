@@ -1,0 +1,61 @@
+{
+  "messages": [
+    {
+      "messageId": "19c3d1b2e3f40005",
+      "threadId": "19c3d1b2e3f40005",
+      "messageTimestamp": "2026-10-15T08:10:00Z",
+      "labelIds": ["INBOX", "UNREAD"],
+      "sender": "Lena Park <lena.park@example.com>",
+      "to": "support@shop.example.com",
+      "subject": "How do I change my delivery address?",
+      "messageText": "Hi, I placed order #2201 yesterday and need to change the delivery address. How can I do that? Lena",
+      "preview": {"subject": "How do I change my delivery address?", "body": "Hi, I placed order #2201 yesterday and need to change the delivery address."}
+    },
+    {
+      "messageId": "19c3d1b2e3f40004",
+      "threadId": "19c3d1b2e3f40004",
+      "messageTimestamp": "2026-10-14T19:40:00Z",
+      "labelIds": ["INBOX", "UNREAD"],
+      "sender": "Raj Mehta <raj.mehta@example.com>",
+      "to": "support@shop.example.com",
+      "subject": "Very disappointed with my order",
+      "messageText": "My order #2188 arrived two weeks late and the box was damaged. I am very disappointed. Raj",
+      "preview": {"subject": "Very disappointed with my order", "body": "My order #2188 arrived two weeks late and the box was damaged."}
+    },
+    {
+      "messageId": "19c3d1b2e3f40003",
+      "threadId": "19c3d1b2e3f40003",
+      "messageTimestamp": "2026-10-14T12:05:00Z",
+      "labelIds": ["INBOX"],
+      "sender": "Chloe Martin <chloe.martin@example.com>",
+      "to": "support@shop.example.com",
+      "subject": "Refund for order #2190",
+      "messageText": "Please refund the $48.00 I paid for order #2190; the jacket does not fit. Chloe",
+      "preview": {"subject": "Refund for order #2190", "body": "Please refund the $48.00 I paid for order #2190; the jacket does not fit."}
+    },
+    {
+      "messageId": "19c3d1b2e3f40002",
+      "threadId": "19c3d1b2e3f40002",
+      "messageTimestamp": "2026-10-14T06:00:00Z",
+      "labelIds": ["INBOX", "CATEGORY_PROMOTIONS"],
+      "sender": "Deals Weekly <offers@dealsweekly.example.com>",
+      "to": "support@shop.example.com",
+      "subject": "50% off everything this weekend",
+      "messageText": "Big savings on every order this weekend only. Unsubscribe at any time.",
+      "preview": {"subject": "50% off everything this weekend", "body": "Big savings on every order this weekend only."}
+    },
+    {
+      "messageId": "19c3d1b2e3f40001",
+      "threadId": "19c3d1b2e3f40001",
+      "messageTimestamp": "2026-10-13T15:30:00Z",
+      "labelIds": ["INBOX"],
+      "sender": "Omar Haddad <omar.haddad@example.com>",
+      "to": "support@shop.example.com",
+      "subject": "Do you ship to Canada?",
+      "messageText": "Hello, do you ship to Canada, and how long does delivery take? Omar",
+      "preview": {"subject": "Do you ship to Canada?", "body": "Hello, do you ship to Canada, and how long does delivery take?"}
+    }
+  ],
+  "nextPageToken": null,
+  "resultSizeEstimate": 5
+}

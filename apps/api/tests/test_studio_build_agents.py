@@ -1,5 +1,7 @@
 """Sub-project C, part 4: an agent draft becomes a google_adk agent definition, and back."""
 
+from copy import deepcopy
+from dataclasses import replace
 from functools import cache
 
 import pytest
@@ -30,7 +32,12 @@ def test_the_tool_index_names_each_tool_with_its_app():
 
 
 def test_every_seed_memory_space_is_readable_by_team_agents():
-    assert {d.key for d in readable_spaces(_bundle())} == {"customer-accounts", "retail-commerce"}
+    assert {d.key for d in readable_spaces(_bundle())} == {
+        "customer-accounts",
+        "expense-policy",
+        "retail-commerce",
+        "support-policies",
+    }
 
 
 def test_an_agent_draft_becomes_a_valid_google_adk_agent():
@@ -132,3 +139,33 @@ def test_agent_issues_name_the_tool(tools, message):
 
 def test_a_draft_with_read_tools_has_no_issues():
     assert agent_issues(TEAM_AGENT, tool_index(_bundle())) == []
+
+
+def _workflow_errors_with_studio_agent(inputs) -> list[str]:
+    """Validate the real bundle with the first agent step of a seed workflow running a Studio-built agent
+    whose step maps `inputs` (no `inputs` key at all for `...`). Returns that workflow's errors."""
+    bundle = _bundle()
+    agent = agent_definition(KEY, ORG, TEAM_AGENT, tool_index(bundle), 1)
+    wf = next(w for w in bundle.of("workflow") if any(n["type"] == "agent" for n in w.body["nodes"]))
+    nodes = deepcopy(wf.body["nodes"])
+    step = next(n for n in nodes if n["type"] == "agent")
+    step["config"]["agent"] = KEY
+    step["config"].pop("inputs", None)
+    if inputs is not ...:
+        step["config"]["inputs"] = inputs
+    workflow = replace(wf, body={**wf.body, "nodes": nodes})
+    items = {**bundle.items, ("agent", KEY): agent, ("workflow", wf.key): workflow}
+    errors = validate_bundle(Bundle(items=items))
+    return [e.message for e in errors if (e.kind, e.key) == ("workflow", wf.key)]
+
+
+@pytest.mark.parametrize("inputs", [..., {}])
+def test_a_studio_agent_step_without_inputs_is_a_problem(inputs):
+    messages = _workflow_errors_with_studio_agent(inputs)
+    assert len(messages) == 1, messages
+    assert ".config.inputs" in messages[0] and KEY in messages[0]
+
+
+@pytest.mark.parametrize("inputs", [{"invoices": "=input.invoices"}, "=input"])
+def test_a_studio_agent_step_with_inputs_is_valid(inputs):
+    assert _workflow_errors_with_studio_agent(inputs) == []

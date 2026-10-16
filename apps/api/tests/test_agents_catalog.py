@@ -20,10 +20,14 @@ INVENTORY = {"slug": "weekly-inventory-report", "name": "Weekly Inventory Report
 REFUNDS = {"slug": "refund-triage", "name": "Refund Triage"}
 DEFINITION_AGENTS = [
     "collections-agent",
+    "expense-agent",
     "finance-agent",
+    "lead-agent",
+    "meeting-agent",
     "ops-agent",
     "refunds-agent",
     "retail-agent",
+    "support-agent",
     "writer-agent",
 ]
 N_DEFINED = len(DEFINITION_AGENTS)
