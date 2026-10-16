@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { screen, waitFor } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { renderWithIntl } from "@/test/intl";
 import { EarningsView } from "./earnings/earnings-view";
@@ -85,6 +85,33 @@ describe("reviewer portal views in Japanese", () => {
     );
     expect(screen.getByRole("heading", { name: "このページを読み込めませんでした" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "受けられるタスクに戻る" })).toHaveAttribute("href", "/work");
+  });
+});
+
+describe("reviewer portal with a claimed task", () => {
+  it("keeps the reviewer's claim on the page, above the open offers, and counts only the offers", () => {
+    lists.tasks = [
+      { ...OPEN_TASKS[0], id: "ht_012", title: "Check 2 refund requests", state: "CLAIMED" },
+      OPEN_TASKS[0],
+    ];
+    renderWithIntl(<WorkView />);
+    const claimed = screen.getByRole("heading", { name: "Your claimed tasks" }).closest("section")!;
+    expect(within(claimed).getByRole("link", { name: /Check 2 refund requests/ })).toHaveAttribute(
+      "href",
+      "/work/tasks/ht_012",
+    );
+    expect(within(claimed).getByText("Continue the task")).toBeInTheDocument();
+    const offers = screen.getByRole("heading", { name: "Open offers" }).closest("section")!;
+    expect(within(offers).getByText("Correct 3 order-to-payout exceptions")).toBeInTheDocument();
+    expect(screen.getByText("Open offers", { selector: "dt" }).nextElementSibling).toHaveTextContent("1");
+    expect(screen.queryByText(/No review tasks are open right now/)).not.toBeInTheDocument();
+  });
+
+  it("shows the claim with the empty state when no offer is open", () => {
+    lists.tasks = [{ ...OPEN_TASKS[0], state: "CLAIMED" }];
+    renderWithIntl(<WorkView />);
+    expect(screen.getByRole("heading", { name: "Your claimed tasks" })).toBeInTheDocument();
+    expect(screen.getByText(/No review tasks are open right now/)).toBeInTheDocument();
   });
 });
 
@@ -187,7 +214,7 @@ describe("reviewer portal with team and network tasks", () => {
     expect(row).toHaveAttribute("href", "/work/tasks/ht_009");
     expect(row).toHaveTextContent("Verdict: Approved");
     expect(row).toHaveTextContent("Payment: Owed$7.50");
-    expect(row).toHaveTextContent("Oct 11, 10:00 PM GMT+8");
+    expect(row).toHaveTextContent("Oct 11, 10:00 PM Manila time");
     expect(row).not.toHaveTextContent("ht_009");
     expect(screen.getAllByText("Verdict").length).toBeGreaterThan(0);
   });

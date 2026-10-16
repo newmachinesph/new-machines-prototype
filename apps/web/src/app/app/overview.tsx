@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { PackIcon } from "@/components/pack-icon";
 import { QueryState } from "@/components/query-state";
-import { useCodes } from "@/components/run-codes";
+import { useRunLede } from "@/components/run-lede";
 import { Skeleton } from "@/components/skeleton";
 import { isSettled, useAutoTour } from "@/components/tour/use-auto-tour";
 import {
@@ -203,7 +203,8 @@ function NoRuns({ packs }: { packs: Pack[] }) {
 export function Overview() {
   const t = useTranslations("overview");
   const { ago, money } = useFormat();
-  const { line } = useCodes();
+  // The row's summary reads as the run page's lede does: what the run is doing, never the "Starting." placeholder.
+  const lede = useRunLede();
   const usage = useUsage();
   const runs = useRuns();
   const attention = useAttention();
@@ -292,7 +293,7 @@ export function Overview() {
                                 </div>
                               </div>
                               <div className="hidden min-w-0 md:block">
-                                <div className="line-clamp-2 text-[13px] break-words">{line(r.summary)}</div>
+                                <div className="line-clamp-2 text-[13px] break-words">{lede(r)}</div>
                                 <div className="text-[13px] text-muted">{when}</div>
                               </div>
                               <div className="hidden justify-self-start lg:block">

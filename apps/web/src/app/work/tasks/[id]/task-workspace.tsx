@@ -7,7 +7,7 @@ import { Choices, focusAfterClose, useToast } from "@/components/base";
 import { Amount, Button, ButtonLink, Callout, Id, KeyValues, Pill, Section, SimTag } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useErrorText } from "@/lib/api/use-error-text";
-import { utc, WORKER_TZ } from "@/lib/format";
+import { WORKER_TZ } from "@/lib/format";
 import { INTL_TAGS, resolveLocale } from "@/i18n/locales";
 import { useNow } from "@/lib/clock";
 import { useFormat } from "@/lib/use-format";
@@ -253,7 +253,9 @@ export function TaskWorkspace({ task, buyer }: { task: HumanTask; buyer: string 
           {t("validating.body")} <SimTag>{t("validating.simulatedCheck")}</SimTag>
         </Callout>
       ) : null}
-      {phase === "submitted" && realRun ? <RunSubmitted outcome={runOutcome} payNote={payNote} /> : null}
+      {phase === "submitted" && realRun ? (
+        <RunSubmitted outcome={runOutcome} payNote={payNote} runHref={showRun ? `/app/runs/${task.runId}` : null} />
+      ) : null}
       {phase === "submitted" && !realRun && task.state !== "ACCEPTED" ? (
         <Callout tone="info" title={t("submitted.title")}>
           {t("submitted.body")}{" "}
@@ -364,15 +366,32 @@ function ReviewSummary({ task, sent, linkEarnings }: { task: HumanTask; sent: Se
 
 /**
  * A submitted review on a real run: what the run does with it, and what the review pays (team: unpaid, network:
- * simulated). Unknown outcome (an older answer): just recorded.
+ * simulated). Unknown outcome (an older answer): just recorded. This is also what a reload shows, so it keeps
+ * the way back to the run (a team task's; a network task's run is not the reviewer's to open).
  */
-function RunSubmitted({ outcome, payNote }: { outcome?: RunOutcome; payNote: string | null }) {
+function RunSubmitted({
+  outcome,
+  payNote,
+  runHref,
+}: {
+  outcome?: RunOutcome;
+  payNote: string | null;
+  runHref: string | null;
+}) {
   const t = useTranslations("task.runSubmitted");
   const tWork = useTranslations("work");
   const key = outcome === "STOPS" ? "stops" : outcome === "CONTINUES" ? "continues" : "recorded";
   return (
     <Callout tone={outcome === "STOPS" ? "warn" : "info"} title={t(`${key}Title`)}>
       {t(`${key}Body`)}{" "}
+      {runHref ? (
+        <>
+          <Link className="link" href={runHref}>
+            {t("openRun")}
+          </Link>
+          {" · "}
+        </>
+      ) : null}
       <Link className="link" href="/work">
         {tWork("backToTasks")}
       </Link>
@@ -412,7 +431,6 @@ function Offer({
                 label: t("due"),
                 value: tWork("due", {
                   when: dateTime(task.deadline, WORKER_TZ),
-                  utc: utc(task.deadline),
                   until: until(task.deadline),
                 }),
               },

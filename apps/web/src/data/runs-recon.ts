@@ -364,7 +364,31 @@ export const RUN_1042: Run = {
   nodes: reconNodes(
     { human: "COMPLETED", verify: "COMPLETED", memory: "COMPLETED", report: "COMPLETED", done: "COMPLETED" },
     {
-      read: { durationS: 11, cost: usd(6), output: "2 tabs, 31 orders, 29 payout lines" },
+      read: {
+        durationS: 11,
+        cost: usd(6),
+        output: "2 tabs, 31 orders, 29 payout lines",
+        toolCalls: [
+          {
+            id: "tool_8801",
+            app: "Google Sheets",
+            action: "Read range Orders!A1:K32",
+            capability: "orders.read",
+            status: "CONFIRMED",
+            policy: "PERMIT",
+            detail: "Read-only. 31 rows.",
+          },
+          {
+            id: "tool_8802",
+            app: "Google Sheets",
+            action: "Read range Payouts!A1:H30",
+            capability: "payment.read",
+            status: "CONFIRMED",
+            policy: "PERMIT",
+            detail: "Read-only. 29 rows.",
+          },
+        ],
+      },
       retail: { durationS: 34, cost: usd(24), output: "31 orders inspected. 2 refunds noted." },
       finance: { durationS: 43, cost: usd(78), attempts: 2, output: "Attempt 2: 30 matched, 1 pending payout." },
       decide: {

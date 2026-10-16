@@ -13,6 +13,7 @@ import { isWrite } from "@/lib/builder/rules";
 import { useEditor } from "@/lib/builder/store";
 import { stepTitle } from "@/lib/builder/titles";
 import { cn } from "@/lib/cn";
+import { useOutcomeLabel } from "@/lib/outcome-label";
 
 /** Problems per step id, local and from the API. The pack editor provides it; the canvas marks those steps. */
 export const StepIssuesContext = createContext<ReadonlyMap<string, number>>(new Map());
@@ -24,6 +25,7 @@ export const StepIssuesContext = createContext<ReadonlyMap<string, number>>(new 
  */
 export const StepNodeView = memo(function StepNodeView({ id, data, selected }: NodeProps<StepNode>) {
   const t = useTranslations("studioCanvas");
+  const outcomeLabel = useOutcomeLabel();
   const palette = useEditor((s) => s.palette);
   const writes = useEditor((s) => isWrite(data, s.tools));
   const routed = useEditor(useShallow((s) => s.edges.filter((e) => e.source === id).map((e) => e.sourceHandle ?? "")));
@@ -82,7 +84,7 @@ export const StepNodeView = memo(function StepNodeView({ id, data, selected }: N
                 FAILURE_OUTCOMES.has(outcome) ? "text-blocked" : "text-muted",
               )}
             >
-              {outcome}
+              {outcomeLabel(outcome)}
             </span>
           )}
         </Handle>

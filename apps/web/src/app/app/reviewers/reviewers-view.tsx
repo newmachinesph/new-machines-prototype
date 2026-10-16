@@ -181,7 +181,14 @@ function TeamSection({
                       </Button>
                     }
                     title={isMe(r) ? t("removeSelfTitle") : t("removeTitle", { name: r.name })}
-                    description={isMe(r) ? t("removeSelfDescription") : t("removeDescription")}
+                    description={
+                      // The only reviewer removing themself leaves review tasks with nobody: say so.
+                      isMe(r)
+                        ? reviewers.filter((x) => !x.pending).length === 1
+                          ? t("removeLastDescription")
+                          : t("removeSelfDescription")
+                        : t("removeDescription")
+                    }
                     confirmLabel={t("removeConfirm")}
                     onConfirm={() => drop(r)}
                   />

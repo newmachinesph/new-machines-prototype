@@ -350,7 +350,7 @@ describe("ConnectionList in a live workspace", () => {
     const stripe = card("Stripe");
     expect(within(stripe).queryByText("Simulated")).not.toBeInTheDocument();
     expect(within(stripe).getByText("Your Stripe account")).toBeInTheDocument();
-    expect(within(stripe).getByText("Via Composio")).toBeInTheDocument();
+    expect(within(stripe).getByText("Via your own account")).toBeInTheDocument();
     expect(within(stripe).queryByRole("button", { name: /Switch Stripe/ })).not.toBeInTheDocument();
     expect(screen.queryByText(/Simulated apps use sandbox data/)).not.toBeInTheDocument();
   });

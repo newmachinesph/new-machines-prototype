@@ -3,7 +3,7 @@
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
-import { Checkbox, Segmented, useToast } from "@/components/base";
+import { Segmented, useToast } from "@/components/base";
 import { QueryState } from "@/components/query-state";
 import { Skeleton } from "@/components/skeleton";
 import { Button, ButtonLink, Callout, EmptyState, Section } from "@/components/ui";
@@ -15,6 +15,7 @@ import { useCreateStudioAgent, useSaveStudioAgent, useStudioAgent, useStudioPale
 import { useLeaveGuard } from "@/lib/use-leave-guard";
 import { useCanBuild } from "../can-build";
 import { SubmitButton } from "../submit-dialog";
+import { ToolPicker } from "./tool-picker";
 
 const INPUT =
   "mt-1.5 h-10 w-full rounded-md border border-grey-300 px-3 text-sm outline-none focus:border-ink disabled:bg-grey-50 disabled:text-grey-700 aria-[invalid=true]:border-blocked";
@@ -195,8 +196,8 @@ function AgentForm({
   const tools = draft.tools ?? [];
   // A chosen tool the registry no longer offers for reading still needs a box, so it can be removed.
   const stale = tools.filter((ref) => !reads.some((tool) => tool.ref === ref));
-  const atCap = tools.length >= MAX_TOOLS;
   const pending = create.isPending || save.isPending;
+  const locked = !canBuild || create.isPending;
   const set = (patch: Partial<AgentDraft>) => setDraft((d) => ({ ...d, ...patch }));
 
   const fieldIssues = issues.filter((i) => i.kind !== "pack");
@@ -335,7 +336,7 @@ function AgentForm({
       ) : null}
       {/* One switch makes every native field inside read-only for a member; Base UI controls get it by prop. */}
       {/* Locked while a new agent is created: the page moves to it on success, without anything typed meanwhile. */}
-      <fieldset disabled={!canBuild || create.isPending} className="min-w-0 space-y-5">
+      <fieldset disabled={locked} className="min-w-0 space-y-5">
         <Section title={t("about")}>
           <div className="grid gap-4 p-5">
             <div>
@@ -420,55 +421,25 @@ function AgentForm({
             </div>
           </div>
         </Section>
+      </fieldset>
 
-        <Section title={t("tools")}>
-          <div className="space-y-3 p-5">
-            <p className="text-sm text-muted">
-              {t("toolsHelp")} {t("toolsMax", { n: MAX_TOOLS })}
-            </p>
-            <FieldError {...toolsErr} />
-            {reads.map((tool) => {
-              const checked = tools.includes(tool.ref);
-              const err = toolErrorsAt(tool.ref);
-              return (
-                <div key={tool.ref}>
-                  <Checkbox
-                    checked={checked}
-                    disabled={!canBuild || (atCap && !checked)}
-                    invalid={err.messages.length > 0}
-                    describedBy={err.messages.length ? err.id : undefined}
-                    onCheckedChange={(on) => setTool(tool.ref, on)}
-                  >
-                    <span className="font-medium">
-                      {tool.app}: {tool.name}
-                    </span>
-                    <span className="block text-xs text-muted">{tool.description}</span>
-                  </Checkbox>
-                  <FieldError {...err} />
-                </div>
-              );
-            })}
-            {stale.map((ref) => {
-              const err = toolErrorsAt(ref);
-              return (
-                <div key={ref}>
-                  <Checkbox
-                    checked
-                    disabled={!canBuild}
-                    invalid={err.messages.length > 0}
-                    describedBy={err.messages.length ? err.id : undefined}
-                    onCheckedChange={(on) => setTool(ref, on)}
-                  >
-                    <span className="font-mono text-[13px] font-medium">{ref}</span>
-                    <span className="block text-xs text-muted">{t("toolGone")}</span>
-                  </Checkbox>
-                  <FieldError {...err} />
-                </div>
-              );
-            })}
-          </div>
-        </Section>
+      {/* Outside the fieldset: a member may still search the tools and open an app; the boxes take `disabled`. */}
+      <ToolPicker
+        tools={reads}
+        chosen={tools}
+        stale={stale}
+        max={MAX_TOOLS}
+        disabled={locked}
+        errorsAt={toolErrorsAt}
+        onToggle={setTool}
+      >
+        <p className="text-sm text-muted">
+          {t("toolsHelp")} {t("toolsMax", { n: MAX_TOOLS })}
+        </p>
+        <FieldError {...toolsErr} />
+      </ToolPicker>
 
+      <fieldset disabled={locked} className="min-w-0 space-y-5">
         <Section
           title={t("skills")}
           headingRef={skillsHeading}
@@ -533,7 +504,8 @@ function AgentForm({
         </Section>
       </fieldset>
 
-      <div className="flex items-center gap-3">
+      {/* Stays in view below the tools and skills, so saving never means scrolling past every app first. */}
+      <div className="sticky bottom-0 z-10 flex flex-wrap items-center gap-3 border-t border-rule bg-stage py-3">
         {canBuild ? (
           <Button type="submit" disabled={pending || !orgId}>
             {t("save")}

@@ -4,7 +4,9 @@ import { renderWithIntl } from "@/test/intl";
 import { PoliciesSection, WorkspaceSection, splitPolicyRef } from "./workspace";
 
 const ok = <T,>(data: T) => ({ isPending: false, isError: false, data });
-const data = vi.hoisted(() => ({ policies: [] as unknown[], region: "asia-south1" }));
+const data = vi.hoisted(() => ({ policies: [] as unknown[], region: "asia-south1", live: true }));
+
+vi.mock("@/lib/queries/me", () => ({ useIsLive: () => data.live }));
 
 vi.mock("@/lib/queries/workspace", () => ({ usePolicies: () => ok(data.policies) }));
 vi.mock("@/lib/queries/org", () => ({
@@ -31,6 +33,7 @@ describe("splitPolicyRef", () => {
 
 describe("PoliciesSection", () => {
   beforeEach(() => {
+    data.live = true;
     data.policies = [
       policy("tool_actions@1"),
       policy("region@1", "Customer data is stored in Mumbai."),
@@ -43,12 +46,30 @@ describe("PoliciesSection", () => {
     expect(screen.getByRole("heading", { level: 3, name: "Tool actions Version 1" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { level: 3, name: "Data region Version 1" })).toBeInTheDocument();
     expect(screen.queryByText(/@\d/)).not.toBeInTheDocument();
-    expect(screen.getByText("Customer data is stored in Mumbai.")).toBeInTheDocument();
+    // The built-in policies read in the interface language, the region one naming the workspace's region.
+    expect(screen.getByText(/^Customer data is stored and processed in asia-south1 \(Mumbai\)/)).toBeInTheDocument();
+    expect(screen.getByText(/^Every tool call is checked first/)).toBeInTheDocument();
+    // An unknown policy keeps the API's words; a ready-made date (the demo's) shows as it came.
+    expect(screen.getByText("What this policy enforces.")).toBeInTheDocument();
+    expect(screen.getAllByText("Updated Oct 15")).toHaveLength(3);
+  });
+
+  it("formats an ISO policy date in the interface language", () => {
+    data.policies = [{ ...policy("tool_actions@1"), updated: "2026-10-16T06:30:00Z" }];
+    renderWithIntl(<PoliciesSection />, { locale: "ja" });
+    expect(screen.getByText("更新：10月15日")).toBeInTheDocument(); // PT, the business zone
   });
 
   it("reads an unknown policy name as words", () => {
     renderWithIntl(<PoliciesSection />);
     expect(screen.getByRole("heading", { level: 3, name: "Data retention Version 2" })).toBeInTheDocument();
+  });
+
+  it("keeps the demo's own policy text, translating only a live workspace's built-in policies", () => {
+    data.policies = [policy("policy/tool_actions@3", "The demo's own wording.")];
+    data.live = false;
+    renderWithIntl(<PoliciesSection />, { locale: "ja" });
+    expect(screen.getByText("The demo's own wording.")).toBeInTheDocument();
   });
 
   it("is translated", () => {

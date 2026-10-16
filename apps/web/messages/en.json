@@ -14,7 +14,7 @@
     "leaveUnsaved": "You have unsaved changes. Leave this page without saving them?",
     "goToOverview": "Go to overview",
     "simulated": "Simulated",
-    "sandboxMock": "Sandbox mock",
+    "sandboxMock": "Sandbox",
     "actor": {
       "machine": "Agent or tool",
       "human": "Human reviewer",
@@ -83,7 +83,9 @@
     "browsePacks": "Browse packs",
     "startRun": "Start a run",
     "choosePack": "Choose one of your packs",
+    "noPacks": "No packs added yet",
     "hireAnother": "Add another pack",
+    "hireFirst": "Add a pack",
     "startHelp": "Choose a pack, then the data it should work on.",
     "palette": {
       "title": "Find anything",
@@ -111,6 +113,10 @@
       "admin": "Admin",
       "member": "Member",
       "reviewer": "Reviewer"
+    },
+    "plans": {
+      "trial": "Trial",
+      "pro": "Pro"
     },
     "sandboxBadge": "Simulated data, simulated billing",
     "sandboxTooltip": "Apps not connected to your real account use simulated data. Connect them on the Connections page. Billing is simulated: no money moves.",
@@ -323,6 +329,7 @@
       "contract": "Contract",
       "openDeliverable": "Open the deliverable and evidence",
       "deliverablePending": "The deliverable appears here once the run is verified. <example>See a finished example</example>.",
+      "deliverablePendingLive": "The deliverable appears here once the run is verified.",
       "receipt": {
         "title": "Work receipt",
         "verified": "Verified",
@@ -372,7 +379,12 @@
         "withoutApproval": "Some writes outside New Machines ran without an approval step."
       },
       "evidence": "Evidence",
+      "noEvidence": "No extra evidence was attached to this run.",
       "open": "Still open",
+      "nothingOpen": "Nothing is left open.",
+      "pending": "The deliverable and its evidence appear here once the run finishes and is verified.",
+      "pendingEnded": "This run ended without a deliverable.",
+      "backToRun": "Back to the run",
       "limitations": "Limitations",
       "billable": "Why this is billable",
       "agentsTools": "Agents and tools",
@@ -502,6 +514,7 @@
       "body": "The link may be incomplete or out of date. Check the address and try again.",
       "overview": "Go to overview",
       "allRuns": "See all runs",
+      "backToStudio": "Back to the Studio",
       "signIn": "Sign in"
     },
     "signIn": {
@@ -539,19 +552,21 @@
       "orDemoLogin": "or use the demo login",
       "email": "Email",
       "emailPlaceholder": "you@company.com",
+      "emailRequired": "Enter your email.",
       "password": "Password",
       "passwordHint": "Sent to you with the demo login.",
+      "passwordRequired": "Enter your password.",
       "passwordSuffix": "password",
       "show": "Show",
       "hide": "Hide",
       "submit": "Sign in",
-      "joinNoteMember": "Signing in with Google joins you to Harbor & Pine Supply Co. as a member.",
+      "joinNoteMember": "Signing in with Google opens your own workspace, or the one you were invited to.",
       "joinNoteReviewer": "Reviewers: after signing in, open the reviewer portal from the menu."
     },
     "record": {
       "title": "Yesterday’s reconciliation at Harbor & Pine",
-      "intro": "{title}. 38 minutes of work, {total} all in. Every line below comes from the run’s record.",
-      "openRun": "Open this run",
+      "example": "Example run from a sample workspace",
+      "intro": "{title}. 38 minutes of work, {total} all in. Every line below comes from the sample run’s record.",
       "whoDidWhat": "Who did what",
       "afterVerified": "The agent’s own claim of success was not used.",
       "afterAccepted": "One order waits on Tuesday’s payout. It stays tracked, not hidden."
@@ -588,9 +603,11 @@
       "suggestions": {
         "reconcile": "Match last week's orders to Stripe payouts",
         "invoices": "Chase wholesale invoices that are past due",
-        "refunds": "Handle refund requests from support email",
+        "refunds": "Decide refund requests against our refund policy",
         "reorder": "Tell me what to reorder every Monday",
-        "translate": "Translate our catalog for a Japanese store"
+        "translate": "Translate our catalog for a Japanese store",
+        "expenses": "Sort last week's expenses and flag anything unusual",
+        "meetings": "Draft follow-ups for yesterday's meetings"
       }
     },
     "nothingNeedsYou": "Nothing needs you right now. Approvals and review tasks show up here.",
@@ -692,7 +709,7 @@
     "connect": {
       "title": "Connect an app",
       "titleApp": "Connect {app}",
-      "description": "New Machines sends you to the app's own sign-in page through Composio. You approve the permissions there, and we never see your password.",
+      "description": "New Machines sends you to the app's own sign-in page. You approve the permissions there, and we never see your password.",
       "liveOnly": "Available in the live product",
       "demoNote": "This demo workspace cannot connect real accounts. Google Sheets, Gmail and Drive are already connected to a test account.",
       "liveNote": "Add a pack and the apps it needs are listed on this page. Connect each one to your real account, or use simulated data."
@@ -716,7 +733,7 @@
     "scopes": "Permissions the app granted",
     "used": "Used {when}",
     "viaMock": "Via a sandbox mock",
-    "viaComposio": "Via Composio",
+    "viaComposio": "Via your own account",
     "disconnectApp": "Disconnect {app}",
     "disconnectTitle": "Disconnect {app}?",
     "disconnectDescription": "Every pack you added loses access to {app} at once. Runs already going stop at their next {app} step, and new runs can't start until {app} is connected again.",
@@ -957,7 +974,21 @@
       "reviewerWhenNeeded": "Reviewer when needed",
       "perRun": "{price} per run",
       "perRunPlusFee": "{price} per run, plus the fee",
-      "perRunUnset": "Price not set"
+      "perRunUnset": "Usage-based",
+      "categories": {
+        "financeOps": "Finance operations",
+        "customerOps": "Customer operations",
+        "fulfillment": "Fulfillment",
+        "merchandising": "Merchandising",
+        "operations": "Operations",
+        "salesOps": "Sales operations"
+      },
+      "industries": {
+        "retailCommerce": "Retail & Commerce",
+        "manufacturing": "Manufacturing",
+        "mediaContent": "Media, Content & Digital Experiences",
+        "professionalServices": "Professional Services"
+      }
     },
     "price": {
       "range": "{min}–{max}"
@@ -1009,7 +1040,7 @@
       "costs": "What it costs",
       "agentsTools": "Agents and tools",
       "perRun": "{price} per run",
-      "perRunUnset": "Price not set",
+      "perRunUnset": "Usage-based",
       "upTo": "up to {amount} per run",
       "noneByDefault": "None by default",
       "basis": "Basis",
@@ -1230,6 +1261,12 @@
         "spend_cap": "Spend cap",
         "region": "Data region"
       },
+      "summaries": {
+        "tool_actions": "Every tool call is checked first. Reads are permitted, writes and money movements wait for your approval, and an action the policy does not know is denied.",
+        "human_review": "Work a pack sends for review is checked by a person before it is accepted.",
+        "spend_cap": "New runs do not start once this month's spend reaches the workspace's monthly cap.",
+        "region": "Customer data is stored and processed in {region} ({place}). AI model requests are sent to the model provider and are not pinned to a region."
+      },
       "note": "A blocked action has no override button. Policies are shown here to read and cannot be changed from the workspace."
     },
     "workspace": {
@@ -1258,7 +1295,9 @@
       "role": "Role",
       "roles": {
         "Member": "Member",
-        "Admin": "Admin"
+        "Admin": "Admin",
+        "Owner": "Owner",
+        "Reviewer": "Reviewer"
       },
       "roleHelp": {
         "Member": "Starts runs and approves actions their policy allows.",
@@ -1369,6 +1408,7 @@
     "removeDescription": "They stop seeing your team's review tasks, and tasks they claimed go back to the queue. Someone who joined as a reviewer also leaves this workspace.",
     "removeSelfTitle": "Remove yourself as a reviewer?",
     "removeSelfDescription": "You stop seeing your team's review tasks, and tasks you claimed go back to the queue. Your role in the workspace does not change.",
+    "removeLastDescription": "You are the only reviewer here. Until someone else is added, review tasks wait with nobody to take them. Your role in the workspace does not change.",
     "removeConfirm": "Remove reviewer",
     "removed": "Reviewer removed",
     "removeFailed": "Could not remove the reviewer",
@@ -1402,6 +1442,12 @@
     "ledgerNote": "Open an entry to see where the money went",
     "viewRun": "View run",
     "account": "Account",
+    "accounts": {
+      "aiUsage": "AI usage",
+      "toolUsage": "Tool usage",
+      "humanReview": "Human review",
+      "publisherFees": "Publisher fees"
+    },
     "debit": "Debit",
     "credit": "Credit",
     "status": {
@@ -1449,13 +1495,15 @@
       "data": "Data"
     },
     "aboutMin": "About {n} min",
-    "due": "{when} Manila time ({utc}), {until}",
+    "due": "{when}, {until}",
     "dataConfidential": "Confidential, redacted",
     "dataNone": "No customer data",
     "paidOnAccept": "Paid once your submission is accepted",
     "simulatedOnAccept": "Simulated pay once your submission is accepted: no money moves",
     "readTask": "Read the task",
     "yourWork": "Your work",
+    "yourClaimed": "Your claimed tasks",
+    "continueTask": "Continue the task",
     "openOffers": "Open offers",
     "worth": "Worth",
     "owed": "Owed",
@@ -1658,7 +1706,8 @@
       "stopsTitle": "Review recorded. The run stops here.",
       "stopsBody": "You rejected or escalated the result, so the run ends without retrying.",
       "recordedTitle": "Review recorded",
-      "recordedBody": "The run has your verdict."
+      "recordedBody": "The run has your verdict.",
+      "openRun": "Open the run"
     },
     "payNote": {
       "team": "Team reviews are unpaid.",
@@ -1697,6 +1746,7 @@
     "liveOnlyTitle": "The Studio is part of the live workspace",
     "liveOnlyBody": "The demo workspace shows finished packs only. Sign in to your own workspace to build agents and packs.",
     "backToWorkspace": "Back to the workspace",
+    "backToStudio": "Back to Studio home",
     "buildersOnly": "Only owners and admins can build agents and packs."
   },
   "studioAgents": {
@@ -1711,7 +1761,7 @@
     "viewLede": "An agent your company built. Only an owner or admin can change it.",
     "empty": "No agents yet.",
     "emptyMember": "No agents yet. An owner or admin can build one.",
-    "notYours": "This agent is not one of yours.",
+    "notYours": "There is no agent of yours at this address. It may have been removed, or it belongs to another workspace.",
     "backToAgents": "Back to agents",
     "about": "About the agent",
     "name": "Name",
@@ -1725,6 +1775,15 @@
     "tools": "Apps it reads",
     "toolsHelp": "Agents only read. Steps that change data in an app go in a pack, after an approval.",
     "toolsMax": "Up to {n} tools.",
+    "toolsChosen": "{n} of {max} chosen",
+    "chosenTools": "Chosen tools",
+    "noToolsChosen": "No tools chosen yet. Search below, or open an app to see what it offers.",
+    "removeTool": "Remove {name}",
+    "toolSearch": "Search tools",
+    "toolSearchPlaceholder": "Search by app or tool",
+    "toolGroup": "{n, plural, one {# tool} other {# tools}}",
+    "toolGroupChosen": "{n} chosen",
+    "noToolMatches": "No tools match “{query}”.",
     "toolGone": "No longer available in your apps. Untick it to remove it.",
     "skills": "Skills",
     "addSkill": "Add a skill",
@@ -1749,6 +1808,20 @@
     "versionHead": "Version",
     "usedBy": "Used by",
     "unused": "Not used by a pack yet"
+  },
+  "outcomes": {
+    "next": "Next",
+    "ok": "Done",
+    "denied": "Denied",
+    "error": "Error",
+    "resolved": "Resolved",
+    "rejected": "Rejected",
+    "timeout": "Timed out",
+    "granted": "Approved",
+    "pass": "Passed",
+    "fail": "Failed",
+    "blocked": "Blocked",
+    "failed": "Failed"
   },
   "studioCanvas": {
     "canvas": "Workflow canvas",
@@ -1982,7 +2055,7 @@
     "viewLede": "A pack your company built. Only an owner or admin can change it.",
     "empty": "No packs yet. Start from a small example and change it step by step.",
     "emptyMember": "No packs yet. An owner or admin can build one.",
-    "notYours": "This pack is not one of yours.",
+    "notYours": "There is no pack of yours at this address. It may have been removed, or it belongs to another workspace.",
     "backToPacks": "Back to packs",
     "copyTitle": "Edit a copy",
     "copyLede": "Change anything you need, then save it as your own pack.",
@@ -2008,8 +2081,7 @@
     "payouts": "Payout history",
     "noPayouts": "No payouts yet.",
     "empty": "Nothing listed yet. Submit an agent or pack for review from its page.",
-    "toAgents": "Agents",
-    "toPacks": "Packs",
+    "goTo": "Go to <agents>Agents</agents> · <packs>Packs</packs>",
     "columns": {
       "name": "Name",
       "kind": "Kind",

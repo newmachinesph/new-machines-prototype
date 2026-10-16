@@ -464,13 +464,17 @@ def test_the_network_deadline_keeps_its_digits(ana, nina, db):
     assert nina.get(f"/v1/human-tasks/{_pid(db)}").json()["deadline"] == "2026-10-15 09:00 for the customer"
 
 
-def test_decided_and_claimed_tasks_do_not_crowd_offers_out_of_the_list(ana, db):
+def test_decided_tasks_and_other_peoples_claims_do_not_crowd_the_list(ana, db):
+    """The list holds the open offers and the reviewer's own claims; decided tasks and tasks other people
+    hold are left out, so they never use up its limit."""
     _task(db, ana.org_id, "team", age=timedelta(days=1), task_id="ht_old")
     for n in range(review_routing.LIST_LIMIT + 1):
         add_task(db, f"ht_done_{n}", "run_ht_old", status="resolved")
+    add_task(db, "ht_theirs", "run_ht_old", payload={"claimed_by": "uid_rita", "claimed_via": "team"})
     add_task(db, "ht_held", "run_ht_old", payload={"claimed_by": "uid_ana", "claimed_via": "team"})
-    assert ids(ana) == ["ht_old"]
-    assert ana.get("/v1/human-tasks/ht_held").json()["state"] == "CLAIMED"  # still reachable by id
+    assert ids(ana) == ["ht_held", "ht_old"]
+    assert ana.get("/v1/human-tasks/ht_held").json()["state"] == "CLAIMED"
+    assert ana.get("/v1/human-tasks/ht_theirs").json()["state"] == "CLAIMED"  # reachable by id, not listed
 
 
 def test_the_team_sees_its_own_copy_unpaid(ana, db):
@@ -489,7 +493,8 @@ def test_a_network_reviewer_claims_submits_and_earns_simulated_pay(setup, ana, b
     assert claimed.json()["state"] == "CLAIMED"
     stored = "SELECT payload->>'claimed_via' AS via, (payload->>'pay')::int AS pay FROM run_tasks"
     assert _rows(db, stored) == [{"via": "network", "pay": 150}]
-    assert ids(nina) == []  # claimed, so no longer an open offer
+    assert ids(nina) == [_pid(db)]  # claimed: listed as Nina's own until she submits
+    assert ids(ana) == []
     assert ben.post(f"/v1/human-tasks/{_pid(db)}:submit", json=REVIEW).status_code == 404
     done = nina.post(f"/v1/human-tasks/{_pid(db)}:submit", json=REVIEW)
     assert done.status_code == 200, done.text
@@ -568,7 +573,7 @@ def test_leaving_an_org_returns_the_leavers_claims_to_the_queue(ana, ben, setup,
         r["id"]: r["holder"] for r in _rows(db, "SELECT id, payload->>'claimed_by' AS holder FROM run_tasks")
     }
     assert holders == {"ht_1": None, "ht_ana": "uid_ana"}
-    assert ids(ana) == ["ht_1"]
+    assert ids(ana) == ["ht_ana", "ht_1"]  # Ana's own claim, then the offer Rita's claim went back to
 
 
 # --- redaction --------------------------------------------------------------------------------------------

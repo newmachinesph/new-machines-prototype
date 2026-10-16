@@ -579,6 +579,8 @@ def test_a_real_approval_is_listed_first_and_approving_signals_the_workflow(api,
 
     res = api.post(f"/v1/approvals/{task_id}:approve")
     assert res.status_code == 200 and res.json()["status"] == "GRANTED"
+    # The demo's account has no name, so the digest says "You" rather than its id.
+    assert {d["label"]: d["value"] for d in res.json()["digest"]}["Decided by"] == "You"
     assert rec.calls[-1] == ("approval", run["id"], task_id, "granted", "user_demo")
     [row] = _rows(db, "SELECT status, decided_by, decided_at, result FROM run_tasks")
     assert row["status"] == "granted" and row["decided_by"] == "user_demo" and row["decided_at"]
@@ -699,7 +701,9 @@ def test_a_real_human_task_is_offered_claimed_and_submitted(api, rec, db):
 
     claimed = api.post(f"/v1/human-tasks/{task_id}:claim")
     assert claimed.status_code == 200 and claimed.json()["state"] == "CLAIMED"
-    assert all(t["id"] != task_id for t in api.get("/v1/human-tasks/eligible").json())
+    # The reviewer's own claim stays on /work, without its records, until they submit.
+    mine = next(t for t in api.get("/v1/human-tasks/eligible").json() if t["id"] == task_id)
+    assert mine["state"] == "CLAIMED" and mine["records"] == []
 
     res = api.post(f"/v1/human-tasks/{task_id}:submit", json=review)
     assert res.status_code == 200 and res.json()["state"] == "SUBMITTED"

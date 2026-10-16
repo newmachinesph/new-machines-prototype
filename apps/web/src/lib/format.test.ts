@@ -19,8 +19,9 @@ describe("format", () => {
     expect(dateTime("2026-10-12T16:40:00Z")).toBe("Oct 12, 9:40 AM PT");
     expect(time("2026-10-12T16:40:00Z", undefined, "ja-JP")).toBe("9:40 太平洋時間");
     expect(dateTime("2026-10-12T16:40:00Z", undefined, "ja-JP")).toBe("10月12日 9:40 太平洋時間");
-    // Another zone is named by its caller ("Manila time"); a timeline names its zone once, above its times.
-    expect(dateTime("2026-10-12T16:40:00Z", "Asia/Manila")).toBe("Oct 13, 12:40 AM");
+    // The reviewer portal's zone is named the same way; a timeline names its zone once, above its times.
+    expect(dateTime("2026-10-12T16:40:00Z", "Asia/Manila")).toBe("Oct 13, 12:40 AM Manila time");
+    expect(dateTime("2026-10-12T16:40:00Z", "Asia/Manila", "ja-JP")).toBe("10月13日 0:40 マニラ時間");
     expect(timeSec("2026-10-12T16:40:05Z")).toBe("9:40:05 AM");
     // The day a time falls on there: early UTC morning is still the evening before.
     expect(businessDay("2026-10-13T05:00:00Z")).toBe("2026-10-12");

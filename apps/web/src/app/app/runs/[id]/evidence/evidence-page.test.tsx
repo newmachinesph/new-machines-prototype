@@ -1,4 +1,5 @@
 import { screen, within } from "@testing-library/react";
+import { notFound } from "next/navigation";
 import { describe, expect, it, vi } from "vitest";
 import { RUN_1042 } from "@/data/runs-recon";
 import { money } from "@/lib/format";
@@ -158,9 +159,14 @@ describe("EvidencePage", () => {
     renderWithIntl(<EvidencePage id={RUN_1042.id} />);
     expect(screen.queryByRole("heading", { name: "What the run produced" })).not.toBeInTheDocument();
     expect(screen.getByText("Orders checked")).toBeInTheDocument();
-    // The reconciliation page keeps its written copy, word for word.
+    // The reconciliation page keeps its written contract and basis, word for word; what was permitted
+    // comes from the run's own tool calls, so it never contradicts the receipt.
     expect(RUN_1042.stages.verified).toBe("done");
-    expect(screen.getByText(/Google Sheets was read twice, read-only/)).toBeInTheDocument();
+    expect(screen.queryByText(/Google Sheets was read twice, read-only/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Filing it to Drive/)).not.toBeInTheDocument();
+    expect(screen.getByText("Google Sheets: Read range Orders!A1:K32.")).toBeInTheDocument();
+    expect(screen.getAllByText("Read only, once.")).toHaveLength(2);
+    expect(screen.getByText("Nothing outside New Machines was changed by this run.")).toBeInTheDocument();
     expect(
       screen.getByText(
         "Verified by the independent check and accepted by you. Reviewer pay was owed from the moment the submission was accepted.",
@@ -316,6 +322,27 @@ describe("EvidencePage", () => {
     expect(screen.queryByText(stranger)).not.toBeInTheDocument();
     expect(screen.getByText("A member of your workspace")).toBeInTheDocument();
     expect(screen.getByText("−$70.40")).toBeInTheDocument();
+  });
+
+  it("says what is left open and what evidence was attached when there is none", () => {
+    query.run = drafts;
+    renderWithIntl(<EvidencePage id={drafts.id} />);
+    expect(screen.getByText("Nothing is left open.")).toBeInTheDocument();
+    expect(screen.getByText("No extra evidence was attached to this run.")).toBeInTheDocument();
+  });
+
+  it("says the deliverable is still to come for a run that has none, instead of a 404", () => {
+    query.run = { ...drafts, status: "WAITING_FOR_EVENT", deliverable: undefined };
+    const { unmount } = renderWithIntl(<EvidencePage id={drafts.id} />);
+    expect(notFound).not.toHaveBeenCalled();
+    expect(
+      screen.getByText("The deliverable and its evidence appear here once the run finishes and is verified."),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Back to the run" })).toHaveAttribute("href", `/app/runs/${drafts.id}`);
+    unmount();
+    query.run = { ...drafts, status: "FAILED", deliverable: undefined };
+    renderWithIntl(<EvidencePage id={drafts.id} />, { locale: "ja" });
+    expect(screen.getByText("この実行は成果物を残さずに終了しました。")).toBeInTheDocument();
   });
 
   it("says acceptance was not given on a pack's own basis too", () => {

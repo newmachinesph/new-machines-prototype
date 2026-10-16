@@ -24,6 +24,8 @@ export function SignInForm() {
   const sent = useRef(false);
   const [busy, setBusy] = useState<"google" | "email" | null>(null);
   const [error, setError] = useState<SignInError | null>(null);
+  // Which fields were submitted empty: each says so under itself until it is typed in.
+  const [missing, setMissing] = useState<{ email: boolean; password: boolean }>({ email: false, password: false });
   const [showPassword, setShowPassword] = useState(false);
   const id = useId();
 
@@ -104,10 +106,21 @@ export function SignInForm() {
       </div>
       <form
         className="space-y-4"
+        // The form says itself which field is empty, in the interface language, instead of the browser's tooltip.
+        noValidate
         onSubmit={(e) => {
           e.preventDefault();
-          const data = new FormData(e.currentTarget);
-          void go("email", String(data.get("email") ?? ""), String(data.get("password") ?? ""));
+          const form = e.currentTarget;
+          const data = new FormData(form);
+          const email = String(data.get("email") ?? "").trim();
+          const password = String(data.get("password") ?? "");
+          const empty = { email: email === "", password: password === "" };
+          setMissing(empty);
+          if (empty.email || empty.password) {
+            form.querySelector<HTMLInputElement>(empty.email ? 'input[name="email"]' : 'input[name="password"]')?.focus();
+            return;
+          }
+          void go("email", email, password);
         }}
       >
         <div>
@@ -121,9 +134,18 @@ export function SignInForm() {
             autoComplete="username"
             inputMode="email"
             spellCheck={false}
+            required
+            aria-invalid={missing.email || undefined}
+            aria-describedby={missing.email ? `${id}-email-error` : undefined}
+            onChange={() => setMissing((m) => (m.email ? { ...m, email: false } : m))}
             placeholder={t("emailPlaceholder")}
             className={`mt-1.5 ${FIELD}`}
           />
+          {missing.email ? (
+            <p id={`${id}-email-error`} className="mt-1.5 text-xs text-blocked">
+              {t("emailRequired")}
+            </p>
+          ) : null}
         </div>
         <div>
           <label htmlFor={`${id}-password`} className="text-sm font-medium">
@@ -135,7 +157,10 @@ export function SignInForm() {
               name="password"
               type={showPassword ? "text" : "password"}
               autoComplete="current-password"
-              aria-describedby={`${id}-password-hint`}
+              required
+              aria-invalid={missing.password || undefined}
+              aria-describedby={missing.password ? `${id}-password-error ${id}-password-hint` : `${id}-password-hint`}
+              onChange={() => setMissing((m) => (m.password ? { ...m, password: false } : m))}
               className={`${FIELD} pr-16`}
             />
             <button
@@ -147,6 +172,11 @@ export function SignInForm() {
               {showPassword ? t("hide") : t("show")} <span className="sr-only">{t("passwordSuffix")}</span>
             </button>
           </div>
+          {missing.password ? (
+            <p id={`${id}-password-error`} className="mt-1.5 text-xs text-blocked">
+              {t("passwordRequired")}
+            </p>
+          ) : null}
           <p id={`${id}-password-hint`} className="mt-1.5 text-xs text-muted">
             {t("passwordHint")}
           </p>

@@ -384,40 +384,85 @@ def _held_terms(
 # --- suggest --------------------------------------------------------------------------------------------
 
 
+# Word endings dropped so that "reconcile" and "reconciliation", "matched" and "matches", "orders" and
+# "order" count as one word. Longest first; one is dropped per word, then a trailing "e".
+_SUFFIXES = ("iation", "ation", "ings", "ing", "ly", "es", "ed", "s")
+_MIN_STEM = 3
+# A word people ask with beside the word the packs describe it by; both count.
+_SYNONYM_WORDS = {"payout": "payment", "due": "overdue", "late": "overdue"}
+# What a shared word is worth by where the pack says it: its name first, then its outcome, the apps it
+# uses and its industries, then its description.
+_NAME, _OUTCOME, _DETAIL = 3, 2, 1
+# The least a pack must score to be suggested: one word from anywhere but its description alone.
+_MIN_SCORE = 2
+
+
+def _stem(word: str) -> str:
+    """A word reduced to the part its forms share ("reconcil", "match", "order", "week")."""
+    if word.endswith(("ies", "ied")) and len(word) - 3 >= _MIN_STEM:
+        word = word[:-3] + "y"
+    else:
+        for suffix in _SUFFIXES:
+            if word.endswith(suffix) and not word.endswith("ss") and len(word) - len(suffix) >= _MIN_STEM:
+                word = word[: -len(suffix)]
+                break
+    return word[:-1] if word.endswith("e") and len(word) - 1 >= _MIN_STEM else word
+
+
+# The synonyms by stem, so a plural ("payouts") finds them as the singular does.
+_SYNONYMS = {_stem(word): _stem(other) for word, other in _SYNONYM_WORDS.items()}
+
+
 def _words(text: str) -> set[str]:
-    """Lower-case words of three letters or more without stop words, a plural "s" dropped."""
-    out = set()
-    for word in _WORD.findall(text.lower()):
-        if len(word) < 3 or word in _STOP_WORDS:
-            continue
-        out.add(word[:-1] if len(word) > 3 and word.endswith("s") and not word.endswith("ss") else word)
-    return out
+    """The stems of the lower-case words of three letters or more in `text`, without stop words."""
+    return {_stem(w) for w in _WORD.findall(text.lower()) if len(w) >= _MIN_STEM and w not in _STOP_WORDS}
 
 
-def _pack_words(defs: Definitions, body: dict) -> set[str]:
+def _asked(text: str) -> set[str]:
+    """The stems of `text` and of the synonyms of its words."""
+    words = _words(text)
+    return words | {_SYNONYMS[w] for w in words if w in _SYNONYMS}
+
+
+def _pack_words(defs: Definitions, body: dict) -> dict[str, int]:
+    """Each stem the pack describes itself with and what sharing it is worth."""
     taxonomy = defs.bodies("taxonomy").get("default") or {}
     industry_names = {str(i.get("id")): str(i.get("name")) for i in taxonomy.get("industries") or []}
     industries = [str(i) for i in body.get("industries") or []]
-    text = " ".join(
-        [str(body.get(f) or "") for f in ("name", "outcome", "description")]
-        + [i.replace("-", " ") for i in industries]
-        + [industry_names.get(i, "") for i in industries]
+    industry_text = [f"{i.replace('-', ' ')} {industry_names.get(i, '')}" for i in industries]
+    connectors = defs.bodies("connector")
+    keys = [str(c) for c in body.get("connectors") or ()]
+    apps = [f"{key} {(connectors.get(key) or {}).get('app') or ''}" for key in keys]
+    weighted = (
+        (_DETAIL, str(body.get("description") or "")),
+        (_OUTCOME, str(body.get("outcome") or "")),
+        (_OUTCOME, " ".join(apps)),
+        (_OUTCOME, " ".join(industry_text)),
+        (_NAME, str(body.get("name") or "")),
     )
-    return _words(text)
+    out: dict[str, int] = {}
+    for weight, text in weighted:  # ascending, so a word said in two places keeps its higher worth
+        out.update(dict.fromkeys(_words(text), weight))
+    return out
+
+
+def _score(asked: set[str], pack_words: dict[str, int]) -> int:
+    return sum(pack_words.get(word, 0) for word in asked)
 
 
 def suggest(org_id: str, text: str) -> Suggestion:
-    """The listed pack definition whose name, outcome, description and industries share the most words with
-    `text`. A keyword match over real definitions, so not simulated."""
+    """The listed pack definition whose name, outcome, apps, industries and description share the most with
+    `text`: words are matched by their stems and weighed by where the pack says them. A keyword match over
+    real definitions, so not simulated; none when nothing scores enough."""
     defs, hired, pack_listings = definitions(org_id), _hires(org_id), _listings()
-    asked = _words(text)
+    asked = _asked(text)
     scored = [
-        (len(asked & _pack_words(defs, v.body)), slug_of(v), v)
+        (_score(asked, _pack_words(defs, v.body)), slug_of(v), v)
         for v in defs.packs()
         if _visible(pack_listings, slug_of(v), slug_of(v) in hired)
     ]
-    best = min(scored, key=lambda s: (-s[0], s[1]), default=None)  # most shared words, then by slug
-    if best is None or best[0] == 0:
+    best = min(scored, key=lambda s: (-s[0], s[1]), default=None)  # highest score, then by slug
+    if best is None or best[0] < _MIN_SCORE:
         return Suggestion(
             steps=["Describe the result you want, the apps involved and how often."], simulated=False
         )

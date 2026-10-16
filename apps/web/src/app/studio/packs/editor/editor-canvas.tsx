@@ -15,10 +15,11 @@ import {
 } from "@xyflow/react";
 import { Workflow } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useMemo, useState, type DragEvent, type KeyboardEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent, type KeyboardEvent } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { useToast } from "@/components/base";
 import { RoutedEdge } from "@/components/routed-edge";
+import { READABLE_ZOOM } from "@/components/run-canvas";
 import type { DecisionRules } from "@/lib/api/gen/types.gen";
 import type { NewStep, StepEdge, StepNode } from "@/lib/builder/graph";
 import { layoutInput } from "@/lib/builder/layout";
@@ -26,6 +27,7 @@ import { STEP_TYPES, type StepType } from "@/lib/builder/routes";
 import { refusalOf, type Link } from "@/lib/builder/rules";
 import { useEditor, useEditorApi } from "@/lib/builder/store";
 import { layoutGraph } from "@/lib/graph-layout";
+import { useOutcomeLabel } from "@/lib/outcome-label";
 import { StepNodeView } from "./step-node";
 
 /** The drag data type the palette and the guided list use for a new step. */
@@ -33,10 +35,13 @@ export const STEP_MIME = "application/x-nm-step";
 
 const nodeTypes = { step: StepNodeView };
 const edgeTypes = { routed: RoutedEdge };
-// As on the run canvas: steps are placed by their vertical centre, and the view opens at most at 1:1. The padding
-// keeps the outermost steps and the labels on their edges clear of the pane's sides.
+// As on the run canvas: steps are placed by their vertical centre, and the view opens at most at 1:1 and never
+// below READABLE_ZOOM (a long pack opens on its start and the steps near it, not shrunk to fit). The padding keeps
+// the outermost steps and the labels on their edges clear of the pane's sides.
 const NODE_ORIGIN: [number, number] = [0, 0.5];
-const FIT_OPTIONS = { padding: 0.18, maxZoom: 1 };
+const FIT_OPTIONS = { padding: 0.18, maxZoom: 1, minZoom: READABLE_ZOOM };
+/** Opening view: the start step and the steps near it (this far across, and within its row). */
+const FOCUS_RADIUS = { x: 620, y: 260 };
 const DEFAULT_EDGE = { markerEnd: { type: MarkerType.ArrowClosed, width: 14, height: 14, color: "#c5c5cb" } };
 
 const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
@@ -62,6 +67,22 @@ export function stepFromDrop(raw: string): NewStep | null {
   } catch {
     return null;
   }
+}
+
+/** The selected step when there is one, else the start step (or the first step), and every step near it. */
+export function focusAround(nodes: StepNode[], selectedId?: string | null): { id: string }[] {
+  const anchor =
+    (selectedId ? nodes.find((n) => n.id === selectedId) : undefined) ??
+    nodes.find((n) => n.data.type === "trigger") ??
+    nodes[0];
+  if (!anchor) return [];
+  return nodes
+    .filter(
+      (n) =>
+        Math.abs(n.position.x - anchor.position.x) <= FOCUS_RADIUS.x &&
+        Math.abs(n.position.y - anchor.position.y) <= FOCUS_RADIUS.y,
+    )
+    .map(({ id }) => ({ id }));
 }
 
 /** Lays the graph out with the shared ELK layout whenever the store asks: on open, after an insert or import, and on Auto-arrange. */
@@ -90,9 +111,14 @@ function useAutoLayout() {
       live = false;
     };
   }, [request, api]);
+  // The first layout opens on the start step; later ones (an insert, an import, Auto-arrange) keep the selected step in view.
+  const firstFit = useRef(true);
   useEffect(() => {
-    if (placed) void fitView(FIT_OPTIONS);
-  }, [placed, fitView]);
+    if (!placed) return;
+    const { nodes, selectedId } = api.getState();
+    void fitView({ ...FIT_OPTIONS, nodes: focusAround(nodes, firstFit.current ? null : selectedId) });
+    firstFit.current = false;
+  }, [placed, fitView, api]);
 }
 
 /** The connection a drag described, whichever end it started from. */
@@ -111,11 +137,17 @@ function linkOf(state: FinalConnectionState): Link | null {
  */
 export function EditorCanvas({ readOnly = false }: { readOnly?: boolean }) {
   const t = useTranslations("studioCanvas");
+  const outcomeLabel = useOutcomeLabel();
   const toast = useToast();
   const api = useEditorApi();
   const { nodes, edges } = useEditor(useShallow((s) => ({ nodes: s.nodes, edges: s.edges })));
   const { screenToFlowPosition } = useReactFlow();
   useAutoLayout();
+  // The store keeps each edge's outcome as its label (the YAML's route name); the canvas shows it in words.
+  const shown = useMemo(
+    () => edges.map((e) => (typeof e.label === "string" ? { ...e, label: outcomeLabel(e.label) } : e)),
+    [edges, outcomeLabel],
+  );
 
   const isValidConnection = useCallback(
     (c: Connection | Edge) => {
@@ -206,7 +238,7 @@ export function EditorCanvas({ readOnly = false }: { readOnly?: boolean }) {
     >
       <ReactFlow<StepNode, StepEdge>
         nodes={nodes}
-        edges={edges}
+        edges={shown}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         nodeOrigin={NODE_ORIGIN}

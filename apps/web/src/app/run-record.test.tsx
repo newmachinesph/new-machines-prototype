@@ -32,7 +32,9 @@ describe("landing run record in Japanese", () => {
     expect(screen.getByRole("heading", { name: "Harbor & Pine の昨日の照合" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "実行済み" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "精算済み" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "この実行を開く" })).toBeInTheDocument();
+    // The record is a sample workspace's, labelled so, and links to no run the visitor's own workspace lacks.
+    expect(screen.getByText("サンプルワークスペースの実行例")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "この実行を開く" })).toBeNull();
     expect(screen.getByLabelText("誰が何をしたか")).toHaveTextContent("人間のレビュアー");
     expect(screen.queryByText("Person")).not.toBeInTheDocument();
     expect(screen.getByText("Matched 28 orders. Flagged 3 that did not add up.")).toBeInTheDocument();

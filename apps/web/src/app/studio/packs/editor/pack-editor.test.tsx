@@ -225,7 +225,7 @@ describe("PackEditor", () => {
     };
     renderWithIntl(<PackEditor packKey={SAVED.key} />);
     expect(screen.getByLabelText("Name")).toHaveValue("Overdue invoice follow-up");
-    expect(screen.queryByText("This pack is not one of yours.")).toBeNull();
+    expect(screen.queryByText(/^There is no pack of yours at this address/)).toBeNull();
   });
 
   it("locks the editor while a new pack is being created, so nothing typed then is lost when it opens", () => {
@@ -385,7 +385,7 @@ describe("PackEditor", () => {
     await userEvent.click(screen.getByRole("button", { name: /^Human review/ }));
     expect(screen.getByLabelText("Step name")).toHaveValue("review");
     expect(screen.getByLabelText("Step name")).toBeDisabled();
-    expect(screen.getByRole("combobox", { name: "resolved goes to" })).toBeDisabled();
+    expect(screen.getByRole("combobox", { name: "Resolved goes to" })).toBeDisabled();
     const pickers = screen.getAllByRole("button", { name: /^Fields to insert into/ });
     expect(pickers.length).toBeGreaterThan(0);
     for (const picker of pickers) expect(picker).toBeDisabled();
@@ -500,7 +500,7 @@ describe("PackEditor", () => {
       data: undefined,
     };
     renderWithIntl(<PackEditor packKey="org-zz--secret" />);
-    expect(screen.getByText("This pack is not one of yours.")).toBeInTheDocument();
+    expect(screen.getByText(/^There is no pack of yours at this address/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Back to packs" })).toHaveAttribute("href", "/studio/packs");
   });
 

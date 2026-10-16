@@ -25,6 +25,10 @@ import { useFormat } from "@/lib/use-format";
 type Scope = CreateTokenRequest["scopes"][number];
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+/** The role names the API sends, which the messages translate; any other name shows as it came. */
+const ROLE_NAMES = ["Owner", "Admin", "Member", "Reviewer"] as const;
+type RoleName = (typeof ROLE_NAMES)[number];
+const isRoleName = (role: string): role is RoleName => (ROLE_NAMES as readonly string[]).includes(role);
 
 export function MembersSection() {
   const t = useTranslations("settings.members");
@@ -127,7 +131,11 @@ export function MembersSection() {
                   {/* The API's `via` is a status word ("Signed in"), not a sign-in method, so only the email shows. */}
                   <div className="truncate text-xs text-muted">{m.pending ? t("pendingNote") : m.email}</div>
                 </div>
-                {m.pending ? <Pill tone="quiet">{t("invited")}</Pill> : <span className="text-grey-700">{m.role}</span>}
+                {m.pending ? (
+                  <Pill tone="quiet">{t("invited")}</Pill>
+                ) : (
+                  <span className="text-grey-700">{isRoleName(m.role) ? t(`roles.${m.role}`) : m.role}</span>
+                )}
               </li>
             ))}
           </ul>

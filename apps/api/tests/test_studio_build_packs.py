@@ -190,7 +190,7 @@ CASES = {
         "send",
         "every path into it must come from an approval's granted outcome",
     ),
-    "an unknown agent": (_config(DRAFT, "plan", agent="nobody"), "plan", "Choose the agent plan runs."),
+    "an unknown agent": (_config(DRAFT, "plan", agent="nobody"), "plan", "Choose the agent for step plan."),
     "an unknown tool": (_config(DRAFT, "invoices", tool="stripe.nothing"), "invoices", "Choose the app tool"),
     "a missing outcome": (
         _route(DRAFT, "verify", "fail", None),
@@ -212,7 +212,7 @@ CASES = {
     "a step nothing leads to": (
         _add(DRAFT, StepDraft(id="orphan", type="end", config={"status": "COMPLETED"})),
         "orphan",
-        "Nothing leads to orphan.",
+        "Nothing leads to step orphan.",
     ),
     "a decision without rules": (
         _change(DRAFT, "check", rules=None),
@@ -336,7 +336,11 @@ CASES = {
     ),
     # References are client JSON, so a reference that is not text is just a missing one.
     "a tool that is not text": (_config(DRAFT, "invoices", tool={"x": 1}), "invoices", "Choose the app tool"),
-    "an agent that is not text": (_config(DRAFT, "plan", agent=["a"]), "plan", "Choose the agent plan runs."),
+    "an agent that is not text": (
+        _config(DRAFT, "plan", agent=["a"]),
+        "plan",
+        "Choose the agent for step plan.",
+    ),
     "a result shape that is not text": (
         _config(DRAFT, "draft", output_schema=["shared/drafts"]),
         "draft",

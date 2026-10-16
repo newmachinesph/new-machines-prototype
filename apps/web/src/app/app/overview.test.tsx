@@ -155,6 +155,14 @@ describe("Overview in a new workspace", () => {
     expect(within(titled).getByText("$0.10")).toBeInTheDocument();
   });
 
+  it("says what a run is doing instead of the API's placeholder summary", () => {
+    data.packs = [{ ...RECON, installed: true }];
+    data.runs = [{ ...RUN, summary: "Starting.", status: "WAITING_FOR_EVENT" }];
+    renderWithIntl(<Overview />);
+    expect(screen.queryByText("Starting.")).not.toBeInTheDocument();
+    expect(screen.getByText("Waiting for your approval before it continues.")).toBeInTheDocument();
+  });
+
   it("reads the budget from the org and its ledger, with no plan fee on a trial", () => {
     data.usage = {
       org: org(450),

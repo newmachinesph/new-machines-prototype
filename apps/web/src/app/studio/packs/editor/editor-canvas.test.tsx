@@ -6,7 +6,8 @@ import { createEditorStore, EditorStoreContext } from "@/lib/builder/store";
 import { OVERDUE, PALETTE } from "@/lib/builder/test-fixtures";
 import { layoutGraph } from "@/lib/graph-layout";
 import { renderWithIntl } from "@/test/intl";
-import { EditorCanvas, STEP_MIME, stepFromDrop } from "./editor-canvas";
+import type { StepNode } from "@/lib/builder/graph";
+import { EditorCanvas, STEP_MIME, focusAround, stepFromDrop } from "./editor-canvas";
 import { StepIssuesContext } from "./step-node";
 
 vi.mock("@/lib/graph-layout", async (importOriginal) => ({
@@ -205,5 +206,28 @@ describe("stepFromDrop", () => {
       type: "decision",
       config: {},
     });
+  });
+});
+
+describe("focusAround", () => {
+  const node = (id: string, type: string, x: number) =>
+    ({ id, position: { x, y: 0 }, data: { type } }) as unknown as StepNode;
+  const nodes = [
+    node("start", "trigger", 0),
+    node("a", "agent", 400),
+    node("far", "agent", 5000),
+    node("new", "agent", 5300),
+  ];
+
+  it("opens on the start step and the steps near it", () => {
+    expect(focusAround(nodes).map((n) => n.id)).toEqual(["start", "a"]);
+  });
+
+  it("follows the selected step, so a step inserted far from the start stays in view", () => {
+    expect(focusAround(nodes, "new").map((n) => n.id)).toEqual(["far", "new"]);
+  });
+
+  it("falls back to the start step when the selection is gone", () => {
+    expect(focusAround(nodes, "missing").map((n) => n.id)).toEqual(["start", "a"]);
   });
 });

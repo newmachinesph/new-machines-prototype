@@ -1,7 +1,6 @@
 import { getLocale, getTranslations } from "next-intl/server";
-import Link from "next/link";
 import type { CSSProperties, ReactNode } from "react";
-import { ActorGlyph, ActorLabel, SimTag } from "@/components/ui";
+import { ActorGlyph, ActorLabel, Pill, SimTag } from "@/components/ui";
 import { RUN_1042 } from "@/data/runs-recon";
 import { cn } from "@/lib/cn";
 import { INTL_TAGS, resolveLocale } from "@/i18n/locales";
@@ -114,14 +113,16 @@ export async function RunRecord() {
       <div className="mx-auto max-w-[1600px] px-5 py-12 sm:px-10 lg:px-16 lg:py-16">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <h2 id="record-title" className="text-[clamp(1.375rem,2.2vw,1.875rem)] font-semibold tracking-[-0.02em]">
-              {rec("title")}
-            </h2>
+            {/* Harbor & Pine is a sample workspace, not the visitor's own: the record says so, and links nowhere
+                a new workspace cannot follow. */}
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+              <h2 id="record-title" className="text-[clamp(1.375rem,2.2vw,1.875rem)] font-semibold tracking-[-0.02em]">
+                {rec("title")}
+              </h2>
+              <Pill tone="quiet">{rec("example")}</Pill>
+            </div>
             <p className="mt-2 max-w-[62ch] text-[15px] leading-relaxed text-grey-700">
-              {rec("intro", { title: run.title, total: money(total, {}, intl) })}{" "}
-              <Link href={`/app/runs/${run.id}`} className="link text-ink">
-                {rec("openRun")}
-              </Link>
+              {rec("intro", { title: run.title, total: money(total, {}, intl) })}
             </p>
           </div>
           <ul className="flex flex-wrap gap-x-5 gap-y-2 text-[13px] text-grey-700" aria-label={rec("whoDidWhat")}>

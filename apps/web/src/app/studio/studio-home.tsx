@@ -130,9 +130,10 @@ function PublisherCard() {
           ) : (
             <Link
               href="/studio/publisher"
-              className="flex min-h-11 items-center justify-between gap-3 px-5 py-3 text-sm hover:bg-grey-50/70"
+              // On a phone the link's name comes first and the figures under it; from sm they share one row.
+              className="flex min-h-11 flex-col gap-1 px-5 py-3 text-sm hover:bg-grey-50/70 sm:flex-row sm:items-center sm:justify-between sm:gap-3"
             >
-              <span>
+              <span className="order-last sm:order-none">
                 {earnings.data
                   ? t("cardBody", { n: list.length, amount: money(earnings.data.month) })
                   : t("cardCount", { n: list.length })}

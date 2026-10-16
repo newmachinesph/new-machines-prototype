@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 import { cn } from "@/lib/cn";
 import { sumMoney } from "@/lib/format";
+import { useIsDemo } from "@/lib/queries/me";
 import { useReceipt } from "@/lib/queries/runs";
 import type { NodeType, Run } from "@/lib/types";
 import { useFormat } from "@/lib/use-format";
@@ -72,19 +73,23 @@ export function RunView({ run }: { run: Run }) {
   // A receipt that fails or is not fetched at all counts as settled.
   useAutoTour("run", isSettled(receipt));
 
+  // The finished example is a demo fixture: a live workspace has no such run, so it is not offered there.
+  const demo = useIsDemo();
   const deliverable = run.deliverable ? (
     <ButtonLink href={`/app/runs/${run.id}/evidence`} className="w-full">
       {t("openDeliverable")}
     </ButtonLink>
   ) : (
     <p className="px-1 text-xs leading-relaxed text-muted">
-      {t.rich("deliverablePending", {
-        example: (chunks) => (
-          <Link className="link" href="/app/runs/run_1042/evidence">
-            {chunks}
-          </Link>
-        ),
-      })}
+      {demo
+        ? t.rich("deliverablePending", {
+            example: (chunks) => (
+              <Link className="link" href="/app/runs/run_1042/evidence">
+                {chunks}
+              </Link>
+            ),
+          })
+        : t("deliverablePendingLive")}
     </p>
   );
 

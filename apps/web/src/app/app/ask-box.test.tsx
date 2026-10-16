@@ -10,6 +10,10 @@ vi.mock("@/lib/queries/catalog", () => ({
   useSuggestPack: () => ({ mutate, reset: vi.fn(), isPending: false, data: suggestion.data }),
 }));
 vi.mock("@/components/base", () => ({ useToast: () => vi.fn() }));
+const workspace = vi.hoisted(() => ({ kind: "demo" as "demo" | "live" | undefined }));
+vi.mock("@/lib/queries/me", () => ({
+  useMe: () => ({ data: workspace.kind ? { workspace: workspace.kind } : undefined }),
+}));
 
 const ENGLISH_QUERY = "Match last week's orders to Stripe payouts";
 
@@ -17,6 +21,7 @@ describe("AskBox suggestion chips", () => {
   beforeEach(() => {
     mutate.mockClear();
     suggestion.data = undefined;
+    workspace.kind = "demo";
   });
 
   it("offers all five starters as buttons, each a comfortable tap target", () => {
@@ -24,6 +29,22 @@ describe("AskBox suggestion chips", () => {
     const chips = screen.getAllByRole("button");
     expect(chips).toHaveLength(5);
     for (const chip of chips) expect(chip).toHaveClass("min-h-9");
+  });
+
+  it("offers the live marketplace's packs in a live workspace, not the demo's", () => {
+    workspace.kind = "live";
+    renderWithIntl(<AskBox />);
+    const names = screen.getAllByRole("button").map((b) => b.textContent);
+    expect(names).toContain("Sort last week's expenses and flag anything unusual");
+    expect(names).toContain("Draft follow-ups for yesterday's meetings");
+    expect(names).not.toContain("Tell me what to reorder every Monday");
+    expect(names).not.toContain("Translate our catalog for a Japanese store");
+  });
+
+  it("shows only the shared starters until /me says which workspace this is", () => {
+    workspace.kind = undefined;
+    renderWithIntl(<AskBox />);
+    expect(screen.getAllByRole("button")).toHaveLength(3);
   });
 
   it("sends the same English query from a chip and from the button, in Japanese", async () => {

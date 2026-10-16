@@ -18,6 +18,7 @@ import { useTranslations } from "next-intl";
 import { memo, useCallback, useEffect, useEffectEvent, useMemo, useRef, useState, type RefObject } from "react";
 import { cn } from "@/lib/cn";
 import { layoutGraph, mainPath, type GraphLayout, type LayoutEdge, type LayoutNode } from "@/lib/graph-layout";
+import { useOutcomeLabel } from "@/lib/outcome-label";
 import { isFailureRoute, withTerminalStubs, type CanvasNode } from "@/lib/terminal-stubs";
 import type { NodeType, Run, RunEdge, RunNode } from "@/lib/types";
 import { RoutedEdge, type RoutedEdgeData } from "./routed-edge";
@@ -250,6 +251,7 @@ export function RunCanvas({
 }) {
   const t = useTranslations("run.canvas");
   const tNode = useTranslations("node");
+  const outcomeLabel = useOutcomeLabel();
   const container = useRef<HTMLDivElement>(null);
   const aspect = useAspect(container);
   const graph = useMemo(() => withTerminalStubs(run.nodes, run.edges), [run.nodes, run.edges]);
@@ -303,7 +305,7 @@ export function RunCanvas({
           id: edgeId(e),
           source: e.from,
           target: e.to,
-          label: e.label,
+          label: outcomeLabel(e.label),
           ...(data ? { type: "routed", data } : { type: e.revision ? "default" : "smoothstep" }),
           className: cn(e.taken && "taken", e.revision && "revision"),
           markerEnd: {
@@ -316,7 +318,7 @@ export function RunCanvas({
           focusable: false,
         };
       }),
-    [graph.edges, routeData],
+    [graph.edges, routeData, outcomeLabel],
   );
 
   // Open zoomed in around the step that matters (the initial selection), not the whole graph;

@@ -14,6 +14,7 @@ import { readingOrder } from "@/lib/builder/guided";
 import { outcomesOf } from "@/lib/builder/routes";
 import { STEP_SCHEMAS, withDerived } from "@/lib/builder/step-schemas";
 import { useEditor, useEditorApi, type PackDetails } from "@/lib/builder/store";
+import { useOutcomeLabel } from "@/lib/outcome-label";
 import { FIELD_CLASS } from "./cel-field";
 import { useReadOnly } from "./read-only";
 import { RulesEditor } from "./rules-editor";
@@ -217,6 +218,7 @@ function Outcomes({
 }) {
   const t = useTranslations("studioFields");
   const tc = useTranslations("studioCanvas");
+  const outcomeLabel = useOutcomeLabel();
   const toast = useToast();
   const api = useEditorApi();
   const readOnly = useReadOnly();
@@ -246,9 +248,9 @@ function Outcomes({
         const target = edges.find((e) => e.source === id && e.sourceHandle === outcome)?.target ?? "";
         return (
           <div key={outcome} className="flex items-center gap-3">
-            <span className="w-24 shrink-0 truncate font-mono text-[12px]">{outcome}</span>
+            <span className="w-24 shrink-0 truncate text-[12px]">{outcomeLabel(outcome)}</span>
             <Select
-              label={t("goesTo", { outcome })}
+              label={t("goesTo", { outcome: outcomeLabel(outcome) })}
               className="min-w-0 flex-1"
               disabled={readOnly}
               value={target}

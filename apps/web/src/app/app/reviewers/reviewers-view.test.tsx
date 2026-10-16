@@ -99,6 +99,13 @@ describe("ReviewersView", () => {
     expect(screen.getByRole("heading", { name: "Remove yourself as a reviewer?" })).toBeInTheDocument();
   });
 
+  it("warns about the last reviewer by counting accepted reviewers, not pending invites", async () => {
+    state.email = "ana@example.com";
+    renderWithIntl(<ReviewersView />);
+    await userEvent.click(screen.getByRole("button", { name: "Remove Ana Reyes" }));
+    expect(screen.getByText(/You are the only reviewer here/)).toBeInTheDocument();
+  });
+
   it("shows no Remove button until we know who you are", () => {
     state.email = undefined as unknown as string;
     renderWithIntl(<ReviewersView />);

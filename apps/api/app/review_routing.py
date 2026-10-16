@@ -69,6 +69,8 @@ _TEAM = (
 )
 # An open task nobody has claimed.
 _UNCLAIMED = "t.status = %(open)s AND t.payload->>'claimed_by' IS NULL"
+# An open task the user holds a claim on.
+_CLAIMED_BY_USER = "t.status = %(open)s AND t.payload->>'claimed_by' = %(user)s"
 # An unclaimed task the network is offered.
 _OFFERED = (
     f"{_UNCLAIMED} AND ({_POOL} = 'network' "
@@ -108,9 +110,9 @@ def visible_rows(
     org_id: str, user_id: str, *, now: datetime | None = None, offered: bool = False
 ) -> list[dict]:
     """The human tasks the user may see, newest first: their org's as a team reviewer, other orgs' as a
-    network reviewer. `offered`: only open, unclaimed ones (the offers), so decided and claimed tasks do not
-    use up the limit."""
-    where = f" AND {_UNCLAIMED}" if offered else ""
+    network reviewer. `offered`: only open ones that are unclaimed (the offers) or that the user has claimed,
+    so decided tasks and other people's claims do not use up the limit."""
+    where = f" AND (({_UNCLAIMED}) OR ({_CLAIMED_BY_USER}))" if offered else ""
     with db.connect() as conn:
         return conn.execute(
             f"{_VISIBLE}{where} ORDER BY t.created_at DESC, t.id DESC LIMIT %(limit)s",

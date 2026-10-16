@@ -7,7 +7,8 @@ import { renderWithIntl } from "@/test/intl";
 import { RunView } from "./run-view";
 
 const me = vi.hoisted(() => ({ userId: "pwGlMEou0WQsM6aQvlgggXtXa5C3" }));
-vi.mock("@/lib/queries/me", () => ({ useMe: () => ({ data: me }) }));
+const workspace = vi.hoisted(() => ({ demo: true }));
+vi.mock("@/lib/queries/me", () => ({ useMe: () => ({ data: me }), useIsDemo: () => workspace.demo }));
 vi.mock("@/lib/queries/tasks", () => ({ useTask: () => ({ data: undefined, isPending: false }) }));
 const receipt = vi.hoisted(() => ({ value: {} as unknown }));
 vi.mock("@/lib/queries/runs", () => ({ useReceipt: () => receipt.value }));

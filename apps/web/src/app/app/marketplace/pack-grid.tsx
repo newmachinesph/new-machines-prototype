@@ -26,6 +26,25 @@ const ALL_INDUSTRIES = "";
 
 type Filter = { label: string; text: string; n: number };
 
+// The taxonomy's functions (by the English name the API sends) and industries (by id), keyed for translation.
+// A name the messages do not know shows as it came.
+type CategoryKey = "financeOps" | "customerOps" | "fulfillment" | "merchandising" | "operations" | "salesOps";
+const CATEGORY_KEYS: Record<string, CategoryKey | undefined> = {
+  "Finance operations": "financeOps",
+  "Customer operations": "customerOps",
+  Fulfillment: "fulfillment",
+  Merchandising: "merchandising",
+  Operations: "operations",
+  "Sales operations": "salesOps",
+};
+type IndustryKey = "retailCommerce" | "manufacturing" | "mediaContent" | "professionalServices";
+const INDUSTRY_KEYS: Record<string, IndustryKey | undefined> = {
+  "retail-commerce": "retailCommerce",
+  manufacturing: "manufacturing",
+  "media-content": "mediaContent",
+  "professional-services": "professionalServices",
+};
+
 /** One group of the filter nav: a small heading and its toggles, each with the number of packs it shows. */
 function FilterGroup({
   title,
@@ -41,8 +60,8 @@ function FilterGroup({
   return (
     <div role="group" aria-label={title}>
       <span className="label mb-1 block">{title}</span>
-      {/* One scrolling row on small screens; a column beside the packs from xl, where long names wrap. */}
-      <div className="flex [scrollbar-width:none] gap-1 overflow-x-auto xl:flex-col xl:overflow-visible">
+      {/* Rows that wrap on small screens, so no name is cut at the edge; a column beside the packs from xl. */}
+      <div className="flex flex-wrap gap-1 xl:flex-col">
         {filters.map((f) => (
           <button
             key={f.label}
@@ -50,7 +69,7 @@ function FilterGroup({
             aria-pressed={active === f.label}
             onClick={() => onPick(f.label)}
             className={cn(
-              "flex min-h-9 shrink-0 items-center justify-between gap-3 rounded-md px-3 text-left text-sm whitespace-nowrap xl:py-1.5 xl:whitespace-normal",
+              "flex min-h-9 items-center justify-between gap-3 rounded-md px-3 text-left text-sm xl:py-1.5",
               active === f.label ? "bg-grey-100 font-medium text-ink" : "text-grey-700 hover:bg-grey-50 hover:text-ink",
             )}
           >
@@ -81,6 +100,14 @@ export function PackGrid() {
   // Owners and admins of a live workspace can build what the marketplace lacks (the Studio is live only).
   const live = useIsLive();
   const canBuild = useCanBuild();
+  const categoryText = (name: string) => {
+    const key = CATEGORY_KEYS[name];
+    return key ? t(`categories.${key}`) : name;
+  };
+  const industryText = (id: string, name: string) => {
+    const key = INDUSTRY_KEYS[id];
+    return key ? t(`industries.${key}`) : name;
+  };
 
   return (
     <QueryState query={packsQuery} skeleton={<PackGridSkeleton />}>
@@ -103,7 +130,7 @@ export function PackGrid() {
             ];
             const functions: Filter[] = categories.map((c) => ({
               label: c,
-              text: c,
+              text: categoryText(c),
               n: PACKS.filter((p) => p.category === c).length,
             }));
             // Every industry the taxonomy knows, so that an empty one still shows as 0 rather than vanishing.
@@ -111,7 +138,7 @@ export function PackGrid() {
               { label: ALL_INDUSTRIES, text: t("allIndustries"), n: PACKS.length },
               ...industries.map((i) => ({
                 label: i.id,
-                text: i.name,
+                text: industryText(i.id, i.name),
                 n: PACKS.filter((p) => (p.industries ?? []).includes(i.id)).length,
               })),
             ];

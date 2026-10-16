@@ -1,5 +1,5 @@
-from app import run_tasks, temporal_client, workspace
-from app.auth import Actor, CurrentActor
+from app import db, run_tasks, settings, temporal_client, workspace
+from app.auth import DEMO_ORG_ID, Actor, CurrentActor
 from app.errors import ApiProblem
 from app.models.work import Approval, ApprovalAction, DigestRow, UnlockedAction
 from app.routing import ApiRouter
@@ -11,6 +11,30 @@ router = ApiRouter(prefix="/v1", tags=["approvals"])
 STATUSES = {"pending": "PENDING", "granted": "GRANTED", "denied": "DECLINED", "timeout": "EXPIRED"}
 DECISIONS = {"GRANTED": "granted", "DECLINED": "denied"}
 DEFAULT_POLICY_REF = "policy/default"
+# Who decided, when the account that did is no longer a member of the org: never the account id itself.
+FORMER_MEMBER = "A former member of your workspace"
+# The shared demo org has no member rows for its deciders; they are other people, not former members.
+ANOTHER_PERSON = "Another person"
+
+
+def decider_names(actor: Actor, rows: list[dict]) -> dict[str, str]:
+    """Each decider's name (or email) by account id: the org's members among the rows' deciders, and the
+    caller themselves ("You" when nothing names them, as in the demo workspace)."""
+    ids = sorted({row["decided_by"] for row in rows if row["decided_by"]})
+    names: dict[str, str] = {}
+    if ids and settings.runtime_enabled():
+        with db.connect() as conn:
+            members = conn.execute(
+                "SELECT user_id, name, email FROM org_members WHERE org_id = %s AND user_id = ANY(%s)",
+                (actor.org_id, ids),
+            ).fetchall()
+        names = {m["user_id"]: m["name"] or m["email"] for m in members if m["name"] or m["email"]}
+    if actor.user_id in ids and actor.user_id not in names:
+        names[actor.user_id] = actor.name or actor.email or "You"
+    if actor.org_id == DEMO_ORG_ID:
+        for decider in ids:
+            names.setdefault(decider, ANOTHER_PERSON)
+    return names
 
 
 def find_approval(approval_id: str) -> Approval:
@@ -45,8 +69,9 @@ def _unlocked(row: dict, payload: dict) -> list[UnlockedAction]:
     return out
 
 
-def real_approval(row: dict) -> Approval:
-    """A run_tasks approval row as the inbox's Approval: the step it lets the run take, not an email."""
+def real_approval(row: dict, names: dict[str, str] | None = None) -> Approval:
+    """A run_tasks approval row as the inbox's Approval: the step it lets the run take, not an email. `names`
+    (`decider_names`) says who decided it by name; an account it does not name shows as a former member."""
     payload = row["payload"] or {}
     title = str(payload.get("title") or "Approve the next step")
     summary = str(payload.get("summary") or "") or None
@@ -68,7 +93,8 @@ def real_approval(row: dict) -> Approval:
         DigestRow(label="Policy", value=f"{policy_ref} requires approval (APPROVAL_REQUIRED)"),
     ]
     if row["decided_by"]:
-        digest.append(DigestRow(label="Decided by", value=row["decided_by"]))
+        decided_by = (names or {}).get(row["decided_by"], FORMER_MEMBER)
+        digest.append(DigestRow(label="Decided by", value=decided_by))
     requested_at = iso(row["created_at"])
     return Approval(
         id=row["id"],
@@ -89,7 +115,9 @@ def real_approval(row: dict) -> Approval:
 @router.get("/approvals", operation_id="listApprovals", response_model=list[Approval])
 def list_approvals(actor: CurrentActor) -> list[Approval]:
     """Approvals of real runs (newest first), then the fixtures (none in the live workspace)."""
-    real = [real_approval(row) for row in run_tasks.list_rows(actor.org_id, "approval")]
+    rows = run_tasks.list_rows(actor.org_id, "approval")
+    names = decider_names(actor, rows)
+    real = [real_approval(row, names) for row in rows]
     return real if workspace.live() else real + get_store().approvals
 
 
@@ -115,7 +143,7 @@ def _decide_any(approval_id: str, status: str, actor: Actor) -> Approval:
     run_tasks.signal(
         temporal_client.signal_approval, row["run_id"], approval_id, updated["status"], updated["decided_by"]
     )
-    return real_approval(updated)
+    return real_approval(updated, decider_names(actor, [updated]))
 
 
 @router.post("/approvals/{approval_id}:approve", operation_id="approveApproval", response_model=Approval)

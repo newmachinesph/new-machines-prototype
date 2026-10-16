@@ -116,10 +116,26 @@ describe("SignInForm fields", () => {
     expect(toggle).toHaveAccessibleName("Hide password");
   });
 
+  it("says under each empty field what is missing, and clears it once typed in", async () => {
+    renderWithIntl(<SignInForm />);
+    await userEvent.click(screen.getByRole("button", { name: "Sign in" }));
+    const email = screen.getByRole("textbox", { name: "Email" });
+    expect(email).toHaveAttribute("aria-invalid", "true");
+    expect(email).toHaveAccessibleDescription("Enter your email.");
+    expect(email).toHaveFocus();
+    const password = screen.getByLabelText("Password");
+    expect(password).toHaveAttribute("aria-invalid", "true");
+    expect(password).toHaveAccessibleDescription("Enter your password. Sent to you with the demo login.");
+    await userEvent.type(email, "a@b.co");
+    expect(email).not.toHaveAttribute("aria-invalid");
+    expect(screen.queryByText("Enter your email.")).toBeNull();
+    expect(screen.getByText("Enter your password.")).toBeInTheDocument();
+  });
+
   it("splits the note into a member line and a reviewer line", () => {
     renderWithIntl(<SignInForm />);
     expect(
-      screen.getByText("Signing in with Google joins you to Harbor & Pine Supply Co. as a member."),
+      screen.getByText("Signing in with Google opens your own workspace, or the one you were invited to."),
     ).toBeInTheDocument();
     expect(
       screen.getByText("Reviewers: after signing in, open the reviewer portal from the menu."),

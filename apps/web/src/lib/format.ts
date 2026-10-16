@@ -26,13 +26,19 @@ function fmt(iso: string, tz: string, o: Intl.DateTimeFormatOptions, locale: Int
   return new Intl.DateTimeFormat(locale, { timeZone: tz, ...o }).format(new Date(iso));
 }
 
-/** The business time zone's short name, in each interface language. */
-const BUSINESS_TZ_LABEL: Record<IntlLocale, string> = { "en-US": "PT", "ja-JP": "太平洋時間" };
+/** The short name of each zone the interface shows times in, per interface language. One label style
+ * everywhere ("PT", "Manila time"): never a UTC offset or a browser-dependent abbreviation beside it. */
+const TZ_LABELS: Record<string, Record<IntlLocale, string>> = {
+  [BUSINESS_TZ]: { "en-US": "PT", "ja-JP": "太平洋時間" },
+  [WORKER_TZ]: { "en-US": "Manila time", "ja-JP": "マニラ時間" },
+};
 
-/** A time in the business zone carries the zone's short name ("9:40 AM PT"), so no time reads as the viewer's
- * own. A caller showing another zone names it in its own words ("Manila time"). */
-const zoned = (text: string, tz: string, locale: IntlLocale) =>
-  tz === BUSINESS_TZ ? `${text} ${BUSINESS_TZ_LABEL[locale]}` : text;
+/** A time in a named zone carries that zone's label ("9:40 AM PT", "3:04 AM Manila time"), so no time reads
+ * as the viewer's own. Any other zone is left to its caller to name. */
+const zoned = (text: string, tz: string, locale: IntlLocale) => {
+  const label = TZ_LABELS[tz]?.[locale];
+  return label ? `${text} ${label}` : text;
+};
 
 export const time = (iso: string, tz = BUSINESS_TZ, locale: IntlLocale = DEFAULT_LOCALE) =>
   zoned(fmt(iso, tz, { hour: "numeric", minute: "2-digit" }, locale), tz, locale);

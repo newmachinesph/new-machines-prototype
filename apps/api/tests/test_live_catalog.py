@@ -9,7 +9,7 @@ import pytest
 from fastapi.testclient import TestClient
 from psycopg.types.json import Jsonb
 
-from app import auth, ops_state, settings, temporal_client
+from app import auth, live_catalog, ops_state, settings, temporal_client
 from app import db as app_db
 from app.defs import registry
 from app.defs.loader import load_bundle
@@ -225,6 +225,35 @@ def test_suggest_matches_over_pack_definitions(ana):
     assert by_industry["pack"]["slug"] == PACK
     none = ana.post("/v1/workflow-packs:suggest", json={"text": "bake a birthday cake"}).json()
     assert "pack" not in none and none["simulated"] is False
+
+
+@pytest.mark.parametrize(
+    ("text", "slug"),
+    [
+        # The ask box's placeholder example and its suggestion chips, each to the pack it describes.
+        ("reconcile orders and payouts every week", PACK),
+        ("Match last week's orders to Stripe payouts", PACK),
+        ("compare payouts with orders", PACK),
+        ("Chase wholesale invoices that are past due", "overdue-invoice-follow-up"),
+        ("Decide refund requests against our refund policy", "refund-triage"),
+        ("Sort last week's expenses and flag anything unusual", "weekly-expense-check"),
+        ("Draft follow-ups for yesterday's meetings", "meeting-follow-ups"),
+    ],
+)
+def test_suggest_matches_word_forms_and_weighs_where_a_pack_says_them(ana, text, slug):
+    """A stem match: "reconcile" finds "reconciliation", "orders" finds "order". A word in a pack's name
+    outweighs one in another pack's description, so "last week" does not pull a query to the lead tracker."""
+    found = ana.post("/v1/workflow-packs:suggest", json={"text": text}).json()
+    assert found.get("pack", {}).get("slug") == slug, (text, found.get("pack", {}).get("name"))
+
+
+def test_suggest_needs_more_than_a_word_from_a_description(ana):
+    """A single word only a description shares ("qualified") is not enough to suggest a pack."""
+    assert "pack" not in ana.post("/v1/workflow-packs:suggest", json={"text": "qualified"}).json()
+    assert live_catalog._stem("reconciliation") == live_catalog._stem("reconcile") == "reconcil"
+    assert live_catalog._stem("matches") == live_catalog._stem("matched") == "match"
+    assert live_catalog._stem("weekly") == live_catalog._stem("weeks") == "week"
+    assert live_catalog._stem("enquiries") == "enquiry" and live_catalog._stem("business") == "business"
 
 
 # --- install --------------------------------------------------------------------------------------------
@@ -541,6 +570,56 @@ def test_approvals_and_tasks_of_an_orgs_runs_stay_in_that_org(ana, ben, db):
         {"status": "pending", "decided_by": None}
     ]
     assert ben.post("/v1/human-tasks/human_a:claim").status_code == 404
+
+
+def test_a_task_the_reviewer_claimed_stays_listed_on_work(ana, ben, db, monkeypatch):
+    """Claiming a task keeps it on /work as the reviewer's own, not only reachable from the run page."""
+    monkeypatch.setattr(temporal_client, "signal_human", lambda *a, **k: None)
+    _add_run(db, ana.org_id, "run_a")
+    for task_id in ("human_a", "human_b"):
+        db.execute(
+            "INSERT INTO run_tasks (id, run_id, node_id, kind, status, payload) "
+            "VALUES (%s, 'run_a', 'n', 'human', 'open', %s)",
+            (task_id, Jsonb({"title": "Check"})),
+        )
+    db.commit()
+    assert ana.post("/v1/human-tasks/human_a:claim").status_code == 200
+    listed = {t["id"]: t["state"] for t in ana.get("/v1/human-tasks/eligible").json()}
+    assert listed == {"human_a": "CLAIMED", "human_b": "OFFERED"}
+    assert ben.get("/v1/human-tasks/eligible").json() == []
+    review = {"verdict": "APPROVED", "feedbackText": "ok", "recordCalls": {}}
+    assert ana.post("/v1/human-tasks/human_a:submit", json=review).status_code == 200
+    assert [t["id"] for t in ana.get("/v1/human-tasks/eligible").json()] == ["human_b"]
+
+
+def test_an_approval_says_who_decided_it_by_name_never_by_account_id(ana, db, monkeypatch):
+    monkeypatch.setattr(temporal_client, "signal_approval", lambda *a, **k: None)
+    _add_run(db, ana.org_id, "run_a")
+    for approval_id in ("approval_a", "approval_b"):
+        db.execute(
+            "INSERT INTO run_tasks (id, run_id, node_id, kind, status, payload) "
+            "VALUES (%s, 'run_a', 'n', 'approval', 'pending', %s)",
+            (approval_id, Jsonb({"title": "Write the report"})),
+        )
+    db.commit()
+    decided = ana.post("/v1/approvals/approval_a:approve").json()
+    assert {d["label"]: d["value"] for d in decided["digest"]}["Decided by"] == "Ana Reyes"
+    db.execute("UPDATE run_tasks SET status = 'granted', decided_by = 'uid_gone' WHERE id = 'approval_b'")
+    db.commit()
+    listed = {a["id"]: {d["label"]: d["value"] for d in a["digest"]} for a in ana.get("/v1/approvals").json()}
+    assert listed["approval_a"]["Decided by"] == "Ana Reyes"
+    assert listed["approval_b"]["Decided by"] == "A former member of your workspace"
+    assert "uid_" not in json.dumps(listed)
+
+
+def test_in_the_shared_demo_org_an_unnamed_decider_is_another_person(ana):
+    from app.routers import approvals
+
+    caller = auth.Actor(user_id="uid_me", org_id=auth.DEMO_ORG_ID)
+    rows = [{"decided_by": "uid_me"}, {"decided_by": "uid_other"}]
+    assert approvals.decider_names(caller, rows) == {"uid_me": "You", "uid_other": "Another person"}
+    live = auth.Actor(user_id="uid_me", org_id="org_live")
+    assert "uid_other" not in approvals.decider_names(live, rows)
 
 
 # --- memory ---------------------------------------------------------------------------------------------

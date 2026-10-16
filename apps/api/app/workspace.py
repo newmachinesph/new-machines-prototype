@@ -390,11 +390,11 @@ DEFAULT_POLICIES = (
 
 
 def policies(org_id: str) -> list[Policy]:
-    """The built-in defaults, dated when the workspace was created."""
+    """The built-in defaults, dated (ISO, for the web app to format in its language) when the workspace was
+    created."""
     with db.connect() as conn:
-        created = _org_row(conn, org_id)["created_at"].astimezone(UTC)
-    when = f"{created:%b} {created.day}"
-    return [p.model_copy(update={"updated": when}) for p in DEFAULT_POLICIES]
+        created = _org_row(conn, org_id)["created_at"]
+    return [p.model_copy(update={"updated": iso(created)}) for p in DEFAULT_POLICIES]
 
 
 def _member(row: dict) -> Member:

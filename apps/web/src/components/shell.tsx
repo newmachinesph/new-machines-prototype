@@ -313,6 +313,10 @@ function NavLink({
 
 /** The first letter of a name, for the small workspace and person badges. */
 const initial = (name: string | undefined) => (name?.trim()[0] ?? "").toUpperCase();
+/** The plans the messages name (`nav.plans`); the API's plan names are compared lower-cased. */
+const PLANS = ["trial", "pro"] as const;
+type PlanKey = (typeof PLANS)[number];
+const planKey = (plan: string): PlanKey | undefined => PLANS.find((p) => p === plan.toLowerCase());
 
 /** Who is signed in: their name, else their email, else the demo operator (demo) or a plain "You" (live). */
 function usePerson() {
@@ -353,7 +357,10 @@ function WorkspaceMenu({ mode, returnFocusTo }: { mode: ShellMode; returnFocusTo
   const t = useTranslations("nav");
   const meQuery = useMe();
   const me = meQuery.data;
-  const plan = useOrg().data?.plan;
+  const planName = useOrg().data?.plan;
+  // The plans the messages name are shown in the interface language; any other plan as the API sent it.
+  const known = planName ? planKey(planName) : undefined;
+  const plan = known ? t(`plans.${known}`) : planName;
   const demo = useIsDemo();
   const person = usePerson();
   const failed = meQuery.isError;
@@ -465,7 +472,7 @@ function useNavCounts(mode: ShellMode): Record<string, number | undefined> {
   return {
     "/app/approvals": approvals.data?.filter((a) => a.status === "PENDING").length,
     "/app/memory": memory.data?.filter((m) => m.state === "CANDIDATE").length,
-    "/work": tasks.data?.length,
+    "/work": tasks.data?.filter((task) => task.state === "OFFERED").length,
   };
 }
 
@@ -714,7 +721,7 @@ export function StartRunMenu() {
         <span className="sr-only sm:not-sr-only">{t("startRun")}</span>
       </MenuTrigger>
       <MenuPopup className="w-72">
-        <MenuLabel>{t("choosePack")}</MenuLabel>
+        <MenuLabel>{hired.length > 0 ? t("choosePack") : t("noPacks")}</MenuLabel>
         {hired.map((pack) => (
           <MenuLink key={pack.slug} href={`/app/runs/new?pack=${pack.slug}`}>
             <PackIcon slug={pack.slug} className="size-6 [&_svg]:size-3" />
@@ -724,7 +731,7 @@ export function StartRunMenu() {
         <MenuSeparator />
         <MenuLink href="/app/marketplace">
           <LayoutGrid className="size-4 text-grey-500" strokeWidth={1.75} aria-hidden />
-          {t("hireAnother")}
+          {hired.length > 0 ? t("hireAnother") : t("hireFirst")}
         </MenuLink>
         <div className="px-2.5 pt-1.5 pb-1 text-xs text-muted">{t("startHelp")}</div>
       </MenuPopup>

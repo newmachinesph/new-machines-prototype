@@ -7,7 +7,17 @@ import { QueryState } from "@/components/query-state";
 import { useCodes, useWho } from "@/components/run-codes";
 import { TechnicalDetails } from "@/components/run-disclosures";
 import { Skeleton } from "@/components/skeleton";
-import { ActorGlyph, ActorLabel, KeyValues, OutcomeRail, PageHeader, Section, SimTag } from "@/components/ui";
+import {
+  ActorGlyph,
+  ActorLabel,
+  ButtonLink,
+  EmptyState,
+  KeyValues,
+  OutcomeRail,
+  PageHeader,
+  Section,
+  SimTag,
+} from "@/components/ui";
 import { INTL_TAGS, resolveLocale } from "@/i18n/locales";
 import { ApiError } from "@/lib/api/errors";
 import { sumMoney } from "@/lib/format";
@@ -29,12 +39,35 @@ export function EvidencePage({ id }: { id: string }) {
         </div>
       }
     >
-      {(r) => <Evidence run={r} />}
+      {(r) => (r.deliverable ? <Evidence run={r} deliverable={r.deliverable} /> : <EvidencePending run={r} />)}
     </QueryState>
   );
 }
 
-function Evidence({ run }: { run: Run }) {
+/** A run that exists but has not produced its deliverable yet: the page says so instead of a 404. */
+function EvidencePending({ run }: { run: Run }) {
+  const t = useTranslations("run.evidence");
+  const ended = ["COMPLETED", "FAILED", "CANCELLED"].includes(run.status);
+  return (
+    <>
+      <title>{`${t("pageTitle")} | New Machines`}</title>
+      <PageHeader title={t("pageTitle")} lede={run.title} />
+      <div className="panel">
+        <EmptyState
+          action={
+            <ButtonLink href={`/app/runs/${run.id}`} variant="secondary" className="h-10 sm:h-8">
+              {t("backToRun")}
+            </ButtonLink>
+          }
+        >
+          {ended ? t("pendingEnded") : t("pending")}
+        </EmptyState>
+      </div>
+    </>
+  );
+}
+
+function Evidence({ run, deliverable: d }: { run: Run; deliverable: NonNullable<Run["deliverable"]> }) {
   const t = useTranslations("run.evidence");
   const tc = useTranslations("common");
   const tt = useTranslations("run.technical");
@@ -45,13 +78,12 @@ function Evidence({ run }: { run: Run }) {
   // Publisher fees are on the receipt, not in `run.spent`; a demo run has none.
   const fees = useReceipt(run.id, run.status).data?.fees ?? [];
   const feeTotal = sumMoney(...fees.map((f) => f.amount));
-  const d = run.deliverable;
-  if (!d) notFound();
   const total = sumMoney(run.spent.ai, run.spent.human, run.spent.tools, feeTotal);
 
   // PRODUCT.md WORK-04: the evidence viewer answers seven questions.
   const parts = run.timeline.filter((e) => e.actor !== "system");
-  // The reconciliation pack's page keeps its written copy; any other pack's is built from the run itself.
+  // The reconciliation pack's page keeps its written contract and basis; any other pack's are built from the
+  // run itself. What the run was permitted to do always comes from its own tool calls.
   const written = run.packSlug === RECONCILIATION_PACK;
 
   return (
@@ -146,42 +178,43 @@ function Evidence({ run }: { run: Run }) {
             </Section>
 
             <Section title={t("permitted")}>
-              {written ? (
-                <div className="px-5 py-4 text-sm leading-relaxed">
-                  <p>{t("permittedBody")}</p>
-                  <p className="mt-2 text-muted">{t("permittedNote")}</p>
-                </div>
-              ) : (
-                <ToolUseList run={run} />
-              )}
+              <ToolUseList run={run} />
             </Section>
           </div>
 
           <div className="space-y-6">
             <Section title={t("evidence")}>
-              <ul className="divide-y divide-rule">
-                {d.evidence.map((e) => (
-                  <li key={e.id} className="px-5 py-3">
-                    <div className="flex items-center gap-2 text-sm font-medium">
-                      <ActorGlyph actor={e.by} />
-                      {e.label}
-                    </div>
-                    <div className="mt-0.5 pl-5 text-xs text-muted">{who(e.who, e.by)}</div>
-                  </li>
-                ))}
-              </ul>
               {d.evidence.length > 0 ? (
-                <div className="px-5 pb-4">
-                  <TechnicalDetails rows={d.evidence.map((e) => ({ label: e.label, value: e.id }))} />
-                </div>
-              ) : null}
+                <>
+                  <ul className="divide-y divide-rule">
+                    {d.evidence.map((e) => (
+                      <li key={e.id} className="px-5 py-3">
+                        <div className="flex items-center gap-2 text-sm font-medium">
+                          <ActorGlyph actor={e.by} />
+                          {e.label}
+                        </div>
+                        <div className="mt-0.5 pl-5 text-xs text-muted">{who(e.who, e.by)}</div>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="px-5 pb-4">
+                    <TechnicalDetails rows={d.evidence.map((e) => ({ label: e.label, value: e.id }))} />
+                  </div>
+                </>
+              ) : (
+                <p className="px-5 py-4 text-sm text-muted">{t("noEvidence")}</p>
+              )}
             </Section>
             <Section title={t("open")}>
-              <ul className="space-y-2 px-5 py-4 text-sm">
-                {d.unresolved.map((u) => (
-                  <li key={u}>{u}</li>
-                ))}
-              </ul>
+              {d.unresolved.length > 0 ? (
+                <ul className="space-y-2 px-5 py-4 text-sm">
+                  {d.unresolved.map((u) => (
+                    <li key={u}>{u}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="px-5 py-4 text-sm text-muted">{t("nothingOpen")}</p>
+              )}
             </Section>
             <Section title={t("limitations")}>
               <ul className="list-disc space-y-1.5 py-4 pr-5 pl-9 text-sm text-grey-700">

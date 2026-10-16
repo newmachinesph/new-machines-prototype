@@ -14,7 +14,7 @@
     "leaveUnsaved": "未保存の変更があります。保存せずにこのページを離れますか？",
     "goToOverview": "概要へ移動",
     "simulated": "シミュレーション",
-    "sandboxMock": "サンドボックスのモック",
+    "sandboxMock": "サンドボックス",
     "actor": {
       "machine": "エージェントまたはツール",
       "human": "人間のレビュアー",
@@ -83,7 +83,9 @@
     "browsePacks": "パックを探す",
     "startRun": "実行を開始",
     "choosePack": "追加済みのパックを選択",
+    "noPacks": "まだパックがありません",
     "hireAnother": "別のパックを追加",
+    "hireFirst": "パックを追加",
     "startHelp": "パックを選び、次に処理するデータを選びます。",
     "palette": {
       "title": "何でも検索",
@@ -111,6 +113,10 @@
       "admin": "管理者",
       "member": "メンバー",
       "reviewer": "レビュアー"
+    },
+    "plans": {
+      "trial": "トライアル",
+      "pro": "Pro"
     },
     "sandboxBadge": "シミュレーションデータ、請求はシミュレーション",
     "sandboxTooltip": "実際のアカウントに接続していないアプリはシミュレーションデータを使います。接続ページから接続できます。請求はシミュレーションで、お金は動きません。",
@@ -323,6 +329,7 @@
       "contract": "契約",
       "openDeliverable": "成果物と根拠を開く",
       "deliverablePending": "実行が検証されると、ここに成果物が表示されます。<example>完了済みの例を見る</example>。",
+      "deliverablePendingLive": "実行が検証されると、ここに成果物が表示されます。",
       "receipt": {
         "title": "作業レシート",
         "verified": "検証済み",
@@ -372,7 +379,12 @@
         "withoutApproval": "New Machinesの外への書き込みの一部は、承認ステップなしで実行されました。"
       },
       "evidence": "根拠",
+      "noEvidence": "この実行に添付された追加の根拠はありません。",
       "open": "未解決の項目",
+      "nothingOpen": "未解決の項目はありません。",
+      "pending": "実行が完了して検証されると、成果物と根拠がここに表示されます。",
+      "pendingEnded": "この実行は成果物を残さずに終了しました。",
+      "backToRun": "実行に戻る",
       "limitations": "制限事項",
       "billable": "課金される理由",
       "agentsTools": "エージェントとツール",
@@ -502,6 +514,7 @@
       "body": "リンクが途中で切れているか、古くなっている可能性があります。アドレスを確認して、もう一度お試しください。",
       "overview": "概要へ移動",
       "allRuns": "すべての実行を見る",
+      "backToStudio": "スタジオに戻る",
       "signIn": "サインイン"
     },
     "signIn": {
@@ -539,19 +552,21 @@
       "orDemoLogin": "またはデモ用ログインを使う",
       "email": "メールアドレス",
       "emailPlaceholder": "you@company.com",
+      "emailRequired": "メールアドレスを入力してください。",
       "password": "パスワード",
       "passwordHint": "デモ用ログイン情報と一緒にお送りしています。",
+      "passwordRequired": "パスワードを入力してください。",
       "passwordSuffix": "パスワード",
       "show": "表示",
       "hide": "非表示",
       "submit": "サインイン",
-      "joinNoteMember": "Googleアカウントでサインインすると、Harbor & Pine Supply Co. にメンバーとして参加します。",
+      "joinNoteMember": "Googleアカウントでサインインすると、自分のワークスペース（招待されている場合はそのワークスペース）が開きます。",
       "joinNoteReviewer": "レビュアーの方は、サインイン後にメニューからレビュアーポータルを開いてください。"
     },
     "record": {
       "title": "Harbor & Pine の昨日の照合",
-      "intro": "{title}。作業時間は38分、費用は合計{total}です。以下の各行は、この実行の記録から取っています。",
-      "openRun": "この実行を開く",
+      "example": "サンプルワークスペースの実行例",
+      "intro": "{title}。作業時間は38分、費用は合計{total}です。以下の各行は、このサンプル実行の記録から取っています。",
       "whoDidWhat": "誰が何をしたか",
       "afterVerified": "エージェント自身の成功報告は使っていません。",
       "afterAccepted": "1件の注文は火曜日の入金待ちです。隠さず、追跡されたままです。"
@@ -588,9 +603,11 @@
       "suggestions": {
         "reconcile": "先週の注文をStripeの入金と突き合わせる",
         "invoices": "支払期限を過ぎた卸の請求書を督促する",
-        "refunds": "サポートメールの返金依頼を処理する",
+        "refunds": "返金ポリシーに沿って返金依頼を判断する",
         "reorder": "毎週月曜に発注すべき商品を知らせる",
-        "translate": "日本のストア向けにカタログを翻訳する"
+        "translate": "日本のストア向けにカタログを翻訳する",
+        "expenses": "先週の経費を分類し、異常があれば知らせる",
+        "meetings": "昨日の会議のフォローアップを下書きする"
       }
     },
     "nothingNeedsYou": "今、対応が必要なものはありません。承認やレビューのタスクはここに表示されます。",
@@ -692,7 +709,7 @@
     "connect": {
       "title": "アプリを接続",
       "titleApp": "{app}を接続",
-      "description": "New MachinesはComposio経由でアプリ自身のサインインページに移動します。権限はそこで承認し、パスワードが私たちに渡ることはありません。",
+      "description": "New Machinesはアプリ自身のサインインページに移動します。権限はそこで承認し、パスワードが私たちに渡ることはありません。",
       "liveOnly": "本番版で利用できます",
       "demoNote": "このデモ用ワークスペースでは、実際のアカウントは接続できません。Google Sheets、Gmail、Driveはテスト用アカウントに接続済みです。",
       "liveNote": "パックを追加すると、必要なアプリがこのページに表示されます。それぞれを実際のアカウントに接続するか、シミュレーションデータを使えます。"
@@ -716,7 +733,7 @@
     "scopes": "アプリが許可した権限",
     "used": "最終利用：{when}",
     "viaMock": "サンドボックスのモック経由",
-    "viaComposio": "Composio経由",
+    "viaComposio": "ご自身のアカウント経由",
     "disconnectApp": "{app}の接続を解除",
     "disconnectTitle": "{app}の接続を解除しますか？",
     "disconnectDescription": "追加済みのすべてのパックが、すぐに{app}へアクセスできなくなります。進行中の実行は次の{app}のステップで停止し、{app}を再接続するまで新しい実行は開始できません。",
@@ -957,7 +974,21 @@
       "reviewerWhenNeeded": "必要に応じてレビュアー",
       "perRun": "1回の実行あたり{price}",
       "perRunPlusFee": "1回の実行あたり{price}＋手数料",
-      "perRunUnset": "価格未設定"
+      "perRunUnset": "従量課金",
+      "categories": {
+        "financeOps": "財務業務",
+        "customerOps": "カスタマー業務",
+        "fulfillment": "フルフィルメント",
+        "merchandising": "マーチャンダイジング",
+        "operations": "オペレーション",
+        "salesOps": "営業業務"
+      },
+      "industries": {
+        "retailCommerce": "小売・コマース",
+        "manufacturing": "製造",
+        "mediaContent": "メディア・コンテンツ・デジタル体験",
+        "professionalServices": "プロフェッショナルサービス"
+      }
     },
     "price": {
       "range": "{min}～{max}"
@@ -1009,7 +1040,7 @@
       "costs": "費用",
       "agentsTools": "エージェントとツール",
       "perRun": "1回の実行あたり{price}",
-      "perRunUnset": "価格未設定",
+      "perRunUnset": "従量課金",
       "upTo": "1回の実行あたり最大{amount}",
       "noneByDefault": "既定ではなし",
       "basis": "課金の基準",
@@ -1230,6 +1261,12 @@
         "spend_cap": "支出上限",
         "region": "データの地域"
       },
+      "summaries": {
+        "tool_actions": "すべてのツール呼び出しは事前に確認されます。読み取りは許可され、書き込みと送金はあなたの承認を待ち、ポリシーが知らない操作は拒否されます。",
+        "human_review": "パックがレビューに送った成果物は、受け入れられる前に人が確認します。",
+        "spend_cap": "今月の支出がワークスペースの月間上限に達すると、新しい実行は開始されません。",
+        "region": "顧客データは{place}（{region}）に保存・処理されます。AIモデルへのリクエストはモデル提供元に送られ、地域は固定されません。"
+      },
       "note": "ブロックされた操作を強制的に通すボタンはありません。ポリシーはここで確認できますが、ワークスペースから変更することはできません。"
     },
     "workspace": {
@@ -1258,7 +1295,9 @@
       "role": "ロール",
       "roles": {
         "Member": "メンバー",
-        "Admin": "管理者"
+        "Admin": "管理者",
+        "Owner": "オーナー",
+        "Reviewer": "レビュアー"
       },
       "roleHelp": {
         "Member": "実行を開始し、ポリシーで許可された操作を承認します。",
@@ -1369,6 +1408,7 @@
     "removeDescription": "チームのレビュータスクが表示されなくなり、受けていたタスクはキューに戻ります。レビュアーとして参加した人は、このワークスペースからも外れます。",
     "removeSelfTitle": "ご自身をレビュアーから外しますか?",
     "removeSelfDescription": "チームのレビュータスクが表示されなくなり、受けていたタスクはキューに戻ります。ワークスペースでのあなたの役割は変わりません。",
+    "removeLastDescription": "あなたはここで唯一のレビュアーです。ほかの人が追加されるまで、レビュータスクは受け手のないまま待ちます。ワークスペースでのあなたの役割は変わりません。",
     "removeConfirm": "レビュアーから外す",
     "removed": "レビュアーから外しました",
     "removeFailed": "レビュアーを外せませんでした",
@@ -1402,6 +1442,12 @@
     "ledgerNote": "記録を開くと、お金の行き先が見られます",
     "viewRun": "実行を見る",
     "account": "勘定科目",
+    "accounts": {
+      "aiUsage": "AI利用",
+      "toolUsage": "ツール利用",
+      "humanReview": "人によるレビュー",
+      "publisherFees": "提供元手数料"
+    },
     "debit": "借方",
     "credit": "貸方",
     "status": {
@@ -1449,13 +1495,15 @@
       "data": "データ"
     },
     "aboutMin": "約{n}分",
-    "due": "{when} マニラ時間（{utc}）、{until}",
+    "due": "{when}、{until}",
     "dataConfidential": "機密（マスキング済み）",
     "dataNone": "顧客データなし",
     "paidOnAccept": "提出が受け入れられると報酬が支払われます",
     "simulatedOnAccept": "提出が受け入れられると模擬報酬が記録されます。お金は動きません",
     "readTask": "タスクを見る",
     "yourWork": "あなたの作業",
+    "yourClaimed": "あなたが引き受けたタスク",
+    "continueTask": "タスクを続ける",
     "openOffers": "受付中の依頼",
     "worth": "報酬合計",
     "owed": "未払いの報酬",
@@ -1658,7 +1706,8 @@
       "stopsTitle": "レビューを記録しました。実行はここで停止します。",
       "stopsBody": "結果を却下またはエスカレーションしたため、実行は再試行せずに終了します。",
       "recordedTitle": "レビューを記録しました",
-      "recordedBody": "実行はあなたの判定を受け取りました。"
+      "recordedBody": "実行はあなたの判定を受け取りました。",
+      "openRun": "実行を開く"
     },
     "payNote": {
       "team": "チームのレビューは無報酬です。",
@@ -1697,6 +1746,7 @@
     "liveOnlyTitle": "スタジオはライブワークスペースでのみ使えます",
     "liveOnlyBody": "デモワークスペースでは完成したパックだけを表示します。エージェントやパックを作成するには、自社のワークスペースにサインインしてください。",
     "backToWorkspace": "ワークスペースに戻る",
+    "backToStudio": "スタジオのホームに戻る",
     "buildersOnly": "エージェントやパックを作成できるのはオーナーと管理者だけです。"
   },
   "studioAgents": {
@@ -1711,7 +1761,7 @@
     "viewLede": "自社で作成したエージェントです。変更できるのはオーナーまたは管理者だけです。",
     "empty": "まだエージェントはありません。",
     "emptyMember": "まだエージェントはありません。オーナーまたは管理者が作成できます。",
-    "notYours": "このエージェントは自社のものではありません。",
+    "notYours": "この住所に自社のエージェントはありません。削除されたか、ほかのワークスペースのものかもしれません。",
     "backToAgents": "エージェント一覧に戻る",
     "about": "エージェントについて",
     "name": "名前",
@@ -1725,6 +1775,15 @@
     "tools": "読み取るアプリ",
     "toolsHelp": "エージェントは読み取りのみ行います。アプリのデータを変更するステップは、承認の後にパックに置きます。",
     "toolsMax": "ツールは最大 {n} 個までです。",
+    "toolsChosen": "{max} 個中 {n} 個を選択",
+    "chosenTools": "選択中のツール",
+    "noToolsChosen": "まだツールを選んでいません。下で検索するか、アプリを開いてツールを確認してください。",
+    "removeTool": "{name} を外す",
+    "toolSearch": "ツールを検索",
+    "toolSearchPlaceholder": "アプリ名やツール名で検索",
+    "toolGroup": "{n, plural, other {ツール # 個}}",
+    "toolGroupChosen": "{n} 個を選択中",
+    "noToolMatches": "「{query}」に一致するツールはありません。",
     "toolGone": "現在アプリで利用できません。チェックを外すと削除されます。",
     "skills": "スキル",
     "addSkill": "スキルを追加",
@@ -1749,6 +1808,20 @@
     "versionHead": "バージョン",
     "usedBy": "使用しているパック",
     "unused": "まだパックで使われていません"
+  },
+  "outcomes": {
+    "next": "次へ",
+    "ok": "完了",
+    "denied": "拒否",
+    "error": "エラー",
+    "resolved": "解決",
+    "rejected": "却下",
+    "timeout": "タイムアウト",
+    "granted": "承認",
+    "pass": "合格",
+    "fail": "不合格",
+    "blocked": "ブロック",
+    "failed": "失敗"
   },
   "studioCanvas": {
     "canvas": "ワークフローキャンバス",
@@ -1982,7 +2055,7 @@
     "viewLede": "自社で作成したパックです。変更できるのはオーナーまたは管理者だけです。",
     "empty": "まだパックはありません。小さな例から始めて、1 ステップずつ変更してください。",
     "emptyMember": "まだパックはありません。オーナーまたは管理者が作成できます。",
-    "notYours": "このパックは自社のものではありません。",
+    "notYours": "この住所に自社のパックはありません。削除されたか、ほかのワークスペースのものかもしれません。",
     "backToPacks": "パック一覧に戻る",
     "copyTitle": "コピーを編集",
     "copyLede": "必要な部分を変更して、自社のパックとして保存します。",
@@ -2008,8 +2081,7 @@
     "payouts": "支払い履歴",
     "noPayouts": "支払いはまだありません。",
     "empty": "掲載しているものはまだありません。エージェントまたはパックのページから審査に提出してください。",
-    "toAgents": "エージェント",
-    "toPacks": "パック",
+    "goTo": "<agents>エージェント</agents>・<packs>パック</packs>へ",
     "columns": {
       "name": "名前",
       "kind": "種類",

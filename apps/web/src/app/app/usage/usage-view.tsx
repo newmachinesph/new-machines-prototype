@@ -17,6 +17,8 @@ import type { LedgerTxn, Organization } from "@/lib/types";
 import { useFormat } from "@/lib/use-format";
 
 const STATUS_TONE = { POSTED: "ink", ELIGIBLE: "machine", PENDING: "quiet", HELD: "human" } as const;
+/** A ledger cell with no amount on its side, so a line with only a debit or only a credit never reads as blank. */
+const NO_AMOUNT = "—";
 
 function UsageHeader() {
   const t = useTranslations("usage");
@@ -59,9 +61,22 @@ function FeeItems({ txnId, fees }: { txnId: string; fees: FeeItem[] }) {
   );
 }
 
+// The ledger's accounts, by the English name the API sends, keyed for translation; any other account shows as it came.
+type AccountKey = "aiUsage" | "toolUsage" | "humanReview" | "publisherFees";
+const ACCOUNT_KEYS: Record<string, AccountKey | undefined> = {
+  "AI usage": "aiUsage",
+  "Tool usage": "toolUsage",
+  "Human review": "humanReview",
+  "Publisher fees": "publisherFees",
+};
+
 function Ledger({ ledger }: { ledger: LedgerTxn[] }) {
   const t = useTranslations("usage");
   const { dateTime, money } = useFormat();
+  const accountText = (account: string) => {
+    const key = ACCOUNT_KEYS[account];
+    return key ? t(`accounts.${key}`) : account;
+  };
   if (ledger.length === 0) {
     return (
       <EmptyState
@@ -112,9 +127,9 @@ function Ledger({ ledger }: { ledger: LedgerTxn[] }) {
               <tbody className="divide-y divide-rule">
                 {txn.lines.map((l, i) => (
                   <tr key={i}>
-                    <td className="py-1.5">{l.account}</td>
-                    <td className="tnum py-1.5 text-right">{l.debit ? money(l.debit) : ""}</td>
-                    <td className="tnum py-1.5 text-right">{l.credit ? money(l.credit) : ""}</td>
+                    <td className="py-1.5">{accountText(l.account)}</td>
+                    <td className="tnum py-1.5 text-right text-muted">{l.debit ? money(l.debit) : NO_AMOUNT}</td>
+                    <td className="tnum py-1.5 text-right text-muted">{l.credit ? money(l.credit) : NO_AMOUNT}</td>
                   </tr>
                 ))}
               </tbody>

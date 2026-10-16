@@ -17,10 +17,55 @@ const BUDGET_LABEL: Record<BudgetDetail, "budget" | "humanBudget"> = {
 const stepOf = (i: EditorIssue | ServerIssue) => ("step" in i ? i.step : undefined);
 export const isDetailsIssue = (i: EditorIssue): i is DetailsIssue => "field" in i;
 
+/** What a local issue is about: its step and code, and the outcome or argument it names. */
+const subjectOf = (i: EditorIssue) =>
+  `${stepOf(i) ?? ""}|${i.code}|${"outcome" in i ? (i.outcome ?? "") : "arg" in i ? (i.arg ?? "") : ""}`;
+
+/** The last part of a path under `prefix.`, when the path is one level below it. */
+const under = (path: string, prefix: string) => {
+  if (!path.startsWith(`${prefix}.`)) return null;
+  const rest = path.slice(prefix.length + 1);
+  return rest && !rest.includes(".") ? rest : null;
+};
+
+/**
+ * The subject of a problem the API reported, in the editor's own terms, when the editor checks for the same thing
+ * (apps/api/app/studio_build.py paths and wording). Null for a problem only the API finds.
+ */
+export function serverSubject(i: ServerIssue): string | null {
+  const { step, path, message } = i;
+  if (!step) return null;
+  const at = `steps.${step}`;
+  const config = `${at}.config`;
+  const subject = (code: string, named = "") => `${step}|${code}|${named}`;
+  if (path === at && message.startsWith("Nothing leads to")) return subject("unreachable");
+  if (path === `${at}.rules`) return subject("noRules");
+  if (path === `${config}.agent`) return subject("missingAgent");
+  if (path === `${config}.tool`) return subject(message.includes("cannot delete") ? "blockedTool" : "missingTool");
+  if (path === `${config}.space`) return subject("missingSpace");
+  if (path === `${config}.title`) return subject("missingTitle");
+  if (path === `${config}.show`) return subject("missingShow");
+  const outcome = under(path, `${at}.routes`);
+  if (outcome && message.includes("goes nowhere")) return subject("unrouted", outcome);
+  const arg = under(path, `${config}.args`);
+  if (arg && message.includes("needs a value")) return subject("missingArg", arg);
+  if (arg && message.includes("has no")) return subject("unknownArg", arg);
+  return null;
+}
+
+/** The API's problems without those the editor already lists in its own words, so a problem is listed once. */
+export function withoutCovered(local: EditorIssue[], server: ServerIssue[]): ServerIssue[] {
+  const covered = new Set(local.map(subjectOf));
+  return server.filter((i) => {
+    const subject = serverSubject(i);
+    return subject === null || !covered.has(subject);
+  });
+}
+
 /** Problems per step, for the canvas and the step list. */
 export function countByStep(local: EditorIssue[], server: ServerIssue[]): Map<string, number> {
   const counts = new Map<string, number>();
-  for (const i of [...local, ...server]) {
+  for (const i of [...local, ...withoutCovered(local, server)]) {
     const step = stepOf(i);
     if (step) counts.set(step, (counts.get(step) ?? 0) + 1);
   }
@@ -62,12 +107,13 @@ const identity = (i: EditorIssue | ServerIssue, server: boolean) =>
     : `local|${(i as EditorIssue).code}|${JSON.stringify(i)}`;
 
 /**
- * Every problem the editor and the API found, under the canvas. A step's problem opens the step; a problem in the
- * pack's details (or one the API reports without a step) opens the details, at the field when it is known.
+ * Every problem the editor and the API found, under the canvas, each once: a problem the API reports that the
+ * editor also found is listed in the editor's words only. A step's problem opens the step; a problem in the pack's
+ * details (or one the API reports without a step) opens the details, at the field when it is known.
  */
 export function IssuesPanel({
   local,
-  server,
+  server: reported,
   checked,
   onPick,
   onPickDetails,
@@ -81,6 +127,7 @@ export function IssuesPanel({
 }) {
   const t = useTranslations("studioIssues");
   const text = useIssueText();
+  const server = withoutCovered(local, reported);
   const total = local.length + server.length;
   const seen = new Map<string, number>();
   const keyOf = (i: EditorIssue | ServerIssue, isServer: boolean) => {

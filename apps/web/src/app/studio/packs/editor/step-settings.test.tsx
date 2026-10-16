@@ -321,7 +321,7 @@ describe("StepSettings", () => {
   it("shows where each outcome goes, and duplicates and removes the step", async () => {
     const store = renderSettings("approve");
     // Targets read as the step list names them: number, kind of step, then the id.
-    expect(screen.getByRole("combobox", { name: "granted goes to" })).toHaveTextContent(
+    expect(screen.getByRole("combobox", { name: "Approved goes to" })).toHaveTextContent(
       /^Step \d+: App step \(send\)$/,
     );
     act(() => {
@@ -344,7 +344,7 @@ describe("StepSettings", () => {
   it("is disabled as a whole inside a disabled fieldset, choices included", () => {
     renderSettings("approve", undefined, PALETTE, (ui) => <fieldset disabled>{ui}</fieldset>);
     expect(screen.getByLabelText("Title (required)")).toBeDisabled();
-    const choice = screen.getByRole("combobox", { name: "granted goes to" });
+    const choice = screen.getByRole("combobox", { name: "Approved goes to" });
     expect(choice).toBeDisabled();
     expect(choice).toHaveClass("disabled:opacity-60");
   });

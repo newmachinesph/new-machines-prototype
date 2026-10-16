@@ -200,7 +200,7 @@ describe("TaskWorkspace review summary", () => {
     await user.type(screen.getByRole("textbox", { name: "Feedback for the agent" }), "The digits are swapped.");
     await user.click(screen.getByRole("button", { name: "Submit review" }));
     const summary = screen.getByRole("heading", { name: "Your review" }).closest("section")!;
-    expect(summary).toHaveTextContent("Oct 13, 12:40 AM GMT+8"); // the demo's pinned Oct 12, 16:40 UTC
+    expect(summary).toHaveTextContent("Oct 13, 12:40 AM Manila time"); // the demo's pinned Oct 12, 16:40 UTC
     expect(summary).not.toHaveTextContent("Your calls"); // no records, so no blank row
   });
 
@@ -217,6 +217,19 @@ describe("TaskWorkspace review summary", () => {
     expect(summary).toHaveTextContent("Your verdict and when you submitted are listed on Earnings.");
     expect(summary).not.toHaveTextContent("Feedback");
     expect(screen.getByRole("link", { name: "See earnings" })).toHaveAttribute("href", "/work/earnings");
+    // A reload keeps the outcome and the way back to the run.
+    expect(screen.getByText("Review recorded. The run goes on with it.")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Open the run" })).toHaveAttribute("href", "/app/runs/run_1042");
+  });
+
+  it("keeps the run link off a network task, whose run is not the reviewer's to open", () => {
+    renderWithIntl(
+      <TaskWorkspace
+        task={{ ...task, realRun: true, via: "network", runId: "", state: "SUBMITTED", runOutcome: "CONTINUES" }}
+        buyer={task.buyer}
+      />,
+    );
+    expect(screen.queryByRole("link", { name: "Open the run" })).toBeNull();
   });
 
   it("shows the summary in Japanese", () => {

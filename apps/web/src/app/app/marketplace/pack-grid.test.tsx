@@ -152,20 +152,20 @@ describe("PackGrid industry filter", () => {
     expect(within(industry).getByRole("button", { name: /^All industries/ })).toHaveAttribute("aria-pressed", "true");
   });
 
-  it("says Sandbox mock once for a card whose apps are all mocks, and per app otherwise", () => {
+  it("says Sandbox once for a card whose apps are all mocks, and per app otherwise", () => {
     renderWithIntl(<PackGrid />);
     const recon = screen.getByRole("link", { name: /Reconciliation/ });
-    expect(within(recon).getAllByText("Sandbox mock")).toHaveLength(1);
+    expect(within(recon).getAllByText("Sandbox")).toHaveLength(1);
     expect(within(recon).getByText("Shopify")).toBeInTheDocument();
     expect(within(recon).getByText("Stripe")).toBeInTheDocument();
     const claims = screen.getByRole("link", { name: /Claims intake/ });
-    expect(within(claims).getByText("Gmail")).toContainElement(within(claims).getByText("Sandbox mock"));
-    expect(within(claims).getByText("Google Sheets")).not.toContainElement(within(claims).getByText("Sandbox mock"));
+    expect(within(claims).getByText("Gmail")).toContainElement(within(claims).getByText("Sandbox"));
+    expect(within(claims).getByText("Google Sheets")).not.toContainElement(within(claims).getByText("Sandbox"));
   });
 
-  it("says a pack with a zero estimate has no price set, never $0.00–$0.00", () => {
+  it("says a pack with a zero estimate is usage-based, never $0.00–$0.00", () => {
     renderWithIntl(<PackGrid />);
-    expect(within(screen.getByRole("link", { name: /Claims intake/ })).getByText("Price not set")).toBeInTheDocument();
+    expect(within(screen.getByRole("link", { name: /Claims intake/ })).getByText("Usage-based")).toBeInTheDocument();
     expect(within(screen.getByRole("link", { name: /Misc/ })).getByText("$0.01–$0.02 per run")).toBeInTheDocument();
     expect(screen.queryByText(/\$0\.00–\$0\.00/)).toBeNull();
   });

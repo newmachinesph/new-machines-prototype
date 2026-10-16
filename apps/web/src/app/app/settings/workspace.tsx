@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { QueryState } from "@/components/query-state";
 import { Skeleton } from "@/components/skeleton";
 import { KeyValues, Section } from "@/components/ui";
+import { useIsLive } from "@/lib/queries/me";
 import { useOrg } from "@/lib/queries/org";
 import { usePolicies } from "@/lib/queries/workspace";
 import { useFormat } from "@/lib/use-format";
@@ -25,9 +26,29 @@ const asWords = (name: string) => {
   return words.charAt(0).toUpperCase() + words.slice(1);
 };
 
+/** A live workspace dates its policies in ISO; the demo's fixtures carry a ready-made date. */
+const isIsoDate = (when: string) => /^\d{4}-\d{2}-\d{2}T/.test(when);
+
 export function PoliciesSection() {
   const t = useTranslations("settings.policies");
+  const tw = useTranslations("settings.workspace");
+  const { date } = useFormat();
   const policies = usePolicies();
+  const org = useOrg().data;
+  // The built-in policies read in the interface language. The region policy names the workspace's region, so it
+  // waits for the workspace; any policy the messages do not know shows the API's words.
+  // The demo's fixtures carry their own specific policy text, which stays; only a live workspace's built-in
+  // policies are translated.
+  const isLive = useIsLive();
+  const summary = (name: string, fallback: string) => {
+    if (!isLive || !isNamed(name)) return fallback;
+    if (name !== "region") return t(`summaries.${name}`);
+    if (!org) return fallback;
+    return t("summaries.region", {
+      region: org.region,
+      place: isRegionCode(org.region) ? tw(`places.${org.region}`) : org.region,
+    });
+  };
   return (
     <Section title={t("title")} aside={<span className="text-xs text-muted">{t("aside")}</span>}>
       <QueryState query={policies} skeleton={<Skeleton className="h-64 rounded-none" />}>
@@ -47,9 +68,11 @@ export function PoliciesSection() {
                         </>
                       ) : null}
                     </h3>
-                    <span className="text-xs text-muted">{t("updated", { when: p.updated })}</span>
+                    <span className="text-xs text-muted">
+                      {t("updated", { when: isIsoDate(p.updated) ? date(p.updated) : p.updated })}
+                    </span>
                   </div>
-                  <p className="mt-1 text-sm text-grey-700">{p.summary}</p>
+                  <p className="mt-1 text-sm text-grey-700">{summary(name, p.summary)}</p>
                 </li>
               );
             })}

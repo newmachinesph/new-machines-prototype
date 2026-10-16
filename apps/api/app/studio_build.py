@@ -345,7 +345,7 @@ def _connector_issues(step: StepDraft, tools: dict[str, dict], at: str) -> list[
     s, cfg = step.id, step.config
     ref = _ref(cfg, "tool")
     if ref is None or ref not in tools:
-        return [_issue(f"Choose the app tool {s} uses.", s, f"{at}.tool")]
+        return [_issue(f"Choose the app tool for step {s}.", s, f"{at}.tool")]
     tool = tools[ref]
     if tool["action_class"] in BLOCKED_CLASSES:
         return [_issue(f"{s} uses {ref}. A pack cannot delete records or move money.", s, f"{at}.tool")]
@@ -370,7 +370,7 @@ def _agent_step_issues(
     s, cfg = step.id, step.config
     agent = agents.get(_ref(cfg, "agent") or "")
     if agent is None:
-        return [_issue(f"Choose the agent {s} runs.", s, f"{at}.agent")]
+        return [_issue(f"Choose the agent for step {s}.", s, f"{at}.agent")]
     override = cfg.get("output_schema")
     if not override:
         return []
@@ -496,7 +496,9 @@ def _graph_issues(draft: PackDraft, by_id: dict[str, StepDraft]) -> list[Builder
         return []
     reached = _reachable(draft.entry_step, by_id)
     out = [
-        _issue(f"Nothing leads to {s.id}.", s.id, f"steps.{s.id}") for s in draft.steps if s.id not in reached
+        _issue(f"Nothing leads to step {s.id}.", s.id, f"steps.{s.id}")
+        for s in draft.steps
+        if s.id not in reached
     ]
     if not any(_completes(s) and s.id in reached for s in draft.steps):
         out.append(_issue("The pack never completes. Add an end step that completes the run.", path="steps"))

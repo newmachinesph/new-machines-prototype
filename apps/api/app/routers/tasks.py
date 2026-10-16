@@ -278,7 +278,8 @@ def real_task(row: dict) -> HumanTask:
         question=title,
         records=records,
         lease_minutes=LEASE_MINUTES,
-        buyer="A New Machines customer",
+        # A team task is the reviewer's own workspace's; only a network task keeps the org unnamed.
+        buyer="A New Machines customer" if network else (org_name or "Your workspace"),
         real_run=True,
         run_outcome=RUN_OUTCOMES.get(row["status"]),
         via=via,
@@ -305,11 +306,21 @@ def _shown_ids(row: dict) -> dict[str, str]:
 
 
 def _offered_rows(actor: Actor) -> list[dict]:
-    """Rows to list as offers: in the live workspace only open, unclaimed tasks are read, so the list's limit
-    counts offers alone."""
+    """Rows to list on /work: in the live workspace only open tasks that are unclaimed or the actor's own
+    claims are read, so the list's limit counts those alone."""
     if workspace.live():
         return review_routing.visible_rows(actor.org_id, actor.user_id, offered=True)
     return run_tasks.list_rows(actor.org_id, "human")
+
+
+def _listed(task: HumanTask, row: dict | None, actor: Actor) -> bool:
+    """Whether a task belongs on /work: an open offer, or a task the actor has claimed and not yet submitted
+    (reachable there, not only from the run page)."""
+    if task.state == "OFFERED":
+        return True
+    if task.state != "CLAIMED":
+        return False
+    return row is None or (row["payload"] or {}).get("claimed_by") == actor.user_id
 
 
 def _human_row(actor: Actor, task_id: str) -> dict | None:
@@ -321,11 +332,12 @@ def _human_row(actor: Actor, task_id: str) -> dict | None:
 
 @router.get("/human-tasks/eligible", operation_id="listEligibleHumanTasks", response_model=list[HumanTask])
 def list_eligible_human_tasks(actor: CurrentActor) -> list[HumanTask]:
-    # Offers show sanitized metadata only; records arrive with the task itself (API.md section 3).
-    real = [real_task(row) for row in _offered_rows(actor)]
-    fixtures = [] if workspace.live() else list(get_store().tasks.values())
-    offered = [t for t in real if t.state == "OFFERED"] + [t for t in fixtures if t.state == "OFFERED"]
-    return [t.model_copy(update={"records": [], "details": None}) for t in offered]
+    # Offers show sanitized metadata only; records arrive with the task itself (API.md section 3). The
+    # actor's own claims are listed too (the demo's fixtures have one reviewer, so any claimed one is theirs).
+    real = [(real_task(row), row) for row in _offered_rows(actor)]
+    fixtures = [] if workspace.live() else [(t, None) for t in get_store().tasks.values()]
+    listed = [t for t, row in real + fixtures if _listed(t, row, actor)]
+    return [t.model_copy(update={"records": [], "details": None}) for t in listed]
 
 
 @router.get("/human-tasks/{task_id}", operation_id="getHumanTask", response_model=HumanTask)

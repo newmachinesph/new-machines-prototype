@@ -8,18 +8,32 @@ import { Button, ButtonLink, SimTag } from "@/components/ui";
 import { useToast } from "@/components/base";
 import { useErrorText } from "@/lib/api/use-error-text";
 import { useSuggestPack } from "@/lib/queries/catalog";
+import { useMe } from "@/lib/queries/me";
 
 // The label is translated; the query sent to the suggestion API stays English because its keyword match is English-only.
+// Each chip names a pack its workspace has: the demo's fixtures and the live marketplace list different ones.
 const SUGGESTIONS = [
   { key: "reconcile", query: "Match last week's orders to Stripe payouts" },
   { key: "invoices", query: "Chase wholesale invoices that are past due" },
-  { key: "refunds", query: "Handle refund requests from support email" },
+  { key: "refunds", query: "Decide refund requests against our refund policy" },
+] as const;
+const DEMO_SUGGESTIONS = [
   { key: "reorder", query: "Tell me what to reorder every Monday" },
   { key: "translate", query: "Translate our catalog for a Japanese store" },
+] as const;
+const LIVE_SUGGESTIONS = [
+  { key: "expenses", query: "Sort last week's expenses and flag anything unusual" },
+  { key: "meetings", query: "Draft follow-ups for yesterday's meetings" },
 ] as const;
 
 export function AskBox() {
   const t = useTranslations("overview.ask");
+  const workspace = useMe().data?.workspace;
+  // Until /me says which workspace this is, only the chips both share show, so the wrong ones never flash in.
+  const suggestions = [
+    ...SUGGESTIONS,
+    ...(workspace === "demo" ? DEMO_SUGGESTIONS : workspace === "live" ? LIVE_SUGGESTIONS : []),
+  ];
   const [q, setQ] = useState("");
   // Set when a chip fills the input: the English query to send while the input shows the translated label.
   const [chipQuery, setChipQuery] = useState<string | null>(null);
@@ -110,25 +124,22 @@ export function AskBox() {
         ) : null}
       </div>
       {!suggest.data ? (
-        // The chips wrap from sm up. On a phone they scroll sideways, with a fade at the edge and room past
-        // the last chip so the fade never covers it.
-        <div className="relative border-t border-rule after:pointer-events-none after:absolute after:inset-y-0 after:right-0 after:w-10 after:rounded-br-[12px] after:bg-linear-to-l after:from-paper after:to-transparent sm:after:hidden">
-          <div className="flex [scrollbar-width:none] gap-2 overflow-x-auto px-4 py-2.5 pr-10 sm:flex-wrap sm:pr-4">
-            {SUGGESTIONS.map(({ key, query }) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => {
-                  setQ(t(`suggestions.${key}`));
-                  setChipQuery(query);
-                  submit(query);
-                }}
-                className="inline-flex min-h-9 shrink-0 items-center rounded-full border border-rule bg-stage px-3 text-[13px] whitespace-nowrap text-grey-700 hover:border-grey-300 hover:text-ink"
-              >
-                {t(`suggestions.${key}`)}
-              </button>
-            ))}
-          </div>
+        // The chips wrap at every width, so none is cut at the edge of a phone screen.
+        <div className="flex flex-wrap gap-2 border-t border-rule px-4 py-2.5">
+          {suggestions.map(({ key, query }) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => {
+                setQ(t(`suggestions.${key}`));
+                setChipQuery(query);
+                submit(query);
+              }}
+              className="inline-flex min-h-9 items-center rounded-full border border-rule bg-stage px-3 text-left text-[13px] text-grey-700 hover:border-grey-300 hover:text-ink"
+            >
+              {t(`suggestions.${key}`)}
+            </button>
+          ))}
         </div>
       ) : null}
     </section>

@@ -21,6 +21,7 @@ const data = vi.hoisted(() => ({
   path: "/app",
   studio: { agent: undefined as string | undefined, pack: undefined as string | undefined },
   packs: [] as { slug: string; installed: boolean }[],
+  tasks: [] as { state: string }[],
 }));
 
 // The workspace menu's language items refresh the router after a choice; the menu must open without one.
@@ -70,7 +71,7 @@ vi.mock("@/lib/queries/studio", () => ({
 vi.mock("@/lib/queries/publishing", () => ({
   useStudioListing: (id?: string) => ({ data: id ? { name: "Refund check" } : undefined }),
 }));
-vi.mock("@/lib/queries/tasks", () => ({ useEligibleTasks: () => ok([]) }));
+vi.mock("@/lib/queries/tasks", () => ({ useEligibleTasks: () => ok(data.tasks) }));
 vi.mock("@/lib/queries/workspace", () => ({ useApprovals: () => ok([]), useMemory: () => ok([]) }));
 
 describe("AppShell", () => {
@@ -209,6 +210,15 @@ describe("AppShell", () => {
     data.me = ok({ userId: "demo", orgId: "org_hp01", orgName: "Harbor", role: "owner", workspace: "demo" });
     renderWithIntl(<AppShell mode="work">page</AppShell>);
     expect(screen.getAllByText("Reviewer 204").length).toBeGreaterThan(0);
+  });
+
+  it("badges Available tasks with the open offers only, not the claimed ones", () => {
+    data.tasks = [{ state: "OFFERED" }, { state: "CLAIMED" }, { state: "OFFERED" }];
+    renderWithIntl(<AppShell mode="work">page</AppShell>);
+    const link = screen.getAllByRole("link", { name: /Available tasks/ })[0];
+    expect(link).toHaveTextContent("2");
+    expect(link).not.toHaveTextContent("3");
+    data.tasks = [];
   });
 
   it("lists Reviewers only in a live workspace", () => {

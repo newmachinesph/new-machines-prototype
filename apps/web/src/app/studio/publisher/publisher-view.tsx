@@ -4,7 +4,7 @@ import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { QueryState } from "@/components/query-state";
 import { Skeleton } from "@/components/skeleton";
-import { Amount, ButtonLink, EmptyState, Section, SimTag } from "@/components/ui";
+import { Amount, EmptyState, Section, SimTag } from "@/components/ui";
 import type { StudioListing } from "@/lib/api/gen/types.gen";
 import { useStudioEarnings, useStudioListings } from "@/lib/queries/publishing";
 import { listingPrices, ListingStatusPill, usePriceLabel, VersionStatusPill } from "./listing-parts";
@@ -53,19 +53,26 @@ function Earnings() {
   );
 }
 
+/** Nothing listed: where the pages to submit from are, as one line of links that reads with the sentence above. */
 function NothingListed() {
   const t = useTranslations("studioPublisher");
   return (
     <EmptyState
       action={
-        <>
-          <ButtonLink href="/studio/agents" variant="secondary">
-            {t("toAgents")}
-          </ButtonLink>
-          <ButtonLink href="/studio/packs" variant="secondary">
-            {t("toPacks")}
-          </ButtonLink>
-        </>
+        <p className="text-sm">
+          {t.rich("goTo", {
+            agents: (chunks) => (
+              <Link className="link" href="/studio/agents">
+                {chunks}
+              </Link>
+            ),
+            packs: (chunks) => (
+              <Link className="link" href="/studio/packs">
+                {chunks}
+              </Link>
+            ),
+          })}
+        </p>
       }
     >
       {t("empty")}

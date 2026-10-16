@@ -66,6 +66,12 @@ function editing(agent: StudioAgent = AGENT) {
 }
 
 const save = () => userEvent.click(screen.getByRole("button", { name: "Save agent" }));
+/** Unfolds an app in the tool picker (its tools are not on the page until it is opened). */
+const openApp = (app: string) => userEvent.click(screen.getByRole("button", { name: new RegExp(`^${app} `) }));
+const pickStripe = async () => {
+  await openApp("Stripe");
+  await userEvent.click(screen.getByRole("checkbox", { name: /Stripe: List invoices/ }));
+};
 const createHandlers = () => mocks.create.mutate.mock.calls[0][1];
 const saveHandlers = () => mocks.save.mutate.mock.calls[0][1];
 
@@ -95,7 +101,7 @@ describe("AgentEditor", () => {
     await fillIn();
     expect(screen.queryByRole("checkbox", { name: /Gmail: Create draft/ })).toBeNull();
     expect(screen.getByText(/Agents only read/)).toBeInTheDocument();
-    await userEvent.click(screen.getByRole("checkbox", { name: /Stripe: List invoices/ }));
+    await pickStripe();
     await save();
     const [vars, handlers] = mocks.create.mutate.mock.calls[0];
     expect(vars).toEqual({
@@ -176,7 +182,7 @@ describe("AgentEditor", () => {
   it("lists each problem the API reports, and marks the field it names", async () => {
     renderWithIntl(<AgentEditor />);
     await fillIn();
-    await userEvent.click(screen.getByRole("checkbox", { name: /Stripe: List invoices/ }));
+    await pickStripe();
     await save();
     const issues = [
       { kind: "studio", key: "", path: "tools[0]", message: "An agent may only read." },
@@ -334,6 +340,7 @@ describe("AgentEditor", () => {
     const twelve = Array.from({ length: 12 }, (_, i) => `app.tool_${i}`);
     editing({ ...AGENT, draft: { ...AGENT.draft, tools: twelve } });
     expect(screen.getByText(/Up to 12 tools\./)).toBeInTheDocument();
+    await openApp("Stripe");
     const stripe = screen.getByRole("checkbox", { name: /Stripe: List invoices/ });
     await userEvent.click(stripe);
     expect(stripe).toHaveAttribute("aria-checked", "false");
@@ -347,7 +354,7 @@ describe("AgentEditor", () => {
       data: undefined,
     };
     renderWithIntl(<AgentEditor agentKey="org-zz--secret" />);
-    expect(screen.getByText("This agent is not one of yours.")).toBeInTheDocument();
+    expect(screen.getByText(/^There is no agent of yours at this address/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Back to agents" })).toHaveAttribute("href", "/studio/agents");
     expect(screen.queryByLabelText("Name")).toBeNull();
   });
@@ -358,7 +365,9 @@ describe("AgentEditor", () => {
     expect(screen.getByLabelText("Name")).toHaveValue("Invoice helper");
     expect(screen.getByLabelText("Name")).toBeDisabled();
     expect(screen.getByRole("button", { name: "Fast model" })).toBeDisabled();
-    // The checkbox is a span, outside the fieldset's reach: a click must change nothing.
+    // A member can still open an app to see its tools. The checkbox is a span, outside the fieldset's reach: a
+    // click must change nothing.
+    await openApp("Stripe");
     const box = screen.getByRole("checkbox", { name: /Stripe: List invoices/ });
     await userEvent.click(box);
     expect(box).toHaveAttribute("aria-checked", "true");
@@ -396,6 +405,48 @@ describe("AgentEditor", () => {
     );
     expect(screen.getAllByRole("link", { name: "New agent" })).toHaveLength(2);
     expect(screen.getByText("No agents yet.")).toBeInTheDocument();
+  });
+
+  it("does not save the agent when Enter is pressed in the tool search", async () => {
+    editing();
+    const search = screen.getByLabelText("Search tools");
+    await userEvent.type(search, "invoices{Enter}");
+    expect(mocks.save.mutate).not.toHaveBeenCalled();
+    // Each app's toggle names the list it expands.
+    const stripe = screen.getByRole("button", { name: /^Stripe / });
+    const controls = stripe.getAttribute("aria-controls");
+    expect(controls).toBeTruthy();
+    expect(document.getElementById(controls!)).toContainElement(
+      screen.getByRole("checkbox", { name: /Stripe: List invoices/ }),
+    );
+  });
+
+  it("folds the tools by app, finds one by search, and summarises what is chosen", async () => {
+    editing();
+    // What is chosen comes first, each with its own remove button; the apps stay folded until opened.
+    expect(screen.getByRole("list", { name: "Chosen tools" })).toHaveTextContent("Stripe: List invoices");
+    expect(screen.getByText("1 of 12 chosen")).toBeInTheDocument();
+    expect(screen.queryByRole("checkbox", { name: /Stripe: List invoices/ })).toBeNull();
+    const stripe = screen.getByRole("button", { name: /^Stripe / });
+    expect(stripe).toHaveAttribute("aria-expanded", "false");
+    expect(stripe).toHaveTextContent("1 tool · 1 chosen");
+    await userEvent.click(stripe);
+    expect(screen.getByRole("checkbox", { name: /Stripe: List invoices/ })).toHaveAttribute("aria-checked", "true");
+    await userEvent.click(stripe);
+    expect(screen.queryByRole("checkbox", { name: /Stripe: List invoices/ })).toBeNull();
+    // A search opens every app it matches and leaves out the rest.
+    const search = screen.getByLabelText("Search tools");
+    await userEvent.type(search, "invoices");
+    expect(screen.getByRole("checkbox", { name: /Stripe: List invoices/ })).toBeInTheDocument();
+    await userEvent.clear(search);
+    await userEvent.type(search, "nothing here");
+    expect(screen.getByText("No tools match “nothing here”.")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Stripe / })).toBeNull();
+    // Removing a tool from the summary unticks it.
+    await userEvent.click(screen.getByRole("button", { name: "Remove Stripe: List invoices" }));
+    expect(screen.getByText("0 of 12 chosen")).toBeInTheDocument();
+    expect(screen.getByText(/No tools chosen yet/)).toBeInTheDocument();
+    expect(screen.getByText("Unsaved changes")).toBeInTheDocument();
   });
 
   it("speaks Japanese", () => {

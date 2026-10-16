@@ -4,32 +4,21 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { QueryState } from "@/components/query-state";
-import { useCodes } from "@/components/run-codes";
+import { useRunLede } from "@/components/run-lede";
 import { Skeleton } from "@/components/skeleton";
 import { PageHeader, Pill, RunStatusPill, SimTag } from "@/components/ui";
 import { ApiError } from "@/lib/api/errors";
 import { usePackName } from "@/lib/queries/catalog";
 import { useRun } from "@/lib/queries/runs";
-import type { Run } from "@/lib/types";
 import { NamedRunView } from "./named-run-view";
-
-/** The summary the API gives a run until it ends; the header says what the run is doing instead. */
-const PLACEHOLDER = "Starting.";
-const LEDE_STATES = ["WAITING_FOR_HUMAN", "WAITING_FOR_EVENT", "RUNNING", "VERIFYING"] as const;
 
 export function RunPage({ id }: { id: string }) {
   // The same label the run list gives a sandbox test, so the run reads the same wherever it is seen.
   const t = useTranslations("run.list");
-  const { line } = useCodes();
+  const lede = useRunLede();
   const run = useRun(id);
   const packName = usePackName(run.data?.packSlug);
   if (run.error instanceof ApiError && run.error.status === 404) notFound();
-  const lede = (r: Run): string => {
-    if (r.summary !== PLACEHOLDER) return line(r.summary);
-    const state = LEDE_STATES.find((s) => s === r.status);
-    const started = r.nodes.some((n) => n.status !== "CREATED");
-    return state && (state !== "RUNNING" || started) ? t(`lede.${state}`) : t("lede.starting");
-  };
   return (
     <QueryState query={run} skeleton={<RunSkeleton />}>
       {(r) => (
