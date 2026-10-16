@@ -12,6 +12,7 @@ from app import settings
 from app.defs import owners
 from app.defs.model import Bundle, DefError, Definition, path_for
 from app.defs.owners import SEPARATOR
+from app.runtime import mcp
 
 SCHEMA_FILES = {
     "taxonomy": "nm.taxonomy.v1",
@@ -47,7 +48,8 @@ NODE_REFS = {
 LISTING_CHECK = "listing-check"  # the reserved name of a submission's check pack (see studio.CHECK_NAME)
 
 # kinds with a same-named cross-reference method on _Checker
-CROSS_REF_KINDS = {"pack", "workflow", "contract", "agent", "decision_rules"}
+CROSS_REF_KINDS = {"pack", "workflow", "contract", "agent", "decision_rules", "connector"}
+MCP_DRIVER = "mcp"  # the connector `driver` whose tools carry an `mcp` mapping (runtime.drivers.McpDriver)
 
 _CEL_ENV = celpy.Environment()
 
@@ -270,6 +272,39 @@ class _Checker:
             )
         if not given and not missing:
             self.err(d, f"{at}.config.inputs: agent {agent_key!r} gets no inputs, so this step must map some")
+
+    def connector(self, d: Definition) -> None:
+        """A `driver: mcp` connector maps every tool to one MCP call (`mcp`): a read names the key its
+        documents come back under and a query (a pipeline or a filter), a write the update and the filter it
+        applies to. Every `{{placeholder}}` in the mapping names an argument of the tool's input schema (or
+        `now`, the call time). A connector on any other driver carries no mapping."""
+        is_mcp = d.body.get("driver") == MCP_DRIVER
+        for i, tool in enumerate(d.body["tools"]):
+            at = f"tools[{i}] ({tool['id']}).mcp"
+            spec = tool.get("mcp")
+            if not is_mcp:
+                if spec is not None:
+                    self.err(d, f"{at}: only a `driver: {MCP_DRIVER}` connector maps tools to MCP calls")
+                continue
+            if spec is None:
+                self.err(d, f"{at}: a `driver: {MCP_DRIVER}` connector's tool must map to an MCP call")
+                continue
+            if tool["action_class"] == "read":
+                if "result_key" not in spec:
+                    self.err(d, f"{at}.result_key: a read names the key its documents come back under")
+                if "pipeline" not in spec and "filter" not in spec:
+                    self.err(d, f"{at}: a read needs a pipeline or a filter")
+                if "update" in spec:
+                    self.err(d, f"{at}.update: a read cannot update")
+            else:
+                for field in ("update", "filter"):
+                    if field not in spec:
+                        self.err(d, f"{at}.{field}: a write needs an update and the filter it applies to")
+                if "result_key" in spec or "pipeline" in spec:
+                    self.err(d, f"{at}: a write has no result_key or pipeline")
+            allowed = set((tool.get("input_schema") or {}).get("properties") or {}) | {mcp.NOW}
+            for name in sorted(mcp.placeholders(spec) - allowed):
+                self.err(d, f"{at}: placeholder {{{{{name}}}}} is not an argument of the tool")
 
     def contract(self, d: Definition) -> None:
         for field in ("input_schema_ref", "output_schema_ref"):

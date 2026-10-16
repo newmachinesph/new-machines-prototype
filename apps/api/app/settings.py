@@ -147,6 +147,25 @@ def composio_api_key() -> str | None:
     return os.environ.get("COMPOSIO_API_KEY") or None
 
 
+def mcp_url() -> str | None:
+    """The MCP server a `driver: mcp` connector calls in the live and auto connector modes (the MongoDB MCP
+    server's streamable-HTTP endpoint). Never log it: it can carry a host only the deployment should know."""
+    return os.environ.get("NM_MCP_URL") or None
+
+
+def mcp_token() -> str | None:
+    """Sent as a bearer token on every MCP request. Never log or return it in a response."""
+    return os.environ.get("NM_MCP_TOKEN") or None
+
+
+MCP_DATABASE = "nm_demo"
+
+
+def mcp_database() -> str:
+    """The database the MCP server's tools read and write (its connection string names the server)."""
+    return os.environ.get("NM_MCP_DATABASE") or MCP_DATABASE
+
+
 def defs_auto_apply() -> bool:
     return os.environ.get("NM_DEFS_AUTO_APPLY", "").lower() in {"1", "true", "yes", "on"}
 

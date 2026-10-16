@@ -44,7 +44,7 @@ nodes:
       args:
         since: =timestamp(input.since + "T00:00:00Z") - duration("1440h")
         until: =input.until + "T23:59:59Z"
-        limit: 500
+        limit: 2000
     routes: {next: payments, denied: failed, error: failed}
 
   - id: payments

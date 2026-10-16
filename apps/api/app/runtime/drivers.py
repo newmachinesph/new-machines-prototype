@@ -1,4 +1,4 @@
-"""Connector drivers: sandbox responses from definitions, or live calls through Composio."""
+"""Connector drivers: sandbox responses from definitions, or live calls through Composio or an MCP server."""
 
 import json
 import logging
@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from app import settings
+from app.runtime import mcp
 
 log = logging.getLogger(__name__)
 
@@ -138,6 +139,65 @@ class ComposioDriver:
         return ToolResult(ok=True, data=response.get("data"), mocked=False)
 
 
+MCP = "mcp"  # the connector `driver` whose tools run on an MCP server (`mcp` mapping per tool)
+
+
+class McpDriver:
+    """Runs a `driver: mcp` connector tool on the MCP server NM_MCP_URL names (the MongoDB MCP server over
+    streamable HTTP): the tool's `mcp` mapping has its `{{argument}}` placeholders filled from the call, the
+    MCP tool it names is called, and a read answers `{result_key: documents}` while a write answers its
+    `result` template once the update matched. All mapping lives in the connector definition."""
+
+    def __init__(
+        self,
+        url: str | None = None,
+        token: str | None = None,
+        database: str | None = None,
+        client: mcp.McpClient | None = None,
+    ) -> None:
+        self._client = client or mcp.McpClient(url or settings.mcp_url(), token=token or settings.mcp_token())
+        self._database = database or settings.mcp_database()
+
+    @property
+    def database(self) -> str:
+        return self._database
+
+    def is_available(self) -> bool:
+        """Whether the server answers `tools/list` now (the `auto` mode's check)."""
+        try:
+            return bool(self._client.list_tools())
+        except Exception as exc:  # unreachable, refused, not an MCP endpoint: the caller falls back
+            log.warning("mcp server check failed: %s", type(exc).__name__)
+            return False
+
+    def execute(self, connector: str, tool: dict, args: dict) -> ToolResult:
+        spec = tool.get("mcp")
+        if not isinstance(spec, dict):
+            error = f"ConfigError: tool {connector}.{tool.get('id')} has no mcp mapping"
+            return ToolResult(ok=False, data=None, mocked=False, error=error)
+        if not self._client.configured:
+            return ToolResult(ok=False, data=None, mocked=False, error="ConfigError: NM_MCP_URL is not set")
+        values = mcp.call_values(tool, args)
+        try:
+            arguments = mcp.arguments(spec, values, self._database)
+        except mcp.PlaceholderError as exc:
+            return ToolResult(ok=False, data=None, mocked=False, error=f"ConfigError: {exc}")
+        try:
+            response = self._client.call_tool(str(spec["tool"]), arguments)
+        except Exception as exc:  # transport, auth or protocol errors; their messages can carry the URL
+            log.warning("mcp %s.%s failed: %s", connector, tool.get("id"), type(exc).__name__)
+            error = f"{type(exc).__name__}: the {connector} call failed"
+            return ToolResult(ok=False, data=None, mocked=False, error=error)
+        if getattr(response, "isError", False):
+            error = f"ToolError: {safe_message(mcp.text_of(response))}"
+            return ToolResult(ok=False, data=None, mocked=False, error=error)
+        try:
+            data = mcp.shape(spec, response, values)
+        except (mcp.ResultError, mcp.PlaceholderError) as exc:
+            return ToolResult(ok=False, data=None, mocked=False, error=f"ToolError: {safe_message(exc)}")
+        return ToolResult(ok=True, data=data, mocked=False)
+
+
 NOT_CONNECTED = "NotConnected"  # error type: a live-workspace app with no usable connection
 ROUTE_CHANGED = "RouteChanged"  # error type: the app's route is not the one pinned when the run started
 
@@ -169,15 +229,20 @@ def is_route_changed(result: ToolResult | None) -> bool:
     return result is not None and not result.ok and str(result.error or "").startswith(f"{ROUTE_CHANGED}:")
 
 
-def driver_for(connector_def: dict, mode: str, pack: str | None = None) -> SandboxDriver | ComposioDriver:
+def driver_for(
+    connector_def: dict, mode: str, pack: str | None = None
+) -> SandboxDriver | ComposioDriver | McpDriver:
     """`connector_def` is the connector body. mode: sandbox | live | auto (live if connected). `pack` is the
-    run's pack key, for its own sandbox data."""
+    run's pack key, for its own sandbox data. A `driver: mcp` connector runs on the MCP server instead of
+    Composio (`auto`: when NM_MCP_URL is set and the server answers)."""
     if mode == "sandbox":
         return SandboxDriver(pack=pack)
+    if mode not in ("live", "auto"):
+        raise ValueError(f"unknown connector mode {mode!r}")
+    if connector_def.get("driver") == MCP:
+        return _mcp_driver_for(connector_def, mode, pack)
     if mode == "live":
         return ComposioDriver()
-    if mode != "auto":
-        raise ValueError(f"unknown connector mode {mode!r}")
     live = ComposioDriver()
     try:
         if live.is_connected(connector_def["toolkit"]):
@@ -186,4 +251,15 @@ def driver_for(connector_def: dict, mode: str, pack: str | None = None) -> Sandb
         log.warning(
             "composio connection check failed for %s: %s", connector_def.get("toolkit"), type(exc).__name__
         )
+    return SandboxDriver(pack=pack)
+
+
+def _mcp_driver_for(connector_def: dict, mode: str, pack: str | None) -> SandboxDriver | McpDriver:
+    if mode == "live":
+        return McpDriver()
+    if settings.mcp_url():
+        live = McpDriver()
+        if live.is_available():
+            return live
+        log.warning("mcp server unavailable for %s: using sandbox data", connector_def.get("toolkit"))
     return SandboxDriver(pack=pack)

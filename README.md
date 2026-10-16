@@ -80,6 +80,9 @@ Environment variables (all optional, read at call time by `apps/api/app/settings
 | `NM_WORKFLOW_ID_PREFIX` | empty (prepended to every run workflow id; give each database sharing one dev Temporal server its own, e.g. `qa-c-`) |
 | `NM_MODEL_ENV` | `test` (`test`, `dev`, `prod`) |
 | `NM_CONNECTOR_MODE` | `sandbox` (`auto`, `sandbox`, `live`); demo workspace only |
+| `NM_MCP_URL` | unset (the MongoDB MCP server's streamable-HTTP endpoint, e.g. `http://127.0.0.1:8085/mcp`; `driver: mcp` connectors call it in the `live` and `auto` connector modes) |
+| `NM_MCP_TOKEN` | unset (sent to the MCP server as a bearer token) |
+| `NM_MCP_DATABASE` | `nm_demo` (the database the MCP server's tools read and write) |
 | `NM_WEB_ORIGIN` | first `ALLOWED_ORIGINS` entry, else `http://localhost:3100` (where app sign-in links return) |
 | `COMPOSIO_API_KEY` | unset (live workspace: real app connections; demo: the `live`/`auto` connector modes) |
 | `JEV_API_KEY` | unset (the decision model's key; never commit it) |
@@ -148,6 +151,28 @@ workflow Temporal no longer has is ended `FAILED`.
 `apps/api/tests/test_replay.py` replays a recorded `PackRunner` history against the current workflow code;
 re-record it (`NM_RECORD_HISTORY=1 uv run pytest tests/test_replay.py`) only for a change meant to break
 replay, after in-flight runs have finished.
+
+### Run the Exception Desk against the demo database
+
+The Order-to-Cash Exception Desk's connector (`custom-business-app`) is `driver: mcp`: besides its sandbox
+files it carries, per tool, the MongoDB aggregation or update the official
+[MongoDB MCP server](https://www.npmjs.com/package/mongodb-mcp-server) runs against the demo database
+`nm_demo` (loaded by `scripts/demo_data`). Start the server over streamable HTTP, then point the worker at it:
+
+```bash
+npx -y mongodb-mcp-server@3.1.0 --transport http --httpHost 127.0.0.1 --httpPort 8085 \
+  --maxDocumentsPerQuery 2000 --connectionString mongodb://127.0.0.1:27017/nm_demo
+NM_CONNECTOR_MODE=auto NM_MCP_URL=http://127.0.0.1:8085/mcp uv run ... python -m app.worker
+```
+
+In `auto` mode a `driver: mcp` connector reads the database when `NM_MCP_URL` is set and the server answers
+`tools/list`, and its sandbox file otherwise; `live` always calls the server (a run fails rather than falling
+back) and `sandbox` never does. Other connectors keep their Composio behaviour. The server's default
+`--maxDocumentsPerQuery` (100) cuts a window of orders short, and the driver reports such a read as a failed
+call rather than returning part of it, so raise the limit as above. Add `--readOnly` to refuse the two note
+writes (`add_ledger_note`, `add_warehouse_note`), which then fail at their approval. The
+gated `tests/test_mcp_driver_live.py` runs every read and a note write against the server when `NM_MCP_URL`
+is set.
 
 ## Build the API image
 

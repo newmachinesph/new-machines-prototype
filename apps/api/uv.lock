@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.14"
 
 [[package]]
@@ -923,6 +923,7 @@ dependencies = [
     { name = "fastapi" },
     { name = "google-auth" },
     { name = "jsonschema" },
+    { name = "mcp" },
     { name = "psycopg", extra = ["binary", "pool"] },
     { name = "psycopg-pool" },
     { name = "pyyaml" },
@@ -947,6 +948,7 @@ requires-dist = [
     { name = "fastapi", specifier = "==0.141.1" },
     { name = "google-auth", specifier = "==2.61.0" },
     { name = "jsonschema", specifier = "==4.26.0" },
+    { name = "mcp", specifier = "==1.30.0" },
     { name = "psycopg", extras = ["binary", "pool"], specifier = "==3.3.6" },
     { name = "psycopg-pool", specifier = "==3.3.3" },
     { name = "pyyaml", specifier = "==6.0.3" },

@@ -1,10 +1,13 @@
 # The business's custom app: its store orders and payments, the ledger (sales orders, customers, payments posted),
 # the warehouse (served orders) and the sales app (each seller's sales). One order keeps the same id in every
-# section. Runs on sandbox data until a live connection exists; the slugs are placeholders.
+# section. Runs on sandbox data, or on the demo database through the MongoDB MCP server (`driver: mcp`): each
+# read's `mcp` block is the aggregation that turns the app's raw documents into the tool's response contract (the
+# same shape as its sandbox file), and each write pushes a note onto the order. The slugs are placeholders.
 kind: connector
 key: custom-business-app
 app: Custom Business App
 toolkit: custom_business_app
+driver: mcp
 
 tools:
   - id: list_store_orders
@@ -30,8 +33,42 @@ tools:
         limit:
           type: integer
           minimum: 1
-          maximum: 500
-          description: Most orders to return.
+          maximum: 2000
+          default: 2000
+          description: Most orders to return, newest first.
+    mcp:
+      tool: aggregate
+      collection: ecommerce_sales_orders
+      result_key: orders
+      pipeline:
+        - $match:
+            $expr:
+              $and:
+                - $gte: [{$ifNull: ["$orderDate", "$createdBy.date"]}, {$dateFromString: {dateString: "{{since}}"}}]
+                - $lte: [{$ifNull: ["$orderDate", "$createdBy.date"]}, {$dateFromString: {dateString: "{{until}}"}}]
+        - $sort: {orderDate: -1, _id: 1}
+        - $limit: "{{limit}}"
+        - $project:
+            _id: 0
+            id: "$_id"
+            reference: {$ifNull: ["$salesOrderReference", "$_id"]}
+            customer_id: {$ifNull: ["$customerId", null]}
+            customer_name: {$ifNull: ["$customerName", null]}
+            order_date:
+              $dateToString:
+                date: {$ifNull: ["$orderDate", "$createdBy.date"]}
+                format: "%Y-%m-%dT%H:%M:%SZ"
+                onNull: null
+            status: {$ifNull: ["$status", null]}
+            paid: {$ifNull: [{$toBool: "$paid"}, false]}
+            scanned_out: {$ifNull: [{$toBool: "$scannedOut"}, false]}
+            out_for_delivery_at:
+              $dateToString: {date: "$outForDeliveryAt", format: "%Y-%m-%dT%H:%M:%SZ", onNull: null}
+            delivered_at: {$dateToString: {date: "$deliveredAt", format: "%Y-%m-%dT%H:%M:%SZ", onNull: null}}
+            grand_total: {$ifNull: ["$grandTotal", null]}
+            currency: PHP
+            seller_email: {$ifNull: ["$userSellerEmail", null]}
+            payment_method: {$ifNull: ["$paymentMethod", null]}
 
   - id: list_store_payments
     slug: CUSTOM_BUSINESS_APP_LIST_STORE_PAYMENTS
@@ -53,6 +90,29 @@ tools:
           type: string
           pattern: ^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$
           description: Only payments created at or before this time, in UTC (ISO 8601).
+    mcp:
+      tool: aggregate
+      collection: ecommerce_payments
+      result_key: payments
+      pipeline:
+        - $match:
+            $expr:
+              $and:
+                - $gte: ["$createdAt", {$dateFromString: {dateString: "{{since}}"}}]
+                - $lte: ["$createdAt", {$dateFromString: {dateString: "{{until}}"}}]
+        - $sort: {createdAt: 1, _id: 1}
+        - $project:
+            _id: 0
+            id: "$_id"
+            order_id: {$ifNull: ["$salesOrderId", null]}
+            customer_id: {$ifNull: ["$customerId", null]}
+            amount: {$ifNull: ["$amount", null]}
+            currency: PHP
+            mode_of_payment: {$ifNull: ["$modeOfPayment", null]}
+            status: {$ifNull: ["$status", null]}
+            payment_date: {$dateToString: {date: "$paymentDate", format: "%Y-%m-%dT%H:%M:%SZ", onNull: null}}
+            created_at: {$dateToString: {date: "$createdAt", format: "%Y-%m-%dT%H:%M:%SZ", onNull: null}}
+            reference: {$ifNull: ["$transactionReferenceNumber", null]}
 
   - id: list_sales_orders
     slug: CUSTOM_BUSINESS_APP_LIST_SALES_ORDERS
@@ -75,6 +135,36 @@ tools:
           type: string
           pattern: ^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$
           description: Only sales orders invoiced at or before this time, in UTC (ISO 8601).
+    mcp:
+      tool: aggregate
+      collection: accounting_sales_orders
+      result_key: sales_orders
+      pipeline:
+        - $match:
+            $expr:
+              $and:
+                - $gte: ["$invoiceDate", {$dateFromString: {dateString: "{{since}}"}}]
+                - $lte: ["$invoiceDate", {$dateFromString: {dateString: "{{until}}"}}]
+        - $sort: {invoiceDate: 1, _id: 1}
+        - $project:
+            _id: 0
+            id: "$_id"
+            invoice_number: {$ifNull: ["$invoiceNumber", null]}
+            invoice_date: {$dateToString: {date: "$invoiceDate", format: "%Y-%m-%dT%H:%M:%SZ", onNull: null}}
+            customer_id: {$ifNull: ["$customer._id", null]}
+            customer_name: {$ifNull: ["$customer.name", null]}
+            payment_terms_days: {$ifNull: ["$customer.paymentTerms", null]}
+            account_manager: {$ifNull: ["$customer.accountManager.name", null]}
+            account_manager_email: {$ifNull: ["$customer.accountManager.email", null]}
+            grand_total: {$ifNull: ["$grandTotal", null]}
+            total_payment_received: {$ifNull: ["$totalPaymentReceived", null]}
+            balance: {$ifNull: ["$balance", null]}
+            currency: PHP
+            paid: {$ifNull: [{$toBool: "$paid"}, false]}
+            delivered: {$ifNull: [{$toBool: "$delivered"}, false]}
+            delivery_date: {$dateToString: {date: "$deliveryDate", format: "%Y-%m-%dT%H:%M:%SZ", onNull: null}}
+            is_from_ecommerce: {$ifNull: [{$toBool: "$isFromEcommerce"}, false]}
+            created_at: {$dateToString: {date: "$createdBy.date", format: "%Y-%m-%dT%H:%M:%SZ", onNull: null}}
 
   - id: list_customers
     slug: CUSTOM_BUSINESS_APP_LIST_CUSTOMERS
@@ -87,6 +177,38 @@ tools:
       type: object
       additionalProperties: false
       properties: {}
+    mcp:
+      tool: aggregate
+      collection: accounting_customers
+      result_key: customers
+      pipeline:
+        - $sort: {_id: 1}
+        - $project:
+            _id: 0
+            id: "$_id"
+            name: {$ifNull: ["$name", null]}
+            email: {$ifNull: ["$contactDetails.email", null]}
+            phone: {$ifNull: ["$contactDetails.phone", null]}
+            payment_terms_days: {$ifNull: ["$paymentTerms", null]}
+            balance_current: {$ifNull: ["$accountBalance.current", null]}
+            balance_overdue: {$ifNull: ["$accountBalance.overdue", null]}
+            account_manager: {$ifNull: ["$accountManager.name", null]}
+            account_manager_email: {$ifNull: ["$accountManager.email", null]}
+            # The text of each note (`content`, else `text`, else the note itself when it is a string), blanks
+            # dropped.
+            notes:
+              $filter:
+                input:
+                  $map:
+                    input: {$ifNull: ["$notesList", []]}
+                    as: n
+                    in:
+                      $cond:
+                        - {$eq: [{$type: "$$n"}, object]}
+                        - $convert: {input: {$ifNull: ["$$n.content", "$$n.text", ""]}, to: string, onError: "", onNull: ""}
+                        - $convert: {input: "$$n", to: string, onError: "", onNull: ""}
+                as: t
+                cond: {$ne: ["$$t", ""]}
 
   - id: list_customer_payments
     slug: CUSTOM_BUSINESS_APP_LIST_CUSTOMER_PAYMENTS
@@ -106,6 +228,30 @@ tools:
           type: string
           pattern: ^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$
           description: Only payments posted at or before this time, in UTC (ISO 8601).
+    mcp:
+      tool: aggregate
+      collection: accounting_customer_payments
+      result_key: payments
+      pipeline:
+        - $match:
+            $expr:
+              $and:
+                - $gte: ["$createdBy.date", {$dateFromString: {dateString: "{{since}}"}}]
+                - $lte: ["$createdBy.date", {$dateFromString: {dateString: "{{until}}"}}]
+        - $sort: {createdBy.date: 1, _id: 1}
+        - $project:
+            _id: 0
+            id: "$_id"
+            order_id: {$ifNull: ["$orderReferenceOfPayment", null]}
+            customer_id: {$ifNull: ["$customer._id", null]}
+            amount: {$ifNull: ["$amount", null]}
+            currency: PHP
+            method:
+              $cond:
+                - {$eq: [{$type: "$paymentMethod"}, object]}
+                - {$ifNull: ["$paymentMethod.method", null]}
+                - {$ifNull: ["$paymentMethod", null]}
+            date: {$dateToString: {date: "$createdBy.date", format: "%Y-%m-%dT%H:%M:%SZ", onNull: null}}
 
   - id: list_served_orders
     slug: CUSTOM_BUSINESS_APP_LIST_SERVED_ORDERS
@@ -127,6 +273,55 @@ tools:
           type: string
           pattern: ^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$
           description: Only orders served at or before this time, in UTC (ISO 8601).
+    mcp:
+      tool: aggregate
+      collection: warehouse_served_orders
+      result_key: served_orders
+      pipeline:
+        - $match:
+            $expr:
+              $and:
+                - $gte: ["$createdDate", {$dateFromString: {dateString: "{{since}}"}}]
+                - $lte: ["$createdDate", {$dateFromString: {dateString: "{{until}}"}}]
+        - $sort: {createdDate: 1, _id: 1}
+        # The deliveries recorded on the order, and those marked delivered.
+        - $addFields:
+            deliveries:
+              $filter: {input: {$ifNull: ["$deliveryList", []]}, as: d, cond: {$eq: [{$type: "$$d"}, object]}}
+        - $addFields:
+            done:
+              $filter: {input: "$deliveries", as: d, cond: {$ifNull: [{$toBool: "$$d.delivered"}, false]}}
+        - $project:
+            _id: 0
+            id: "$_id"
+            customer_name: {$ifNull: ["$customerName", null]}
+            created_at: {$dateToString: {date: "$createdDate", format: "%Y-%m-%dT%H:%M:%SZ", onNull: null}}
+            released: {$ifNull: [{$toBool: "$released"}, false]}
+            release_date: {$dateToString: {date: "$releaseDate", format: "%Y-%m-%dT%H:%M:%SZ", onNull: null}}
+            # Delivered when the order carries a delivery date or any delivery is marked delivered; delivered
+            # at the order's delivery date, else the latest delivered delivery's.
+            delivered: {$or: [{$ifNull: [{$toBool: "$deliveryDate"}, false]}, {$gt: [{$size: "$done"}, 0]}]}
+            delivered_at:
+              $dateToString:
+                date: {$ifNull: ["$deliveryDate", {$max: "$done.deliveryDate"}]}
+                format: "%Y-%m-%dT%H:%M:%SZ"
+                onNull: null
+            delivery_count: {$size: "$deliveries"}
+            # The text of each note (`content`, else `text`, else the note itself when it is a string), blanks
+            # dropped.
+            notes:
+              $filter:
+                input:
+                  $map:
+                    input: {$ifNull: ["$notesList", []]}
+                    as: n
+                    in:
+                      $cond:
+                        - {$eq: [{$type: "$$n"}, object]}
+                        - $convert: {input: {$ifNull: ["$$n.content", "$$n.text", ""]}, to: string, onError: "", onNull: ""}
+                        - $convert: {input: "$$n", to: string, onError: "", onNull: ""}
+                as: t
+                cond: {$ne: ["$$t", ""]}
 
   - id: list_sales
     slug: CUSTOM_BUSINESS_APP_LIST_SALES
@@ -148,6 +343,30 @@ tools:
           type: string
           pattern: ^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$
           description: Only sales made at or before this time, in UTC (ISO 8601).
+    mcp:
+      tool: aggregate
+      collection: salesapp_sales
+      result_key: sales
+      pipeline:
+        - $match:
+            $expr:
+              $and:
+                - $gte: ["$date", {$dateFromString: {dateString: "{{since}}"}}]
+                - $lte: ["$date", {$dateFromString: {dateString: "{{until}}"}}]
+        - $sort: {date: 1, _id: 1}
+        - $project:
+            _id: 0
+            id: "$_id"
+            seller_name: {$ifNull: ["$userSeller.name", null]}
+            seller_email: {$ifNull: ["$userSeller.email", null]}
+            customer_id: {$ifNull: ["$customer._id", null]}
+            customer_name: {$ifNull: ["$customer.name", null]}
+            date: {$dateToString: {date: "$date", format: "%Y-%m-%dT%H:%M:%SZ", onNull: null}}
+            total: {$ifNull: ["$totalSale", null]}
+            currency: PHP
+            paid: {$ifNull: [{$toBool: "$paid"}, false]}
+            delivered: {$ifNull: [{$toBool: "$delivered"}, false]}
+            closed: {$ifNull: [{$toBool: "$closed"}, false]}
 
   - id: add_ledger_note
     slug: CUSTOM_BUSINESS_APP_ADD_LEDGER_NOTE
@@ -168,6 +387,14 @@ tools:
           minLength: 1
           maxLength: 1000
           description: The note, in plain text.
+    mcp:
+      tool: update-many
+      collection: accounting_sales_orders
+      filter: {_id: "{{order_id}}"}
+      update:
+        $push:
+          notesList: {content: "{{note}}", createdDate: {$date: "{{now}}"}, userName: Exception Desk}
+      result: {ok: true, order_id: "{{order_id}}"}
 
   - id: add_warehouse_note
     slug: CUSTOM_BUSINESS_APP_ADD_WAREHOUSE_NOTE
@@ -188,5 +415,13 @@ tools:
           minLength: 1
           maxLength: 1000
           description: The note, in plain text.
+    mcp:
+      tool: update-many
+      collection: warehouse_served_orders
+      filter: {_id: "{{order_id}}"}
+      update:
+        $push:
+          notesList: {content: "{{note}}", createdDate: {$date: "{{now}}"}, userName: Exception Desk}
+      result: {ok: true, order_id: "{{order_id}}"}
 
 defaults: {read: permit, write: require_approval, delete: deny, money: deny}
