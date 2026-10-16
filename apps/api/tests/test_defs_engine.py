@@ -112,6 +112,45 @@ def test_agent_tool_not_in_any_connector(bundle):
     only_error(bad, mentions="shop.missing", kind="agent")
 
 
+def _team_agent_needing_thread(bundle: Bundle, *, maps: dict | None) -> Bundle:
+    """The fixture pack running an org-built copy of helper-agent whose input schema requires thread_id."""
+    key = "org-abc--helper"
+    agent = bundle.get("agent", "helper-agent")
+    body = {**copy.deepcopy(agent.body), "agent_id": key, "input_schema_ref": "demo-pack/input"}
+    schema = bundle.get("schema", "demo-pack/input")
+    items = dict(bundle.items)
+    items[("agent", key)] = replace(agent, key=key, body=body, path=path_for("agent", key))
+    items[("schema", "demo-pack/input")] = replace(
+        schema,
+        body={**schema.body, "required": ["thread_id"], "properties": {"thread_id": {"type": "string"}}},
+    )
+    wf = bundle.get("workflow", "demo-pack")
+    nodes = copy.deepcopy(wf.body["nodes"])
+    nodes[1]["config"]["agent"] = key
+    if maps is not None:
+        nodes[1]["config"]["inputs"] = maps
+    items[("workflow", "demo-pack")] = replace(wf, body={**wf.body, "nodes": nodes})
+    return Bundle(items=items)
+
+
+def test_agent_step_must_map_the_agents_required_inputs(bundle):
+    errors = validate_bundle(_team_agent_needing_thread(bundle, maps=None))
+    messages = [e.message for e in errors if e.kind == "workflow"]
+    assert len(messages) == 1 and "nodes[1] (analyse)" in messages[0] and "thread_id" in messages[0]
+
+
+def test_agent_step_that_maps_every_required_input_is_valid(bundle):
+    assert validate_bundle(_team_agent_needing_thread(bundle, maps={"thread_id": "=x"})) == []
+
+
+def test_the_exempt_listing_check_name_is_the_studios_check_pack_name():
+    """validate cannot import studio (studio imports validate), so the two copies must agree."""
+    from app import studio
+    from app.defs import validate
+
+    assert validate.LISTING_CHECK == studio.CHECK_NAME
+
+
 def test_cel_syntax_error_in_decision_rule(bundle):
     bad = mutated(
         bundle, "decision_rules", "triage", lambda b, f: b["rules"][0].update(when="facts.total_minor <")

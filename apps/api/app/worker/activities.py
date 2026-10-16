@@ -18,7 +18,7 @@ from psycopg.types.json import Jsonb
 from temporalio import activity
 from temporalio.exceptions import ApplicationError
 
-from app import db, settings
+from app import db, fees, settings
 from app.runtime import agent, cel, decisions, drivers, gateway, memory, projection, providers, receipt
 from app.runtime.drivers import ToolResult, safe_message
 from app.runtime.providers import ModelProvider, ToolSpec
@@ -29,7 +29,11 @@ MODELS_KEY = "default"
 MAX_REPORTED_ERRORS = 5
 MAX_ERROR_CHARS = 300
 MAX_FOR_EACH_ITEMS = 50  # a connector node's for_each makes at most this many calls
-SAFE_ERROR_TYPES = {"ConfigError", "CelError", "InputInvalid", "OutputInvalid"}  # messages written here
+# Error types that stop the run whatever the node's error route says: a step whose publisher fee would go
+# over the monthly cap or the run's budget (`fees.agent_fee_writer`).
+STOP_ERROR_TYPES = {fees.SPEND_CAP, fees.BUDGET_EXCEEDED}
+# Messages written here
+SAFE_ERROR_TYPES = {"ConfigError", "CelError", "InputInvalid", "OutputInvalid", *STOP_ERROR_TYPES}
 _OUTCOMES = {"human": {"resolved", "rejected", "timeout"}, "approval": {"granted", "denied", "timeout"}}
 REVIEW_VERDICTS = {"HUMAN_REVIEW", "ESCALATED", "REVISION_REQUIRED"}
 _FAILED_STATUS = {"rejected": "REJECTED", "denied": "REJECTED", "timeout": "TIMED_OUT"}
@@ -232,6 +236,15 @@ def _fatal(kind: str, message: str) -> ApplicationError:
     """A non-retryable failure; its message goes into the receipt, so it gets the same sanitizer as tool
     errors (no URLs, one line, bounded)."""
     return ApplicationError(safe_message(message, MAX_ERROR_CHARS), type=kind, non_retryable=True)
+
+
+def run_budget_minor(snapshot: dict) -> int:
+    """The run's budget in minor units, for its AI spend and agent fees: the budget asked for at start, capped
+    by the contract maximum. 0 means no limit (neither is set)."""
+    maximum = int((gateway.contract_of(snapshot).get("budget") or {}).get("maximum_minor") or 0)
+    requested = int(snapshot.get("budget_minor") or 0)
+    limits = [b for b in (maximum, requested) if b > 0]
+    return min(limits) if limits else 0
 
 
 def policy_verdict(decision_verdict: str) -> str:
@@ -776,11 +789,17 @@ def pay_minor(payload: dict) -> int:
 
 
 def _shown_decision(conn, call: TaskDecision) -> dict:
-    """What the run's timeline shows of a settled decision. An approval: who decided, as recorded. A review:
-    who made it as the buyer may see them (a network reviewer stays anonymous, a member shows by name or
-    email), its verdict, and the network reviewer's simulated pay, which the run counts as reviewer pay."""
+    """What the run's timeline shows of a settled decision. An approval: who decided, by name or email when
+    they are a member of the run's org, else as recorded. A review: who made it as the buyer may see them (a
+    network reviewer stays anonymous, a member shows by name or email), its verdict, and the network
+    reviewer's simulated pay, which the run counts as reviewer pay."""
     if call.kind != "human":
-        return {"decided_by": call.by}
+        member = conn.execute(
+            "SELECT m.name, m.email FROM runs r JOIN org_members m ON m.org_id = r.org_id AND m.user_id = %s "
+            "WHERE r.id = %s",
+            (call.by, call.run_id),
+        ).fetchone()
+        return {"decided_by": (member and (member["name"] or member["email"])) or call.by}
     row = conn.execute(
         "SELECT t.payload, t.result, m.name, m.email FROM run_tasks t JOIN runs r ON r.id = t.run_id "
         "LEFT JOIN org_members m ON m.org_id = r.org_id AND m.user_id = %s WHERE t.id = %s",
@@ -915,8 +934,18 @@ class PackActivities:
                 "adapter": runtime.get("adapter", "hosted"),
                 "agent_id": body["agent_id"],
             }
-        _commit(call, [("node.started", {})])
-        return spec
+        # A listed agent of another workspace owes its per-call fee: one line per step attempt, written with
+        # node.started so a retry adds nothing (sub-project D). A fee that would go over the monthly cap or
+        # the run's budget is refused before the step starts: nothing is written and the run stops.
+        key = event_key(call.node_id, call.attempt, "fee", call.step)
+        budget = run_budget_minor(call.snapshot)
+        fee = fees.agent_fee_writer(call.snapshot, call.run_id, cfg["agent"], key, budget)
+        try:
+            _commit(call, [("node.started", {})], fee)
+        except fees.OverCap as exc:
+            raise _fatal(exc.code, exc.message) from None
+        charged = fees.agent_fee(call.snapshot, cfg["agent"])
+        return {**spec, "fee_minor": int(charged["unit_minor"]) if charged else 0}
 
     @activity.defn
     def model_call(self, call: ModelCall) -> dict:

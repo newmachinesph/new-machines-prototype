@@ -41,7 +41,11 @@ describe("AgentList", () => {
   beforeEach(() => {
     state.result = ok([
       agent({ id: "finance-agent", name: "Finance Agent", capabilities: ["finance.reconcile"], usedBy: [recon] }),
-      agent({ id: "retail-agent", name: "Retail Agent", capabilities: ["retail.orders", "team.assist"] }),
+      agent({
+        id: "retail-agent",
+        name: "Retail Agent",
+        capabilities: ["retail.orders", "team.assist", "team.triage"],
+      }),
       agent({
         id: "agent_finance",
         name: "Invoice Agent",
@@ -60,13 +64,25 @@ describe("AgentList", () => {
     expect(within(finance).getByText("Finance Agent summary")).toBeInTheDocument();
   });
 
+  it("shows a Studio-built agent's definition version, not the 1.0.<n> the Studio writes", () => {
+    state.result = ok([
+      agent({ id: "org-5c81-helper", name: "Helper", publisher: "Acme Labs", version: "1.0.1", builtByTeam: true }),
+    ]);
+    renderWithIntl(<AgentList />);
+    expect(within(card("Helper")).getByText("Acme Labs, version 1")).toBeInTheDocument();
+    expect(screen.queryByText(/1\.0\.1/)).toBeNull();
+  });
+
   it("shows capabilities as plain labels, never as ids", () => {
     renderWithIntl(<AgentList />);
     expect(within(card("Finance Agent")).getByText("Payment reconciliation")).toBeInTheDocument();
     expect(screen.queryByText("finance.reconcile")).toBeNull();
+    // A Studio-built agent's capability reads naturally, not as its id cut into words.
+    expect(within(card("Retail Agent")).getByText("Helps your team")).toBeInTheDocument();
+    expect(screen.queryByText("Team assist")).toBeNull();
     // An id with no published label still reads as words.
-    expect(within(card("Retail Agent")).getByText("Team assist")).toBeInTheDocument();
-    expect(screen.queryByText("team.assist")).toBeNull();
+    expect(within(card("Retail Agent")).getByText("Team triage")).toBeInTheDocument();
+    expect(screen.queryByText("team.triage")).toBeNull();
   });
 
   it("names and links the packs that use each agent", () => {
@@ -136,8 +152,9 @@ describe("AgentList", () => {
     expect(screen.getByText(/1件のパックで使用：/)).toBeInTheDocument();
     expect(screen.getByText("入金の照合")).toBeInTheDocument();
     // An id with no label stays the id, not half-English words; the pack list has no stray space after the colon.
-    expect(screen.getByText("team.assist")).toBeInTheDocument();
-    expect(screen.queryByText("Team assist")).toBeNull();
+    expect(screen.getByText("team.triage")).toBeInTheDocument();
+    expect(screen.queryByText("Team triage")).toBeNull();
+    expect(screen.getByText("チームの業務を支援")).toBeInTheDocument();
     expect(card("Finance Agent").textContent).toMatch(/1件のパックで使用：Order & Payment Reconciliation/);
   });
 
@@ -161,5 +178,28 @@ describe("AgentList team agents", () => {
     renderWithIntl(<AgentList />);
     expect(within(card("Invoice helper")).getByText("Built by your team")).toBeInTheDocument();
     expect(within(card("Writer Agent")).queryByText("Built by your team")).toBeNull();
+  });
+
+  it("names a listed agent's publisher once, with its fee", () => {
+    state.result = ok([
+      agent({
+        id: "tax-agent",
+        name: "Tax Agent",
+        publisher: "Harbor Cafe",
+        version: "2",
+        listing: {
+          listingId: "lst_1",
+          publisher: "Harbor Cafe",
+          fee: { amountMinor: 30, currency: "USD" },
+          feeUnit: "call",
+          version: 2,
+        },
+      }),
+    ]);
+    renderWithIntl(<AgentList />);
+    const tax = card("Tax Agent");
+    expect(within(tax).getByText("Version 2")).toBeInTheDocument();
+    expect(within(tax).getByText(/By Harbor Cafe/)).toHaveTextContent("By Harbor Cafe · $0.30 per call");
+    expect(within(tax).getAllByText(/Harbor Cafe/)).toHaveLength(1);
   });
 });

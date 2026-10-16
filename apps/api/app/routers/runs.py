@@ -4,7 +4,7 @@ from fastapi import Header
 
 from app import db, live_work, ops_state, real_runs, settings, workspace
 from app.auth import Actor, CurrentActor
-from app.errors import ApiProblem, Problem
+from app.errors import ApiProblem, Problem, conflicts
 from app.idempotency import once
 from app.models.catalog import Pack
 from app.models.common import Money
@@ -159,7 +159,18 @@ def get_workflow_run_receipt(run_id: str, actor: CurrentActor) -> Receipt:
     operation_id="startWorkflowRun",
     response_model=Run,
     status_code=202,
-    responses={503: {"model": Problem, "description": UNAVAILABLE}},
+    responses={
+        **conflicts(
+            "PLATFORM_PAUSED",
+            "PACK_NOT_HIRED",
+            "APPS_NOT_CONNECTED",
+            "RUN_BUDGET_OVER_CAP",
+            "SPEND_CAP",
+            "PACK_UNAVAILABLE",
+            "CONFLICT",
+        ),
+        503: {"model": Problem, "description": UNAVAILABLE},
+    },
 )
 def start_workflow_run(
     body: StartRunRequest,

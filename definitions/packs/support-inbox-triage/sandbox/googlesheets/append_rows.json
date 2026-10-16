@@ -1,0 +1,11 @@
+{
+  "spreadsheetId": "sandbox-support-cases-sheet-0000001",
+  "tableRange": "Cases!A1:F20",
+  "updates": {
+    "spreadsheetId": "sandbox-support-cases-sheet-0000001",
+    "updatedRange": "Cases!A21:F24",
+    "updatedRows": 4,
+    "updatedColumns": 6,
+    "updatedCells": 24
+  }
+}

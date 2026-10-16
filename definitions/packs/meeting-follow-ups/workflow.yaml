@@ -1,0 +1,130 @@
+# The meeting follow-ups graph. Values starting with "=" are CEL over the run state
+# (input, nodes.<id>.output; `item` inside a for_each). Routes name the next node for each outcome.
+kind: workflow
+key: meeting-follow-ups
+schema_version: nm.workflow.v1
+workflow_id: meeting-follow-ups
+version: "1"
+entry_node_id: start
+default_policy_ref: policy/default
+work_contract_ref: meeting-follow-ups
+limits:
+  max_duration_s: 172800
+  max_cost_minor: 1000
+  currency: USD
+  max_parallel_nodes: 1
+  max_total_node_attempts: 30
+
+nodes:
+  - id: start
+    type: trigger
+    version: "1"
+    config: {}
+    routes: {next: events}
+
+  - id: events
+    type: connector
+    version: "1"
+    config:
+      tool: googlecalendar.list_events
+      args:
+        calendarId: primary
+        timeMin: =input.day + "T00:00:00Z"
+        timeMax: =input.day + "T23:59:59Z"
+        singleEvents: true
+        orderBy: startTime
+        maxResults: 50
+    routes: {next: plan, denied: failed, error: failed}
+
+  - id: plan
+    type: agent
+    version: "1"
+    config:
+      agent: meeting-agent
+      task: >-
+        Decide which of the day's meetings need a follow-up and plan one short follow-up message per guest
+        from outside the user's team, using only what the calendar says. Submit the result in the required
+        shape.
+      inputs:
+        events: =nodes.events.output
+        day: =input.day
+      output_schema: meeting-follow-ups/plan
+    routes: {next: check}
+
+  - id: check
+    type: decision
+    version: "1"
+    config:
+      rules: meeting-follow-ups
+    routes: {nothing: nothing, planned: draft}
+
+  - id: draft
+    type: agent
+    version: "1"
+    config:
+      agent: writer-agent
+      task: >-
+        Write one short, friendly follow-up email per item, using only its facts. Submit the result in the
+        required shape.
+      inputs:
+        items: =nodes.plan.output.messages
+        review: null
+        tone: friendly and brief
+        sign_off: =input.signature
+      output_schema: shared/drafts
+    routes: {next: approve}
+
+  - id: approve
+    type: approval
+    version: "1"
+    config:
+      title: Save the follow-ups as Gmail drafts
+      summary: >-
+        =size(nodes.draft.output.drafts) == 1 ? 'Create 1 follow-up draft in Gmail' : 'Create ' +
+        string(size(nodes.draft.output.drafts)) + ' follow-up drafts in Gmail'
+      timeout_s: 86400
+    routes: {granted: save, denied: failed, timeout: failed}
+
+  - id: save
+    type: connector
+    version: "1"
+    config:
+      tool: gmail.create_draft
+      for_each: =nodes.draft.output.drafts
+      args:
+        recipient_email: =item.to
+        subject: =item.subject
+        body: =item.body
+    routes: {ok: verify, denied: failed, error: failed}
+
+  - id: verify
+    type: verification
+    version: "1"
+    config:
+      schema: shared/drafts
+      value: =nodes.draft.output
+      checks:
+        - =size(nodes.draft.output.drafts) >= 1
+        - =size(nodes.save.output.results) == size(nodes.draft.output.drafts)
+        - =size(nodes.draft.output.drafts) == size(nodes.plan.output.messages)
+    routes: {pass: done, fail: failed}
+
+  - id: nothing
+    type: end
+    version: "1"
+    config:
+      status: COMPLETED
+      deliverable: =nodes.plan.output
+
+  - id: done
+    type: end
+    version: "1"
+    config:
+      status: COMPLETED
+      deliverable: =nodes.draft.output
+
+  - id: failed
+    type: end
+    version: "1"
+    config:
+      status: FAILED

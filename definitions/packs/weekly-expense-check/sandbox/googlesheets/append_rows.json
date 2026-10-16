@@ -1,0 +1,11 @@
+{
+  "spreadsheetId": "sandbox-expenses-sheet-0000000000001",
+  "tableRange": "Summary!A1:D6",
+  "updates": {
+    "spreadsheetId": "sandbox-expenses-sheet-0000000000001",
+    "updatedRange": "Summary!A7:D11",
+    "updatedRows": 5,
+    "updatedColumns": 4,
+    "updatedCells": 20
+  }
+}

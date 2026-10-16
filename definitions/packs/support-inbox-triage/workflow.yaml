@@ -1,0 +1,186 @@
+# The support inbox triage graph. Values starting with "=" are CEL over the run state
+# (input, nodes.<id>.output, memory; `item` inside a for_each). Routes name the next node for each outcome.
+kind: workflow
+key: support-inbox-triage
+schema_version: nm.workflow.v1
+workflow_id: support-inbox-triage
+version: "1"
+entry_node_id: start
+default_policy_ref: policy/default
+work_contract_ref: support-inbox-triage
+limits:
+  max_duration_s: 172800
+  max_cost_minor: 2500
+  currency: USD
+  max_parallel_nodes: 1
+  max_total_node_attempts: 40
+
+nodes:
+  - id: start
+    type: trigger
+    version: "1"
+    config: {}
+    routes: {next: recall}
+
+  - id: recall
+    type: memory
+    version: "1"
+    config:
+      op: recall
+      space: support-policies
+      query: reply question complaint refund hours
+    routes: {next: inbox}
+
+  # At most 20 emails: the decision model is asked about 20 items per step at most.
+  - id: inbox
+    type: connector
+    version: "1"
+    config:
+      tool: gmail.list_threads
+      args:
+        query: "=has(input.query) ? input.query : 'in:inbox newer_than:3d'"
+        max_results: 20
+    routes: {next: screen, denied: failed, error: failed}
+
+  - id: screen
+    type: decision
+    version: "1"
+    config:
+      rules: support-screen
+    routes: {nothing: nothing, sorted: triage, unsorted: triage}
+
+  - id: triage
+    type: agent
+    version: "1"
+    config:
+      agent: support-agent
+      task: >-
+        Make one case per customer email, plan one reply per case from the support policies in rules, and
+        say which cases need a person. Do not send anything. Submit the result in the required shape.
+      inputs:
+        emails: >-
+          =nodes.screen.output.evaluator.status == 'answered' ? nodes.inbox.output.messages.filter(m,
+          m.messageId in nodes.screen.output.kept) : nodes.inbox.output.messages
+        categories: =nodes.screen.output.items
+        screened: =nodes.screen.output.evaluator.status == 'answered'
+        rules: =memory
+      output_schema: support-inbox-triage/triage
+    routes: {next: check}
+
+  - id: check
+    type: decision
+    version: "1"
+    config:
+      rules: support-cases
+    routes: {nothing: nothing, human_review: review, planned: draft}
+
+  - id: review
+    type: human_workforce
+    version: "1"
+    config:
+      title: Check the complaints and refund requests
+      instructions: >-
+        For each case, read the customer's email and check the planned reply against the support policies.
+        When the decision model was not available, every case is shown: check its category too. Add a note
+        where the reply should change. Resolve the task when every case is checked, or reject it if the
+        emails cannot be trusted.
+      # Without the decision model, every case, in the shared review-item shape the reviewer's record reads
+      # (ref, date, amount, flag, note); with it, the agent's review items.
+      show: >-
+        =nodes.screen.output.evaluator.status == 'answered' ? nodes.triage.output.review_items :
+        nodes.triage.output.cases.map(c, {'ref': c.thread_id, 'date': c.received, 'amount_minor': 0,
+        'currency': 'USD', 'flag': c.category == 'refund' ? 'Refund request' : (c.category == 'complaint' ?
+        'Complaint' : 'Question'), 'note': 'Sorted without the decision model; check the category and the
+        planned reply.'})
+      timeout_s: 86400
+    routes: {resolved: draft, rejected: failed, timeout: failed}
+
+  - id: draft
+    type: agent
+    version: "1"
+    config:
+      agent: writer-agent
+      task: >-
+        Write one short, polite reply draft per item, using only its facts. Follow the reviewer notes when
+        there are any. Submit the result in the required shape.
+      inputs:
+        items: =nodes.triage.output.messages
+        review: "=has(nodes.review) ? nodes.review.output : null"
+        tone: warm and clear
+        sign_off: Support team
+      output_schema: shared/drafts
+    routes: {next: approve_drafts}
+
+  - id: approve_drafts
+    type: approval
+    version: "1"
+    config:
+      title: Save the replies as Gmail drafts
+      summary: "=size(nodes.draft.output.drafts) == 1 ? 'Create 1 reply draft in Gmail' : 'Create ' + string(size(nodes.draft.output.drafts)) + ' reply drafts in Gmail'"
+      timeout_s: 86400
+    routes: {granted: save, denied: failed, timeout: failed}
+
+  - id: save
+    type: connector
+    version: "1"
+    config:
+      tool: gmail.create_draft
+      for_each: =nodes.draft.output.drafts
+      args:
+        recipient_email: =item.to
+        subject: =item.subject
+        body: =item.body
+    routes: {ok: approve_log, denied: failed, error: failed}
+
+  - id: approve_log
+    type: approval
+    version: "1"
+    config:
+      title: Log the cases in your sheet
+      summary: "=size(nodes.triage.output.rows) == 1 ? 'Add 1 row to the Cases tab' : 'Add ' + string(size(nodes.triage.output.rows)) + ' rows to the Cases tab'"
+      timeout_s: 86400
+    routes: {granted: log, denied: failed, timeout: failed}
+
+  - id: log
+    type: connector
+    version: "1"
+    config:
+      tool: googlesheets.append_rows
+      args:
+        spreadsheetId: =input.spreadsheet_id
+        range: Cases!A:F
+        valueInputOption: RAW
+        values: =nodes.triage.output.rows
+    routes: {ok: verify, denied: failed, error: failed}
+
+  - id: verify
+    type: verification
+    version: "1"
+    config:
+      schema: shared/drafts
+      value: =nodes.draft.output
+      checks:
+        - =size(nodes.draft.output.drafts) == size(nodes.triage.output.messages)
+        - =size(nodes.save.output.results) == size(nodes.draft.output.drafts)
+        - =size(nodes.triage.output.rows) == size(nodes.triage.output.cases)
+    routes: {pass: done, fail: failed}
+
+  - id: nothing
+    type: end
+    version: "1"
+    config:
+      status: COMPLETED
+      deliverable: "={'summary': 'No customer email needed an answer.'}"
+
+  - id: done
+    type: end
+    version: "1"
+    config:
+      status: COMPLETED
+      deliverable: =nodes.draft.output
+
+  - id: failed
+    type: end
+    version: "1"
+    config:
+      status: FAILED

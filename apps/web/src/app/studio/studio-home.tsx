@@ -4,9 +4,12 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { QueryState } from "@/components/query-state";
 import { Skeleton } from "@/components/skeleton";
+import { isSettled, useAutoTour } from "@/components/tour/use-auto-tour";
 import { ButtonLink, Callout, EmptyState, Section } from "@/components/ui";
 import type { StudioAgentSummary, StudioPackSummary } from "@/lib/api/gen/types.gen";
+import { useStudioEarnings, useStudioListings } from "@/lib/queries/publishing";
 import { useStudioAgents, useStudioPacks } from "@/lib/queries/studio";
+import { useFormat } from "@/lib/use-format";
 import { useCanBuild } from "./can-build";
 
 const RECENT = 3;
@@ -29,15 +32,22 @@ export function StudioHome() {
   const packs = useStudioPacks();
   const canBuild = useCanBuild();
   const next = canBuild ? nextStep(agents.data, packs.data) : null;
+  // The same queries whose skeletons the page shows, so the Studio tour never opens over one.
+  const listings = useStudioListings();
+  useAutoTour("studio", [agents, packs, listings].every(isSettled));
   return (
     <div className="space-y-6">
-      <Callout tone="info" title={t("privateTitle")} announce={false}>
-        {t("privateBody")}
-      </Callout>
+      <div data-tour="studio-intro">
+        <Callout tone="info" title={t("privateTitle")} announce={false}>
+          {t("privateBody")}
+        </Callout>
+      </div>
       {canBuild ? null : <p className="text-sm text-muted">{t("buildersOnly")}</p>}
       {next ? <p className="text-sm">{t(next)}</p> : null}
-      <div className="grid gap-4 md:grid-cols-2">
+      {/* grid-cols-1 is minmax(0, 1fr): the column stays within the page, so a long name truncates in it. */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Section
+          data-tour="studio-agents"
           title={t("agentsTitle")}
           aside={
             canBuild ? (
@@ -68,6 +78,7 @@ export function StudioHome() {
           </QueryState>
         </Section>
         <Section
+          data-tour="studio-packs"
           title={t("packsTitle")}
           aside={
             canBuild ? (
@@ -98,7 +109,40 @@ export function StudioHome() {
           </QueryState>
         </Section>
       </div>
+      {canBuild ? <PublisherCard /> : null}
     </div>
+  );
+}
+
+/** Where listed agents and packs are tracked: how many are listed and what they earned this month. */
+function PublisherCard() {
+  const t = useTranslations("studioPublisher");
+  const { money } = useFormat();
+  const listings = useStudioListings();
+  const earnings = useStudioEarnings();
+  return (
+    <Section title={t("card")} data-tour="studio-publisher">
+      <QueryState query={listings} skeleton={<Skeleton className="m-5 h-10" />} inline>
+        {(list) =>
+          // One render once the earnings have settled too, so the text does not change after it appears.
+          earnings.isPending ? (
+            <Skeleton className="m-5 h-10" />
+          ) : (
+            <Link
+              href="/studio/publisher"
+              className="flex min-h-11 items-center justify-between gap-3 px-5 py-3 text-sm hover:bg-grey-50/70"
+            >
+              <span>
+                {earnings.data
+                  ? t("cardBody", { n: list.length, amount: money(earnings.data.month) })
+                  : t("cardCount", { n: list.length })}
+              </span>
+              <span className="font-medium">{t("title")}</span>
+            </Link>
+          )
+        }
+      </QueryState>
+    </Section>
   );
 }
 

@@ -2,7 +2,8 @@ import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { renderWithIntl } from "@/test/intl";
-import { AppShell } from "./shell";
+import { AppShell, type ShellMode } from "./shell";
+import { TourContext } from "./tour/tour-context";
 
 const ok = <T,>(data: T) => ({ isPending: false, isError: false, data });
 type MeState = { isPending: boolean; isError: boolean; data?: Record<string, string> };
@@ -19,6 +20,7 @@ const data = vi.hoisted(() => ({
   plan: "Trial",
   path: "/app",
   studio: { agent: undefined as string | undefined, pack: undefined as string | undefined },
+  packs: [] as { slug: string; installed: boolean }[],
 }));
 
 // The workspace menu's language items refresh the router after a choice; the menu must open without one.
@@ -26,8 +28,20 @@ vi.mock("next/navigation", () => ({ usePathname: () => data.path, useRouter: () 
 vi.mock("@/lib/auth/session", () => ({ useSession: () => ({ signOut: vi.fn() }) }));
 // The palette itself is tested on its own; here it only reports the pages AppShell hands it.
 vi.mock("./command-palette", () => ({
-  CommandPalette: ({ pages }: { pages: { href: string }[] }) => (
-    <div data-testid="palette-pages" data-hrefs={pages.map((p) => p.href).join(" ")} />
+  CommandPalette: ({
+    pages,
+    actions = [],
+  }: {
+    pages: { href: string }[];
+    actions?: { id: string; label: string; run: (opener: Element | null) => void }[];
+  }) => (
+    <div data-testid="palette-pages" data-hrefs={pages.map((p) => p.href).join(" ")}>
+      {actions.map((a) => (
+        <button key={a.id} type="button" data-testid={`palette-action-${a.id}`} onClick={() => a.run(null)}>
+          {a.label}
+        </button>
+      ))}
+    </div>
   ),
 }));
 vi.mock("./base", async (importOriginal) => ({
@@ -41,7 +55,7 @@ vi.mock("@/lib/queries/me", () => ({
 }));
 vi.mock("@/lib/queries/org", () => ({ useOrg: () => ok({ plan: data.plan }) }));
 vi.mock("@/lib/queries/catalog", () => ({
-  usePacks: () => ok([]),
+  usePacks: () => ok(data.packs),
   usePackName: () => undefined,
   useAgentName: () => undefined,
 }));
@@ -52,6 +66,9 @@ vi.mock("@/lib/queries/studio", () => ({
   useStudioPack: (key?: string) => ({
     data: key && data.studio.pack ? { draft: { name: data.studio.pack } } : undefined,
   }),
+}));
+vi.mock("@/lib/queries/publishing", () => ({
+  useStudioListing: (id?: string) => ({ data: id ? { name: "Refund check" } : undefined }),
 }));
 vi.mock("@/lib/queries/tasks", () => ({ useEligibleTasks: () => ok([]) }));
 vi.mock("@/lib/queries/workspace", () => ({ useApprovals: () => ok([]), useMemory: () => ok([]) }));
@@ -68,6 +85,7 @@ describe("AppShell", () => {
     data.plan = "Trial";
     data.path = "/app";
     data.studio = { agent: undefined, pack: undefined };
+    data.packs = [];
   });
 
   it("names the signed-in user's own workspace, plan and role", () => {
@@ -131,6 +149,26 @@ describe("AppShell", () => {
     renderWithIntl(<AppShell>page</AppShell>);
     expect(crumbs()).toHaveTextContent("Runsrun_2012");
     expect(crumbs()).not.toHaveClass("page-crumb"); // a trail stays beside the page's heading
+  });
+
+  it("calls an added pack's install page its settings, not Add, in a live workspace", () => {
+    const trail = () =>
+      within(screen.getByRole("navigation", { name: "Breadcrumb" }))
+        .getAllByRole("listitem")
+        .map((li) => li.textContent);
+    data.path = "/app/marketplace/recon/install";
+    data.packs = [{ slug: "recon", installed: false }];
+    const { unmount } = renderWithIntl(<AppShell>page</AppShell>);
+    expect(trail().at(-1)).toBe("Add");
+    unmount();
+    data.packs = [{ slug: "recon", installed: true }];
+    const live = renderWithIntl(<AppShell>page</AppShell>);
+    expect(trail().at(-1)).toBe("Settings");
+    live.unmount();
+    // The demo keeps the add flow for an added pack, so its crumb stays.
+    data.me = ok({ ...LIVE_ME, workspace: "demo" });
+    renderWithIntl(<AppShell>page</AppShell>);
+    expect(trail().at(-1)).toBe("Add");
   });
 
   it("keeps the demo workspace's name and label", () => {
@@ -225,6 +263,15 @@ describe("AppShell", () => {
     expect(screen.getAllByRole("link", { name: "Business workspace" })[0]).toHaveAttribute("href", "/app");
     expect(screen.queryByRole("link", { name: "Approvals" })).toBeNull();
     const hrefs = (screen.getByTestId("palette-pages").dataset.hrefs ?? "").split(" ");
+    expect(hrefs).toEqual(["/studio", "/studio/agents", "/studio/packs", "/studio/publisher"]);
+    expect(screen.getAllByRole("link", { name: "Publisher" })[0]).toHaveAttribute("href", "/studio/publisher");
+  });
+
+  it("lists Publisher in the Studio for owners and admins only", () => {
+    data.me = ok({ ...LIVE_ME, role: "member" });
+    renderWithIntl(<AppShell mode="studio">page</AppShell>);
+    expect(screen.queryByRole("link", { name: "Publisher" })).toBeNull();
+    const hrefs = (screen.getByTestId("palette-pages").dataset.hrefs ?? "").split(" ");
     expect(hrefs).toEqual(["/studio", "/studio/agents", "/studio/packs"]);
   });
 
@@ -254,6 +301,16 @@ describe("AppShell", () => {
         .getAllByRole("listitem")
         .map((li) => li.textContent),
     ).toEqual(["Workflow Packs", "Invoice checks"]);
+  });
+
+  it("reads a Publisher listing by its name, not its id", () => {
+    data.path = "/studio/publisher/lst_123";
+    renderWithIntl(<AppShell mode="studio">page</AppShell>);
+    expect(
+      within(screen.getByRole("navigation", { name: "Breadcrumb" }))
+        .getAllByRole("listitem")
+        .map((li) => li.textContent),
+    ).toEqual(["Publisher", "Refund check"]);
   });
 
   it("names the reviewer portal's pages in the top bar, which the page's own heading does not hide", () => {
@@ -288,5 +345,60 @@ describe("AppShell", () => {
     await userEvent.click(screen.getAllByRole("button", { name: "Ana's workspace, switch workspace" })[0]);
     expect(await screen.findByRole("menuitem", { name: /Reviewer portal/ })).toBeInTheDocument();
     expect(screen.queryByRole("menuitem", { name: /Developer Studio/ })).toBeNull();
+  });
+
+  describe("the tour", () => {
+    const replay = vi.fn();
+    const withTour = (mode: ShellMode = "business") =>
+      renderWithIntl(
+        <TourContext value={{ start: () => false, replay, pending: null, clearPending: vi.fn(), visible: false }}>
+          <AppShell mode={mode}>page</AppShell>
+        </TourContext>,
+      );
+    beforeEach(() => replay.mockReset());
+
+    it("replays the welcome tour from the workspace menu, on its overview, back to the menu", async () => {
+      data.path = "/app/marketplace";
+      withTour();
+      const trigger = screen.getAllByRole("button", { name: "Ana's workspace, switch workspace" })[0];
+      await userEvent.click(trigger);
+      await userEvent.click(await screen.findByRole("menuitem", { name: "Take the tour" }));
+      expect(replay).toHaveBeenCalledWith("welcome", { href: "/app", opener: trigger });
+    });
+
+    it.each([["/app/runs/run_1042"], ["/app/runs/run_1042/evidence"]])(
+      "replays the run tour on the run page from %s",
+      async (path) => {
+        data.path = path;
+        withTour();
+        await userEvent.click(screen.getAllByRole("button", { name: "Ana's workspace, switch workspace" })[0]);
+        await userEvent.click(await screen.findByRole("menuitem", { name: "Take the tour" }));
+        expect(replay).toHaveBeenCalledWith("run", expect.objectContaining({ href: "/app/runs/run_1042" }));
+      },
+    );
+
+    it("replays the Studio tour in the Studio", async () => {
+      data.path = "/studio/packs";
+      withTour("studio");
+      await userEvent.click(screen.getAllByRole("button", { name: "Ana's workspace, switch workspace" })[0]);
+      await userEvent.click(await screen.findByRole("menuitem", { name: "Take the tour" }));
+      expect(replay).toHaveBeenCalledWith("studio", expect.objectContaining({ href: "/studio" }));
+    });
+
+    it("offers no tour in the reviewer portal", async () => {
+      data.path = "/work";
+      withTour("work");
+      expect(screen.queryByTestId("palette-action-tour")).not.toBeInTheDocument();
+      await userEvent.click(screen.getAllByRole("button", { name: /switch workspace/ })[0]);
+      await screen.findByRole("menuitem", { name: "Sign out" });
+      expect(screen.queryByRole("menuitem", { name: "Take the tour" })).not.toBeInTheDocument();
+    });
+
+    it("hands the palette a Take the tour action for the current area", async () => {
+      data.path = "/app";
+      withTour();
+      await userEvent.click(screen.getByTestId("palette-action-tour"));
+      expect(replay).toHaveBeenCalledWith("welcome", { href: "/app", opener: null });
+    });
   });
 });

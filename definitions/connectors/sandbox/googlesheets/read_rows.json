@@ -1,0 +1,14 @@
+{
+  "spreadsheetId": "sandbox-reconciliation-sheet-00000001",
+  "valueRanges": [
+    {
+      "range": "Sheet1!A1:C3",
+      "majorDimension": "ROWS",
+      "values": [
+        ["Date", "Description", "Amount"],
+        ["2026-10-05", "Sample row", "10.00"],
+        ["2026-10-06", "Another sample row", "12.50"]
+      ]
+    }
+  ]
+}

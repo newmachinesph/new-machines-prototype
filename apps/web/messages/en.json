@@ -10,6 +10,7 @@
     "cancel": "Cancel",
     "close": "Close",
     "retry": "Retry",
+    "couldNotLoad": "This could not load",
     "leaveUnsaved": "You have unsaved changes. Leave this page without saving them?",
     "goToOverview": "Go to overview",
     "simulated": "Simulated",
@@ -100,7 +101,8 @@
         "runs": "Runs",
         "needsYou": "Needs you",
         "packs": "Workflow Packs",
-        "tasks": "Reviewer tasks"
+        "tasks": "Reviewer tasks",
+        "actions": "Actions"
       }
     },
     "signedInAsUser": "Signed in as {who}",
@@ -119,6 +121,7 @@
     "studio": "Studio home",
     "studioAgents": "Agents",
     "studioPacks": "Workflow Packs",
+    "studioPublisher": "Publisher",
     "crumbNew": "New",
     "crumbTask": "Task",
     "developerStudio": "Developer Studio"
@@ -130,6 +133,7 @@
     "VERIFYING": "Verifying",
     "COMPLETED": "Completed",
     "FAILED": "Failed",
+    "DECLINED": "Declined",
     "CANCELLED": "Cancelled",
     "NEEDS_ATTENTION": "Needs attention"
   },
@@ -170,6 +174,7 @@
       "evaluatorTitle": "What the evaluator recommends",
       "rules": "Rules",
       "aiModel": "AI model",
+      "decisionModel": "Decision model",
       "chainVerdict": ": {verdict}",
       "verdict": {
         "APPROVED": "Approved",
@@ -252,13 +257,22 @@
       "filterStatus": "Filter by status",
       "filterPack": "Filter by pack",
       "allPacks": "All packs",
+      "listingCheck": "Listing check",
       "sandboxTest": "Sandbox test",
+      "lede": {
+        "WAITING_FOR_HUMAN": "Waiting for a reviewer to finish their step.",
+        "WAITING_FOR_EVENT": "Waiting for your approval before it continues.",
+        "RUNNING": "Running.",
+        "VERIFYING": "Checking the result.",
+        "starting": "Starting."
+      },
       "filters": {
         "all": "All",
         "needs": "Needs you",
         "active": "In progress",
         "done": "Completed",
-        "failed": "Failed"
+        "failed": "Failed",
+        "declined": "Declined"
       },
       "outcomeTooltip": "The stage the run is at, in order: executed, verified, accepted, settlement eligible. Stages this run does not need are left out.",
       "outcome": "Outcome",
@@ -285,8 +299,7 @@
       "revisionLoop": "Revision loop",
       "canvasHelp": "Select a step, or an event in the timeline, to see who did it, what it cost and the records behind it. Drag to see the rest of the workflow.",
       "timeline": "Timeline",
-      "pacificTime": "Times in Pacific time",
-      "localTime": "Times in your time zone ({zone})",
+      "pacificTime": "Times in Pacific time (PT)",
       "legendAgent": "AI agent",
       "legendApp": "App action",
       "jumpTo": "Jump to",
@@ -297,6 +310,7 @@
       "agentsAndModels": "Agents and models",
       "tools": "Tools",
       "reviewerPay": "Reviewer pay",
+      "publisherFees": "Publisher fees",
       "totalSoFar": "Total so far",
       "budget": "Budget",
       "upTo": "up to {amount}",
@@ -362,6 +376,7 @@
       "limitations": "Limitations",
       "billable": "Why this is billable",
       "agentsTools": "Agents and tools",
+      "publisherFees": "Publisher fees",
       "total": "Total",
       "basis": "Basis",
       "basisValue": "Verified by the independent check{accepted, select, done { and accepted by you.} pending {. Waiting for your acceptance.} failed {. Your acceptance was not given.} blocked {. Your acceptance was not given.} other {. This pack does not ask for your acceptance.}}",
@@ -396,6 +411,10 @@
     },
     "codes": {
       "aiModel": "the AI model",
+      "stopped": {
+        "spendCap": "Stopped: this month's spending cap was reached.",
+        "budgetExceeded": "Stopped: the run's budget was used up."
+      },
       "createdTask": "Created a review task",
       "pinnedVersions": "Locked the pack and policy versions for this run",
       "waitingApproval": "Waiting for approval",
@@ -404,7 +423,9 @@
         "reasoning": "Careful, step-by-step reasoning",
         "fast": "Quick, lighter reasoning",
         "read": "Reads only",
-        "write": "Can make changes"
+        "write": "Can make changes",
+        "rules": "Rules",
+        "decisionModel": "Decision model"
       },
       "map": {
         "ACTION_CLASS_PERMITTED": "Allowed: your policies permit this kind of action",
@@ -428,6 +449,18 @@
         "CASES_PROPOSED": "Cases proposed for a decision",
         "NOTHING_OVERDUE": "Nothing is overdue",
         "REMINDERS_PLANNED": "Reminders planned",
+        "DECISION_MODEL_UNAVAILABLE": "The decision model was not available",
+        "LEADS_FOUND": "Some emails look like real enquiries",
+        "NO_LEADS": "No email looked like a real enquiry",
+        "EMAILS_SORTED": "Emails sorted by type",
+        "NO_EMAILS": "No customer emails to answer",
+        "CASES_NEED_A_PERSON": "Some cases need a person",
+        "REPLIES_PLANNED": "Replies planned",
+        "NO_EXPENSES": "No expenses this week",
+        "ODD_ITEMS_FOUND": "Some expenses look unusual",
+        "ALL_ORDINARY": "Every expense looks ordinary",
+        "NO_MEETINGS": "No meetings need a follow-up",
+        "FOLLOW_UPS_PLANNED": "Follow-ups planned",
         "REFERENCE_MISMATCH": "A reference does not match",
         "AMOUNT_DELTA": "The amounts differ",
         "PAYOUT_NOT_FOUND": "No payout was found",
@@ -449,6 +482,10 @@
     "unreachable": "Can't reach New Machines. Check your connection and retry.",
     "generic": "Something went wrong.",
     "contract": "New Machines sent data this page did not expect. Reload to try again.",
+    "codes": {
+      "PUBLISHER_PROFILE_REQUIRED": "Turn on publishing in Settings before you submit.",
+      "SUBMISSION_OPEN": "A version of this is already waiting for review."
+    },
     "pageCouldNotLoad": "This page could not load",
     "notFound": {
       "title": "There is nothing at this address",
@@ -513,6 +550,7 @@
   "overview": {
     "budget": "Budget",
     "daysLeft": "{n, plural, one {# day} other {# days}} left in {month}",
+    "publisherFees": "Publisher fees",
     "billing": "Billing",
     "spent": "Spent this month",
     "cap": "Monthly cap",
@@ -593,6 +631,7 @@
     "card": {
       "approvedToast": "Approved and queued to send",
       "approvedToastBody": "One email to {to}. Simulated: nothing leaves the demo.",
+      "approvedToastBodyLive": "One email to {to}.",
       "approveFailed": "Could not approve",
       "declinedToast": "Declined",
       "declinedToastBody": "Nothing was sent. The run closes this invoice as skipped.",
@@ -741,7 +780,7 @@
   },
   "memory": {
     "title": "Memory",
-    "lede": "What your agents have learned about how your business works. Nothing becomes memory until a person approves it, and your systems of record always win over memory.",
+    "lede": "What your agents know about how your business works: the policies your workspace started with, and what an agent learns from a run once a person approves it. Your systems of record always win over memory.",
     "inUse": "In use",
     "count": "{n, plural, one {# memory} other {# memories}}",
     "none": "No memories in use. Agents rely only on your systems of record.",
@@ -815,7 +854,7 @@
       "allIndustries": "All industries",
       "buildOwn": "Need a pack that isn't here? Build your own in the Developer Studio.",
       "buildOwnCta": "Build a pack",
-      "priceNote": "Prices are estimates per run. You only pay reviewers when a run needs one.",
+      "priceNote": "Prices are estimates per run. You only pay reviewers when a run needs one. Publisher fees are simulated: no money moves.",
       "search": "Search packs",
       "searchPlaceholder": "Search packs by outcome, publisher or category",
       "noMatch": "No pack matches.",
@@ -825,6 +864,7 @@
       "team": "Built by your team",
       "reviewerWhenNeeded": "Reviewer when needed",
       "perRun": "{price} per run",
+      "perRunPlusFee": "{price} per run, plus the fee",
       "perRunUnset": "Price not set"
     },
     "price": {
@@ -918,6 +958,7 @@
       "capabilitiesNote": "Requesting a capability does not grant it. Each action is checked against your policies when it happens.",
       "capTitle": "Spending cap per run",
       "capNote": "A run stops and asks you before it would go past this amount, including reviewer pay.",
+      "capAboveUse": "Runs of this pack can use at most {amount}.",
       "reviewers": "Human reviewers",
       "pool": {
         "team": "Your team only",
@@ -939,6 +980,7 @@
       "perRunLabel": "Per run",
       "perRunValue": "{price} plus reviewer pay. A run stops and asks you above {cap}",
       "perRunUnset": "Agent price not set, plus reviewer pay. A run stops and asks you above {cap}",
+      "feeNote": "Added to every run, on top of the estimate, and counted toward the cap.",
       "region": "Data region",
       "agree": "I agree to the work contract and pay terms for this pack.",
       "readContract": "Read the contract",
@@ -985,7 +1027,8 @@
       "shipments_read": "Read shipments",
       "dispute_draft": "Draft dispute evidence",
       "catalog_read": "Read the catalog",
-      "catalog_draft": "Draft catalog text"
+      "catalog_draft": "Draft catalog text",
+      "team_assist": "Helps your team"
     },
     "detail": {
       "allAgents": "All agents",
@@ -1013,6 +1056,24 @@
       "notUsed": "No Workflow Pack uses this agent yet."
     }
   },
+  "listedMarket": {
+    "by": "By {publisher}",
+    "noFee": "No fee",
+    "perRun": "{amount} per run",
+    "perCall": "{amount} per call",
+    "viewPacks": "Packs",
+    "viewAgents": "Agents",
+    "viewsLabel": "Show packs or agents",
+    "version": "Version {version}",
+    "agentsEmpty": "No agents are listed by other publishers yet.",
+    "useInStudio": "Use it in the Studio",
+    "fee": "Fee",
+    "updateTitle": "Update available",
+    "updateBody": "Version {version} is available. Runs keep using version {installedVersion} until you update.",
+    "update": "Update",
+    "updateConfirm": "Update to version {version}?",
+    "updated": "Updated to version {version}."
+  },
   "runs": {
     "new": {
       "title": "Start a run",
@@ -1038,7 +1099,12 @@
       "changeCap": "Change the per-run cap",
       "noHiredPacks": "Add a pack before starting a run.",
       "noChoice": "None",
-      "perRunCap": "This pack's spending cap per run is {cap}."
+      "perRunCap": "This pack's spending cap per run is {cap}.",
+      "perRunCapWithFee": "This pack's spending cap per run is {cap}, including the publisher's fee of {fee} per run, which is charged on top of the budget.",
+      "maxBudget": "This pack allows a budget of at most {max} per run.",
+      "noRoom": "The publisher's fee of {fee} per run leaves less than {min} of this pack's {cap} cap per run for the run itself. Raise the cap to start a run.",
+      "budgetTooHigh": "This pack allows a budget of at most {max} per run. Choose a lower budget.",
+      "budgetRequired": "Choose a budget for this run."
     },
     "empty": "No runs yet. Start a run of one of your packs and follow its work here.",
     "startRun": "Start a run"
@@ -1071,7 +1137,7 @@
         "spend_cap": "Spend cap",
         "region": "Data region"
       },
-      "note": "A blocked action has no override button. To allow it, change the policy here, and the change is recorded."
+      "note": "A blocked action has no override button. Policies are shown here to read and cannot be changed from the workspace."
     },
     "workspace": {
       "title": "Workspace",
@@ -1103,7 +1169,7 @@
       },
       "roleHelp": {
         "Member": "Starts runs and approves actions their policy allows.",
-        "Admin": "Also changes policies, connections and billing."
+        "Admin": "Also invites people and manages connections and billing."
       },
       "send": "Send invite",
       "sentToast": "Invite sent",
@@ -1155,6 +1221,36 @@
       "done": "Done",
       "copyByHand": "The token is selected. Copy it with Ctrl+C or ⌘C."
     }
+  },
+  "publisherFees": {
+    "title": "Publisher fees",
+    "by": "{name} by {publisher}",
+    "perRun": "Per run",
+    "calls": "{quantity, plural, one {# call} other {# calls}} × {unit}",
+    "total": "Total publisher fees",
+    "simulated": "Simulated: no money moves",
+    "show": "Show fee details",
+    "hide": "Hide fee details"
+  },
+  "publisherSettings": {
+    "title": "Publish to the marketplace",
+    "intro": "List your agents and packs in other workspaces' marketplaces. New Machines reviews each version before it is listed.",
+    "turnOn": "Turn on publishing",
+    "turnOff": "Turn off publishing",
+    "turnOffConfirm": "Turn off publishing?",
+    "turnOffBody": "Turning publishing off stops new submissions. Listed items stay listed until New Machines unlists them.",
+    "edit": "Edit",
+    "save": "Save",
+    "cancel": "Cancel",
+    "name": "Publisher name",
+    "nameHint": "Shown on your listings. 1 to 80 characters.",
+    "description": "Description",
+    "payout": "Payout details",
+    "payoutHint": "Simulated: no money moves",
+    "simulated": "Simulated",
+    "savedOn": "Publishing is on.",
+    "savedOff": "Publishing is off.",
+    "nameRequired": "Enter a publisher name."
   },
   "reviewers": {
     "title": "Reviewers",
@@ -1232,6 +1328,7 @@
     "heldNoteMany": "Held for {n} runs in progress. Each is released when its run finishes.",
     "heldNone": "Nothing is held right now.",
     "agentsToolsNoteNoPlan": "Metered per run step. Reviewer pay is counted separately.",
+    "publisherFeesLine": "Publisher fees, counted separately: {fees}",
     "reviewerPayAbsorbed": "{absorbed} of it was absorbed by New Machines.",
     "planValueFree": "{plan}, no plan fee (simulated)",
     "paymentValueLive": "None. Billing is simulated, so no card is charged.",
@@ -1450,6 +1547,17 @@
       },
       "notePlaceholder": "Correction for this record (optional)",
       "noteLabel": "Correction for {id}"
+    },
+    "item": {
+      "label": "Item {index}, {id}",
+      "heading": "Item {index} of {total}",
+      "reference": "Reference",
+      "date": "Date",
+      "amount": "Amount",
+      "related": "Related reference",
+      "noted": "The agent's note:",
+      "notePlaceholder": "Note for this item (optional)",
+      "noteLabel": "Note on {id}"
     },
     "runSubmitted": {
       "continuesTitle": "Review recorded. The run goes on with it.",
@@ -1714,6 +1822,11 @@
     "duplicate": "Duplicate step",
     "remove": "Remove step"
   },
+  "paletteListed": {
+    "heading": "From other workspaces",
+    "by": "By {publisher} · {fee}",
+    "feeNote": "Each call to this agent adds its fee to the run's cost."
+  },
   "studioPalette": {
     "search": "Find a step",
     "help": "Drag a step onto the canvas, or choose it to add it beside the selected step.",
@@ -1786,6 +1899,82 @@
     "notAdded": "Not added yet",
     "addToWorkspace": "Add to workspace",
     "versionHead": "Version"
+  },
+  "studioPublisher": {
+    "title": "Publisher",
+    "intro": "Agents and packs you have listed for other workspaces, with their installs, runs and earnings.",
+    "earningsMonth": "Earnings this month",
+    "simulated": "Simulated: no money moves.",
+    "payouts": "Payout history",
+    "noPayouts": "No payouts yet.",
+    "empty": "Nothing listed yet. Submit an agent or pack for review from its page.",
+    "toAgents": "Agents",
+    "toPacks": "Packs",
+    "columns": {
+      "name": "Name",
+      "kind": "Kind",
+      "status": "Status",
+      "price": "Price",
+      "installs": "Installs",
+      "runs": "Runs (30 days)",
+      "earnings": "Earnings this month"
+    },
+    "kind": {
+      "agent": "Agent",
+      "pack": "Pack"
+    },
+    "status": {
+      "pending": "Pending",
+      "listed": "Listed",
+      "unlisted": "Unlisted"
+    },
+    "version": {
+      "checking": "Checking",
+      "checks_failed": "Checks failed",
+      "in_review": "In review",
+      "approved": "Approved",
+      "changes_requested": "Changes requested",
+      "rejected": "Rejected"
+    },
+    "perRun": "{price} per run",
+    "perCall": "{price} per call",
+    "noFee": "No fee",
+    "listedPrice": "Listed price",
+    "priceInReview": "Price in review",
+    "inReview": "In review: {price}",
+    "versions": "Versions",
+    "versionLabel": "Version {n}",
+    "submittedBy": "Submitted by {by} on {at}",
+    "note": "Note from the review team",
+    "openRun": "Open the sandbox run",
+    "checkWaiting": "The check is waiting for a reviewer in your workspace.",
+    "checkWaitingLink": "Open the run to review it",
+    "back": "Back to Publisher",
+    "managersOnlyTitle": "Only owners and admins can see publishing",
+    "managersOnlyBody": "Ask an owner or admin of this workspace about its listings and earnings.",
+    "backToStudio": "Back to the Studio",
+    "checks": "Checks",
+    "check": {
+      "definition": "Definition",
+      "agents": "Agents",
+      "sandbox": "Sandbox run"
+    },
+    "checkState": {
+      "passed": "Passed",
+      "failed": "Failed",
+      "running": "Running"
+    },
+    "checkDetail": {
+      "definition": "The definition checks found no problems.",
+      "agents": "Every agent in the pack is the platform's or listed.",
+      "sandboxRunning": "A sandbox run of this version is running.",
+      "sandboxPassed": "A sandbox run of this version completed."
+    },
+    "notFoundTitle": "There is no such listing",
+    "notFoundBody": "It may belong to another workspace, or the link may be out of date.",
+    "card": "Publisher",
+    "cardCount": "{n, plural, one {# listing} other {# listings}}",
+    "cardBody": "{n, plural, one {# listing} other {# listings}}, {amount} this month (simulated)"
   },
   "studioEditor": {
     "untitled": "Untitled pack",
@@ -1907,6 +2096,43 @@
     "noStartTitle": "Nothing was changed",
     "noStart": "The file has no start step, so nothing was imported."
   },
+  "studioSubmit": {
+    "button": "Submit for review",
+    "saveFirst": "Save your changes first",
+    "title": "Submit {name} for review",
+    "needsProfile": "Turn on publishing in Settings first.",
+    "openSettings": "Open Settings",
+    "pricePerRun": "Price per run",
+    "pricePerCall": "Price per call",
+    "priceHelp": "In US dollars. Enter 0 for no fee. Fees are simulated: no money moves.",
+    "noFee": "No fee",
+    "split": "You get 80%, New Machines keeps 20%.",
+    "youGet": "{amount} to you",
+    "sandboxNote": "We run a sandbox test of this version. A test that already completed for this version is reused.",
+    "input": "Input for the sandbox test",
+    "budget": "Budget for the test run",
+    "budgetHelp": "Optional, in US dollars. Leave it empty to use the pack's own budget.",
+    "submit": "Submit for review",
+    "checking": "Running checks",
+    "waitingSandbox": "Waiting for the sandbox run",
+    "openRun": "Open the run",
+    "sent": "Sent for review",
+    "checksFailed": "A check failed. Open the run to see why, fix it and submit again.",
+    "resultTitle": "Automatic checks",
+    "openListing": "Open the listing",
+    "failed": "The submission was not sent",
+    "checks": {
+      "definition": "Definition",
+      "agents": "Agents",
+      "sandbox": "Sandbox test"
+    },
+    "state": {
+      "passed": "Passed",
+      "failed": "Failed",
+      "running": "Running"
+    },
+    "close": "Close"
+  },
   "studioTest": {
     "open": "Test in sandbox",
     "title": "Test in sandbox",
@@ -1925,5 +2151,85 @@
     "sandboxUnavailable": "This deployment does not use the platform's sandbox connectors, so test runs cannot start here.",
     "spendCap": "Your workspace has reached its monthly spend cap. Test runs count toward it.",
     "seeUsage": "See usage"
+  },
+  "tour": {
+    "common": {
+      "next": "Next",
+      "back": "Back",
+      "done": "Done",
+      "skip": "Skip tour",
+      "stepOf": "Step {n} of {total}",
+      "replay": "Take the tour"
+    },
+    "welcome": {
+      "ask": {
+        "title": "Start from the outcome",
+        "body": "Describe the work you want done and we suggest a pack for it. You can also start a run from the button at the top of any page."
+      },
+      "marketplace": {
+        "title": "Find packs in the Marketplace",
+        "body": "A Workflow Pack bundles the agents, tools and review steps for one job. Add the ones your business needs."
+      },
+      "runs": {
+        "title": "Follow every run",
+        "body": "Each run shows its steps as they happen, what it produced, and what it cost."
+      },
+      "approvals": {
+        "title": "You approve before anything is written",
+        "body": "When a run is about to change something in your apps, it waits here until a person approves that exact action."
+      },
+      "usage": {
+        "title": "Spend and caps",
+        "body": "See this month's spend against your monthly cap and where it went. Runs stop before passing the cap. Billing is simulated: no money moves."
+      },
+      "help": {
+        "title": "Come back to this tour",
+        "body": "Your account menu holds the language switch and sign-out. You can take this tour again from there at any time."
+      }
+    },
+    "studio": {
+      "intro": {
+        "title": "Your own agents and packs",
+        "body": "The Studio is where your team builds its own agents and Workflow Packs. Only your company sees what you build here."
+      },
+      "agents": {
+        "title": "Build agents",
+        "body": "An agent does one kind of work with the tools you give it. Your newest agents show here."
+      },
+      "packs": {
+        "title": "Build Workflow Packs",
+        "body": "A pack puts agents, tools and review steps in order for one job. Save one and it appears in your marketplace under Built by your team."
+      },
+      "publisher": {
+        "title": "Offer your work to other workspaces",
+        "body": "When an agent or pack is ready, submit it for review from its page. The Publisher page tracks your listings and what they earn."
+      }
+    },
+    "run": {
+      "steps": {
+        "title": "The run's steps",
+        "body": "Every step of the workflow in order, with who does it: an agent, an app, a reviewer or a policy check. Select one to see more."
+      },
+      "step": {
+        "title": "What a step did",
+        "body": "The selected step: who did it, what it found, what it cost, and the records behind it."
+      },
+      "attention": {
+        "title": "When the run needs you",
+        "body": "A step waiting for your approval or a decision shows here, with a link to act on it. Actions that change your apps wait until a person approves them."
+      },
+      "timeline": {
+        "title": "Everything, in order",
+        "body": "The timeline records each event and who did it, reviews and approvals included."
+      },
+      "cost": {
+        "title": "What it cost",
+        "body": "Spend so far on agents and models, tools and reviewer pay, against the run's budget. Billing is simulated: no money moves."
+      },
+      "receipt": {
+        "title": "The work receipt",
+        "body": "A tamper-evident record of every step, with any publisher fees and the exact versions this run used."
+      }
+    }
   }
 }

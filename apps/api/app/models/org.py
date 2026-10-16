@@ -1,6 +1,7 @@
 from typing import Literal
 
 from app.models.common import Actor, Model, Money, Opt, RequestModel
+from app.models.publishing import FeeItem
 from app.models.runs import Spent
 
 
@@ -84,6 +85,7 @@ class LedgerTxn(Model):
     status: Literal["POSTED", "PENDING", "ELIGIBLE", "HELD"]
     lines: list[LedgerLine]
     spent: Spent | Opt = None
+    fees: list[FeeItem] | Opt = None
 
 
 class McpToken(Model):

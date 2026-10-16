@@ -1,0 +1,39 @@
+kind: pack
+key: support-inbox-triage
+slug: support-inbox-triage
+name: Support Inbox Triage
+version: 1.0.0
+publisher: New Machines Labs
+function: customer-ops
+industries: [retail-commerce, professional-services, media-content]
+outcome: Every customer email sorted, complaints and refund requests checked by a person, replies drafted and each case logged.
+description: >-
+  Reads recent customer emails and asks the decision model whether each one is a question, a complaint, a
+  refund request or spam, and leaves the spam out. A reviewer checks every complaint and refund request.
+  It then drafts a reply to each customer and, once you approve, saves the replies as Gmail drafts and logs
+  each case in your Google Sheet. It never sends an email or issues a refund. Each email's sender, subject
+  and text are sent to the decision model to sort it; if the decision model is not available, a reviewer
+  checks every case.
+risk_class: medium
+price_note: About $0.30 to $1.50 of AI work per run, plus up to $5.00 of reviewer time for complaints and refund requests.
+workflow: support-inbox-triage
+contract: support-inbox-triage
+agents: [support-agent, writer-agent]
+connectors: [gmail, googlesheets]
+human_review: A reviewer checks every complaint and refund request before any reply is drafted, and every case when the decision model is not available.
+# How the run page shows the result. Strings starting with "=" are CEL over {deliverable, mocked}.
+# With no customer email to answer, the run ends with a summary instead of drafts.
+deliverable_view:
+  kind: Email drafts
+  summary: >-
+    =!has(deliverable.drafts) ? deliverable.summary + (mocked ? ' This is sandbox data.' : '') : (size(deliverable.drafts) == 1 ? '1 reply was
+    drafted' : string(size(deliverable.drafts)) + ' replies were drafted') + (mocked ? ' on sandbox data. No
+    email was created in Gmail and no case was logged in a real sheet.' : ', ready for you to check and
+    send.')
+  facts:
+    - label: Drafts created
+      value: "=has(deliverable.drafts) ? string(size(deliverable.drafts)) : '0'"
+  items:
+    from: "=has(deliverable.drafts) ? deliverable.drafts : []"
+    label: "=item.to + ' — ' + item.subject"
+    detail: =item.body

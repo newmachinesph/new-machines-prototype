@@ -10,14 +10,15 @@ Every key built here comes from `_free_key` or `_own`, so it is in the caller's 
 500 handler, whose reply never carries the message.
 """
 
-from collections.abc import Callable
+from collections.abc import Callable, Collection
 from dataclasses import dataclass, replace
 
 from pydantic import ValidationError
 
-from app import db, live_connections, live_work, real_runs, settings
+from app import db, listings, live_connections, live_work, real_runs, settings
 from app import studio_build as build
 from app.auth import Actor
+from app.catalog.agents import market_listing
 from app.defs import owners, registry
 from app.defs import text as def_text
 from app.defs.digest import digest
@@ -88,6 +89,9 @@ def _own(conn, org_id: str, kind: str, key: str) -> registry.Version:
     return found
 
 
+CHECK_NAME = "listing-check"  # reserved: a submission check runs as an unsaved pack under this key
+
+
 def _free_key(conn, org_id: str, kinds: tuple[str, ...], title: str) -> str:
     """The org's first unused key for `title` across `kinds`: <namespace>--<slug>, then -2, -3 and so on.
     Call under `registry.lock`."""
@@ -95,6 +99,8 @@ def _free_key(conn, org_id: str, kinds: tuple[str, ...], title: str) -> str:
     for n in range(1, KEY_TRIES + 1):
         name = base if n == 1 else f"{base[: owners.NAME_MAX - SUFFIX_ROOM].rstrip('-')}-{n}"
         key = owners.org_key(org_id, name)
+        if name == CHECK_NAME:  # the listing check's pack key (see `listing_checks`)
+            continue
         unused = all(
             registry.latest(conn, k, key) is None and registry.owner_of(conn, k, key) == owners.PLATFORM
             for k in kinds
@@ -167,16 +173,19 @@ def _save(
     conn.commit()
 
 
-def _is_own_or_platform(key: str, org_id: str) -> bool:
-    """A key an org's pack may use: the platform's (no namespace) or the org's own. Another org's key, even
-    one listed in the marketplace, is not offered or built with."""
-    return not owners.is_reserved(key) or owners.in_org(key, org_id)
+def _is_own_or_platform(key: str, org_id: str, listed: Collection[str] = ()) -> bool:
+    """A key an org's pack may use: the platform's (no namespace), the org's own, or an agent another
+    workspace has listed (at its approved version). Another org's private key is never offered or built
+    with."""
+    return not owners.is_reserved(key) or owners.in_org(key, org_id) or key in listed
 
 
 @dataclass(frozen=True)
 class _Context:
-    """What the org may build with: everything it may see, indexed. `agents` holds the platform's and the
-    org's own only, so another org's agent key is missing to a pack draft."""
+    """What the org may build with: everything it may see, indexed. `agents` holds the platform's, the org's
+    own and other workspaces' listed agents (`listed`, by key), so another org's private agent key is missing
+    to a pack draft. `spaces` and `schemas` hold the platform's and the org's own only: a listed bundle's
+    memory spaces and schemas are what its own agent runs with, never what a buyer's steps are built with."""
 
     bundle: Bundle
     tools: dict[str, dict]
@@ -184,17 +193,31 @@ class _Context:
     spaces: dict[str, Definition]
     schemas: dict[str, Definition]
     team: set[tuple[str, str]]
+    listed: dict[str, listings.MarketRow]
+    pack_names: dict[str, str]  # {key: name} of the org's own packs and the packs it added
+
+
+def _taken_pack_names(conn, org_id: str) -> dict[str, str]:
+    """{key: name} of the packs a draft's name must not repeat: the org's own and the packs it added, the
+    names its connection grants are keyed by. Another workspace's listed pack the org has not added holds no
+    grants, so its name never blocks a save."""
+    names = {v.key: str(v.body.get("name") or v.key) for v in registry.owned(conn, org_id, "pack")}
+    return {**live_connections.added_names(conn, org_id), **names}
 
 
 def _context(conn, org_id: str) -> _Context:
     bundle = registry.visible_bundle(conn, org_id)
+    market = listings.market_info(conn, org_id)
+    listed = {key: row for (kind, key), row in market.items() if kind == "agent"}
     return _Context(
         bundle=bundle,
         tools=build.tool_index(bundle),
-        agents={d.key: d.body for d in bundle.of("agent") if _is_own_or_platform(d.key, org_id)},
-        spaces={d.key: d for d in build.readable_spaces(bundle)},
-        schemas={d.key: d for d in bundle.of("schema")},
+        agents={d.key: d.body for d in bundle.of("agent") if _is_own_or_platform(d.key, org_id, listed)},
+        spaces={d.key: d for d in build.readable_spaces(bundle) if _is_own_or_platform(d.key, org_id)},
+        schemas={d.key: d for d in bundle.of("schema") if _is_own_or_platform(d.key, org_id)},
         team=registry.team_keys(conn, org_id),
+        listed=listed,
+        pack_names=_taken_pack_names(conn, org_id),
     )
 
 
@@ -203,7 +226,7 @@ def _context(conn, org_id: str) -> _Context:
 
 def _palette_agent(d: Definition, ctx: _Context) -> PaletteAgent:
     out_ref = str(d.body.get("output_schema_ref") or "")
-    out = ctx.schemas.get(out_ref)
+    out = ctx.schemas.get(out_ref) or ctx.bundle.get("schema", out_ref)  # a listed agent's own result shape
     return PaletteAgent(
         key=d.key,
         name=str(d.body.get("name") or d.key),
@@ -212,12 +235,14 @@ def _palette_agent(d: Definition, ctx: _Context) -> PaletteAgent:
         model_profile=(d.body.get("runtime") or {}).get("model_profile"),
         output_schema_ref=out_ref,
         output_schema=out.body if out else None,
+        listing=market_listing(ctx.listed[d.key], "call", None) if d.key in ctx.listed else None,
     )
 
 
 def palette(actor: Actor) -> Palette:
     """Everything a pack's steps can use, from the registry: a new agent or app tool shows up by itself. The
-    agents are the ones a draft may use (`_Context.agents`): the platform's and the org's own."""
+    agents are the ones a draft may use (`_Context.agents`): the platform's, the org's own and other
+    workspaces' listed ones, with their listing."""
     with db.connect() as conn:
         ctx = _context(conn, actor.org_id)
     return Palette(
@@ -424,15 +449,15 @@ def _pack_release(
     ctx: _Context, key: str, org: build.OrgRef, draft: PackDraft, release: int
 ) -> list[Definition]:
     used = {str(s.config.get("agent")) for s in draft.steps if s.type == "agent"}
-    if not all(_is_own_or_platform(a, org.id) for a in used):  # `_context` never offers one; a backstop
-        raise ValueError("a pack is built only with the platform's agents and the org's own")
+    if not used <= set(ctx.agents):  # `_context` never offers another; a backstop
+        raise ValueError("a pack is built only with agents the org may use")
     return build.pack_definitions(key, org, draft, ctx.tools, ctx.agents, release)
 
 
 def _pack_names(ctx: _Context, key: str) -> list[str]:
-    """The names of the packs the org can see, minus the pack's own: a draft must not repeat one, as
+    """The names of the org's own and added packs, minus the pack's own: a draft must not repeat one, as
     connection grants are keyed by pack name."""
-    return [str(d.body.get("name") or d.key) for d in ctx.bundle.of("pack") if d.key != key]
+    return [name for k, name in ctx.pack_names.items() if k != key]
 
 
 def _pack_issues(ctx: _Context, key: str, org: build.OrgRef, draft: PackDraft) -> list[BuilderIssue]:
@@ -527,8 +552,8 @@ def _checked_pack(conn, actor: Actor, key: str, draft: PackDraft) -> tuple[_Cont
 def _check_pack_name(conn, org_id: str, key: str, draft: PackDraft) -> None:
     """The name check again, under `registry.lock`, against what the org can see now: two saves at once
     both pass the check made before the lock, and the second must not land a second pack with the name."""
-    packs = registry.visible_bundle(conn, org_id).of("pack")
-    names = {str(d.body.get("name") or d.key).strip().casefold() for d in packs if d.key != key}
+    taken = _taken_pack_names(conn, org_id)
+    names = {name.strip().casefold() for k, name in taken.items() if k != key}
     if draft.name.strip().casefold() in names:
         name = draft.name.strip()
         message = f"Another pack is already called {name}. Give this one a different name."
@@ -620,10 +645,11 @@ def pack_workflow_yaml(actor: Actor, key: str) -> WorkflowYaml:
     return WorkflowYaml(yaml=registry.export_files(workflow)[path_for("workflow", workflow.key)])
 
 
-def _step_from(node, bundle: Bundle) -> StepDraft:
+def _step_from(node, bundle: Bundle, org_id: str) -> StepDraft:
     rules = None
     if isinstance(node, dict) and node.get("type") == "decision":
-        found = bundle.get("decision_rules", str((node.get("config") or {}).get("rules") or ""))
+        ref = str((node.get("config") or {}).get("rules") or "")
+        found = bundle.get("decision_rules", ref) if _is_own_or_platform(ref, org_id) else None
         rules = build.rules_of(found.body) if found is not None else None
     return build.step_of(node, rules)
 
@@ -643,9 +669,9 @@ def _route_failures(steps: list[StepDraft]) -> list[StepDraft]:
 
 
 def import_workflow(actor: Actor, body: ImportWorkflowRequest) -> ImportedWorkflow:
-    """The steps of a workflow.yaml (decision rules the org may see are inlined, and unrouted failure
-    outcomes go to the FAILED end). A node that cannot be read is listed in `issues`; 422 INVALID_YAML when
-    the text is not YAML or has no nodes."""
+    """The steps of a workflow.yaml (decision rules that are the org's own or the platform's are inlined, and
+    unrouted failure outcomes go to the FAILED end). A node that cannot be read is listed in `issues`;
+    422 INVALID_YAML when the text is not YAML or has no nodes."""
     require_builder(actor)
     try:
         data = def_text.parse_text("workflow", body.yaml)
@@ -659,7 +685,7 @@ def import_workflow(actor: Actor, body: ImportWorkflowRequest) -> ImportedWorkfl
     steps, issues = [], []
     for i, node in enumerate(nodes):
         try:
-            steps.append(_step_from(node, bundle))
+            steps.append(_step_from(node, bundle, actor.org_id))
         except KeyError, TypeError, ValueError, AttributeError, ValidationError:
             issues.append(BuilderIssue(path=f"nodes[{i}]", message=f"Step {i + 1} cannot be read as a step."))
     entry = str(data.get("entry_node_id") or (steps[0].id if steps else ""))
@@ -678,13 +704,14 @@ def _test_budget(conn, pack: dict) -> int:
     return int(((contract.body if contract else {}).get("budget") or {}).get("maximum_minor") or 0)
 
 
-def sandbox_run(actor: Actor, key: str, body: SandboxRunRequest) -> Run:
+def sandbox_run(actor: Actor, key: str, body: SandboxRunRequest, *, listing_check: bool = False) -> Run:
     """Start a real run of the org's own pack on sandbox data ("Test in sandbox"). The pack need not be added
     and its apps need not be connected: the run is not routed through the org's connections and pins the
     sandbox connector mode, so every tool call answers from sandbox data and nothing is billed to an app. The
     input must match the pack's input schema and the month's spend must be below the cap (a test counts
     toward it). 409 SANDBOX_UNAVAILABLE when the deployment's connectors are not in sandbox mode; 422
-    BUDGET_REQUIRED when the body gives no budget and the pack sets no maximum."""
+    BUDGET_REQUIRED when the body gives no budget and the pack sets no maximum. `listing_check` marks the run
+    as the sandbox check of a submission."""
     require_builder(actor)
     if settings.connector_mode() != settings.SANDBOX_MODE:
         raise ApiProblem(
@@ -702,4 +729,4 @@ def sandbox_run(actor: Actor, key: str, body: SandboxRunRequest) -> Run:
         raise ApiProblem(422, "BUDGET_REQUIRED", "Set a budget for this test run.")
     live_work.check_spend(actor.org_id)
     request = StartRunRequest(pack_slug=key, input=inp, budget_minor=budget)
-    return real_runs.start_real_run(request, actor, None, inp, sandbox_test=True)
+    return real_runs.start_real_run(request, actor, None, inp, sandbox_test=True, listing_check=listing_check)

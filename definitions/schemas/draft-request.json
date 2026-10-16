@@ -21,6 +21,12 @@
       }
     },
     "review": {"type": ["object", "null"]},
-    "tone": {"type": "string", "minLength": 1}
+    "tone": {"type": "string", "minLength": 1},
+    "sign_off": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "description": "The name under 'Kind regards,'. When absent, Accounts team."
+    }
   }
 }

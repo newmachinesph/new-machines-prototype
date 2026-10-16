@@ -32,6 +32,10 @@ const state = vi.hoisted(() => ({
   meError: undefined as Error | undefined,
   agents: [] as unknown[],
   packs: [] as unknown[],
+  listings: [] as unknown[],
+  earnings: { month: { amountMinor: 0, currency: "USD" }, payouts: [] } as unknown,
+  earningsPending: false,
+  listingsError: undefined as Error | undefined,
 }));
 
 vi.mock("@/lib/queries/me", () => ({
@@ -44,6 +48,15 @@ vi.mock("@/lib/queries/me", () => ({
 vi.mock("@/lib/queries/studio", () => ({
   useStudioAgents: () => ok(state.agents),
   useStudioPacks: () => ok(state.packs),
+}));
+
+vi.mock("@/lib/queries/publishing", () => ({
+  useStudioListings: () =>
+    state.listingsError
+      ? { isPending: false, isError: true, error: state.listingsError, data: undefined, refetch: vi.fn() }
+      : ok(state.listings),
+  useStudioEarnings: () =>
+    state.earningsPending ? { isPending: true, isError: false, data: undefined } : ok(state.earnings),
 }));
 
 /** The error panel's Retry resets queries, so it needs a client. */
@@ -60,6 +73,10 @@ describe("Studio home", () => {
     state.meError = undefined;
     state.agents = [];
     state.packs = [];
+    state.listings = [];
+    state.earnings = { month: { amountMinor: 0, currency: "USD" }, payouts: [] };
+    state.earningsPending = false;
+    state.listingsError = undefined;
   });
 
   it("says what the Studio is for and links to new agents and packs", () => {
@@ -92,6 +109,15 @@ describe("Studio home", () => {
     expect(screen.getByRole("link", { name: "See all 1 pack" })).toHaveAttribute("href", "/studio/packs");
   });
 
+  it("lets the lists shrink to a phone's width, so a long name is cut short instead of widening the page", () => {
+    state.agents = [agent("a", "An agent with a very long name that does not fit a phone", "2026-10-01T09:00:00Z")];
+    renderWithIntl(<StudioHome />);
+    // A grid's automatic column grows to its widest unbreakable line (a truncated name is one); a single
+    // minmax(0, 1fr) column cannot, so the names truncate inside it (QA F-11: /studio was 77px too wide at 390).
+    const grid = screen.getByRole("heading", { name: "Agents" }).closest("section")!.parentElement!;
+    expect(grid).toHaveClass("grid", "grid-cols-1");
+  });
+
   it("says what to do next: an agent first, then a pack, then adding the pack", () => {
     const { unmount } = renderWithIntl(<StudioHome />);
     expect(screen.getByText("Start with an agent, then put it in a pack.")).toBeInTheDocument();
@@ -116,6 +142,9 @@ describe("Studio home", () => {
     expect(screen.queryByText(/Start with an agent/)).toBeNull();
     expect(screen.queryByRole("link", { name: "New agent" })).toBeNull();
     expect(screen.queryByRole("link", { name: "New pack" })).toBeNull();
+    // Publishing is for owners and admins only: no Publisher card either.
+    expect(screen.queryByText("Publisher")).toBeNull();
+    expect(screen.queryByRole("link", { name: /Publisher/ })).toBeNull();
   });
 
   it("shows a headed notice instead of the Studio in the demo workspace", () => {
@@ -165,6 +194,14 @@ describe("Studio home", () => {
     expect(screen.queryByText("studio")).toBeNull();
   });
 
+  it("shows a Publisher card with the listings count and this month's earnings", () => {
+    state.listings = [{ id: "l1" }, { id: "l2" }];
+    state.earnings = { month: { amountMinor: 4200, currency: "USD" }, payouts: [] };
+    renderWithIntl(<StudioHome />);
+    expect(screen.getByRole("link", { name: /Publisher/ })).toHaveAttribute("href", "/studio/publisher");
+    expect(screen.getByText(/2 listings/)).toHaveTextContent("$42.00");
+  });
+
   it("speaks Japanese", () => {
     state.agents = [
       agent("a", "Ledger reader", "2026-10-01T09:00:00Z"),
@@ -174,5 +211,20 @@ describe("Studio home", () => {
     expect(screen.getByRole("link", { name: "新しいエージェント" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "エージェント 2 件をすべて見る" })).toBeInTheDocument();
     expect(screen.getByText("エージェントができました。次はパックに入れましょう。")).toBeInTheDocument();
+  });
+
+  it("keeps the Publisher card a skeleton until the earnings have loaded too", () => {
+    state.listings = [{ id: "l1" }];
+    state.earningsPending = true;
+    renderWithIntl(<StudioHome />);
+    expect(screen.queryByText(/1 listing/)).toBeNull();
+  });
+
+  it("shows a failed listings read inside the Publisher card, with a retry, and keeps the Studio", () => {
+    state.listingsError = new ApiError(500, "BOOM", "Listings are down.");
+    renderWithIntl(<StudioHome />);
+    expect(screen.getByText("Listings are down.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "New agent" })).toBeInTheDocument();
   });
 });

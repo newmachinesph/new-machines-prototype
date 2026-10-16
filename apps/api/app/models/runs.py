@@ -3,6 +3,7 @@ from typing import Literal
 from pydantic import Field
 
 from app.models.common import Actor, Model, Money, Opt, StageState
+from app.models.publishing import FeeItem
 
 RunStatus = Literal[
     "RUNNING",
@@ -202,6 +203,11 @@ class Deliverable(Model):
     items: list[DeliverableItem] | Opt = None
 
 
+# Why a FAILED run stopped when nothing went wrong: `declined` when a person declined its approval, so it
+# ended by that decision. Absent for every other run.
+StopReason = Literal["declined"]
+
+
 class RunSummary(Model):
     id: str
     pack_slug: str
@@ -216,6 +222,10 @@ class RunSummary(Model):
     has_detail: bool = False
     # A test run started from the Studio ("Test in sandbox"): sandbox data, the pack need not be added.
     sandbox_test: bool | Opt = None
+    # The sandbox run a submission to the marketplace starts. It is the publisher's own spend, so it stays in
+    # the runs list and the totals, and is labelled "Listing check".
+    listing_check: bool | Opt = None
+    stop_reason: StopReason | Opt = None
 
 
 class Run(Model):
@@ -244,6 +254,10 @@ class Run(Model):
     recovered: str | Opt = None
     # A test run started from the Studio ("Test in sandbox"): sandbox data, the pack need not be added.
     sandbox_test: bool | Opt = None
+    # The sandbox run a submission to the marketplace starts. It is the publisher's own spend, so it stays in
+    # the runs list and the totals, and is labelled "Listing check".
+    listing_check: bool | Opt = None
+    stop_reason: StopReason | Opt = None
 
     def summary_row(self) -> RunSummary:
         return RunSummary(
@@ -259,6 +273,8 @@ class Run(Model):
             summary=self.summary,
             has_detail=True,
             sandbox_test=self.sandbox_test,
+            listing_check=self.listing_check,
+            stop_reason=self.stop_reason,
         )
 
 
@@ -287,3 +303,4 @@ class Receipt(Model):
     head_hash: str
     pinned: list[PinnedVersion]
     items: list[ReceiptItem]
+    fees: list[FeeItem] = Field(default_factory=list)  # publisher fees, one item per listing with an amount

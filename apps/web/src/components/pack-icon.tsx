@@ -1,4 +1,17 @@
-import { Boxes, Languages, Mail, RotateCcw, Scale, ShieldAlert, Truck, type LucideIcon } from "lucide-react";
+import {
+  Boxes,
+  CalendarCheck,
+  Inbox,
+  Languages,
+  LifeBuoy,
+  Mail,
+  ReceiptText,
+  RotateCcw,
+  Scale,
+  ShieldAlert,
+  Truck,
+  type LucideIcon,
+} from "lucide-react";
 import { cn } from "@/lib/cn";
 
 const ICONS: Record<string, LucideIcon> = {
@@ -9,6 +22,10 @@ const ICONS: Record<string, LucideIcon> = {
   "shipping-exceptions": Truck,
   "chargeback-evidence": ShieldAlert,
   "catalog-localization-en-ja": Languages,
+  "inbox-lead-tracker": Inbox,
+  "support-inbox-triage": LifeBuoy,
+  "weekly-expense-check": ReceiptText,
+  "meeting-follow-ups": CalendarCheck,
 };
 
 export function PackIcon({ slug, className }: { slug: string; className?: string }) {

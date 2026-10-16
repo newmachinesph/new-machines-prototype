@@ -1,13 +1,15 @@
-import { screen } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { RUN_1042 } from "@/data/runs-recon";
+import { money } from "@/lib/format";
 import type { Run } from "@/lib/types";
 import { renderWithIntl } from "@/test/intl";
 import { EvidencePage } from "./evidence-page";
 
-const query = vi.hoisted(() => ({ run: undefined as unknown }));
+const query = vi.hoisted(() => ({ run: undefined as unknown, receipt: undefined as unknown }));
 vi.mock("@/lib/queries/runs", () => ({
   useRun: () => ({ isPending: false, isError: false, data: query.run }),
+  useReceipt: () => ({ data: query.receipt }),
 }));
 vi.mock("next/navigation", () => ({ notFound: vi.fn() }));
 const me = vi.hoisted(() => ({ userId: "pwGlMEou0WQsM6aQvlgggXtXa5C3" }));
@@ -86,6 +88,20 @@ const drafts: Run = {
 };
 
 describe("EvidencePage", () => {
+  it("adds the run's publisher fees to the billable total", () => {
+    query.run = drafts;
+    const usd = (amountMinor: number) => ({ amountMinor, currency: "USD" as const });
+    const fee = { listingId: "lst_1", name: "Tax filing", publisher: "Harbor Cafe", kind: "pack_run" as const };
+    query.receipt = { fees: [{ ...fee, quantity: 1, unit: usd(57), amount: usd(57) }] };
+    renderWithIntl(<EvidencePage id={drafts.id} />);
+    const billable = screen.getByRole("heading", { name: "Why this is billable" }).closest("section") as HTMLElement;
+    expect(within(billable).getByText("Publisher fees").parentElement).toHaveTextContent("$0.57");
+    const { ai, human, tools } = drafts.spent;
+    const total = ai.amountMinor + human.amountMinor + tools.amountMinor + 57;
+    expect(within(billable).getByText("Total").parentElement).toHaveTextContent(money(usd(total)));
+    query.receipt = undefined;
+  });
+
   it("lists what the run produced when the deliverable has items", () => {
     query.run = drafts;
     renderWithIntl(<EvidencePage id={drafts.id} />);

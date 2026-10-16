@@ -8,8 +8,10 @@ functions:
   - {id: fulfillment, name: Fulfillment}
   - {id: merchandising, name: Merchandising}
   - {id: operations, name: Operations}
+  - {id: sales-ops, name: Sales operations}
 
 industries:
   - {id: retail-commerce, name: Retail & Commerce}
   - {id: manufacturing, name: Manufacturing}
   - {id: media-content, name: "Media, Content & Digital Experiences"}
+  - {id: professional-services, name: Professional Services}

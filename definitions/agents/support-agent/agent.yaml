@@ -1,0 +1,25 @@
+kind: agent
+key: support-agent
+schema_version: nm.agent.manifest.v1.1
+agent_id: support-agent
+version: "1.0.0"
+publisher_id: new-machines-labs
+publisher_name: New Machines Labs
+name: Support Agent
+summary: >-
+  Turns each customer email into a case, plans a reply from your support policies and sends complaints and refund requests to a person. It never sends an email or issues a refund.
+capabilities: [customer.support]
+runtime:
+  adapter: google_adk
+  model_profile: reasoning
+  instructions: instructions.md
+  skills: [skills/triage-support.md]
+  tools: []
+  max_turns: 6
+input_schema_ref: shared/agent-input
+output_schema_ref: support-inbox-triage/triage
+requested_tool_capabilities: []
+data_processing:
+  supported_regions: ["asia-south1"]
+  data_classes: ["CONFIDENTIAL"]
+  retention_policy_ref: retention/30d

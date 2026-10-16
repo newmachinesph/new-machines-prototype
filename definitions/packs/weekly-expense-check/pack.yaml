@@ -1,0 +1,42 @@
+kind: pack
+key: weekly-expense-check
+slug: weekly-expense-check
+name: Weekly Expense Check
+version: 1.0.0
+publisher: New Machines Labs
+function: finance-ops
+industries: [professional-services, media-content, retail-commerce]
+outcome: A week of expenses sorted by category, anything unusual checked by a person, and a summary in your inbox.
+description: >-
+  Reads one week of expenses from your Google Sheet, puts each one in a category and flags missing
+  receipts, items over your limit and likely duplicates. A reviewer checks anything flagged. Once you
+  approve, it adds the summary to a tab of the sheet and emails it. It never changes or deletes your
+  expense rows.
+risk_class: medium
+price_note: About $0.20 to $1.00 of AI work per run, plus up to $5.00 of reviewer time when expenses are flagged.
+workflow: weekly-expense-check
+contract: weekly-expense-check
+agents: [expense-agent, writer-agent]
+connectors: [googlesheets, gmail]
+human_review: A reviewer checks every flagged expense before the summary is written. A week with nothing unusual needs only your approval.
+# How the run page shows the result. Strings starting with "=" are CEL over {deliverable, mocked}.
+deliverable_view:
+  kind: Expense summary
+  summary: >-
+    =deliverable.summary + (mocked ? ' Made on sandbox data: no sheet was changed and no email was sent.' :
+    '')
+  facts:
+    - label: Expenses checked
+      value: =string(size(deliverable.expenses))
+    - label: Flagged for a check
+      value: =string(size(deliverable.review_items))
+    - label: Total
+      value: >-
+        =string(deliverable.total_minor / 100) + '.' + (deliverable.total_minor % 100 < 10 ? '0' : '') +
+        string(deliverable.total_minor % 100) + ' ' + deliverable.currency
+  items:
+    from: =deliverable.categories
+    label: =item.category
+    detail: >-
+      =string(item.count) + (item.count == 1 ? ' expense, ' : ' expenses, ') + string(item.amount_minor /
+      100) + '.' + (item.amount_minor % 100 < 10 ? '0' : '') + string(item.amount_minor % 100) + ' USD'

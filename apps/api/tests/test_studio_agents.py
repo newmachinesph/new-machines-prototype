@@ -27,7 +27,12 @@ def test_the_palette_lists_agents_tools_memory_and_result_shapes(ana):  # noqa: 
     agents = {a["key"]: a for a in palette["agents"]}
     assert agents["writer-agent"]["outputSchema"]["title"] == "Email drafts"
     assert "builtByTeam" not in agents["writer-agent"]
-    assert {s["key"] for s in palette["spaces"]} == {"customer-accounts", "retail-commerce"}
+    assert {s["key"] for s in palette["spaces"]} == {
+        "customer-accounts",
+        "expense-policy",
+        "retail-commerce",
+        "support-policies",
+    }
     assert {"shared/agent-result", "shared/drafts", "shared/review-items"} <= {
         s["key"] for s in palette["schemas"]
     }

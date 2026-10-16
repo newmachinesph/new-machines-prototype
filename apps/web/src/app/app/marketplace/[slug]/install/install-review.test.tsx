@@ -78,6 +78,15 @@ describe("InstallReview spending cap", () => {
     expect(group).toHaveAccessibleDescription(/A run stops and asks you/);
   });
 
+  it("offers no cap above the pack's maximum budget, with the maximum among them", () => {
+    const capped = { ...pack, maxBudget: { amountMinor: 1000, currency: "USD" as const } };
+    renderWithIntl(<InstallReview pack={capped} />);
+    const group = screen.getByRole("group", { name: "Spending cap per run" });
+    expect(within(group).getAllByRole("radio")).toHaveLength(2);
+    expect(within(group).getByRole("radio", { name: "$5.00" })).toBeInTheDocument();
+    expect(within(group).getByRole("radio", { name: "$10.00" })).toBeChecked();
+  });
+
   it("folds the chosen cap into the summary's price line and sends it", async () => {
     renderWithIntl(<InstallReview pack={pack} />);
     expect(
@@ -168,6 +177,16 @@ describe("InstallReview pack settings", () => {
     expect(install).toHaveBeenCalledWith(body({ capMinor: 5000, reviewerPool: "network" }), expect.anything());
   });
 
+  it("keeps a saved cap above what a run can use, says so, and saves it unchanged", async () => {
+    state.live = true;
+    const over = { ...hired, maxBudget: usd(1000), perRunCap: usd(5000) };
+    renderWithIntl(<InstallReview pack={over} settings />);
+    expect(screen.getByRole("radio", { name: "$50.00" })).toBeChecked();
+    expect(screen.getByText("Runs of this pack can use at most $10.00.")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Save pack settings" }));
+    expect(install).toHaveBeenCalledWith(body({ capMinor: 5000, reviewerPool: "network" }), expect.anything());
+  });
+
   it("says the settings could not be saved, not that the pack could not be added", async () => {
     state.live = true;
     install.mockImplementationOnce((_vars, opts: { onError: (e: Error) => void }) => opts.onError(new Error("x")));
@@ -194,5 +213,22 @@ describe("InstallReview pack settings", () => {
     renderWithIntl(<InstallReview pack={hired} settings />, { locale: "ja" });
     expect(screen.getByRole("button", { name: "パックの設定を保存" })).toBeInTheDocument();
     expect(screen.queryByText(/採用|追加/)).toBeNull();
+  });
+
+  it("shows a listed pack's publisher fee beside the estimate, added to every run", () => {
+    const listed = {
+      ...pack,
+      listing: { listingId: "lst_1", publisher: "Harbor Cafe", fee: usd(250), feeUnit: "run" as const, version: 2 },
+    };
+    renderWithIntl(<InstallReview pack={listed} />);
+    const fee = within(summary()).getByText("Fee").parentElement as HTMLElement;
+    expect(fee).toHaveTextContent("$2.50 per run");
+    expect(fee).toHaveTextContent("Added to every run, on top of the estimate");
+    expect(fee).toHaveTextContent("Simulated");
+  });
+
+  it("shows no fee row for a pack without a fee", () => {
+    renderWithIntl(<InstallReview pack={pack} />);
+    expect(within(summary()).queryByText("Fee")).toBeNull();
   });
 });

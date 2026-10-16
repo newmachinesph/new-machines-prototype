@@ -8,7 +8,9 @@ import { INTL_TAGS, resolveLocale } from "@/i18n/locales";
 import { QueryState } from "@/components/query-state";
 import { Skeleton } from "@/components/skeleton";
 import { ActorGlyph, Pill, SimTag } from "@/components/ui";
+import { useFeeLabel } from "@/lib/listing-fee";
 import { useAgents } from "@/lib/queries/catalog";
+import { shownVersion } from "@/lib/shown-version";
 import type { Agent } from "@/lib/types";
 import { useCapabilityLabel } from "./capability-label";
 
@@ -71,6 +73,8 @@ export function AgentList() {
  */
 function AgentCard({ agent: a }: { agent: Agent }) {
   const t = useTranslations("agents.list");
+  const tl = useTranslations("listedMarket");
+  const fee = useFeeLabel();
   const label = useCapabilityLabel();
   const locale = resolveLocale(useLocale());
   return (
@@ -85,8 +89,18 @@ function AgentCard({ agent: a }: { agent: Agent }) {
             {a.name}
           </Link>
           <div className="mt-0.5 text-xs text-muted">
-            {t("publisherVersion", { publisher: a.publisher, version: a.version })}
+            {/* A listed agent's publisher is on the "By" line below, beside its fee. */}
+            {a.listing
+              ? tl("version", { version: shownVersion(a) })
+              : t("publisherVersion", { publisher: a.publisher, version: shownVersion(a) })}
           </div>
+          {a.listing ? (
+            <div className="mt-0.5 text-xs text-muted">
+              {tl("by", { publisher: a.listing.publisher })}
+              {" · "}
+              <span className="tnum">{fee(a.listing)}</span>
+            </div>
+          ) : null}
         </div>
         {a.builtByTeam ? (
           <Pill tone="machine" className="shrink-0">

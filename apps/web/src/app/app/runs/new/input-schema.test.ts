@@ -44,6 +44,10 @@ describe("a date field's description", () => {
       "The day to measure from. Earlier days are overdue.",
     );
     expect(dated("(YYYY-MM-DD)").description).toBeUndefined();
+    // One date format on the form: the picker's. A hint sharing its brackets with another note keeps the note.
+    expect(dated("The day of the meetings, usually yesterday (YYYY-MM-DD, read in UTC).").description).toBe(
+      "The day of the meetings, usually yesterday (read in UTC).",
+    );
   });
 
   it("keeps the hint on a text field, where the person types the date", () => {
@@ -78,6 +82,30 @@ describe("inputFields", () => {
       ["until", "date", true, "Until"],
     ]);
     expect(fields[0].description).toBe("First day to reconcile.");
+  });
+
+  it("starts date fields without a default at sensible days: a range covers the last 7 days", () => {
+    const today = "2026-10-12";
+    expect(inputFields(RECON, today)!.map((f) => f.initial)).toEqual(["2026-10-06", "2026-10-12"]);
+    const date = (key: string, extra: Record<string, unknown> = {}) =>
+      inputFields(
+        { type: "object", required: [key], properties: { [key]: { type: "string", format: "date", ...extra } } },
+        today,
+      )![0].initial;
+    expect(date("as_of")).toBe("2026-10-12");
+    // An optional date stays empty, so it is not sent unless chosen.
+    expect(
+      inputFields({ type: "object", properties: { since: { type: "string", format: "date" } } }, today)![0].initial,
+    ).toBe("");
+    expect(date("week_start")).toBe("2026-10-06");
+    expect(date("day")).toBe("2026-10-11"); // a day's meetings: usually yesterday's
+    expect(date("from")).toBe("2026-10-06");
+    expect(date("as_of", { default: "2026-01-01" })).toBe("2026-01-01");
+    expect(inputFields({ type: "object", properties: { day: { type: "string", format: "date" } } })![0].initial).toBe(
+      "",
+    );
+    // Across a month's end.
+    expect(inputFields(RECON, "2026-11-03")!.map((f) => f.initial)).toEqual(["2026-10-28", "2026-11-03"]);
   });
 
   it("supports enums, numbers, integers, booleans, patterns, JSON and one level of nesting", () => {

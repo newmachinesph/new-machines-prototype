@@ -92,7 +92,7 @@
           "catalog"
         ],
         "summary": "Get Workflow Pack",
-        "description": "One pack. `inputSchema` is the JSON Schema of the input a run takes: for every pack in the live\nworkspace, and in the demo workspace for a pack that runs for real (the runtime is on and it has a\ndefinition).",
+        "description": "One pack. `inputSchema` is the JSON Schema of the input a run takes: for every pack in the live\nworkspace, and in the demo workspace for a pack that runs for real (the runtime is on and it has a\ndefinition). `maxBudget` is the most one run may be given (422 BUDGET_TOO_HIGH above it): on every live\npack that sets one, and on the demo detail of a pack that runs for real.",
         "operationId": "getWorkflowPack",
         "security": [
           {
@@ -581,7 +581,104 @@
             }
           },
           "409": {
-            "description": "Conflict",
+            "description": "Conflict (CONFLICT).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/organizations/{org_id}/agent-installations/{slug}:upgrade": {
+      "post": {
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Upgrade Workflow Pack",
+        "description": "Move an added pack listed by another workspace to its newest approved version. Until then its runs keep\nthe version pinned when it was added. Live workspace only.",
+        "operationId": "upgradeWorkflowPack",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Org Id"
+            }
+          },
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slug"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Installation"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict (NOT_LISTED, PACK_NOT_HIRED, UP_TO_DATE, RUNS_IN_PROGRESS, CONFLICT).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -765,7 +862,7 @@
             }
           },
           "409": {
-            "description": "Conflict",
+            "description": "Conflict (PLATFORM_PAUSED, PACK_NOT_HIRED, APPS_NOT_CONNECTED, RUN_BUDGET_OVER_CAP, SPEND_CAP, PACK_UNAVAILABLE, CONFLICT).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -5488,6 +5585,792 @@
         }
       }
     },
+    "/v1/organizations/{org_id}/publisher": {
+      "get": {
+        "tags": [
+          "publishing"
+        ],
+        "summary": "Get Publisher",
+        "description": "The workspace's publisher profile. `enabled` is false until an owner or admin turns publishing on.\nPayout details are simulated: no money moves. Owners and admins only (403 POLICY_DENIED).",
+        "operationId": "getPublisher",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Org Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublisherSettings"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed (POLICY_DENIED: owners and admins only).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "publishing"
+        ],
+        "summary": "Save Publisher",
+        "description": "Turn publishing on, or update the profile. Owners and admins only (403 POLICY_DENIED).",
+        "operationId": "savePublisher",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Org Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublisherRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublisherSettings"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed (POLICY_DENIED: owners and admins only).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "publishing"
+        ],
+        "summary": "Disable Publisher",
+        "description": "Turn publishing off: no new submissions. Listings stay as they are; New Machines unlists them. Owners\nand admins only (403 POLICY_DENIED).",
+        "operationId": "disablePublisher",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Org Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublisherSettings"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed (POLICY_DENIED: owners and admins only).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/organizations/{org_id}/studio/agents/{key}/submissions": {
+      "post": {
+        "tags": [
+          "studio"
+        ],
+        "summary": "Submit Studio Agent",
+        "description": "Submit the agent's saved version for the marketplace at a per-call price. Owners and admins of a\nworkspace with a publisher profile. The automatic checks run first: the definition checks (422 with each\nproblem; nothing is recorded) and a sandbox call of the agent through the agent runtime. The version waits\nin `checking` until that run ends, then in `in_review` for New Machines.",
+        "operationId": "submitStudioAgent",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Org Id"
+            }
+          },
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 100,
+              "pattern": "^[a-z0-9][a-z0-9-]*$",
+              "title": "Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitListingRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudioListingDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict (PUBLISHER_PROFILE_REQUIRED, SUBMISSION_OPEN, PLATFORM_PAUSED, SANDBOX_UNAVAILABLE, SPEND_CAP, PACK_UNAVAILABLE, VERSION_CONFLICT).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request (INVALID_DEFINITION, INVALID_INPUT).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The workflow engine is unavailable (RUNTIME_UNAVAILABLE).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/organizations/{org_id}/studio/packs/{key}/submissions": {
+      "post": {
+        "tags": [
+          "studio"
+        ],
+        "summary": "Submit Studio Pack",
+        "description": "Submit the pack's saved version for the marketplace at a per-run price. Owners and admins of a\nworkspace with a publisher profile. Every agent in the pack must be the platform's or listed (422\nPRIVATE_AGENTS names the agents that need to be listed first, each with where it stands: not submitted,\nin review, unlisted or not approved). The automatic checks run the definition checks and a\nsandbox test run with `input` and `budgetMinor` (a completed sandbox test of this version is reused). The\nversion waits in `checking` until that run ends, then in `in_review` for New Machines.",
+        "operationId": "submitStudioPack",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Org Id"
+            }
+          },
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 100,
+              "pattern": "^[a-z0-9][a-z0-9-]*$",
+              "title": "Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitListingRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudioListingDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict (PUBLISHER_PROFILE_REQUIRED, SUBMISSION_OPEN, PLATFORM_PAUSED, SANDBOX_UNAVAILABLE, SPEND_CAP, PACK_UNAVAILABLE, VERSION_CONFLICT).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request (INVALID_DEFINITION, PRIVATE_AGENTS, INVALID_INPUT, BUDGET_REQUIRED, BUDGET_TOO_HIGH).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The workflow engine is unavailable (RUNTIME_UNAVAILABLE).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/organizations/{org_id}/studio/listings": {
+      "get": {
+        "tags": [
+          "studio"
+        ],
+        "summary": "List Studio Listings",
+        "description": "The workspace's listings: status, the newest submission, installs, runs in the last 30 days and this\nmonth's earnings (simulated). Owners and admins only (403 POLICY_DENIED).",
+        "operationId": "listStudioListings",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Org Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StudioListing"
+                  },
+                  "title": "Response Liststudiolistings"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed (POLICY_DENIED: owners and admins only).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/organizations/{org_id}/studio/listings/{listing_id}": {
+      "get": {
+        "tags": [
+          "studio"
+        ],
+        "summary": "Get Studio Listing",
+        "description": "One of the workspace's listings with every submitted version, its checks and the review notes. Owners\nand admins only (403 POLICY_DENIED).",
+        "operationId": "getStudioListing",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Org Id"
+            }
+          },
+          {
+            "name": "listing_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^lst_[0-9a-f]{12}$",
+              "title": "Listing Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudioListingDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed (POLICY_DENIED: owners and admins only).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/organizations/{org_id}/studio/earnings": {
+      "get": {
+        "tags": [
+          "studio"
+        ],
+        "summary": "Get Studio Earnings",
+        "description": "The publisher share of this month's fees and the simulated payouts of earlier months. Simulated: no\nmoney moves. Owners and admins only (403 POLICY_DENIED).",
+        "operationId": "getStudioEarnings",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Org Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublisherEarnings"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed (POLICY_DENIED: owners and admins only).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/ops/packs": {
       "get": {
         "tags": [
@@ -6961,6 +7844,695 @@
           },
           "409": {
             "description": "Conflict (NOT_AVAILABLE_LIVE).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/ops/listings": {
+      "get": {
+        "tags": [
+          "ops"
+        ],
+        "summary": "Ops List Listings",
+        "description": "Every workspace's listings, newest change first. `status=in_review` is the review queue (a version\nwaits for a decision); `pending`, `listed` and `unlisted` filter on the listing.",
+        "operationId": "opsListListings",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "in_review",
+                    "pending",
+                    "listed",
+                    "unlisted"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OpsListing"
+                  },
+                  "title": "Response Opslistlistings"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/ops/listings/{listing_id}": {
+      "get": {
+        "tags": [
+          "ops"
+        ],
+        "summary": "Ops Get Listing",
+        "description": "One listing: its versions with check results and sandbox run, the newest version's diff against the\napproved one, the price and the ops history.",
+        "operationId": "opsGetListing",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "listing_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^lst_[0-9a-f]{12}$",
+              "title": "Listing Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpsListingDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/ops/listings/{listing_id}:approve": {
+      "post": {
+        "tags": [
+          "ops"
+        ],
+        "summary": "Decide",
+        "description": "Approve the version in review: it becomes the listed version. The reason is the note the publisher sees.",
+        "operationId": "opsApproveListing",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "listing_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^lst_[0-9a-f]{12}$",
+              "title": "Listing Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpsListingDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict (INVALID_TRANSITION).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/ops/listings/{listing_id}:request-changes": {
+      "post": {
+        "tags": [
+          "ops"
+        ],
+        "summary": "Decide",
+        "description": "Send the version in review back to the publisher with a note of what to change.",
+        "operationId": "opsRequestListingChanges",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "listing_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^lst_[0-9a-f]{12}$",
+              "title": "Listing Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpsListingDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict (INVALID_TRANSITION).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/ops/listings/{listing_id}:reject": {
+      "post": {
+        "tags": [
+          "ops"
+        ],
+        "summary": "Decide",
+        "description": "Reject the version in review, with a note the publisher sees.",
+        "operationId": "opsRejectListing",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "listing_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^lst_[0-9a-f]{12}$",
+              "title": "Listing Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpsListingDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict (INVALID_TRANSITION).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/ops/listings/{listing_id}:unlist": {
+      "post": {
+        "tags": [
+          "ops"
+        ],
+        "summary": "Decide",
+        "description": "Take a listed agent or pack out of every other workspace's marketplace and Studio; new runs of it stop.",
+        "operationId": "opsUnlistListing",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "listing_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^lst_[0-9a-f]{12}$",
+              "title": "Listing Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpsListingDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict (INVALID_TRANSITION).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/ops/listings/{listing_id}:relist": {
+      "post": {
+        "tags": [
+          "ops"
+        ],
+        "summary": "Decide",
+        "description": "List an unlisted agent or pack again at its approved version.",
+        "operationId": "opsRelistListing",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "listing_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^lst_[0-9a-f]{12}$",
+              "title": "Listing Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpsListingDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict (INVALID_TRANSITION).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -9413,7 +10985,8 @@
                     "guardrail",
                     "incident",
                     "definition",
-                    "memory"
+                    "memory",
+                    "listing"
                   ],
                   "type": "string"
                 },
@@ -10517,6 +12090,10 @@
             "type": "array",
             "title": "Usedby"
           },
+          "listing": {
+            "$ref": "#/components/schemas/MarketplaceListing",
+            "title": "Listing"
+          },
           "source": {
             "type": "string",
             "enum": [
@@ -10908,7 +12485,8 @@
               "guardrail",
               "incident",
               "definition",
-              "memory"
+              "memory",
+              "listing"
             ],
             "title": "Targettype"
           },
@@ -11958,6 +13536,44 @@
         "title": "DefinitionDetail",
         "description": "One definition at one version. `yaml` is the main file as exported (JSON for a schema); `files` holds\nthe Markdown files of an agent by path relative to its folder. `body` is the same main file parsed, so a\nclient can read fields without a YAML parser. `refs` are the definitions this one refers to and\n`used_by` those that refer to it, both computed from the latest versions. `warnings` is set on a publish\nthat breaks definitions teams built in their Studio: a count only, never their keys."
       },
+      "DefinitionDiff": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "path": {
+            "type": "string",
+            "title": "Path"
+          },
+          "change": {
+            "type": "string",
+            "enum": [
+              "added",
+              "changed",
+              "removed"
+            ],
+            "title": "Change"
+          },
+          "unified": {
+            "type": "string",
+            "title": "Unified"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "key",
+          "path",
+          "change",
+          "unified"
+        ],
+        "title": "DefinitionDiff"
+      },
       "DefinitionExport": {
         "properties": {
           "files": {
@@ -12370,6 +13986,52 @@
           "who"
         ],
         "title": "EvidenceItem"
+      },
+      "FeeItem": {
+        "properties": {
+          "listingId": {
+            "type": "string",
+            "title": "Listingid"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "publisher": {
+            "type": "string",
+            "title": "Publisher"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "pack_run",
+              "agent_call"
+            ],
+            "title": "Kind"
+          },
+          "quantity": {
+            "type": "integer",
+            "title": "Quantity"
+          },
+          "unit": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "amount": {
+            "$ref": "#/components/schemas/Money"
+          }
+        },
+        "type": "object",
+        "required": [
+          "listingId",
+          "name",
+          "publisher",
+          "kind",
+          "quantity",
+          "unit",
+          "amount"
+        ],
+        "title": "FeeItem",
+        "description": "One listing's publisher fees in a run: the quantity charged at the unit price, and the amount."
       },
       "Grant": {
         "properties": {
@@ -13064,6 +14726,13 @@
           },
           "spent": {
             "$ref": "#/components/schemas/Spent"
+          },
+          "fees": {
+            "items": {
+              "$ref": "#/components/schemas/FeeItem"
+            },
+            "type": "array",
+            "title": "Fees"
           }
         },
         "type": "object",
@@ -13077,6 +14746,182 @@
           "lines"
         ],
         "title": "LedgerTxn"
+      },
+      "ListingCheck": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "enum": [
+              "definition",
+              "agents",
+              "sandbox"
+            ],
+            "title": "Name"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "passed",
+              "failed",
+              "running"
+            ],
+            "title": "State"
+          },
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          },
+          "runId": {
+            "type": "string",
+            "title": "Runid"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "state",
+          "detail"
+        ],
+        "title": "ListingCheck"
+      },
+      "ListingHistoryEntry": {
+        "properties": {
+          "at": {
+            "type": "string",
+            "title": "At"
+          },
+          "by": {
+            "type": "string",
+            "title": "By"
+          },
+          "action": {
+            "type": "string",
+            "title": "Action"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "at",
+          "by",
+          "action",
+          "note"
+        ],
+        "title": "ListingHistoryEntry",
+        "description": "One ops action on a listing, from `ops_audit`."
+      },
+      "ListingVersion": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "definitionVersion": {
+            "type": "integer",
+            "title": "Definitionversion"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "checking",
+              "checks_failed",
+              "in_review",
+              "approved",
+              "changes_requested",
+              "rejected"
+            ],
+            "title": "Status"
+          },
+          "price": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "checks": {
+            "items": {
+              "$ref": "#/components/schemas/ListingCheck"
+            },
+            "type": "array",
+            "title": "Checks"
+          },
+          "submittedAt": {
+            "type": "string",
+            "title": "Submittedat"
+          },
+          "submittedBy": {
+            "type": "string",
+            "title": "Submittedby"
+          },
+          "decidedAt": {
+            "type": "string",
+            "title": "Decidedat"
+          },
+          "decidedBy": {
+            "type": "string",
+            "title": "Decidedby"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "definitionVersion",
+          "status",
+          "price",
+          "checks",
+          "submittedAt",
+          "submittedBy"
+        ],
+        "title": "ListingVersion"
+      },
+      "MarketplaceListing": {
+        "properties": {
+          "listingId": {
+            "type": "string",
+            "title": "Listingid"
+          },
+          "publisher": {
+            "type": "string",
+            "title": "Publisher"
+          },
+          "fee": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "feeUnit": {
+            "type": "string",
+            "enum": [
+              "run",
+              "call"
+            ],
+            "title": "Feeunit"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "installedVersion": {
+            "type": "integer",
+            "title": "Installedversion"
+          },
+          "updateAvailable": {
+            "type": "boolean",
+            "title": "Updateavailable"
+          }
+        },
+        "type": "object",
+        "required": [
+          "listingId",
+          "publisher",
+          "fee",
+          "feeUnit",
+          "version"
+        ],
+        "title": "MarketplaceListing",
+        "description": "Another workspace's listed agent or pack. `fee` is per run (pack) or per call (agent); 0 shows as\n\"No fee\". `version` is the newest approved version; `installed_version` and `update_available` are set on\na pack the workspace has added."
       },
       "McpToken": {
         "properties": {
@@ -13628,6 +15473,160 @@
         ],
         "title": "OpsKpis"
       },
+      "OpsListing": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "agent",
+              "pack"
+            ],
+            "title": "Kind"
+          },
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "publisher": {
+            "type": "string",
+            "title": "Publisher"
+          },
+          "publisherOrgId": {
+            "type": "string",
+            "title": "Publisherorgid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "listed",
+              "unlisted"
+            ],
+            "title": "Status"
+          },
+          "price": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "updatedAt": {
+            "type": "string",
+            "title": "Updatedat"
+          },
+          "pending": {
+            "$ref": "#/components/schemas/ListingVersion",
+            "title": "Pending"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "key",
+          "name",
+          "publisher",
+          "publisherOrgId",
+          "status",
+          "price",
+          "updatedAt"
+        ],
+        "title": "OpsListing"
+      },
+      "OpsListingDetail": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "agent",
+              "pack"
+            ],
+            "title": "Kind"
+          },
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "publisher": {
+            "type": "string",
+            "title": "Publisher"
+          },
+          "publisherOrgId": {
+            "type": "string",
+            "title": "Publisherorgid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "listed",
+              "unlisted"
+            ],
+            "title": "Status"
+          },
+          "price": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "updatedAt": {
+            "type": "string",
+            "title": "Updatedat"
+          },
+          "pending": {
+            "$ref": "#/components/schemas/ListingVersion",
+            "title": "Pending"
+          },
+          "versions": {
+            "items": {
+              "$ref": "#/components/schemas/ListingVersion"
+            },
+            "type": "array",
+            "title": "Versions"
+          },
+          "diff": {
+            "items": {
+              "$ref": "#/components/schemas/DefinitionDiff"
+            },
+            "type": "array",
+            "title": "Diff"
+          },
+          "history": {
+            "items": {
+              "$ref": "#/components/schemas/ListingHistoryEntry"
+            },
+            "type": "array",
+            "title": "History"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "key",
+          "name",
+          "publisher",
+          "publisherOrgId",
+          "status",
+          "price",
+          "updatedAt",
+          "versions",
+          "diff",
+          "history"
+        ],
+        "title": "OpsListingDetail"
+      },
       "OpsMe": {
         "properties": {
           "userId": {
@@ -13708,6 +15707,14 @@
           "spendMonth": {
             "$ref": "#/components/schemas/Money",
             "title": "Spendmonth"
+          },
+          "listingsInReview": {
+            "type": "integer",
+            "title": "Listingsinreview"
+          },
+          "publisherEarningsMonth": {
+            "$ref": "#/components/schemas/Money",
+            "title": "Publisherearningsmonth"
           }
         },
         "type": "object",
@@ -14083,6 +16090,18 @@
             "$ref": "#/components/schemas/Money",
             "title": "Perruncap"
           },
+          "maxBudget": {
+            "$ref": "#/components/schemas/Money",
+            "title": "Maxbudget"
+          },
+          "runFee": {
+            "$ref": "#/components/schemas/Money",
+            "title": "Runfee"
+          },
+          "runBudgetLimit": {
+            "$ref": "#/components/schemas/Money",
+            "title": "Runbudgetlimit"
+          },
           "reviewerPool": {
             "type": "string",
             "enum": [
@@ -14095,6 +16114,10 @@
           "builtByTeam": {
             "type": "boolean",
             "title": "Builtbyteam"
+          },
+          "listing": {
+            "$ref": "#/components/schemas/MarketplaceListing",
+            "title": "Listing"
           }
         },
         "type": "object",
@@ -14644,6 +16667,10 @@
             "additionalProperties": true,
             "type": "object",
             "title": "Outputschema"
+          },
+          "listing": {
+            "$ref": "#/components/schemas/MarketplaceListing",
+            "title": "Listing"
           }
         },
         "type": "object",
@@ -14832,6 +16859,29 @@
           "status"
         ],
         "title": "Payout"
+      },
+      "PayoutMonth": {
+        "properties": {
+          "month": {
+            "type": "string",
+            "title": "Month"
+          },
+          "amount": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "status": {
+            "type": "string",
+            "const": "SIMULATED",
+            "title": "Status",
+            "default": "SIMULATED"
+          }
+        },
+        "type": "object",
+        "required": [
+          "month",
+          "amount"
+        ],
+        "title": "PayoutMonth"
       },
       "PendingInvitation": {
         "properties": {
@@ -15075,6 +17125,112 @@
         "title": "PublishDefinitionRequest",
         "description": "`base_version` is the latest version the edit started from (0 for a new definition). When sent, the\npublish is refused with 409 VERSION_CONFLICT if someone has published since."
       },
+      "PublisherEarnings": {
+        "properties": {
+          "month": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "payouts": {
+            "items": {
+              "$ref": "#/components/schemas/PayoutMonth"
+            },
+            "type": "array",
+            "title": "Payouts"
+          },
+          "simulated": {
+            "type": "boolean",
+            "title": "Simulated",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "month",
+          "payouts"
+        ],
+        "title": "PublisherEarnings",
+        "description": "The publisher share of fees: this calendar month (UTC) and the simulated payouts of earlier months."
+      },
+      "PublisherProfile": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "payoutNote": {
+            "type": "string",
+            "title": "Payoutnote"
+          },
+          "updatedAt": {
+            "type": "string",
+            "title": "Updatedat"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "description",
+          "payoutNote",
+          "updatedAt"
+        ],
+        "title": "PublisherProfile"
+      },
+      "PublisherRequest": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 280,
+            "title": "Description",
+            "default": ""
+          },
+          "payoutNote": {
+            "type": "string",
+            "maxLength": 200,
+            "title": "Payoutnote",
+            "default": ""
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "PublisherRequest",
+        "description": "Turn publishing on, or change the profile. `payout_note` is simulated payout details."
+      },
+      "PublisherSettings": {
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled"
+          },
+          "profile": {
+            "$ref": "#/components/schemas/PublisherProfile",
+            "title": "Profile"
+          },
+          "simulated": {
+            "type": "boolean",
+            "title": "Simulated",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "enabled"
+        ],
+        "title": "PublisherSettings",
+        "description": "`enabled` is whether the workspace may submit; `profile` is absent until publishing is first turned on\nand kept when it is turned off. Payout details and payouts are simulated: no money moves."
+      },
       "ReasonRequest": {
         "properties": {
           "reason": {
@@ -15122,6 +17278,13 @@
             },
             "type": "array",
             "title": "Items"
+          },
+          "fees": {
+            "items": {
+              "$ref": "#/components/schemas/FeeItem"
+            },
+            "type": "array",
+            "title": "Fees"
           }
         },
         "type": "object",
@@ -15192,6 +17355,15 @@
           "agentNote": {
             "type": "string",
             "title": "Agentnote"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "reconciliation",
+              "item"
+            ],
+            "title": "Kind",
+            "default": "reconciliation"
           }
         },
         "type": "object",
@@ -15455,6 +17627,15 @@
           "sandboxTest": {
             "type": "boolean",
             "title": "Sandboxtest"
+          },
+          "listingCheck": {
+            "type": "boolean",
+            "title": "Listingcheck"
+          },
+          "stopReason": {
+            "type": "string",
+            "const": "declined",
+            "title": "Stopreason"
           }
         },
         "type": "object",
@@ -15696,6 +17877,15 @@
           "sandboxTest": {
             "type": "boolean",
             "title": "Sandboxtest"
+          },
+          "listingCheck": {
+            "type": "boolean",
+            "title": "Listingcheck"
+          },
+          "stopReason": {
+            "type": "string",
+            "const": "declined",
+            "title": "Stopreason"
           }
         },
         "type": "object",
@@ -16285,6 +18475,161 @@
         ],
         "title": "StudioAgentSummary"
       },
+      "StudioListing": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "agent",
+              "pack"
+            ],
+            "title": "Kind"
+          },
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "listed",
+              "unlisted"
+            ],
+            "title": "Status"
+          },
+          "price": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "latest": {
+            "$ref": "#/components/schemas/ListingVersion"
+          },
+          "approvedVersion": {
+            "type": "integer",
+            "title": "Approvedversion"
+          },
+          "installs": {
+            "type": "integer",
+            "title": "Installs"
+          },
+          "runs30d": {
+            "type": "integer",
+            "title": "Runs30D"
+          },
+          "earningsMonth": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "simulated": {
+            "type": "boolean",
+            "title": "Simulated",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "key",
+          "name",
+          "status",
+          "price",
+          "latest",
+          "installs",
+          "runs30d",
+          "earningsMonth"
+        ],
+        "title": "StudioListing",
+        "description": "One of the workspace's listings on its Publisher tab. Earnings are simulated."
+      },
+      "StudioListingDetail": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "agent",
+              "pack"
+            ],
+            "title": "Kind"
+          },
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "listed",
+              "unlisted"
+            ],
+            "title": "Status"
+          },
+          "price": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "latest": {
+            "$ref": "#/components/schemas/ListingVersion"
+          },
+          "approvedVersion": {
+            "type": "integer",
+            "title": "Approvedversion"
+          },
+          "installs": {
+            "type": "integer",
+            "title": "Installs"
+          },
+          "runs30d": {
+            "type": "integer",
+            "title": "Runs30D"
+          },
+          "earningsMonth": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "simulated": {
+            "type": "boolean",
+            "title": "Simulated",
+            "default": true
+          },
+          "versions": {
+            "items": {
+              "$ref": "#/components/schemas/ListingVersion"
+            },
+            "type": "array",
+            "title": "Versions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "key",
+          "name",
+          "status",
+          "price",
+          "latest",
+          "installs",
+          "runs30d",
+          "earningsMonth",
+          "versions"
+        ],
+        "title": "StudioListingDetail"
+      },
       "StudioPack": {
         "properties": {
           "key": {
@@ -16365,6 +18710,34 @@
         ],
         "title": "StudioPackSummary"
       },
+      "SubmitListingRequest": {
+        "properties": {
+          "priceMinor": {
+            "type": "integer",
+            "maximum": 100000.0,
+            "minimum": 0.0,
+            "title": "Priceminor"
+          },
+          "input": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Input"
+          },
+          "budgetMinor": {
+            "type": "integer",
+            "title": "Budgetminor",
+            "gt": 0,
+            "le": 100000
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "priceMinor"
+        ],
+        "title": "SubmitListingRequest",
+        "description": "The price (per run for a pack, per call for an agent; 0 is \"No fee\") and, for a pack, the input and\nbudget of the sandbox test run the automatic checks start."
+      },
       "SubmitReviewRequest": {
         "properties": {
           "verdict": {
@@ -16389,6 +18762,15 @@
             },
             "type": "object",
             "title": "Recordcalls"
+          },
+          "recordNotes": {
+            "additionalProperties": {
+              "type": "string",
+              "maxLength": 1000
+            },
+            "type": "object",
+            "maxProperties": 100,
+            "title": "Recordnotes"
           }
         },
         "additionalProperties": false,

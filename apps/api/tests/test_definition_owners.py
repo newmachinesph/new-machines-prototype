@@ -91,8 +91,6 @@ def test_a_snapshot_pins_an_org_pack_only_for_its_org(defs):
     assert snapshot["defs"]["contract"][mine]["body"]["org_id"] == ORG_A
     with pytest.raises(LookupError, match="not available"):
         build_snapshot(defs, mine, ORG_B, {}, set())
-    assert registry.hidden_from(defs, [("pack", mine), ("pack", PACK)], ORG_B) == [("pack", mine)]
-    assert registry.hidden_from(defs, [("pack", mine)], ORG_A) == []
 
 
 def test_publish_if_changed_skips_an_identical_version(defs):

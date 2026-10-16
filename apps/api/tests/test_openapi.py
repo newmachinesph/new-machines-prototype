@@ -101,3 +101,30 @@ def test_ops_conflicts_name_their_problem_codes():
     for op_id, codes in OPS_CONFLICTS.items():
         documented = by_id[op_id]["responses"]["409"]["description"]
         assert set(re.findall(r"[A-Z][A-Z_]+[A-Z]", documented)) == codes, op_id
+
+
+# Run start and pack install name the 409 reasons they raise.
+ROUTE_CONFLICTS = {
+    "installWorkflowPack": {"CONFLICT"},
+    "startWorkflowRun": {
+        "PLATFORM_PAUSED",
+        "PACK_NOT_HIRED",
+        "APPS_NOT_CONNECTED",
+        "RUN_BUDGET_OVER_CAP",
+        "SPEND_CAP",
+        "PACK_UNAVAILABLE",
+        "CONFLICT",
+    },
+}
+
+
+def test_install_and_run_start_conflicts_name_their_problem_codes():
+    by_id = {op["operationId"]: op for op in operations(create_app().openapi())}
+    for op_id, codes in ROUTE_CONFLICTS.items():
+        documented = by_id[op_id]["responses"]["409"]["description"]
+        assert set(re.findall(r"[A-Z][A-Z_]+[A-Z]", documented)) == codes, op_id
+
+
+def test_the_agent_submit_route_documents_invalid_input():
+    by_id = {op["operationId"]: op for op in operations(create_app().openapi())}
+    assert "INVALID_INPUT" in by_id["submitStudioAgent"]["responses"]["422"]["description"]

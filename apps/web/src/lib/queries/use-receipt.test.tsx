@@ -6,6 +6,8 @@ import type { RunStatus } from "@/lib/types";
 import { useReceipt } from "./runs";
 
 const fetchReceipt = vi.hoisted(() => vi.fn());
+const workspace = vi.hoisted(() => ({ live: true }));
+vi.mock("./me", async (orig) => ({ ...(await orig<object>()), useIsLive: () => workspace.live }));
 vi.mock("@/lib/api/gen/@tanstack/react-query.gen", async (orig) => ({
   ...(await orig<object>()),
   getWorkflowRunReceiptOptions: (o: { path: { run_id: string } }) => ({
@@ -23,11 +25,21 @@ const setup = (initial: RunStatus) => {
 };
 
 afterEach(() => {
+  workspace.live = true;
   vi.useRealTimers();
   fetchReceipt.mockReset();
 });
 
 describe("useReceipt", () => {
+  it("never asks for a receipt in the demo workspace, whose fixture runs have none", async () => {
+    workspace.live = false;
+    const { result } = setup("COMPLETED");
+    await act(() => Promise.resolve());
+    expect(result.current.fetchStatus).toBe("idle");
+    expect(result.current.data).toBeUndefined();
+    expect(fetchReceipt).not.toHaveBeenCalled();
+  });
+
   it("fetches the receipt once more when the run's status changes", async () => {
     fetchReceipt.mockResolvedValue({ entries: 3 });
     const { rerender } = setup("RUNNING");

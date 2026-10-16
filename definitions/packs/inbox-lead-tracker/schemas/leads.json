@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Leads",
+  "description": "One lead per kept enquiry, and the sheet rows to add.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["summary", "leads", "rows"],
+  "properties": {
+    "summary": {"type": "string", "minLength": 1},
+    "leads": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["thread_id", "received", "name", "company", "email", "request", "urgency"],
+        "properties": {
+          "thread_id": {"type": "string", "minLength": 1},
+          "received": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"},
+          "name": {"type": "string", "minLength": 1, "maxLength": 120},
+          "company": {"type": "string", "minLength": 1, "maxLength": 120},
+          "email": {"type": "string", "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"},
+          "request": {"type": "string", "minLength": 1, "maxLength": 200},
+          "urgency": {"enum": ["urgent", "soon", "normal"]}
+        }
+      }
+    },
+    "rows": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {"type": "array", "minItems": 7, "maxItems": 7, "items": {"type": "string"}}
+    }
+  }
+}

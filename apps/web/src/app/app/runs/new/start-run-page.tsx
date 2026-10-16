@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/skeleton";
 import { ButtonLink, Callout, PageHeader } from "@/components/ui";
 import { usePacks } from "@/lib/queries/catalog";
 import { isUsable, missingApps, useConnections, useOrg } from "@/lib/queries/org";
+import { packRunFee } from "@/lib/run-budget";
 import type { Connection, Organization, Pack } from "@/lib/types";
 import { useFormat } from "@/lib/use-format";
 import { type Refusal, StartRunForm } from "./start-run-form";
@@ -58,17 +59,19 @@ function StartRunBody({ list, conns, pack }: { list: Pack[]; conns: Connection[]
     name: p.name,
     inputs: p.connectors.filter((c) => connected.has(c.app)).flatMap((c) => INPUTS[c.app] ?? []),
     perRunCap: p.perRunCap,
+    maxBudget: p.maxBudget,
+    packFee: packRunFee(p),
+    runBudgetLimit: p.runBudgetLimit,
   }));
-  // A `?pack=` that can't be started (not hired, or unknown) is explained, never silently swapped.
+  // A `?pack=` that can't be started (not hired, or unknown) is explained, and the form waits: another pack is
+  // never chosen in its place.
   const unstartable = pack && !startable.some((p) => p.slug === pack) ? pack : null;
+  if (unstartable) return <UnstartablePack slug={unstartable} name={list.find((p) => p.slug === unstartable)?.name} />;
   return (
     <>
-      {unstartable ? (
-        <UnstartablePack slug={unstartable} name={list.find((p) => p.slug === unstartable)?.name} />
-      ) : null}
       {startable.length ? (
-        <StartRunForm packs={startable} defaultPack={unstartable ? undefined : (pack ?? undefined)} blocked={blocked} />
-      ) : unstartable ? null : (
+        <StartRunForm packs={startable} defaultPack={pack ?? undefined} blocked={blocked} />
+      ) : (
         <Callout
           tone="warn"
           title={t("noHiredPacks")}
@@ -106,11 +109,11 @@ export function StartRunPage() {
   );
 }
 
-/** Shown above the form when the link asked for a pack that can't start a run. */
+/** Shown instead of the form when the link asked for a pack that can't start a run: add it first. */
 function UnstartablePack({ slug, name }: { slug: string; name?: string }) {
   const t = useTranslations("runs.new");
   return (
-    <div className="mb-6">
+    <div>
       <Callout
         tone="warn"
         title={name ? t("notHired", { name }) : t("unknownPack", { slug })}

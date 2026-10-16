@@ -1,0 +1,25 @@
+kind: agent
+key: meeting-agent
+schema_version: nm.agent.manifest.v1.1
+agent_id: meeting-agent
+version: "1.0.0"
+publisher_id: new-machines-labs
+publisher_name: New Machines Labs
+name: Meeting Agent
+summary: >-
+  Reads one day of your calendar and plans a short follow-up for each guest from outside your team, from what the event says was agreed. It skips internal, cancelled and declined meetings, and it only plans: a person sends.
+capabilities: [communications.plan]
+runtime:
+  adapter: google_adk
+  model_profile: fast
+  instructions: instructions.md
+  skills: [skills/plan-follow-ups.md]
+  tools: []
+  max_turns: 4
+input_schema_ref: shared/agent-input
+output_schema_ref: meeting-follow-ups/plan
+requested_tool_capabilities: []
+data_processing:
+  supported_regions: ["asia-south1"]
+  data_classes: ["CONFIDENTIAL"]
+  retention_policy_ref: retention/30d

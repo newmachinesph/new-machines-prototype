@@ -433,11 +433,11 @@ def test_a_run_starting_while_a_pack_is_renamed_is_counted(ana, starts, monkeypa
     pin = real_runs.build_snapshot
     saver = threading.Thread(target=rename)
 
-    def pin_while_renaming(conn, *args):
+    def pin_while_renaming(conn, *args, **kwargs):
         monkeypatch.setattr(real_runs, "build_snapshot", pin)
         saver.start()
         saver.join(0.5)  # the rename reaches the installation row and waits there for the start
-        return pin(conn, *args)
+        return pin(conn, *args, **kwargs)
 
     monkeypatch.setattr(real_runs, "build_snapshot", pin_while_renaming)
     run = ana.post("/v1/workflow-runs", json={"packSlug": key, "input": AS_OF, "budgetMinor": 1000})

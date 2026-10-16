@@ -6,6 +6,7 @@ import { useToast } from "@/components/base";
 import { Button, Callout, Id, KeyValues, Pill, Section, SimTag } from "@/components/ui";
 import { useErrorText } from "@/lib/api/use-error-text";
 import type { ApprovalAction, EmailPreview } from "@/lib/api/gen/types.gen";
+import { useIsDemo } from "@/lib/queries/me";
 import { useDecideApproval } from "@/lib/queries/workspace";
 import { useFormat } from "@/lib/use-format";
 import type { Approval } from "@/lib/types";
@@ -22,10 +23,17 @@ export function ApprovalCard({ approval: a, onDecide }: { approval: Approval; on
   const approveMutation = useDecideApproval("approve");
   const declineMutation = useDecideApproval("decline");
   const action = a.action;
+  const demo = useIsDemo();
   // The cache is updated at once and rolled back on error, so the status is the single source of truth.
   const state = a.status === "GRANTED" ? "approved" : a.status === "DECLINED" ? "declined" : "pending";
   const approvedToast = () => {
-    if (!action) return toast(t("approvedToast"), t("approvedToastBody", { to: a.preview?.to ?? "" }), "sim");
+    if (!action) {
+      // An email approval belongs to the demo's fixtures; should one reach a live workspace, it is not the demo.
+      const to = a.preview?.to ?? "";
+      return demo
+        ? toast(t("approvedToast"), t("approvedToastBody", { to }), "sim")
+        : toast(t("approvedToast"), t("approvedToastBodyLive", { to }));
+    }
     if (action.mocked)
       return toast(t("actionApprovedToast"), t("actionApprovedToastSimulated", { app: action.app }), "sim");
     return toast(t("actionApprovedToast"), t("actionApprovedToastBody", { app: action.app }));

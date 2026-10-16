@@ -14,6 +14,7 @@ import { useOrgId } from "@/lib/queries/me";
 import { useCreateStudioAgent, useSaveStudioAgent, useStudioAgent, useStudioPalette } from "@/lib/queries/studio";
 import { useLeaveGuard } from "@/lib/use-leave-guard";
 import { useCanBuild } from "../can-build";
+import { SubmitButton } from "../submit-dialog";
 
 const INPUT =
   "mt-1.5 h-10 w-full rounded-md border border-grey-300 px-3 text-sm outline-none focus:border-ink disabled:bg-grey-50 disabled:text-grey-700 aria-[invalid=true]:border-blocked";
@@ -540,6 +541,7 @@ function AgentForm({
         ) : (
           <p className="text-sm text-muted">{tStudio("buildersOnly")}</p>
         )}
+        {agentKey ? <SubmitButton kind="agent" keyName={agentKey} name={draft.name} dirty={dirty} /> : null}
         {base ? <span className="text-sm text-muted">{t("version", { n: base })}</span> : null}
         {dirty ? <span className="text-sm text-muted">{t("unsaved")}</span> : null}
       </div>

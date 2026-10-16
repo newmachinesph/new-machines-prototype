@@ -99,6 +99,26 @@ describe("MarketplaceView ?action=new", () => {
   });
 });
 
+describe("MarketplaceView review queue callout", () => {
+  beforeEach(() => {
+    state.action = null;
+    state.packs = [];
+  });
+
+  it("points live workspaces to the review queue", () => {
+    state.workspace = "live";
+    renderView();
+    expect(screen.getByText("Workspace listings are reviewed in the review queue.")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /review queue/i })).toHaveAttribute("href", "/listings");
+  });
+
+  it("does not show it in the demo", () => {
+    state.workspace = "demo";
+    renderView();
+    expect(screen.queryByText("Workspace listings are reviewed in the review queue.")).toBeNull();
+  });
+});
+
 describe("MarketplaceView listings", () => {
   it("shows each pack's function and industries from its definition", () => {
     state.action = null;

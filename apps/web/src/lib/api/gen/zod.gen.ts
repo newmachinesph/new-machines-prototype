@@ -43,30 +43,6 @@ export const zAgentSkill = z.object({
 });
 
 /**
- * Agent
- *
- * A catalog agent. `source` is "definition" for an agent definition, "sample" for a demo fixture
- * agent (sample agents have no skills, tools or model profile). `used_by` lists the packs whose `agents`
- * name it.
- */
-export const zAgent = z.object({
-    id: z.string(),
-    version: z.string(),
-    name: z.string(),
-    publisher: z.string(),
-    summary: z.string(),
-    capabilities: z.array(z.string()),
-    regions: z.array(z.string()),
-    certified: z.boolean(),
-    skills: z.array(zAgentSkill),
-    tools: z.array(z.string()),
-    modelProfile: z.enum(['reasoning', 'fast']).optional(),
-    usedBy: z.array(zAgentPackRef),
-    source: z.enum(['definition', 'sample']),
-    builtByTeam: z.boolean().optional()
-});
-
-/**
  * ApprovalAction
  *
  * The step a real run asks to take once approved: the app it acts on, the workflow step, and the tool
@@ -147,7 +123,8 @@ export const zAuditEntry = z.object({
         'guardrail',
         'incident',
         'definition',
-        'memory'
+        'memory',
+        'listing'
     ]),
     targetId: z.string(),
     reason: z.string(),
@@ -343,6 +320,21 @@ export const zDeclareIncidentRequest = z.object({
     ]),
     services: z.array(z.string().min(1).max(40)).min(1).max(10),
     reason: z.string().min(1).max(500)
+});
+
+/**
+ * DefinitionDiff
+ */
+export const zDefinitionDiff = z.object({
+    kind: z.string(),
+    key: z.string(),
+    path: z.string(),
+    change: z.enum([
+        'added',
+        'changed',
+        'removed'
+    ]),
+    unified: z.string()
 });
 
 /**
@@ -701,6 +693,36 @@ export const zLedgerLine = z.object({
 });
 
 /**
+ * ListingCheck
+ */
+export const zListingCheck = z.object({
+    name: z.enum([
+        'definition',
+        'agents',
+        'sandbox'
+    ]),
+    state: z.enum([
+        'passed',
+        'failed',
+        'running'
+    ]),
+    detail: z.string(),
+    runId: z.string().optional()
+});
+
+/**
+ * ListingHistoryEntry
+ *
+ * One ops action on a listing, from `ops_audit`.
+ */
+export const zListingHistoryEntry = z.object({
+    at: z.string(),
+    by: z.string(),
+    action: z.string(),
+    note: z.string()
+});
+
+/**
  * McpToken
  */
 export const zMcpToken = z.object({
@@ -828,6 +850,21 @@ export const zEarning = z.object({
 });
 
 /**
+ * FeeItem
+ *
+ * One listing's publisher fees in a run: the quantity charged at the unit price, and the amount.
+ */
+export const zFeeItem = z.object({
+    listingId: z.string(),
+    name: z.string(),
+    publisher: z.string(),
+    kind: z.enum(['pack_run', 'agent_call']),
+    quantity: z.int(),
+    unit: zMoney,
+    amount: zMoney
+});
+
+/**
  * Invoice
  */
 export const zInvoice = z.object({
@@ -842,6 +879,71 @@ export const zInvoice = z.object({
         'overdue',
         'void'
     ])
+});
+
+/**
+ * ListingVersion
+ */
+export const zListingVersion = z.object({
+    id: z.string(),
+    definitionVersion: z.int(),
+    status: z.enum([
+        'checking',
+        'checks_failed',
+        'in_review',
+        'approved',
+        'changes_requested',
+        'rejected'
+    ]),
+    price: zMoney,
+    checks: z.array(zListingCheck),
+    submittedAt: z.string(),
+    submittedBy: z.string(),
+    decidedAt: z.string().optional(),
+    decidedBy: z.string().optional(),
+    note: z.string().optional()
+});
+
+/**
+ * MarketplaceListing
+ *
+ * Another workspace's listed agent or pack. `fee` is per run (pack) or per call (agent); 0 shows as
+ * "No fee". `version` is the newest approved version; `installed_version` and `update_available` are set on
+ * a pack the workspace has added.
+ */
+export const zMarketplaceListing = z.object({
+    listingId: z.string(),
+    publisher: z.string(),
+    fee: zMoney,
+    feeUnit: z.enum(['run', 'call']),
+    version: z.int(),
+    installedVersion: z.int().optional(),
+    updateAvailable: z.boolean().optional()
+});
+
+/**
+ * Agent
+ *
+ * A catalog agent. `source` is "definition" for an agent definition, "sample" for a demo fixture
+ * agent (sample agents have no skills, tools or model profile). `used_by` lists the packs whose `agents`
+ * name it.
+ */
+export const zAgent = z.object({
+    id: z.string(),
+    version: z.string(),
+    name: z.string(),
+    publisher: z.string(),
+    summary: z.string(),
+    capabilities: z.array(z.string()),
+    regions: z.array(z.string()),
+    certified: z.boolean(),
+    skills: z.array(zAgentSkill),
+    tools: z.array(z.string()),
+    modelProfile: z.enum(['reasoning', 'fast']).optional(),
+    usedBy: z.array(zAgentPackRef),
+    listing: zMarketplaceListing.optional(),
+    source: z.enum(['definition', 'sample']),
+    builtByTeam: z.boolean().optional()
 });
 
 /**
@@ -907,6 +1009,49 @@ export const zOpsKpis = z.object({
     aiSpendToday: zMoney,
     platformDailyCap: zMoney,
     incidentsOpen: z.int()
+});
+
+/**
+ * OpsListing
+ */
+export const zOpsListing = z.object({
+    id: z.string(),
+    kind: z.enum(['agent', 'pack']),
+    key: z.string(),
+    name: z.string(),
+    publisher: z.string(),
+    publisherOrgId: z.string(),
+    status: z.enum([
+        'pending',
+        'listed',
+        'unlisted'
+    ]),
+    price: zMoney,
+    updatedAt: z.string(),
+    pending: zListingVersion.optional()
+});
+
+/**
+ * OpsListingDetail
+ */
+export const zOpsListingDetail = z.object({
+    id: z.string(),
+    kind: z.enum(['agent', 'pack']),
+    key: z.string(),
+    name: z.string(),
+    publisher: z.string(),
+    publisherOrgId: z.string(),
+    status: z.enum([
+        'pending',
+        'listed',
+        'unlisted'
+    ]),
+    price: zMoney,
+    updatedAt: z.string(),
+    pending: zListingVersion.optional(),
+    versions: z.array(zListingVersion),
+    diff: z.array(zDefinitionDiff),
+    history: z.array(zListingHistoryEntry)
 });
 
 /**
@@ -1082,7 +1227,9 @@ export const zOpsOverview = z.object({
     runsByHour: z.array(zHourPoint),
     simulatedFields: z.array(z.string()),
     topPacks: z.array(zPackCount).optional(),
-    spendMonth: zMoney.optional()
+    spendMonth: zMoney.optional(),
+    listingsInReview: z.int().optional(),
+    publisherEarningsMonth: zMoney.optional()
 });
 
 /**
@@ -1114,7 +1261,8 @@ export const zPaletteAgent = z.object({
     builtByTeam: z.boolean().optional(),
     modelProfile: z.string().optional(),
     outputSchemaRef: z.string(),
-    outputSchema: z.record(z.string(), z.unknown()).optional()
+    outputSchema: z.record(z.string(), z.unknown()).optional(),
+    listing: zMarketplaceListing.optional()
 });
 
 /**
@@ -1206,6 +1354,15 @@ export const zBillingSummary = z.object({
     invoices: z.array(zInvoice),
     payouts: z.array(zPayout),
     simulated: z.literal(true).optional().default(true)
+});
+
+/**
+ * PayoutMonth
+ */
+export const zPayoutMonth = z.object({
+    month: z.string(),
+    amount: zMoney,
+    status: z.literal('SIMULATED').optional().default('SIMULATED')
 });
 
 /**
@@ -1346,6 +1503,50 @@ export const zPublishDefinitionRequest = z.object({
 });
 
 /**
+ * PublisherEarnings
+ *
+ * The publisher share of fees: this calendar month (UTC) and the simulated payouts of earlier months.
+ */
+export const zPublisherEarnings = z.object({
+    month: zMoney,
+    payouts: z.array(zPayoutMonth),
+    simulated: z.boolean().optional().default(true)
+});
+
+/**
+ * PublisherProfile
+ */
+export const zPublisherProfile = z.object({
+    name: z.string(),
+    description: z.string(),
+    payoutNote: z.string(),
+    updatedAt: z.string()
+});
+
+/**
+ * PublisherRequest
+ *
+ * Turn publishing on, or change the profile. `payout_note` is simulated payout details.
+ */
+export const zPublisherRequest = z.object({
+    name: z.string().min(1).max(80),
+    description: z.string().max(280).optional().default(''),
+    payoutNote: z.string().max(200).optional().default('')
+});
+
+/**
+ * PublisherSettings
+ *
+ * `enabled` is whether the workspace may submit; `profile` is absent until publishing is first turned on
+ * and kept when it is turned off. Payout details and payouts are simulated: no money moves.
+ */
+export const zPublisherSettings = z.object({
+    enabled: z.boolean(),
+    profile: zPublisherProfile.optional(),
+    simulated: z.boolean().optional().default(true)
+});
+
+/**
  * ReasonRequest
  */
 export const zReasonRequest = z.object({
@@ -1375,7 +1576,8 @@ export const zReceipt = z.object({
     entries: z.int(),
     headHash: z.string(),
     pinned: z.array(zPinnedVersion),
-    items: z.array(zReceiptItem)
+    items: z.array(zReceiptItem),
+    fees: z.array(zFeeItem).optional()
 });
 
 /**
@@ -1386,7 +1588,8 @@ export const zRedactedRecord = z.object({
     order: zOrderSide,
     payment: zPaymentSide,
     flag: z.string(),
-    agentNote: z.string()
+    agentNote: z.string(),
+    kind: z.enum(['reconciliation', 'item']).optional().default('reconciliation')
 });
 
 /**
@@ -1730,7 +1933,8 @@ export const zLedgerTxn = z.object({
         'HELD'
     ]),
     lines: z.array(zLedgerLine),
-    spent: zSpent.optional()
+    spent: zSpent.optional(),
+    fees: z.array(zFeeItem).optional()
 });
 
 /**
@@ -1801,7 +2005,9 @@ export const zRunSummary = z.object({
     stages: zStages,
     summary: z.string(),
     hasDetail: z.boolean().optional().default(false),
-    sandboxTest: z.boolean().optional()
+    sandboxTest: z.boolean().optional(),
+    listingCheck: z.boolean().optional(),
+    stopReason: z.literal('declined').optional()
 });
 
 /**
@@ -1909,6 +2115,53 @@ export const zStudioAgentSummary = z.object({
 });
 
 /**
+ * StudioListing
+ *
+ * One of the workspace's listings on its Publisher tab. Earnings are simulated.
+ */
+export const zStudioListing = z.object({
+    id: z.string(),
+    kind: z.enum(['agent', 'pack']),
+    key: z.string(),
+    name: z.string(),
+    status: z.enum([
+        'pending',
+        'listed',
+        'unlisted'
+    ]),
+    price: zMoney,
+    latest: zListingVersion,
+    approvedVersion: z.int().optional(),
+    installs: z.int(),
+    runs30d: z.int(),
+    earningsMonth: zMoney,
+    simulated: z.boolean().optional().default(true)
+});
+
+/**
+ * StudioListingDetail
+ */
+export const zStudioListingDetail = z.object({
+    id: z.string(),
+    kind: z.enum(['agent', 'pack']),
+    key: z.string(),
+    name: z.string(),
+    status: z.enum([
+        'pending',
+        'listed',
+        'unlisted'
+    ]),
+    price: zMoney,
+    latest: zListingVersion,
+    approvedVersion: z.int().optional(),
+    installs: z.int(),
+    runs30d: z.int(),
+    earningsMonth: zMoney,
+    simulated: z.boolean().optional().default(true),
+    versions: z.array(zListingVersion)
+});
+
+/**
  * StudioPack
  */
 export const zStudioPack = z.object({
@@ -1934,6 +2187,18 @@ export const zStudioPackSummary = z.object({
 });
 
 /**
+ * SubmitListingRequest
+ *
+ * The price (per run for a pack, per call for an agent; 0 is "No fee") and, for a pack, the input and
+ * budget of the sandbox test run the automatic checks start.
+ */
+export const zSubmitListingRequest = z.object({
+    priceMinor: z.int().gte(0).lte(100000),
+    input: z.record(z.string(), z.unknown()).optional(),
+    budgetMinor: z.int().optional()
+});
+
+/**
  * SubmitReviewRequest
  */
 export const zSubmitReviewRequest = z.object({
@@ -1944,7 +2209,8 @@ export const zSubmitReviewRequest = z.object({
         'ESCALATED'
     ]),
     feedbackText: z.string().min(1).max(4000),
-    recordCalls: z.record(z.string(), z.string())
+    recordCalls: z.record(z.string(), z.string()),
+    recordNotes: z.record(z.string(), z.string().max(1000)).optional()
 });
 
 /**
@@ -2207,7 +2473,9 @@ export const zRun = z.object({
     attention: zAttention.optional(),
     deliverable: zDeliverable.optional(),
     recovered: z.string().optional(),
-    sandboxTest: z.boolean().optional()
+    sandboxTest: z.boolean().optional(),
+    listingCheck: z.boolean().optional(),
+    stopReason: z.literal('declined').optional()
 });
 
 /**
@@ -2279,12 +2547,16 @@ export const zPack = z.object({
     priceNote: z.string().optional(),
     inputSchema: z.record(z.string(), z.unknown()).optional(),
     perRunCap: zMoney.optional(),
+    maxBudget: zMoney.optional(),
+    runFee: zMoney.optional(),
+    runBudgetLimit: zMoney.optional(),
     reviewerPool: z.enum([
         'team',
         'network',
         'team_then_network'
     ]).optional(),
-    builtByTeam: z.boolean().optional()
+    builtByTeam: z.boolean().optional(),
+    listing: zMarketplaceListing.optional()
 });
 
 /**
@@ -2523,6 +2795,16 @@ export const zInstallWorkflowPackPath = z.object({
  * Successful Response
  */
 export const zInstallWorkflowPackResponse = zInstallation;
+
+export const zUpgradeWorkflowPackPath = z.object({
+    org_id: z.string(),
+    slug: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zUpgradeWorkflowPackResponse = zInstallation;
 
 /**
  * Response Listworkflowruns
@@ -3031,6 +3313,89 @@ export const zSaveStudioPackPath = z.object({
  */
 export const zSaveStudioPackResponse = zStudioPack;
 
+export const zDisablePublisherPath = z.object({
+    org_id: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zDisablePublisherResponse = zPublisherSettings;
+
+export const zGetPublisherPath = z.object({
+    org_id: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zGetPublisherResponse = zPublisherSettings;
+
+export const zSavePublisherBody = zPublisherRequest;
+
+export const zSavePublisherPath = z.object({
+    org_id: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zSavePublisherResponse = zPublisherSettings;
+
+export const zSubmitStudioAgentBody = zSubmitListingRequest;
+
+export const zSubmitStudioAgentPath = z.object({
+    org_id: z.string(),
+    key: z.string().max(100).regex(/^[a-z0-9][a-z0-9-]*$/)
+});
+
+/**
+ * Successful Response
+ */
+export const zSubmitStudioAgentResponse = zStudioListingDetail;
+
+export const zSubmitStudioPackBody = zSubmitListingRequest;
+
+export const zSubmitStudioPackPath = z.object({
+    org_id: z.string(),
+    key: z.string().max(100).regex(/^[a-z0-9][a-z0-9-]*$/)
+});
+
+/**
+ * Successful Response
+ */
+export const zSubmitStudioPackResponse = zStudioListingDetail;
+
+export const zListStudioListingsPath = z.object({
+    org_id: z.string()
+});
+
+/**
+ * Response Liststudiolistings
+ *
+ * Successful Response
+ */
+export const zListStudioListingsResponse = z.array(zStudioListing);
+
+export const zGetStudioListingPath = z.object({
+    org_id: z.string(),
+    listing_id: z.string().regex(/^lst_[0-9a-f]{12}$/)
+});
+
+/**
+ * Successful Response
+ */
+export const zGetStudioListingResponse = zStudioListingDetail;
+
+export const zGetStudioEarningsPath = z.object({
+    org_id: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zGetStudioEarningsResponse = zPublisherEarnings;
+
 export const zOpsListPacksQuery = z.object({
     status: z.enum([
         'draft',
@@ -3192,6 +3557,86 @@ export const zOpsHealthCheckConnectorPath = z.object({
  * Successful Response
  */
 export const zOpsHealthCheckConnectorResponse = zConnectorEntry;
+
+export const zOpsListListingsQuery = z.object({
+    status: z.enum([
+        'in_review',
+        'pending',
+        'listed',
+        'unlisted'
+    ]).nullish()
+});
+
+/**
+ * Response Opslistlistings
+ *
+ * Successful Response
+ */
+export const zOpsListListingsResponse = z.array(zOpsListing);
+
+export const zOpsGetListingPath = z.object({
+    listing_id: z.string().regex(/^lst_[0-9a-f]{12}$/)
+});
+
+/**
+ * Successful Response
+ */
+export const zOpsGetListingResponse = zOpsListingDetail;
+
+export const zOpsApproveListingBody = zReasonRequest;
+
+export const zOpsApproveListingPath = z.object({
+    listing_id: z.string().regex(/^lst_[0-9a-f]{12}$/)
+});
+
+/**
+ * Successful Response
+ */
+export const zOpsApproveListingResponse = zOpsListingDetail;
+
+export const zOpsRequestListingChangesBody = zReasonRequest;
+
+export const zOpsRequestListingChangesPath = z.object({
+    listing_id: z.string().regex(/^lst_[0-9a-f]{12}$/)
+});
+
+/**
+ * Successful Response
+ */
+export const zOpsRequestListingChangesResponse = zOpsListingDetail;
+
+export const zOpsRejectListingBody = zReasonRequest;
+
+export const zOpsRejectListingPath = z.object({
+    listing_id: z.string().regex(/^lst_[0-9a-f]{12}$/)
+});
+
+/**
+ * Successful Response
+ */
+export const zOpsRejectListingResponse = zOpsListingDetail;
+
+export const zOpsUnlistListingBody = zReasonRequest;
+
+export const zOpsUnlistListingPath = z.object({
+    listing_id: z.string().regex(/^lst_[0-9a-f]{12}$/)
+});
+
+/**
+ * Successful Response
+ */
+export const zOpsUnlistListingResponse = zOpsListingDetail;
+
+export const zOpsRelistListingBody = zReasonRequest;
+
+export const zOpsRelistListingPath = z.object({
+    listing_id: z.string().regex(/^lst_[0-9a-f]{12}$/)
+});
+
+/**
+ * Successful Response
+ */
+export const zOpsRelistListingResponse = zOpsListingDetail;
 
 /**
  * Response Opslistdefinitions
@@ -3488,7 +3933,8 @@ export const zOpsListAuditQuery = z.object({
         'guardrail',
         'incident',
         'definition',
-        'memory'
+        'memory',
+        'listing'
     ]).nullish(),
     targetId: z.string().max(100).nullish(),
     limit: z.int().gte(1).lte(500).optional().default(100)

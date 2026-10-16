@@ -1,0 +1,107 @@
+{
+  "input_parameters": {
+    "properties": {
+      "alwaysIncludeEmail": {
+        "type": "boolean"
+      },
+      "calendarId": {
+        "type": "string"
+      },
+      "eventTypes": {
+        "items": {
+          "enum": [
+            "birthday",
+            "default",
+            "focusTime",
+            "fromGmail",
+            "outOfOffice",
+            "workingLocation"
+          ],
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "fields": {
+        "type": "string"
+      },
+      "iCalUID": {
+        "type": "string"
+      },
+      "maxAttendees": {
+        "minimum": 1,
+        "type": "integer"
+      },
+      "maxResults": {
+        "maximum": 2500,
+        "minimum": 1,
+        "type": "integer"
+      },
+      "orderBy": {
+        "enum": [
+          "startTime",
+          "updated"
+        ],
+        "type": "string"
+      },
+      "pageToken": {
+        "type": "string"
+      },
+      "privateExtendedProperty": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        ]
+      },
+      "query": {
+        "type": "string"
+      },
+      "sharedExtendedProperty": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        ]
+      },
+      "showDeleted": {
+        "type": "boolean"
+      },
+      "showHiddenInvitations": {
+        "type": "boolean"
+      },
+      "singleEvents": {
+        "type": "boolean"
+      },
+      "syncToken": {
+        "type": "string"
+      },
+      "timeMax": {
+        "type": "string"
+      },
+      "timeMin": {
+        "type": "string"
+      },
+      "timeZone": {
+        "type": "string"
+      },
+      "updatedMin": {
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "slug": "GOOGLECALENDAR_EVENTS_LIST",
+  "version": "20261010_00"
+}

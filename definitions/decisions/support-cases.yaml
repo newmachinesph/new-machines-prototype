@@ -1,0 +1,35 @@
+# Where a support triage goes after the cases are planned. Rules run in order; the first whose `when` is true wins.
+# The first two do not trust the agent's review_items: without the decision model a person checks every case,
+# and any email the decision model called a complaint or a refund request goes to a person.
+kind: decision_rules
+key: support-cases
+
+question: Do any cases need a person before replies are drafted?
+
+rules:
+  - when: nodes.screen.output.evaluator.status != 'answered'
+    verdict: HUMAN_REVIEW
+    route: human_review
+    reason_code: UNSCREENED_CASES
+    explanation: The decision model was not available, so a person checks every case before any reply is drafted.
+  - when: nodes.screen.output.items.exists(i, i.answers.support_category.value in ['complaint', 'refund'])
+    verdict: HUMAN_REVIEW
+    route: human_review
+    reason_code: CASES_NEED_A_PERSON
+    explanation: Some cases need a person, who checks them before any reply is drafted.
+  - when: size(nodes.triage.output.cases) == 0
+    verdict: APPROVED
+    route: nothing
+    reason_code: NO_EMAILS
+    explanation: No customer email needs an answer.
+  - when: size(nodes.triage.output.review_items) > 0
+    verdict: HUMAN_REVIEW
+    route: human_review
+    reason_code: CASES_NEED_A_PERSON
+    explanation: Some cases need a person, who checks them before any reply is drafted.
+
+default:
+  verdict: APPROVED
+  route: planned
+  reason_code: REPLIES_PLANNED
+  explanation: Only questions came in, so replies are drafted for your approval.

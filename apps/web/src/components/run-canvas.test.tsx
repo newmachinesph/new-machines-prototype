@@ -5,7 +5,7 @@ import { RUN_1042 } from "@/data/runs-recon";
 import { layoutGraph, type GraphLayout } from "@/lib/graph-layout";
 import type { Run } from "@/lib/types";
 import { renderWithIntl } from "@/test/intl";
-import { RunCanvas, snapAspect } from "./run-canvas";
+import { READABLE_ZOOM, RunCanvas, snapAspect } from "./run-canvas";
 
 vi.mock("@/lib/graph-layout", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/graph-layout")>()),
@@ -212,6 +212,8 @@ describe("RunCanvas", () => {
     expect(fitView).toHaveBeenCalledTimes(1);
     expect(fittedIds()).toContain("report");
     expect(fittedIds()).not.toContain("decide");
+    // The fit keeps the steps readable rather than shrinking them all into view.
+    expect(fitView.mock.calls[0][0].minZoom).toBe(READABLE_ZOOM);
 
     // A resize within the same snap step changes nothing.
     resizeTo(1180, 400);

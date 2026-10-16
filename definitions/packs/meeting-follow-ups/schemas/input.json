@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Meeting follow-ups request",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["day", "signature"],
+  "properties": {
+    "day": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+      "description": "The day of the meetings to follow up, usually yesterday (YYYY-MM-DD, read in UTC)."
+    },
+    "signature": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "description": "The name the follow-ups are signed with."
+    }
+  }
+}

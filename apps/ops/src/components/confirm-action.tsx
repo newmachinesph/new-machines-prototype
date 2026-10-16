@@ -2,7 +2,7 @@
 
 import { AlertDialog } from "@base-ui/react/alert-dialog";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { type ReactElement, type ReactNode, useId, useState } from "react";
+import { type ReactElement, type ReactNode, useId, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { errorText } from "@/lib/api/error-text";
@@ -46,6 +46,8 @@ export type ConfirmActionProps = {
   confirmDisabled?: boolean;
   /** Placeholder for the reason, e.g. "Chargeback dispute opened by the card issuer". */
   reasonPlaceholder?: string;
+  /** Label for the reason field when "Reason" does not fit, e.g. "Note for the publisher". */
+  reasonLabel?: string;
 };
 
 /**
@@ -65,13 +67,27 @@ export function ConfirmAction({
   children,
   confirmDisabled,
   reasonPlaceholder,
+  reasonLabel = "Reason",
 }: ConfirmActionProps) {
   const id = useId();
   const [openState, setOpenState] = useState(false);
   const open = openProp ?? openState;
   const [apiError, setApiError] = useState<string | null>(null);
+  const schema = useMemo(
+    () =>
+      reasonLabel === "Reason"
+        ? reasonSchema
+        : reasonSchema.extend({
+            reason: z
+              .string()
+              .trim()
+              .min(1, `Add a ${reasonLabel.toLowerCase()}. It is recorded in the audit log.`)
+              .max(REASON_MAX, `Keep the ${reasonLabel.toLowerCase()} to ${REASON_MAX} characters or fewer.`),
+          }),
+    [reasonLabel],
+  );
   const form = useForm<ReasonValues>({
-    resolver: zodResolver(reasonSchema),
+    resolver: zodResolver(schema),
     defaultValues: { reason: "" },
     shouldFocusError: true,
   });
@@ -124,7 +140,7 @@ export function ConfirmAction({
             {children}
             <div className="text-sm">
               <label htmlFor={reasonId} className="font-medium">
-                Reason
+                {reasonLabel}
               </label>
               <textarea
                 id={reasonId}

@@ -6,8 +6,12 @@ from collections.abc import Iterable
 from pathlib import PurePosixPath
 from typing import NamedTuple
 
+from app import db, listings, settings
+from app.defs import owners
 from app.defs.current import latest_bodies, latest_with_files, team_keys
 from app.models.catalog import Agent, AgentPackRef, AgentSkill, SampleAgent
+from app.models.common import Money
+from app.models.publishing import FeeUnit, MarketplaceListing
 
 MODEL_PROFILES = ("reasoning", "fast")
 _FRONT_MATTER = re.compile(r"\A---\n.*?\n---[ \t]*(?:\n|\Z)", re.DOTALL)
@@ -71,9 +75,50 @@ def sample_aliases(samples: list[SampleAgent]) -> dict[str, str]:
     return {s.id: keys[_fold(s.name)] for s in samples if _fold(s.name) in keys and s.id not in keys.values()}
 
 
+def market_listing(
+    row: listings.MarketRow,
+    unit: FeeUnit,
+    installed_version: int | None,
+    installed_listing_version: str | None = None,
+) -> MarketplaceListing:
+    """Another workspace's listed agent or pack as the marketplace shows it: publisher, fee per `unit` and the
+    approved version (`installed_version` and `update_available` only for a pack the viewer has added). An
+    update is available when the installation holds another approved listing version than the current one
+    (`installed_listing_version`; one holding none cannot run and updates to hold one), so a version
+    approved again at the same pack version is an update too."""
+    update = None if installed_version is None else installed_listing_version != row.version_id
+    return MarketplaceListing(
+        listing_id=row.listing_id,
+        publisher=row.publisher,
+        fee=Money(amount_minor=row.price_minor),
+        fee_unit=unit,
+        version=row.version,
+        installed_version=installed_version,
+        update_available=update,
+    )
+
+
+def listed_agents(org_id: str | None) -> dict[str, listings.MarketRow]:
+    """Every agent another workspace has listed, by key, as `org_id` sees it (none without an org or with the
+    runtime off)."""
+    if org_id is None or not settings.runtime_enabled():
+        return {}
+    with db.connect() as conn:
+        market = listings.market_info(conn, org_id)
+    return {key: row for (kind, key), row in market.items() if kind == "agent"}
+
+
 def definition_agent(
-    key: str, body: dict, files: dict[str, str], packs: Iterable[PackUse], *, team: bool = False
+    key: str,
+    body: dict,
+    files: dict[str, str],
+    packs: Iterable[PackUse],
+    *,
+    team: bool = False,
+    listed: listings.MarketRow | None = None,
 ) -> Agent:
+    """A definition agent. `listed`: another workspace's listed agent, shown with its listing's publisher and
+    per-call fee. Only the platform's agents are certified: neither the org's own nor another workspace's."""
     runtime = body.get("runtime") if isinstance(body.get("runtime"), dict) else {}
     processing = body.get("data_processing") if isinstance(body.get("data_processing"), dict) else {}
     profile = runtime.get("model_profile")
@@ -82,17 +127,18 @@ def definition_agent(
         id=key,
         version=str(body.get("version") or ""),
         name=agent_name(key, body),
-        publisher=str(
-            body.get("publisher_name") or humanise(str(body.get("publisher_id") or ""), title=True)
-        ),
+        publisher=listed.publisher
+        if listed
+        else str(body.get("publisher_name") or humanise(str(body.get("publisher_id") or ""), title=True)),
         summary=str(body.get("summary") or ""),
         capabilities=_strings(body.get("capabilities")),
         regions=_strings(processing.get("supported_regions")),
-        certified=not team,
+        certified=not team and listed is None and not owners.is_reserved(key),
         skills=[AgentSkill(key=PurePosixPath(p).stem, title=skill_title(p, files.get(p))) for p in skills],
         tools=_strings(runtime.get("tools")),
         model_profile=profile if profile in MODEL_PROFILES else None,
         used_by=_used_by(key, packs),
+        listing=market_listing(listed, "call", None) if listed else None,
         source="definition",
         built_by_team=True if team else None,
     )
@@ -125,10 +171,11 @@ def catalog(
 ) -> list[Agent]:
     """Definition agents by key, then `samples` (pass none in the live workspace) except those folded into a
     definition agent by `aliases`. `packs` should already name definition keys in place of aliases. With
-    `org_id` (live workspace) the org's own agents are included, marked built by its team."""
-    team = team_keys(org_id)
+    `org_id` (live workspace) the org's own agents are included, marked built by its team, and the agents
+    other workspaces have listed, with their listing."""
+    team, listed = team_keys(org_id), listed_agents(org_id)
     defined = [
-        definition_agent(key, body, files, packs, team=("agent", key) in team)
+        definition_agent(key, body, files, packs, team=("agent", key) in team, listed=listed.get(key))
         for key, (body, files) in sorted(latest_with_files("agent", org_id).items())
     ]
     hidden = {a.id for a in defined} | set(aliases or {})

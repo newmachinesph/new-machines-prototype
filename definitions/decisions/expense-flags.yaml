@@ -1,0 +1,23 @@
+# Where a weekly expense check goes after the expenses are checked. Rules run in order; the first whose `when` is true wins.
+kind: decision_rules
+key: expense-flags
+
+question: Do any of this week's expenses need a person?
+
+rules:
+  - when: size(nodes.analyse.output.expenses) == 0
+    verdict: APPROVED
+    route: nothing
+    reason_code: NO_EXPENSES
+    explanation: There were no expenses in the week, so there is nothing to summarise.
+  - when: size(nodes.analyse.output.review_items) > 0
+    verdict: HUMAN_REVIEW
+    route: human_review
+    reason_code: ODD_ITEMS_FOUND
+    explanation: Some expenses look unusual, so a person checks them before the summary is written.
+
+default:
+  verdict: APPROVED
+  route: ordinary
+  reason_code: ALL_ORDINARY
+  explanation: Every expense looks ordinary, so the summary is drafted for your approval.

@@ -1,0 +1,35 @@
+kind: pack
+key: meeting-follow-ups
+slug: meeting-follow-ups
+name: Meeting Follow-ups
+version: 1.0.0
+publisher: New Machines Labs
+function: operations
+industries: [professional-services, media-content]
+outcome: A short follow-up drafted for everyone outside your team you met with, ready for you to check and send.
+description: >-
+  Reads one day of your Google Calendar, skips focus time, internal meetings, cancelled meetings and
+  declined invitations, and plans a short follow-up for each guest from outside your team, using what the
+  event says was agreed. Once you approve, it saves the follow-ups as Gmail drafts. Nothing is sent.
+risk_class: low
+price_note: About $0.05 to $0.30 of AI work per run. No reviewer time.
+workflow: meeting-follow-ups
+contract: meeting-follow-ups
+agents: [meeting-agent, writer-agent]
+connectors: [googlecalendar, gmail]
+human_review: No reviewer. You approve the follow-ups before any draft is saved.
+# How the run page shows the result. Strings starting with "=" are CEL over {deliverable, mocked}.
+# With no meetings to follow up, the run ends with the plan instead of drafts.
+deliverable_view:
+  kind: Email drafts
+  summary: >-
+    =!has(deliverable.drafts) ? deliverable.summary + (mocked ? ' This is sandbox data.' : '') : (size(deliverable.drafts) == 1 ? '1 follow-up was
+    drafted' : string(size(deliverable.drafts)) + ' follow-ups were drafted') + (mocked ? ' on sandbox
+    data. No email was created in Gmail.' : ', ready for you to check and send.')
+  facts:
+    - label: Drafts created
+      value: "=has(deliverable.drafts) ? string(size(deliverable.drafts)) : '0'"
+  items:
+    from: "=has(deliverable.drafts) ? deliverable.drafts : []"
+    label: "=item.to + ' — ' + item.subject"
+    detail: =item.body

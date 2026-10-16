@@ -66,6 +66,38 @@ def _drafts(n: int, body: str = "Hello,\n\nYour invoice is overdue.") -> dict:
     }
 
 
+# --- step labels ------------------------------------------------------------------------------------
+
+
+def _agent_step_label(agent_key: str, agent_body: dict | None) -> str:
+    """The label of OVERDUE's first agent step when it runs `agent_key` (pinned with `agent_body`)."""
+    snapshot = _snapshot(OVERDUE)
+    workflow = next(iter(snapshot["defs"]["workflow"].values()))["body"]
+    step = next(n for n in workflow["nodes"] if n["type"] == "agent")
+    step["config"]["agent"] = agent_key
+    if agent_body is not None:
+        snapshot["defs"]["agent"][agent_key] = {"body": agent_body, "files": {}}
+    p = projection.initial_projection("run_l", snapshot, {}, "You", 2500)
+    return next(n["label"] for n in p["nodes"] if n["id"] == step["id"])
+
+
+def test_a_workspace_agent_step_is_labelled_with_the_agents_name():
+    key = "org-5c8192d7129c2fa2--invoice-helper"
+    assert _agent_step_label(key, {"name": "Invoice helper", "runtime": {}}) == "Invoice helper"
+
+
+def test_a_workspace_agent_step_never_carries_the_org_id():
+    key = "org-5c8192d7129c2fa2--invoice-helper"
+    for body in (None, {"runtime": {}}, {"name": "  ", "runtime": {}}):
+        label = _agent_step_label(key, body)
+        assert "5c8192d7129c2fa2" not in label and "org" not in label.lower(), label
+        assert label == "Invoice helper"
+
+
+def test_a_platform_agent_step_keeps_its_key_in_words():
+    assert _agent_step_label("finance-agent", None) == "Finance agent"
+
+
 # --- the view ---------------------------------------------------------------------------------------
 
 
@@ -469,3 +501,46 @@ def test_a_retried_review_s_second_task_has_its_own_lines():
         "Created task ht_2",
         f"{_review(p)['label']} did not finish",
     ]
+
+
+# --- why a run stopped -----------------------------------------------------------------------------------
+
+APPROVAL_ASKED = (
+    "approval",
+    "approve",
+    {"approval_id": "apr_1", "status": "pending", "title": "Save drafts"},
+)
+
+
+def _stopped_after(decision: str, failed: dict) -> Run:
+    """The overdue pack's run whose approval ended with `decision`, then failed at its `failed` end."""
+    return _fold(
+        OVERDUE,
+        ("node.started", "approve", {}),
+        APPROVAL_ASKED,
+        ("approval", "approve", {"approval_id": "apr_1", "status": decision, "decided_by": "Ana Reyes"}),
+        ("node.failed", "approve", failed),
+        ("node.started", "failed", {}),
+        ("node.completed", "failed", {}),
+        ("run.failed", "failed", {"reason": "The approval was declined."}),
+    )
+
+
+def test_a_run_stopped_by_a_declined_approval_says_declined():
+    run = _stopped_after("denied", {"status": "REJECTED", "route": "denied", "error": "No."})
+    assert run.status == "FAILED" and run.stop_reason == "declined"
+    assert run.summary_row().stop_reason == "declined"
+    assert run.model_dump(by_alias=True)["stopReason"] == "declined"
+
+
+def test_a_run_whose_approval_timed_out_or_that_failed_elsewhere_is_not_declined():
+    timed_out = _stopped_after("timeout", {"status": "TIMED_OUT", "route": "timeout", "error": "Too late."})
+    assert timed_out.status == "FAILED" and timed_out.stop_reason is None
+    failed = _fold(OVERDUE, ("run.failed", None, {"reason": "ACTIVITY_FAILED: plan"}))
+    assert failed.stop_reason is None and failed.summary_row().stop_reason is None
+
+
+def test_an_agent_step_names_its_model_profile_in_sentence_case():
+    run = _fold(OVERDUE)
+    subtitles = {n.id: n.subtitle for n in run.nodes if n.type == "agent"}
+    assert subtitles == {"plan": "Reasoning model", "draft": "Fast model"}

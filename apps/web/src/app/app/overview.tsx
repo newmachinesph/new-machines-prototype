@@ -5,7 +5,9 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { PackIcon } from "@/components/pack-icon";
 import { QueryState } from "@/components/query-state";
+import { useCodes } from "@/components/run-codes";
 import { Skeleton } from "@/components/skeleton";
+import { isSettled, useAutoTour } from "@/components/tour/use-auto-tour";
 import {
   ActorGlyph,
   ActorLabel,
@@ -143,14 +145,18 @@ function Budget({ usage: { org, ledger } }: { usage: Usage }) {
           aria-label={t("shareLabel")}
         >
           <div className="h-full bg-ink" style={{ width: pct(split.plan.amountMinor) }} />
-          <div className="h-full bg-machine" style={{ width: pct(split.agents.amountMinor) }} />
+          <div className="h-full bg-machine" style={{ width: pct(split.agentsExclFees.amountMinor) }} />
+          <div className="h-full bg-grey-500" style={{ width: pct(split.fees.amountMinor) }} />
           <div className="h-full bg-human" style={{ width: pct(split.reviewers.amountMinor) }} />
         </div>
       </div>
       <dl className="divide-y divide-rule px-4 pb-1 text-sm">
         {[
           { k: t("plan", { plan: org.plan }), v: split.plan, c: "bg-ink" },
-          { k: tc("agentsModelsTools"), v: split.agents, c: "bg-machine" },
+          { k: tc("agentsModelsTools"), v: split.agentsExclFees, c: "bg-machine" },
+          ...(split.fees.amountMinor > 0
+            ? [{ k: t("publisherFees"), v: split.fees, c: "bg-grey-500", sim: true }]
+            : []),
           { k: tc("reviewerPay"), v: split.reviewers, c: "bg-human" },
         ].map((r) => (
           <div key={r.k} className="flex items-center justify-between py-2.5">
@@ -158,8 +164,9 @@ function Budget({ usage: { org, ledger } }: { usage: Usage }) {
               <span className={`size-2 rounded-full ${r.c}`} aria-hidden />
               {r.k}
             </dt>
-            <dd>
+            <dd className="flex items-center gap-2">
               <Amount value={r.v} />
+              {"sim" in r ? <SimTag /> : null}
             </dd>
           </div>
         ))}
@@ -196,10 +203,13 @@ function NoRuns({ packs }: { packs: Pack[] }) {
 export function Overview() {
   const t = useTranslations("overview");
   const { ago, money } = useFormat();
+  const { line } = useCodes();
   const usage = useUsage();
   const runs = useRuns();
   const attention = useAttention();
   const packs = usePacks();
+  // The welcome tour waits for the page's own data, so it never opens over a skeleton.
+  useAutoTour("welcome", [usage, runs, attention, packs].every(isSettled));
 
   return (
     <div className="space-y-6">
@@ -278,15 +288,15 @@ export function Overview() {
                                   <span className="md:hidden">{[sub, when].filter(Boolean).join(" · ")}</span>
                                 </div>
                                 <div className="mt-1.5 lg:hidden">
-                                  <RunStatusPill status={r.status} />
+                                  <RunStatusPill status={r.status} stopReason={r.stopReason} />
                                 </div>
                               </div>
                               <div className="hidden min-w-0 md:block">
-                                <div className="line-clamp-2 text-[13px] break-words">{r.summary}</div>
+                                <div className="line-clamp-2 text-[13px] break-words">{line(r.summary)}</div>
                                 <div className="text-[13px] text-muted">{when}</div>
                               </div>
                               <div className="hidden justify-self-start lg:block">
-                                <RunStatusPill status={r.status} />
+                                <RunStatusPill status={r.status} stopReason={r.stopReason} />
                               </div>
                               <div className="hidden 2xl:block">
                                 <OutcomeRail compact stages={r.stages} />

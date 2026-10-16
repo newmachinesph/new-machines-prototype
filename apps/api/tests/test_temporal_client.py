@@ -54,3 +54,65 @@ def test_connecting_holds_no_lock_and_a_timed_out_connect_is_cancelled_and_retri
     monkeypatch.setattr(temporal_client, "connect", quick_connect)
     assert temporal_client.get_client() == "client"
     assert temporal_client.get_client() == "client"
+
+
+def test_workflow_id_is_the_bare_run_id_by_default(monkeypatch):
+    monkeypatch.delenv("NM_WORKFLOW_ID_PREFIX", raising=False)
+    assert temporal_client.workflow_id("run_42") == "run_42"
+
+
+def test_workflow_id_carries_the_configured_prefix(monkeypatch):
+    monkeypatch.setenv("NM_WORKFLOW_ID_PREFIX", "qa-c-")
+    assert temporal_client.workflow_id("run_42") == "qa-c-run_42"
+
+
+class _Client:
+    """Records the workflow ids the API hands Temporal, and the payloads it sends."""
+
+    def __init__(self):
+        self.ids: list[str] = []
+        self.args: list = []
+
+    async def start_workflow(self, name, arg, *, id, task_queue):
+        self.ids.append(id)
+        self.args.append(arg)
+
+    def get_workflow_handle(self, wid):
+        client = self
+
+        class Handle:
+            async def signal(self, name, args=None):
+                client.ids.append(wid)
+                client.args.append(args)
+
+            async def terminate(self, reason=""):
+                client.ids.append(wid)
+
+        return Handle()
+
+
+def test_every_run_call_uses_the_prefixed_workflow_id(monkeypatch):
+    monkeypatch.setenv("NM_WORKFLOW_ID_PREFIX", "qa-c-")
+    client = _Client()
+    monkeypatch.setattr(temporal_client, "get_client", lambda timeout=None: client)
+    temporal_client.start_run("r1", {}, {})
+    temporal_client.signal_human("r1", "t1", "resolved", "")
+    temporal_client.signal_approval("r1", "t1", "granted", "me")
+    temporal_client.terminate_run("r1", "why")
+    assert client.ids == ["qa-c-r1"] * 4
+
+
+def test_the_workflow_input_and_signals_carry_the_bare_run_id(monkeypatch):
+    """Only Temporal's workflow id has the prefix: the worker records events against the run id itself."""
+    monkeypatch.setenv("NM_WORKFLOW_ID_PREFIX", "qa-c-")
+    client = _Client()
+    monkeypatch.setattr(temporal_client, "get_client", lambda timeout=None: client)
+    temporal_client.start_run("r1", {"s": 1}, {"i": 2})
+    temporal_client.signal_human("r1", "t1", "resolved", "note")
+    temporal_client.signal_approval("r1", "t2", "granted", "me")
+    start, human, approval = client.args
+    assert start.run_id == "r1"
+    assert (start.snapshot, start.input) == ({"s": 1}, {"i": 2})
+    assert human == ["t1", "resolved", "note", []]
+    assert approval == ["t2", "granted", "me"]
+    assert "qa-c-" not in repr(client.args)

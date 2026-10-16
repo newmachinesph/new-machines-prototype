@@ -25,6 +25,7 @@ vi.mock("@/lib/queries/workspace", () => ({
   }),
   useDecideApproval: () => ({ mutate: () => {} }),
 }));
+vi.mock("@/lib/queries/me", () => ({ useIsDemo: () => false }));
 vi.mock("@/lib/queries/runs", () => ({
   useRuns: () => ({
     isPending: false,

@@ -15,7 +15,7 @@ from jsonschema import ValidationError as InputError
 from psycopg.types.json import Jsonb
 from pydantic import ValidationError
 
-from app import db, ops_state, settings, temporal_client
+from app import db, fees, listing_pins, ops_state, settings, temporal_client
 from app.auth import Actor
 from app.defs import registry
 from app.defs.snapshot import build_snapshot
@@ -270,28 +270,94 @@ def _org_routing(conn, snapshot: dict, org_id: str) -> dict:
     return {"routing": routes.ORG_ROUTING, **routes.pinned_routes(conn, org_id, keys)}
 
 
+PACK_UPDATED = "This Workflow Pack was just updated. Start the run again."
+
+
+def _still_held(hire: dict | None, held: listing_pins.Held, slug: str) -> bool:
+    """Whether the installation (read under its lock) still holds the listing version the pins came from."""
+    return (
+        hire is not None
+        and hire["listing_version_id"] == held.listing_version_id
+        and int(hire["pack_version"]) == held.pins.get(("pack", slug))
+    )
+
+
+def _fee_plan(conn, snapshot: dict, sandbox_test: bool, held: listing_pins.Held | None) -> dict:
+    """The fee plan of a live run (`fees.plan_fees`). A sandbox test runs the org's own pack, so it owes no
+    pack fee, only the per-call fees of another workspace's listed agents it calls (the publisher's own
+    checks call only its own). Fails closed, 409 PACK_UNAVAILABLE, when a pin was taken from a listing that
+    is no longer listed by the time the fees are planned (an unlist committed in between): the held pack has
+    no pack fee, or another workspace's agent has no per-call fee. Such a run would otherwise run free."""
+    listing_version = held.listing_version_id if held else None
+    plan = fees.plan_fees(conn, snapshot, snapshot["org_id"], listing_version)
+    if sandbox_test:
+        plan = {"pack": None, "agents": plan["agents"]}
+    org_id = snapshot["org_id"]
+    unpaid = [
+        v["key"]
+        for v in snapshot.get("versions") or []
+        if v["kind"] == "agent"
+        and v["key"] not in plan["agents"]
+        and listing_pins.other_workspaces(registry.owner_of(conn, "agent", v["key"]), org_id)
+    ]
+    if held is not None and plan["pack"] is None:
+        unpaid.append(f"pack listing version {held.listing_version_id}")
+    if unpaid:
+        log.info("%s started a run while %s was unlisted", org_id, ", ".join(unpaid))
+        raise ApiProblem(409, "PACK_UNAVAILABLE", "This Workflow Pack cannot run right now.")
+    return plan
+
+
+def _over_cap(check, *args):
+    """Run a `fees` cap check; its OverCap is 409 SPEND_CAP."""
+    try:
+        return check(*args)
+    except fees.OverCap as exc:
+        raise ApiProblem(409, exc.code, exc.message) from None
+
+
 def _insert_run(
     body: StartRunRequest,
     actor: Actor,
     catalog: list[ConnectorEntry] | None,
     inp: dict,
     sandbox_test: bool = False,
+    *,
+    held: listing_pins.Held | None = None,
+    unsaved: dict | None = None,
+    listing_check: bool = False,
 ) -> dict:
-    """Pin the snapshot, insert the runs row and its `run.started` receipt entry; commit. Returns the row
-    values the workflow needs: {run_id, snapshot, projection}. A sandbox test is never routed through the
-    org's connections: its tool calls answer from the platform's sandbox connectors, whatever the org has
-    connected, so nothing real is reached or billed to an app."""
+    """Pin the snapshot, insert the runs row, its pack fee line and its `run.started` receipt entry; commit.
+    Returns the row values the workflow needs: {run_id, snapshot, projection}. A sandbox test is never routed
+    through the org's connections: its tool calls answer from the platform's sandbox connectors, whatever the
+    org has connected, so nothing real is reached or billed to an app. `held` (its pins) and `unsaved` go to
+    `build_snapshot`; a pin no longer available, or no longer paid for (`_fee_plan`), is 409
+    PACK_UNAVAILABLE. A pack fee is checked against the monthly cap under the workspace's row lock: 409
+    SPEND_CAP when it would go over."""
     with db.connect() as conn:
         if catalog is None and not sandbox_test:
+            if held is not None:
+                # A run of another workspace's listed pack pays its fee up front: the workspace's row first
+                # (the lock order of install and update), so the month's spend it is checked against below
+                # cannot change until this run's fee line is committed (`fees.lock_monthly_cap`).
+                _over_cap(fees.lock_monthly_cap, conn, actor.org_id)
             # An org-routed run holds its installation (shared) while it pins the pack: a rename of the pack
             # in flight (which locks the row to update the grants) either waits for this start and counts
             # it, or lands first, and this start then pins the new name.
-            conn.execute(
-                "SELECT 1 FROM installations WHERE org_id = %s AND pack_slug = %s FOR SHARE",
+            hire = conn.execute(
+                "SELECT pack_version, listing_version_id FROM installations "
+                "WHERE org_id = %s AND pack_slug = %s FOR SHARE",
                 (actor.org_id, body.pack_slug),
-            )
+            ).fetchone()
+            if held is not None and not _still_held(hire, held, body.pack_slug):
+                # An update landed after the pins were read: the run would pin one version and pay another.
+                log.info("Installation of %s changed while %s started a run", body.pack_slug, actor.org_id)
+                raise ApiProblem(409, "PACK_UNAVAILABLE", PACK_UPDATED)
+        pins = held.pins if held else None
         try:
-            snapshot = build_snapshot(conn, body.pack_slug, actor.org_id, {}, set())
+            snapshot = build_snapshot(
+                conn, body.pack_slug, actor.org_id, {}, set(), pins=pins, unsaved=unsaved
+            )
         except LookupError as exc:
             log.error("Cannot pin %s: %s", body.pack_slug, exc)
             raise ApiProblem(409, "PACK_UNAVAILABLE", "This Workflow Pack cannot run right now.") from None
@@ -310,16 +376,27 @@ def _insert_run(
             # NM_CONNECTOR_MODE (`gateway.driver_of`).
             **({"connector_mode": settings.SANDBOX_MODE} if sandbox_test else {}),
         }
+        if catalog is None:
+            # The fees this run owes, at the prices of the versions it pinned (sub-project D): a later price
+            # change never touches a run already started. The buyer is the snapshot's org.
+            snapshot = {**snapshot, "fees": _fee_plan(conn, snapshot, sandbox_test, held)}
+            pack_fee = snapshot["fees"]["pack"]
+            # Only a held listed pack carries a pack fee, and its start took the workspace lock above.
+            if held is not None and pack_fee and pack_fee["unit_minor"]:
+                amount = int(pack_fee["unit_minor"])
+                charge = f"This run's publisher fee of {money_text(amount)}"
+                _over_cap(fees.check_month, conn, actor.org_id, amount, charge)
         number = conn.execute("SELECT nextval('run_number') AS n").fetchone()["n"]
         run_id = f"run_{number}"
         initial = projection.initial_projection(run_id, snapshot, inp, STARTED_BY, body.budget_minor)
         if sandbox_test:
-            initial = {**initial, "sandboxTest": True}
+            initial = {**initial, "sandboxTest": True, **({"listingCheck": True} if listing_check else {})}
         conn.execute(
             "INSERT INTO runs (id, org_id, pack_slug, status, snapshot, projection, input) "
             "VALUES (%s, %s, %s, 'RUNNING', %s, %s, %s)",
             (run_id, actor.org_id, body.pack_slug, Jsonb(snapshot), Jsonb(initial), Jsonb(inp)),
         )
+        fees.record_pack_fee(conn, run_id, snapshot)  # the pack's per-run fee, with the run row
         started = {
             "versions": snapshot["versions"],
             "input": inp,
@@ -357,16 +434,26 @@ def start_real_run(
     inp: dict | None = None,
     *,
     sandbox_test: bool = False,
+    listing_check: bool = False,
+    held: listing_pins.Held | None = None,
+    unsaved: dict | None = None,
 ) -> Run:
     """Insert the run, then start PackRunner (workflow id = run id). 503 when Temporal is unreachable.
     `inp` is the input already checked (`check_input`); without it the body's input is checked here.
     `catalog` is the fixture Ops connector catalog; None pins the persisted ops settings (live).
-    `sandbox_test` marks a Studio test run (projection `sandboxTest`, receipt `sandbox_test`)."""
+    `sandbox_test` marks a Studio test run (projection `sandboxTest`, receipt `sandbox_test`); `listing_check`
+    also marks the sandbox run a submission starts (projection `listingCheck`). `held` holds
+    the run to the listing version and pins an installation of a listed pack holds
+    (`listing_pins.installed_bundle`), and the run pays that version's price; `unsaved` definitions are
+    pinned at version 0 (a listing check). A live run pins its fee plan (a sandbox test: its agents' per-call
+    fees only) and writes its pack fee line with the run row."""
     if inp is None:
         with db.connect() as conn:
             schema = input_schema(conn, body.pack_slug)
         inp = check_input(body.pack_slug, body.input, schema)
-    created = _insert_run(body, actor, catalog, inp, sandbox_test)
+    created = _insert_run(
+        body, actor, catalog, inp, sandbox_test, held=held, unsaved=unsaved, listing_check=listing_check
+    )
     run_id = created["run_id"]
     try:
         temporal_client.start_run(run_id, created["snapshot"], inp)
@@ -484,6 +571,8 @@ def receipt_of(org_id: str | None, run_id: str) -> Receipt | None:
             "SELECT seq, at, type, node_id, data, hash FROM receipt_entries WHERE run_id = %s ORDER BY seq",
             (run_id,),
         ).fetchall()
+        # The buyer's publisher fees (any buyer for the operator console); never another org's lines.
+        fee_items = fees.items(conn, [run_id], org_id).get(run_id, [])
     items = [
         ReceiptItem(
             seq=r["seq"],
@@ -497,5 +586,11 @@ def receipt_of(org_id: str | None, run_id: str) -> Receipt | None:
     ]
     pinned = [PinnedVersion.model_validate(v) for v in run["versions"] or []]
     return Receipt(
-        run_id=run_id, verified=verified, entries=count, head_hash=head, pinned=pinned, items=items
+        run_id=run_id,
+        verified=verified,
+        entries=count,
+        head_hash=head,
+        pinned=pinned,
+        items=items,
+        fees=fee_items,
     )

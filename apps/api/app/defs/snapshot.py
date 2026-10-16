@@ -7,26 +7,52 @@ only from its snapshot, so a later publish never changes a run that has already 
 
 import copy
 
-from app.defs import registry
+from app.defs import owners, registry
+from app.defs.digest import digest
+from app.defs.model import Definition
 from app.defs.registry import Version
 
 ORG_PLACEHOLDER = "{org}"  # contract templates name the buyer organisation with this literal
 MODELS_KEY = "default"
+UNSAVED_BY = "listing check"  # published_by of an unsaved definition pinned at version 0
 
 
 class _Pinner:
-    def __init__(self, conn) -> None:
-        self._conn = conn
+    """Pins what `org_id` may see (`registry.visible_version`). `unsaved` definitions come first, at version
+    0 and must be keyed in the org's own namespace (ValueError otherwise); `pins` hold an installation to
+    exact versions of what it may see, of another workspace's definition only an approved listed one."""
+
+    def __init__(self, conn, org_id: str, pins: dict | None = None, unsaved: dict | None = None) -> None:
+        self._conn, self._org = conn, org_id
+        self._pins: dict[tuple[str, str], int] = dict(pins or {})
+        self._unsaved: dict[tuple[str, str], Definition] = dict(unsaved or {})
+        if outside := sorted(f"{k}/{key}" for k, key in self._unsaved if not owners.in_org(key, org_id)):
+            raise ValueError(f"unsaved definitions outside {org_id}: {', '.join(outside)}")
         self.pinned: dict[tuple[str, str], Version] = {}
 
     def pin(self, kind: str, key: str) -> dict:
-        """Pin the latest version of kind/key and return its body. LookupError when it does not exist."""
+        """Pin kind/key and return its body. LookupError when it does not exist or the org may not see it."""
         if (kind, key) not in self.pinned:
-            version = registry.latest(self._conn, kind, key)
-            if version is None:
-                raise LookupError(f"{kind}/{key} is not published")
-            self.pinned[(kind, key)] = version
+            self.pinned[(kind, key)] = self._resolve(kind, key)
         return self.pinned[(kind, key)].body
+
+    def _resolve(self, kind: str, key: str) -> Version:
+        if (kind, key) in self._unsaved:
+            d = self._unsaved[(kind, key)]
+            return Version(
+                kind, key, 0, digest(d), d.body, dict(d.files), registry.BUILDER, UNSAVED_BY, "", ""
+            )
+        visible = registry.visible_version(self._conn, kind, key, self._org)
+        if visible is None:
+            if registry.latest(self._conn, kind, key) is None:
+                raise LookupError(f"{kind}/{key} is not published")
+            raise LookupError(f"{kind}/{key} is not available to {self._org}")
+        if (kind, key) not in self._pins:
+            return visible
+        pinned = registry.pinnable_version(self._conn, kind, key, self._pins[(kind, key)], self._org)
+        if pinned is None:
+            raise LookupError(f"{kind}/{key} is not available to {self._org}")
+        return pinned
 
 
 def _connector_of(tool_ref: str) -> str:
@@ -62,13 +88,24 @@ def _pin_agent_refs(pin: _Pinner) -> None:
                 pin.pin("schema", body[field])
 
 
-def build_snapshot(conn, pack_slug: str, org_id: str, overrides: dict, disabled: set[str]) -> dict:
+def build_snapshot(
+    conn,
+    pack_slug: str,
+    org_id: str,
+    overrides: dict,
+    disabled: set[str],
+    *,
+    pins: dict[tuple[str, str], int] | None = None,
+    unsaved: dict[tuple[str, str], Definition] | None = None,
+) -> dict:
     """Resolve and pin `pack_slug` for `org_id`. LookupError for an unknown pack, a missing reference, or a
     definition another org owns privately (an org can only ever run what it may see).
 
-    Runs on the caller's connection and never commits.
+    `pins` hold an installation of a listed pack to the versions it was added at; `unsaved` definitions (a
+    listing check) are pinned at version 0 and never published. Runs on the caller's connection and never
+    commits.
     """
-    pin = _Pinner(conn)
+    pin = _Pinner(conn, org_id, pins, unsaved)
     pack = pin.pin("pack", pack_slug)
     workflow = pin.pin("workflow", pack["workflow"])
     contract_key = workflow.get("work_contract_ref") or pack["contract"]
@@ -83,9 +120,6 @@ def build_snapshot(conn, pack_slug: str, org_id: str, overrides: dict, disabled:
         if contract.get(field):
             pin.pin("schema", contract[field])
     pin.pin("models", MODELS_KEY)
-    if hidden := registry.hidden_from(conn, list(pin.pinned), org_id):
-        kind, key = hidden[0]
-        raise LookupError(f"{kind}/{key} is not available to {org_id}")
 
     defs: dict[str, dict] = {}
     versions = []

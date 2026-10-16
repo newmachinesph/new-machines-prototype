@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Support triage",
+  "description": "One case per customer email, a reply plan for each, what a reviewer checks and the case log rows.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["summary", "cases", "messages", "review_items", "rows"],
+  "properties": {
+    "summary": {"type": "string", "minLength": 1},
+    "cases": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["thread_id", "received", "from", "subject", "category", "needs_person"],
+        "properties": {
+          "thread_id": {"type": "string", "minLength": 1},
+          "received": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"},
+          "from": {"type": "string", "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"},
+          "subject": {"type": "string", "minLength": 1, "maxLength": 200},
+          "category": {"enum": ["question", "complaint", "refund"]},
+          "needs_person": {"type": "boolean"}
+        }
+      }
+    },
+    "messages": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["to", "about", "facts", "ref"],
+        "properties": {
+          "to": {"type": "string", "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"},
+          "about": {"type": "string", "minLength": 1, "maxLength": 150},
+          "facts": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+          "ref": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "review_items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["ref", "date", "amount_minor", "currency", "flag", "note"],
+        "properties": {
+          "ref": {"type": "string", "minLength": 1},
+          "date": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"},
+          "amount_minor": {"type": "integer", "minimum": 0},
+          "currency": {"type": "string", "pattern": "^[A-Z]{3}$"},
+          "flag": {"type": "string", "minLength": 1, "maxLength": 60},
+          "note": {"type": "string", "minLength": 1, "maxLength": 300}
+        }
+      }
+    },
+    "rows": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {"type": "array", "minItems": 6, "maxItems": 6, "items": {"type": "string"}}
+    }
+  }
+}

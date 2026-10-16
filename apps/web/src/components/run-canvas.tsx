@@ -93,7 +93,9 @@ const STUB_SIZE = { width: 120, height: 40 };
 const NODE_ORIGIN: [number, number] = [0, 0.5];
 /** Opening view: the anchor step and the steps near it (this far across, and within its row), at most 1:1 zoom. */
 const FOCUS_RADIUS = { x: 620, y: 260 };
-const FIT_OPTIONS = { padding: 0.14, maxZoom: 1 };
+/** Fits never shrink a step below READABLE_ZOOM, where its labels stay legible; the viewer can pan to the rest. */
+export const READABLE_ZOOM = 0.85;
+const FIT_OPTIONS = { padding: 0.14, maxZoom: 1, minZoom: READABLE_ZOOM };
 /** The canvas's usual shape (about 1100 by 420), used until it has been measured, or where it cannot be. */
 const DEFAULT_ASPECT = 2.5;
 /** Aspect ratios snap to steps of about 19% (quarter powers of two), so small resizes keep the same layout. */

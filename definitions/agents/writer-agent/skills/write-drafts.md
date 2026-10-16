@@ -11,7 +11,7 @@ For every item in `items`, write one draft with these fields:
   1. A greeting line: `Hello,`
   2. The facts, each as one plain sentence, in the order given.
   3. A short closing line that fits the tone, such as asking the customer to reply with any questions.
-  4. The sign-off on its own lines: `Kind regards,` then `Accounts team`.
+  4. The sign-off on its own lines: `Kind regards,` then the `sign_off` input when there is one, otherwise `Accounts team`.
 - `ref`: the item's `ref`, unchanged. Only when the item has no `ref`, take it from the first fact (for example `Invoice number: INV-0107` gives `INV-0107`).
 
 Reviewer input:

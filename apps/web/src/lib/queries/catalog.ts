@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import {
   getAgentOptions,
@@ -9,11 +9,13 @@ import {
   installWorkflowPackMutation,
   listConnectionsQueryKey,
   listAgentsOptions,
+  listAgentsQueryKey,
   listWorkflowPacksOptions,
   listWorkflowPacksQueryKey,
   suggestWorkflowPackMutation,
+  upgradeWorkflowPackMutation,
 } from "@/lib/api/gen/@tanstack/react-query.gen";
-import { byOperation } from "./me";
+import { byOperation, useOrgId } from "./me";
 
 export const usePacks = (enabled = true) => useQuery({ ...listWorkflowPacksOptions(), enabled });
 export const usePack = (slug: string) => useQuery(getWorkflowPackOptions({ path: { slug } }));
@@ -39,21 +41,41 @@ export function usePackName(slug: string | undefined) {
   return slug ? data?.find((p) => p.slug === slug)?.name : undefined;
 }
 
+/** What an add or an update of a pack changes: the lists and details, the Studio's pack list, the needed apps. */
+const refreshInstalled = (qc: QueryClient) =>
+  Promise.all([
+    qc.invalidateQueries({ queryKey: listWorkflowPacksQueryKey() }),
+    // Agents carry their listing's update state too.
+    qc.invalidateQueries({ queryKey: listAgentsQueryKey() }),
+    // Every cached pack detail, whatever its slug.
+    qc.invalidateQueries({ predicate: byOperation("getWorkflowPack") }),
+    // The Studio's pack list says which of the org's own packs are added to the workspace.
+    qc.invalidateQueries({ predicate: byOperation("listStudioPacks") }),
+    // Adding a pack changes which apps the org needs, and the overview's checklist.
+    qc.invalidateQueries({ queryKey: listConnectionsQueryKey() }),
+  ]);
+
 export function useInstallPack() {
   const qc = useQueryClient();
-  return useMutation({
-    ...installWorkflowPackMutation(),
-    onSuccess: () =>
-      Promise.all([
-        qc.invalidateQueries({ queryKey: listWorkflowPacksQueryKey() }),
-        // Every cached pack detail, whatever its slug.
-        qc.invalidateQueries({ predicate: byOperation("getWorkflowPack") }),
-        // The Studio's pack list says which of the org's own packs are added to the workspace.
-        qc.invalidateQueries({ predicate: byOperation("listStudioPacks") }),
-        // A hire changes which apps the org needs, and the overview's checklist.
-        qc.invalidateQueries({ queryKey: listConnectionsQueryKey() }),
-      ]),
-  });
+  // Settled, not only succeeded: a refused add (CONFLICT) also means the cached lists are out of date.
+  return useMutation({ ...installWorkflowPackMutation(), onSettled: () => refreshInstalled(qc) });
+}
+
+/** Moves the workspace's added pack to the version its publisher has listed since. `upgrade` needs no ids. */
+export function useUpgradePack(slug: string) {
+  const qc = useQueryClient();
+  const orgId = useOrgId();
+  // A refused update (UP_TO_DATE, NOT_LISTED) means the cached "update available" is stale: refresh either way.
+  const m = useMutation({ ...upgradeWorkflowPackMutation(), onSettled: () => refreshInstalled(qc) });
+  const { mutate } = m;
+  const upgrade = useCallback(
+    (options?: Parameters<typeof mutate>[1]) => {
+      if (orgId) mutate({ path: { org_id: orgId, slug } }, options);
+    },
+    [mutate, orgId, slug],
+  );
+  // `ready` is false until the signed-in workspace is known; callers disable the action rather than do nothing.
+  return { upgrade, isPending: m.isPending, ready: orgId !== undefined };
 }
 
 export const useSuggestPack = () => useMutation(suggestWorkflowPackMutation());

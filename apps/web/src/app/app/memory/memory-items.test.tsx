@@ -2,6 +2,8 @@ import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { renderWithIntl } from "@/test/intl";
+import en from "../../../../messages/en.json";
+import ja from "../../../../messages/ja.json";
 import { MemoryBoard } from "./memory-items";
 
 const data = vi.hoisted(() => ({ rows: [] as unknown[] }));
@@ -58,5 +60,13 @@ describe("MemoryBoard", () => {
     renderWithIntl(<MemoryBoard />, { locale: "ja" });
     expect(screen.getByText("ワークスペースの初期設定")).toBeInTheDocument();
     expect(screen.getAllByText("適用先：Customer accounts policies")).toHaveLength(2);
+  });
+
+  // QA F-20: a new workspace starts with its packs' policies in use, which no person approved one by one.
+  it("does not claim that every memory in use was approved by a person", () => {
+    expect(en.memory.lede).not.toMatch(/Nothing becomes memory until a person approves it/);
+    expect(en.memory.lede).toMatch(/policies your workspace started with/);
+    expect(en.memory.lede).toMatch(/once a person approves it/);
+    expect(ja.memory.lede).toMatch(/最初から/);
   });
 });

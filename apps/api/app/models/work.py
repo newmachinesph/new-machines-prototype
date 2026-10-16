@@ -31,6 +31,10 @@ class RedactedRecord(Model):
     payment: PaymentSide
     flag: str
     agent_note: str
+    # What the record is. "reconciliation": an order and its payment, both sides filled. "item": a shared
+    # review item (an invoice, a refund request, a support email...): only `order.ref`, `order.date`, and
+    # `order.amount` and `order.payment_ref` when it has them; its payment side is empty.
+    kind: Literal["reconciliation", "item"] = "reconciliation"
 
 
 class DigestRow(Model):

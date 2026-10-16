@@ -1,0 +1,13 @@
+kind: memory_space
+key: expense-policy
+name: Expense policy
+description: What counts as an unusual expense, for the agent that checks the weekly expenses.
+retention_days: 365
+readers: ["*"]
+writers: [expense-agent]
+
+seed_items:
+  - Every expense of 25.00 USD or more needs a receipt.
+  - A single expense over 500.00 USD needs a person's check before it is accepted.
+  - Two expenses with the same description and the same amount within 7 days may be a duplicate, and a person checks the later one.
+  - Categories are Travel (flights, trains, taxis, hotels, parking), Meals (meals with clients or the team), Software (subscriptions, licences, plans), Office (supplies and equipment) and Other.

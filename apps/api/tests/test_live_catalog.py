@@ -27,6 +27,10 @@ SEED_PACKS = {
     PACK: PACK_NAME,
     "overdue-invoice-follow-up": "Overdue Invoice Follow-up",
     "refund-triage": "Refund Triage",
+    "inbox-lead-tracker": "Inbox Lead Tracker",
+    "support-inbox-triage": "Support Inbox Triage",
+    "weekly-expense-check": "Weekly Expense Check",
+    "meeting-follow-ups": "Meeting Follow-ups",
 }
 USERS = {
     "ana": {"sub": "uid_ana", "email": "ana@example.com", "email_verified": True, "name": "Ana Reyes"},
@@ -161,6 +165,10 @@ def test_the_marketplace_is_the_pack_definitions(ana):
     ]
     assert pack["installed"] is False and "inputSchema" not in pack
     assert pack["estimate"]["humanMax"]["amountMinor"] == 2000
+    # The contract's maximum, which the start checks (BUDGET_TOO_HIGH); not derived from the estimate.
+    assert pack["maxBudget"] == {"amountMinor": 2500, "currency": "USD"}
+    overdue = ana.get("/v1/workflow-packs/overdue-invoice-follow-up").json()
+    assert overdue["maxBudget"]["amountMinor"] == 1500
 
 
 def test_pack_detail_carries_the_input_schema(ana):
@@ -181,7 +189,7 @@ def test_the_marketplace_lists_the_three_seed_packs(ana):
     assert [c["app"] for c in refunds["connectors"]] == ["Gmail", "Shopify", "Stripe"]
     detail = ana.get("/v1/workflow-packs/overdue-invoice-follow-up").json()
     assert detail["inputSchema"]["required"] == ["as_of"]
-    assert len(ana.get("/v1/agents").json()) == 6
+    assert len(ana.get("/v1/agents").json()) == 10
 
 
 def test_a_seed_pack_is_hired_connected_in_sandbox_and_started(ana, starts):
@@ -247,10 +255,10 @@ def test_hiring_upserts_the_orgs_installation_only(ana, ben, db):
         }
     ]
     assert [(p.slug, p.installed) for p in get_store().packs] == before  # the demo store is untouched
-    assert ana.get("/v1/workflow-packs").json()[0]["installed"] is True
+    assert next(p for p in ana.get("/v1/workflow-packs").json() if p["slug"] == PACK)["installed"] is True
     assert ana.get(f"/v1/workflow-packs/{PACK}").json()["installed"] is True
     # Another org sees the pack as not hired and cannot hire into Ana's org.
-    assert ben.get("/v1/workflow-packs").json()[0]["installed"] is False
+    assert next(p for p in ben.get("/v1/workflow-packs").json() if p["slug"] == PACK)["installed"] is False
     body = {"packSlug": PACK, "capMinor": 500, "reviewerPool": "team_then_network"}
     assert ben.post(f"/v1/organizations/{ana.org_id}/agent-installations", json=body).status_code == 403
 
@@ -437,6 +445,11 @@ def test_a_hired_pack_carries_its_per_run_cap(ana):
     assert detail["perRunCap"] == {"amountMinor": 700, "currency": "USD"}
     listed = next(p for p in ana.get("/v1/workflow-packs").json() if p["slug"] == PACK)
     assert listed["perRunCap"]["amountMinor"] == 700
+    # The platform's pack has no fee: a run may be given the whole cap, and no more than the contract's max.
+    for pack in (detail, listed):
+        assert (pack["runFee"]["amountMinor"], pack["runBudgetLimit"]["amountMinor"]) == (0, 700)
+    ana.hire(cap=5000)
+    assert ana.get(f"/v1/workflow-packs/{PACK}").json()["runBudgetLimit"]["amountMinor"] == 2500
 
 
 def test_a_pack_another_org_hired_cannot_be_started(ana, ben, starts):
@@ -764,6 +777,26 @@ def test_the_buyer_s_timeline_names_a_review_without_the_reviewer_s_account(ana,
     assert [(t["who"], t["title"]) for t in p["timeline"]] == [
         ("Network reviewer", "Sent back with corrections")
     ]
+
+
+def test_the_buyer_s_timeline_names_who_decided_an_approval(ana, db):
+    """An approval's decision shows the member's name, not their account id; one the org's members do not
+    include (the demo's) shows as recorded."""
+    _add_run(db, ana.org_id, "run_a")
+    shown = {}
+    for by in ("uid_ana", "someone_else"):
+        call = activities.TaskDecision(
+            run_id="run_a",
+            node_id="approve",
+            attempt=1,
+            step=1,
+            kind="approval",
+            task_id="apr_1",
+            outcome="denied",
+            by=by,
+        )
+        shown[by] = activities._shown_decision(db, call)["decided_by"]
+    assert shown == {"uid_ana": "Ana Reyes", "someone_else": "someone_else"}
 
 
 def test_runs_settled_before_the_fix_lose_the_network_reviewer_s_account_id(ana, db):

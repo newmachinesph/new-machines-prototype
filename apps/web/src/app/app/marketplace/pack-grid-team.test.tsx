@@ -39,7 +39,13 @@ vi.mock("@/lib/queries/catalog", () => ({
   usePacks: () =>
     ok([
       pack("recon", "Reconciliation"),
-      pack("org-a1--nudges", "Invoice nudges", { publisher: "Harbor Cafe", certified: false, builtByTeam: true }),
+      pack("org-a1--nudges", "Invoice nudges", {
+        publisher: "Harbor Cafe",
+        certified: false,
+        builtByTeam: true,
+        version: "1.0.1",
+        agents: ["org-5c8192d7129c2fa2-qa-inbox-reader-a2"],
+      }),
     ]),
   useAgents: () => ok([]),
   useAgentById: () => () => undefined,
@@ -60,6 +66,14 @@ describe("PackGrid team packs", () => {
     await userEvent.click(screen.getByRole("button", { name: /Built by your team/ }));
     expect(screen.getByRole("link", { name: /Invoice nudges/ })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /Reconciliation/ })).toBeNull();
+  });
+
+  // QA F-12 and F-16: a team pack's card showed its agent's raw key (with the org id) and version 1.0.1.
+  it("never shows a team pack's agent key, and shows its definition version", () => {
+    renderWithIntl(<PackGrid />);
+    const card = screen.getByRole("link", { name: /Invoice nudges/ });
+    expect(card.textContent).not.toMatch(/5c8192d7129c2fa2|qa-inbox-reader/);
+    expect(card.textContent).not.toMatch(/1\.0\.1/);
   });
 
   it("labels a team pack in Japanese", () => {

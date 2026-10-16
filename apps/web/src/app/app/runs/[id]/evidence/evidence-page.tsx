@@ -11,10 +11,9 @@ import { ActorGlyph, ActorLabel, KeyValues, OutcomeRail, PageHeader, Section, Si
 import { INTL_TAGS, resolveLocale } from "@/i18n/locales";
 import { ApiError } from "@/lib/api/errors";
 import { sumMoney } from "@/lib/format";
-import { useRun } from "@/lib/queries/runs";
+import { useReceipt, useRun } from "@/lib/queries/runs";
 import type { Run } from "@/lib/types";
 import { useFormat } from "@/lib/use-format";
-import { useViewerTimeZone } from "@/lib/use-viewer-time-zone";
 import { RECONCILIATION_PACK, changed, moneyText, toolKey, toolUse } from "./run-facts";
 
 export function EvidencePage({ id }: { id: string }) {
@@ -41,12 +40,14 @@ function Evidence({ run }: { run: Run }) {
   const tt = useTranslations("run.technical");
   const locale = INTL_TAGS[resolveLocale(useLocale())];
   const { dateTime, money } = useFormat();
-  const { zone } = useViewerTimeZone();
   const { line } = useCodes();
   const who = useWho();
+  // Publisher fees are on the receipt, not in `run.spent`; a demo run has none.
+  const fees = useReceipt(run.id, run.status).data?.fees ?? [];
+  const feeTotal = sumMoney(...fees.map((f) => f.amount));
   const d = run.deliverable;
   if (!d) notFound();
-  const total = sumMoney(run.spent.ai, run.spent.human, run.spent.tools);
+  const total = sumMoney(run.spent.ai, run.spent.human, run.spent.tools, feeTotal);
 
   // PRODUCT.md WORK-04: the evidence viewer answers seven questions.
   const parts = run.timeline.filter((e) => e.actor !== "system");
@@ -112,7 +113,7 @@ function Evidence({ run }: { run: Run }) {
                         : []),
                     {
                       label: t("requestedBy"),
-                      value: `${who(run.startedBy, "buyer")}, ${dateTime(run.startedAt, zone)}`,
+                      value: `${who(run.startedBy, "buyer")}, ${dateTime(run.startedAt)}`,
                     },
                   ]}
                 />
@@ -198,6 +199,9 @@ function Evidence({ run }: { run: Run }) {
                       value: <span className="tnum">{money(sumMoney(run.spent.ai, run.spent.tools))}</span>,
                     },
                     { label: tc("reviewerPay"), value: <span className="tnum">{money(run.spent.human)}</span> },
+                    ...(fees.length
+                      ? [{ label: t("publisherFees"), value: <span className="tnum">{money(feeTotal)}</span> }]
+                      : []),
                     { label: t("total"), value: <span className="tnum font-semibold">{money(total)}</span> },
                     {
                       label: t("basis"),

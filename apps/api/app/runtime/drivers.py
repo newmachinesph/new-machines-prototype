@@ -36,10 +36,27 @@ class ToolResult:
 
 
 class SandboxDriver:
-    """Returns the recorded response in definitions/connectors/sandbox/<connector>/<tool id>.json."""
+    """Returns a recorded response: the run's pack's own
+    definitions/packs/<pack>/sandbox/<connector>/<tool id>.json when there is one, else the shared
+    definitions/connectors/sandbox/<connector>/<tool id>.json."""
 
-    def __init__(self, root: Path | None = None) -> None:
+    def __init__(
+        self, root: Path | None = None, pack: str | None = None, packs_root: Path | None = None
+    ) -> None:
         self._root = root or settings.defs_dir() / "connectors" / "sandbox"
+        self._packs_root = packs_root or settings.defs_dir() / "packs"
+        self._pack = pack if pack and _SAFE_NAME.match(pack) else None
+
+    @property
+    def pack(self) -> str | None:
+        return self._pack
+
+    def _path(self, connector: str, tool_id: str) -> Path:
+        if self._pack is not None:
+            own = self._packs_root / self._pack / "sandbox" / connector / f"{tool_id}.json"
+            if own.is_file():
+                return own
+        return self._root / connector / f"{tool_id}.json"
 
     def execute(self, connector: str, tool: dict, args: dict) -> ToolResult:
         tool_id = str(tool.get("id", ""))
@@ -47,7 +64,7 @@ class SandboxDriver:
             return ToolResult(
                 ok=False, data=None, mocked=True, error=f"invalid sandbox tool {connector}.{tool_id}"
             )
-        path = self._root / connector / f"{tool_id}.json"
+        path = self._path(connector, tool_id)
         if not path.is_file():
             return ToolResult(
                 ok=False, data=None, mocked=True, error=f"no sandbox response for {connector}.{tool_id}"
@@ -152,10 +169,11 @@ def is_route_changed(result: ToolResult | None) -> bool:
     return result is not None and not result.ok and str(result.error or "").startswith(f"{ROUTE_CHANGED}:")
 
 
-def driver_for(connector_def: dict, mode: str) -> SandboxDriver | ComposioDriver:
-    """`connector_def` is the connector body. mode: sandbox | live | auto (live if connected)."""
+def driver_for(connector_def: dict, mode: str, pack: str | None = None) -> SandboxDriver | ComposioDriver:
+    """`connector_def` is the connector body. mode: sandbox | live | auto (live if connected). `pack` is the
+    run's pack key, for its own sandbox data."""
     if mode == "sandbox":
-        return SandboxDriver()
+        return SandboxDriver(pack=pack)
     if mode == "live":
         return ComposioDriver()
     if mode != "auto":
@@ -168,4 +186,4 @@ def driver_for(connector_def: dict, mode: str) -> SandboxDriver | ComposioDriver
         log.warning(
             "composio connection check failed for %s: %s", connector_def.get("toolkit"), type(exc).__name__
         )
-    return SandboxDriver()
+    return SandboxDriver(pack=pack)

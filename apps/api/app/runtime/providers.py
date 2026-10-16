@@ -352,6 +352,7 @@ _OPENED_OR_USED = re.compile(r"\b(?:opened|used)\b", re.IGNORECASE)  # the parti
 _AMOUNT = re.compile(r"\$\s?(\d[\d,]*(?:\.\d{1,2})?)")
 _EMAIL = re.compile(r"[^<>\s]+@[^<>\s]+")
 _MS_TIMESTAMP_MIN = 10**11  # numeric timestamps above this are milliseconds
+DEFAULT_SIGNATURE = "Accounts team"
 SIGN_OFF = "Kind regards,\nAccounts team"
 _STAGES = {"gentle": "gentle", "firm": "firm", "final": "final notice"}
 _BANDS = {"gentle": "1 to 14", "firm": "15 to 44", "final": "45 or more"}
@@ -569,12 +570,13 @@ def fake_refunds(inputs: dict) -> dict:
 def fake_writer(inputs: dict) -> dict:
     """A deterministic writer-agent result per the write-drafts skill: one draft per item."""
     drafts = []
+    sign_off = f"Kind regards,\n{str(inputs.get('sign_off') or DEFAULT_SIGNATURE)}"
     for item in inputs.get("items") or []:
         facts = [str(f) for f in item.get("facts") or []]
         sentences = " ".join(f if f.endswith((".", "!", "?")) else f"{f}." for f in facts)
         first = facts[0] if facts else ""
         ref = item.get("ref") or (first.split(": ", 1)[1] if ": " in first else str(item["about"]))
-        body = f"Hello,\n\n{sentences}\n\nPlease reply to this email if you have any questions.\n\n{SIGN_OFF}"
+        body = f"Hello,\n\n{sentences}\n\nPlease reply to this email if you have any questions.\n\n{sign_off}"
         drafts.append(
             {
                 "to": str(item["to"]),
@@ -693,6 +695,12 @@ _DEFAULT_SCRIPT = {
 }
 
 
+def _sample_pack_script(agent_id: str):
+    from app.runtime import fakes  # lazy: the pack scripts import helpers, never this module at import time
+
+    return fakes.agent_script(agent_id)
+
+
 class FakeProvider:
     """Scripted provider. The turn returned is chosen by agent id (system prompt marker "agent:<id>") and by
     how many assistant turns the conversation already has, so it is stateless across activity calls.
@@ -700,7 +708,8 @@ class FakeProvider:
     Without a script entry, the agents in _DEFAULT_SCRIPT (the reconciliation, overdue invoice and refund
     triage agents, and the shared writer) submit a deterministic result computed from their inputs, valid
     against their output schemas. Any other agent whose result is shared/agent-result (an agent an org built
-    in the Studio) submits `fake_team_agent`'s result.
+    in the Studio) submits `fake_team_agent`'s result. Agents of the sample packs submit the script in
+    app.runtime.fakes.
     """
 
     def __init__(self, script: dict[str, list[ModelTurn]] | None = None) -> None:
@@ -716,6 +725,8 @@ class FakeProvider:
             return turns[min(turn_index, len(turns) - 1)]
         if agent_id in _DEFAULT_SCRIPT:
             result = _DEFAULT_SCRIPT[agent_id](inputs_of(messages))
+        elif (script := _sample_pack_script(agent_id)) is not None:
+            result = script(inputs_of(messages))
         elif _submits(tools, TEAM_RESULT_TITLE):
             result = fake_team_agent(inputs_of(messages))
         else:

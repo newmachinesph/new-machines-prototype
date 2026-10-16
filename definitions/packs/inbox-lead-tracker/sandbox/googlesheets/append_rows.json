@@ -1,0 +1,11 @@
+{
+  "spreadsheetId": "sandbox-leads-sheet-000000000000001",
+  "tableRange": "Leads!A1:G9",
+  "updates": {
+    "spreadsheetId": "sandbox-leads-sheet-000000000000001",
+    "updatedRange": "Leads!A10:G12",
+    "updatedRows": 3,
+    "updatedColumns": 7,
+    "updatedCells": 21
+  }
+}

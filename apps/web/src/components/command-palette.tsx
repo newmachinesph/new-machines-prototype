@@ -5,7 +5,7 @@ import { Dialog } from "@base-ui/react/dialog";
 import { CornerDownLeft, Inbox, ListChecks, Search, type LucideIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { cn } from "@/lib/cn";
 import { usePacks } from "@/lib/queries/catalog";
 import { useRuns } from "@/lib/queries/runs";
@@ -22,6 +22,7 @@ import type {
 import { useIsDemo } from "@/lib/queries/me";
 import { useFormat } from "@/lib/use-format";
 import { PackIcon } from "./pack-icon";
+import { useTour } from "./tour/tour-context";
 
 // Pages show their sidebar icon plain; records (runs, packs, approvals, tasks) sit in a ring.
 type Entry = {
@@ -36,13 +37,17 @@ type Entry = {
   pack?: string;
   icon?: LucideIcon;
   ring?: boolean;
+  /** An action rather than a page: run with what had focus before the palette opened. */
+  run?: (opener: Element | null) => void;
 };
 // The id is the stable key; the label is translated at build time.
 type Group = { id: string; label: string; items: Entry[] };
-type PaletteKey = "approval" | "hired" | `groups.${"pages" | "runs" | "needsYou" | "packs" | "tasks"}`;
+type PaletteKey = "approval" | "hired" | `groups.${"pages" | "actions" | "runs" | "needsYou" | "packs" | "tasks"}`;
 type Translate = (key: PaletteKey) => string;
 
 export type PageEntry = { href: string; label: string; icon: LucideIcon };
+/** Something to do from the palette, such as replaying the page's tour. */
+export type PaletteAction = { id: string; label: string; icon: LucideIcon; run: (opener: Element | null) => void };
 
 type Records = {
   runs?: ListWorkflowRunsResponse;
@@ -53,6 +58,7 @@ type Records = {
 
 function buildGroups(
   pages: PageEntry[],
+  actions: PaletteAction[],
   { runs = [], approvals = [], packs = [], tasks = [] }: Records,
   t: Translate,
   runHint: (run: RunSummary) => string,
@@ -68,6 +74,18 @@ function buildGroups(
         href: p.href,
         keywords: p.href,
         icon: p.icon,
+      })),
+    },
+    {
+      id: "actions",
+      label: t("groups.actions"),
+      items: actions.map((a) => ({
+        id: `action-${a.id}`,
+        label: a.label,
+        href: "",
+        keywords: a.id,
+        icon: a.icon,
+        run: a.run,
       })),
     },
     {
@@ -149,15 +167,18 @@ function EntryIcon({ entry }: { entry: Entry }) {
 const isTyping = (t: EventTarget | null) =>
   t instanceof HTMLElement && (t.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(t.tagName));
 
-export function CommandPalette({ pages }: { pages: PageEntry[] }) {
+export function CommandPalette({ pages, actions = [] }: { pages: PageEntry[]; actions?: PaletteAction[] }) {
   const t = useTranslations("nav.palette");
   const status = useTranslations("status");
   const { ago } = useFormat();
   const demo = useIsDemo();
   const open = useUi((s) => s.paletteOpen);
   const onOpenChange = useUi((s) => s.setPaletteOpen);
+  // A product tour on screen owns the keyboard: its card keeps focus, and Escape and the arrows drive it.
+  const tourVisible = useTour().visible;
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (tourVisible) return;
       const key = e.key?.toLowerCase();
       const k = key === "k" && (e.metaKey || e.ctrlKey);
       if (k || (key === "/" && !isTyping(e.target))) {
@@ -167,7 +188,17 @@ export function CommandPalette({ pages }: { pages: PageEntry[] }) {
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [onOpenChange]);
+  }, [onOpenChange, tourVisible]);
+
+  // What had focus when the palette opened, however it was opened, for an action to hand focus back to.
+  const returnTo = useRef<Element | null>(null);
+  useEffect(
+    () =>
+      useUi.subscribe((s, prev) => {
+        if (s.paletteOpen && !prev.paletteOpen) returnTo.current = document.activeElement;
+      }),
+    [],
+  );
 
   // Palette data loads only while the palette is open.
   const runs = useRuns(open);
@@ -177,6 +208,7 @@ export function CommandPalette({ pages }: { pages: PageEntry[] }) {
   const loading = open && [runs, approvals, packs, tasks].some((q) => q.isPending);
   const groups = buildGroups(
     pages,
+    actions,
     { runs: runs.data, approvals: approvals.data, packs: packs.data, tasks: tasks.data },
     t,
     (r) => t("runHint", { status: status(r.status), when: ago(r.startedAt) }),
@@ -218,7 +250,20 @@ export function CommandPalette({ pages }: { pages: PageEntry[] }) {
                       <Autocomplete.Item
                         key={e.id}
                         value={e}
-                        render={<Link href={e.href} onClick={close} />}
+                        render={
+                          e.run ? (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const opener = returnTo.current;
+                                close();
+                                e.run?.(opener);
+                              }}
+                            />
+                          ) : (
+                            <Link href={e.href} onClick={close} />
+                          )
+                        }
                         className="group flex items-center gap-3 rounded-md px-2.5 py-2 text-sm outline-none data-[highlighted]:bg-grey-100"
                       >
                         <EntryIcon entry={e} />

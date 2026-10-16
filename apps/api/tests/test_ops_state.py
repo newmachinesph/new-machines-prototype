@@ -16,6 +16,7 @@ from app.defs.loader import load_bundle
 from app.main import create_app
 from app.models.ops import AuditTargetType
 from app.store import get_store, reset_store
+from tests.test_db import _drop_schema
 from tests.test_live_catalog import PROJECT, USERS, As, Starts, _ready
 
 OPS_EMAIL = "olga.ops@newmachin.es"
@@ -259,8 +260,9 @@ def test_migration_006_seeds_the_pause_switch_off(db):
             {"key": "pause_all_runs", "value": {"enabled": False}, "updated_by": "system"}
         ]
         assert ops_state.is_paused(db) is False
-    finally:  # whatever failed above, `nm_test` keeps 006 for the tests after this one
+    finally:  # rebuild from scratch: 006 alone drops what later migrations changed (016 widens ops_audit)
         db.rollback()
+        _drop_schema(db)
         app_db.migrate(db)
 
 

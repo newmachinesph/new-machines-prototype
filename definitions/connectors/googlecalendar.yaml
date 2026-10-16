@@ -1,0 +1,43 @@
+kind: connector
+key: googlecalendar
+app: Google Calendar
+toolkit: googlecalendar
+
+tools:
+  - id: list_events
+    slug: GOOGLECALENDAR_EVENTS_LIST
+    version: "20261010_00"
+    action_class: read
+    capability: calendar.read
+    description: List the events on a calendar between two times, with their title, time and attendees.
+    input_schema:
+      type: object
+      additionalProperties: false
+      required: [calendarId, timeMin, timeMax]
+      properties:
+        calendarId:
+          type: string
+          minLength: 1
+          description: The calendar to read; primary is the account's main calendar.
+        timeMin:
+          type: string
+          pattern: ^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$
+          description: Start of the window, in UTC (RFC 3339).
+        timeMax:
+          type: string
+          pattern: ^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$
+          description: End of the window, in UTC (RFC 3339).
+        singleEvents:
+          type: boolean
+          description: Expand repeating events into single events.
+        orderBy:
+          type: string
+          enum: [startTime, updated]
+          description: Order of the events.
+        maxResults:
+          type: integer
+          minimum: 1
+          maximum: 250
+          description: Most events to return.
+
+defaults: {read: permit, write: require_approval, delete: deny, money: deny}

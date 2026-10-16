@@ -1,9 +1,11 @@
-import { screen, within } from "@testing-library/react";
-import { House, Workflow } from "lucide-react";
+import { act, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { Compass, House, Workflow } from "lucide-react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { renderWithIntl } from "@/test/intl";
 import { useUi } from "@/stores/ui";
 import { CommandPalette } from "./command-palette";
+import { TourContext } from "./tour/tour-context";
 
 const ok = <T,>(data: T) => ({ isPending: false, isError: false, data });
 const data = vi.hoisted(() => ({ demo: false }));
@@ -76,5 +78,39 @@ describe("CommandPalette", () => {
     renderWithIntl(<CommandPalette pages={PAGES} />);
     await screen.findByRole("dialog");
     expect(screen.getByText("Search covers demo data only")).toBeInTheDocument();
+  });
+
+  it("runs an action, closes, and hands it what had focus before the palette opened", async () => {
+    useUi.setState({ paletteOpen: false });
+    const before = document.createElement("button");
+    document.body.append(before);
+    before.focus();
+    const run = vi.fn();
+    renderWithIntl(
+      <CommandPalette pages={PAGES} actions={[{ id: "tour", label: "Take the tour", icon: Compass, run }]} />,
+    );
+    act(() => useUi.getState().setPaletteOpen(true));
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByText("Actions")).toBeInTheDocument();
+    await userEvent.click(within(dialog).getByRole("option", { name: "Take the tour" }));
+    expect(run).toHaveBeenCalledWith(before);
+    expect(useUi.getState().paletteOpen).toBe(false);
+    before.remove();
+  });
+
+  it("leaves its shortcuts to a product tour on screen", async () => {
+    useUi.setState({ paletteOpen: false });
+    const tour = (visible: boolean) => (
+      <TourContext value={{ start: () => false, replay: () => {}, pending: null, clearPending: () => {}, visible }}>
+        <CommandPalette pages={PAGES} />
+      </TourContext>
+    );
+    const { rerender } = renderWithIntl(tour(true));
+    await userEvent.keyboard("/");
+    await userEvent.keyboard("{Control>}k{/Control}");
+    expect(useUi.getState().paletteOpen).toBe(false);
+    rerender(tour(false));
+    await userEvent.keyboard("{Control>}k{/Control}");
+    expect(useUi.getState().paletteOpen).toBe(true);
   });
 });

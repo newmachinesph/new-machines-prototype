@@ -24,6 +24,7 @@ with workflow.unsafe.imports_passed_through():
     from app.worker.activities import (
         RUN_SEALED,
         SAFE_ERROR_TYPES,
+        STOP_ERROR_TYPES,
         AgentResult,
         Failure,
         ItemCall,
@@ -32,6 +33,7 @@ with workflow.unsafe.imports_passed_through():
         PackActivities,
         TaskDecision,
         ToolUse,
+        run_budget_minor,
     )
 
 # Retry policies. Changing these values is replay safe: Temporal matches recorded activity commands by type
@@ -104,19 +106,16 @@ def _run_sealed(err: Exception) -> bool:
     return isinstance(cause, ApplicationError) and cause.type == RUN_SEALED
 
 
+def _stops_run(err: Exception) -> bool:
+    """An activity refused a step for a cap (`STOP_ERROR_TYPES`): the run stops, whatever the error route."""
+    cause = err.cause if isinstance(err, ActivityError) else None
+    return isinstance(cause, ApplicationError) and cause.type in STOP_ERROR_TYPES
+
+
 def _route_reason(node: dict, route: str, output: Any) -> str:
     if isinstance(output, dict) and isinstance(output.get("explanation"), str):
         return output["explanation"]  # a decision explains its own route
     return _ROUTE_REASONS.get((node["type"], route), f"{node['id']} ended with {route}.")
-
-
-def _ai_budget(contract: dict, snapshot: dict) -> int:
-    """The run's AI budget in minor units: the budget asked for at start, capped by the contract maximum.
-    0 means no limit (neither is set)."""
-    maximum = int((contract.get("budget") or {}).get("maximum_minor") or 0)
-    requested = int(snapshot.get("budget_minor") or 0)
-    limits = [b for b in (maximum, requested) if b > 0]
-    return min(limits) if limits else 0
 
 
 def _max_executions(contract: dict, graph: dict) -> int:
@@ -136,6 +135,7 @@ class PackRunner:
         self._current: str | None = None
         self._waiting: dict | None = None
         self._spent_ai = 0
+        self._spent_fees = 0  # agent calls' publisher fees (`start_agent`), within the same budget
         self._budget = 0
         self._step = 0
         self._reason: str | None = None
@@ -204,7 +204,7 @@ class PackRunner:
     async def _walk(self, graph: dict) -> str:
         nodes = {n["id"]: n for n in graph["nodes"]}
         contract = gateway.contract_of(self._snapshot)
-        self._budget = _ai_budget(contract, self._snapshot)
+        self._budget = run_budget_minor(self._snapshot)
         limit = _max_executions(contract, graph)
         attempts: dict[str, int] = {}
         node_id, executions = graph["entry_node_id"], 0
@@ -228,7 +228,7 @@ class PackRunner:
             except (ActivityError, _NodeFailed) as err:
                 if _run_sealed(err):  # the run already ended outside this workflow: record nothing more
                     raise ApplicationError(str(err.cause), type=RUN_SEALED, non_retryable=True) from err
-                fatal = isinstance(err, _NodeFailed) and err.fatal
+                fatal = (isinstance(err, _NodeFailed) and err.fatal) or _stops_run(err)
                 reason = err.reason if isinstance(err, _NodeFailed) else _activity_reason(node_id, err)
                 if fatal or "error" not in routes:
                     return await self._fail(node_id, attempt, reason)
@@ -318,6 +318,7 @@ class PackRunner:
 
     async def _agent(self, node_id: str, attempt: int) -> tuple[Any, str]:
         spec = await self._act(PackActivities.start_agent, self._node_call(node_id, attempt))
+        self._spent_fees += int(spec.get("fee_minor") or 0)  # runs started before fees return none
         if spec.get("adapter") == "google_adk":
             return await self._adk_agent(node_id, attempt, spec)
         return await self._hosted_agent(node_id, attempt, spec)  # runs pinned before google_adk existed
@@ -340,13 +341,7 @@ class PackRunner:
             turn = await self._act(
                 PackActivities.model_call, call, timeout=_MODEL_TIMEOUT, retry=_MODEL_RETRY
             )
-            self._spent_ai += int(turn["cost_minor"])
-            if self._budget and self._spent_ai > self._budget:
-                reason = (
-                    f"BUDGET_EXCEEDED: AI spend {self._spent_ai} is over the budget of "
-                    f"{self._budget} minor units"
-                )
-                raise _NodeFailed(reason, fatal=True)
+            self._spend_ai(int(turn["cost_minor"]))
             return turn["content"]
 
         async def tool(block: dict) -> dict:
@@ -382,13 +377,7 @@ class PackRunner:
             turn = await self._act(
                 PackActivities.model_call, call, timeout=_MODEL_TIMEOUT, retry=_MODEL_RETRY
             )
-            self._spent_ai += int(turn["cost_minor"])
-            if self._budget and self._spent_ai > self._budget:
-                reason = (
-                    f"BUDGET_EXCEEDED: AI spend {self._spent_ai} is over the budget of "
-                    f"{self._budget} minor units"
-                )
-                raise _NodeFailed(reason, fatal=True)
+            self._spend_ai(int(turn["cost_minor"]))
             messages = [*messages, {"role": "assistant", "content": turn["content"]}]
             kind, value = agent.next_step(ModelTurn(turn["content"], turn["stop_reason"], 0, 0, ""))
             if kind == "submit":
@@ -446,6 +435,20 @@ class PackRunner:
         return closed["output"], closed["route"]
 
     # --- helpers ----------------------------------------------------------------------------------------
+
+    def _spend_ai(self, cost_minor: int) -> None:
+        """Count a model turn's cost; the node fails for good once the AI spend and the agent fees together
+        are over the run's budget."""
+        self._spent_ai += cost_minor
+        if not self._budget or self._spent_ai + self._spent_fees <= self._budget:
+            return
+        fees = f" and publisher fees {self._spent_fees}" if self._spent_fees else ""
+        verb = "are" if self._spent_fees else "is"
+        raise _NodeFailed(
+            f"BUDGET_EXCEEDED: AI spend {self._spent_ai}{fees} {verb} over the budget of "
+            f"{self._budget} minor units",
+            fatal=True,
+        )
 
     def _next_step(self) -> int:
         self._step += 1

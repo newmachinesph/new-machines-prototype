@@ -1,0 +1,77 @@
+{
+  "kind": "calendar#events",
+  "summary": "alex.tan@yourco.example.com",
+  "timeZone": "UTC",
+  "items": [
+    {
+      "id": "evt20261015focus",
+      "status": "confirmed",
+      "summary": "Focus time",
+      "start": {"dateTime": "2026-10-15T08:00:00Z"},
+      "end": {"dateTime": "2026-10-15T08:45:00Z"},
+      "organizer": {"email": "alex.tan@yourco.example.com", "self": true}
+    },
+    {
+      "id": "evt20261015standup",
+      "status": "confirmed",
+      "summary": "Daily stand-up",
+      "start": {"dateTime": "2026-10-15T09:00:00Z"},
+      "end": {"dateTime": "2026-10-15T09:15:00Z"},
+      "organizer": {"email": "sam.lee@yourco.example.com"},
+      "attendees": [
+        {"email": "alex.tan@yourco.example.com", "self": true, "responseStatus": "accepted"},
+        {"email": "sam.lee@yourco.example.com", "displayName": "Sam Lee", "responseStatus": "accepted"}
+      ]
+    },
+    {
+      "id": "evt20261015brightleaf",
+      "status": "confirmed",
+      "summary": "Brightleaf Events: venue options",
+      "description": "Agreed: send two venue options and a price by Friday.",
+      "start": {"dateTime": "2026-10-15T10:00:00Z"},
+      "end": {"dateTime": "2026-10-15T10:30:00Z"},
+      "organizer": {"email": "alex.tan@yourco.example.com", "self": true},
+      "attendees": [
+        {"email": "alex.tan@yourco.example.com", "self": true, "responseStatus": "accepted"},
+        {"email": "maya.chen@brightleaf.example.com", "displayName": "Maya Chen", "responseStatus": "accepted"}
+      ]
+    },
+    {
+      "id": "evt20261015okafor",
+      "status": "confirmed",
+      "summary": "Okafor Legal: contract review",
+      "description": "Agreed: share the revised draft next week.\nAgreed: Tom checks the notice period.",
+      "start": {"dateTime": "2026-10-15T13:00:00Z"},
+      "end": {"dateTime": "2026-10-15T14:00:00Z"},
+      "organizer": {"email": "tom@okaforlegal.example.com"},
+      "attendees": [
+        {"email": "alex.tan@yourco.example.com", "self": true, "responseStatus": "accepted"},
+        {"email": "sam.lee@yourco.example.com", "displayName": "Sam Lee", "responseStatus": "accepted"},
+        {"email": "tom@okaforlegal.example.com", "displayName": "Tom Okafor", "responseStatus": "accepted"}
+      ]
+    },
+    {
+      "id": "evt20261015supplier",
+      "status": "cancelled",
+      "summary": "Supplier call",
+      "start": {"dateTime": "2026-10-15T15:00:00Z"},
+      "end": {"dateTime": "2026-10-15T15:30:00Z"},
+      "attendees": [
+        {"email": "alex.tan@yourco.example.com", "self": true, "responseStatus": "accepted"},
+        {"email": "orders@freightco.example.com", "responseStatus": "needsAction"}
+      ]
+    },
+    {
+      "id": "evt20261015nordlys",
+      "status": "confirmed",
+      "summary": "Intro call: Nordlys Studio",
+      "start": {"dateTime": "2026-10-15T16:00:00Z"},
+      "end": {"dateTime": "2026-10-15T16:30:00Z"},
+      "organizer": {"email": "alex.tan@yourco.example.com", "self": true},
+      "attendees": [
+        {"email": "alex.tan@yourco.example.com", "self": true, "responseStatus": "accepted"},
+        {"email": "ingrid@nordlys.example.com", "displayName": "Ingrid Berg", "responseStatus": "declined"}
+      ]
+    }
+  ]
+}

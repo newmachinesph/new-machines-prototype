@@ -1,0 +1,48 @@
+{
+  "input_parameters": {
+    "properties": {
+      "dateTimeRenderOption": {
+        "enum": [
+          "SERIAL_NUMBER",
+          "FORMATTED_STRING"
+        ],
+        "type": "string"
+      },
+      "empty_strings_filtered": {
+        "type": "boolean"
+      },
+      "majorDimension": {
+        "enum": [
+          "DIMENSION_UNSPECIFIED",
+          "ROWS",
+          "COLUMNS"
+        ],
+        "type": "string"
+      },
+      "ranges": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "spreadsheet_id": {
+        "maxLength": 200,
+        "type": "string"
+      },
+      "valueRenderOption": {
+        "enum": [
+          "FORMATTED_VALUE",
+          "UNFORMATTED_VALUE",
+          "FORMULA"
+        ],
+        "type": "string"
+      }
+    },
+    "required": [
+      "spreadsheet_id"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLESHEETS_BATCH_GET",
+  "version": "20261001_00"
+}

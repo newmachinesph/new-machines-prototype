@@ -19,6 +19,7 @@ vi.mock("@/components/base", async (importOriginal) => ({
   useToast: () => vi.fn(),
 }));
 vi.mock("@/lib/queries/me", () => ({ useIsDemo: () => false, useOrgId: () => "org_new" }));
+vi.mock("./publisher", () => ({ PublisherSection: () => null }));
 vi.mock("@/lib/queries/org", () => ({
   useOrg: () =>
     ok({

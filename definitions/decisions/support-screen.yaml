@@ -1,0 +1,47 @@
+# What each customer email is. The decision model sorts each email; confident spam is left out. If it is not available,
+# the agent sorts the emails itself and a person checks every case (on_error routes to triage, unscreened).
+kind: decision_rules
+key: support-screen
+
+question: What kind of customer email is each one?
+
+evaluator:
+  kind: jev
+  for_each: nodes.inbox.output.messages
+  ref: item.messageId
+  state:
+    - "'From: ' + (has(item.sender) ? item.sender : '')"
+    - "'Subject: ' + (has(item.subject) ? item.subject : '')"
+    - "'Text: ' + (has(item.messageText) ? item.messageText : '')"
+  questions:
+    support_category:
+      type: choice
+      instructions: What does this email need from the support team?
+      criteria:
+        question: A question about a product, an order, an account or how something works.
+        complaint: The customer is unhappy with a product or the service and wants it put right.
+        refund: The customer asks for money back.
+        spam: Marketing, newsletters, automated notifications or anything not from a customer.
+  # Only confident spam is left out: an unsure "spam" stays a case, so a real customer is never dropped unseen.
+  # type() == null_type, not == null: comparing a number with null has no overload in this CEL runtime.
+  keep: >-
+    answers.support_category.value != 'spam' || type(answers.support_category.confidence) == null_type
+    || answers.support_category.confidence < 0.7
+  on_error:
+    verdict: HUMAN_REVIEW
+    route: unsorted
+    reason_code: DECISION_MODEL_UNAVAILABLE
+    explanation: The decision model was not available, so the emails are sorted without it and a person checks every case.
+
+rules:
+  - when: size(jev.kept) == 0
+    verdict: APPROVED
+    route: nothing
+    reason_code: NO_EMAILS
+    explanation: No customer email needs an answer.
+
+default:
+  verdict: APPROVED
+  route: sorted
+  reason_code: EMAILS_SORTED
+  explanation: The emails are sorted by type and spam is left out.

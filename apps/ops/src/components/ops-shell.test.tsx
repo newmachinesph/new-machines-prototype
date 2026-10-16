@@ -5,7 +5,10 @@ import { UiProviders } from "./base";
 
 let me: { data?: unknown; error?: unknown; isPending: boolean } = { isPending: true };
 vi.mock("next/navigation", () => ({ usePathname: () => "/tenants/org_hp01" }));
-vi.mock("@/lib/queries/ops", () => ({ useMe: () => me }));
+vi.mock("@/lib/queries/ops", () => ({
+  useMe: () => me,
+  useOpsWorkspace: () => ((me.data as { workspace?: string } | undefined)?.workspace === "live" ? "live" : "demo"),
+}));
 vi.mock("@/lib/auth/session", () => ({
   useSession: () => ({ user: { email: "someone@example.com" }, signOut: vi.fn(async () => {}) }),
 }));
@@ -41,6 +44,16 @@ describe("OpsShell", () => {
       screen.getByText((_, el) => el?.tagName === "SPAN" && el.textContent === "Demo environment"),
     ).toBeInTheDocument();
     expect(screen.queryByText("page body")).toBeNull();
+  });
+
+  it("calls the environment live, with no demo wording, against a live API", () => {
+    me = { isPending: false, data: { userId: "ops_1", email: "ops@newmachin.es", role: "owner", workspace: "live" } };
+    renderShell();
+    expect(
+      screen.getByText((_, el) => el?.tagName === "SPAN" && el.textContent === "Live environment"),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/demo environment/i)).toBeNull();
+    expect(screen.queryByText(/synthetic/i)).toBeNull();
   });
 
   it("renders the page only once the API confirms an operator", () => {

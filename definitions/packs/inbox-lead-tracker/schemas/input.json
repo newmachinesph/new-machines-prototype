@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Inbox lead tracker request",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["spreadsheet_id"],
+  "properties": {
+    "spreadsheet_id": {
+      "type": "string",
+      "minLength": 30,
+      "pattern": "^[a-zA-Z0-9_-]+$",
+      "default": "sandbox-leads-sheet-000000000000001",
+      "description": "The leads spreadsheet's id, from its URL. Rows are added to its Leads tab."
+    },
+    "query": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "default": "in:inbox newer_than:7d",
+      "description": "Which emails to check, as a Gmail search."
+    }
+  }
+}

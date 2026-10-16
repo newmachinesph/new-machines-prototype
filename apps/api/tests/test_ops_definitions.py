@@ -78,7 +78,7 @@ def test_list_shows_every_kind_of_the_bundle(api):
     bundle = load_bundle(settings.defs_dir())
     assert {(r["kind"], r["key"]) for r in rows} == set(bundle.items)
     assert {r["kind"] for r in rows} >= {"pack", "workflow", "contract", "agent", "connector", "models"}
-    pack = next(r for r in rows if r["kind"] == "pack")
+    pack = next(r for r in rows if (r["kind"], r["key"]) == ("pack", PACK))
     assert pack["name"] == bundle.get("pack", PACK).body["name"]
     assert pack["version"] == 1 and pack["source"] == "file" and pack["digest"].startswith("sha256:")
     connector = next(r for r in rows if (r["kind"], r["key"]) == ("connector", "shopify"))

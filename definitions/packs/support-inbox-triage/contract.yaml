@@ -1,0 +1,23 @@
+# Work Contract template. The literal "{org}" is replaced with the buyer organisation when a run starts.
+kind: contract
+key: support-inbox-triage
+schema_version: nm.work_contract.v1
+contract_id: support-inbox-triage
+version: 1
+org_id: "{org}"
+capability: customer.support_triage
+input_schema_ref: support-inbox-triage/input
+output_schema_ref: shared/drafts
+
+acceptance:
+  verification_ruleset_ref: shared/drafts
+  buyer_acceptance_required: false
+
+authorization:
+  tool_capabilities: [mail.read, mail.write, sheets.write]
+  region_policy_ref: region/asia-south1
+  policy_ref: policy/default
+
+budget: {currency: USD, maximum_minor: 2500, human_budget_minor: 2000}
+limits: {max_attempts: 3, deadline_s: 172800}
+routes: {success: done, failure: failed, timeout: failed, human_review: review}

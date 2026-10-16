@@ -9,7 +9,9 @@ import { QueryState } from "@/components/query-state";
 import { Skeleton } from "@/components/skeleton";
 import { Id, KeyValues, PageHeader, Pill, Section, SimTag } from "@/components/ui";
 import { ApiError } from "@/lib/api/errors";
+import { useFeeLabel } from "@/lib/listing-fee";
 import { useAgent } from "@/lib/queries/catalog";
+import { shownVersion } from "@/lib/shown-version";
 import { useFormat } from "@/lib/use-format";
 import type { Agent } from "@/lib/types";
 import { useCapabilityLabel } from "../capability-label";
@@ -26,6 +28,8 @@ export function AgentPage({ id }: { id: string }) {
 
 function AgentDetail({ agent: a }: { agent: Agent }) {
   const t = useTranslations("agents.detail");
+  const tl = useTranslations("listedMarket");
+  const fee = useFeeLabel();
   const { list } = useFormat();
   const label = useCapabilityLabel();
   const muted = (text: string) => <span className="text-muted">{text}</span>;
@@ -35,7 +39,19 @@ function AgentDetail({ agent: a }: { agent: Agent }) {
       <title>{`${a.name} | New Machines`}</title>
       <PageHeader title={a.name} lede={a.summary}>
         <div className="mb-2 flex flex-wrap items-center gap-2 text-sm text-muted">
-          <span>{t("publisherVersion", { publisher: a.publisher, version: a.version })}</span>
+          {/* A listed agent's publisher is on the "By" line beside its fee. */}
+          <span>
+            {a.listing
+              ? tl("version", { version: shownVersion(a) })
+              : t("publisherVersion", { publisher: a.publisher, version: shownVersion(a) })}
+          </span>
+          {a.listing ? (
+            <span>
+              {tl("by", { publisher: a.listing.publisher })}
+              {" · "}
+              <span className="tnum">{fee(a.listing)}</span>
+            </span>
+          ) : null}
           {a.source === "sample" ? <SimTag>{t("sample")}</SimTag> : null}
           {a.source !== "sample" && a.certified ? <Pill tone="ink">{t("certified")}</Pill> : null}
         </div>

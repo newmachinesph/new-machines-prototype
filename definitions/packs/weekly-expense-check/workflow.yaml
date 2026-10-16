@@ -1,0 +1,175 @@
+# The weekly expense check graph. Values starting with "=" are CEL over the run state
+# (input, nodes.<id>.output, memory; `item` inside a for_each). Routes name the next node for each outcome.
+kind: workflow
+key: weekly-expense-check
+schema_version: nm.workflow.v1
+workflow_id: weekly-expense-check
+version: "1"
+entry_node_id: start
+default_policy_ref: policy/default
+work_contract_ref: weekly-expense-check
+limits:
+  max_duration_s: 172800
+  max_cost_minor: 2500
+  currency: USD
+  max_parallel_nodes: 1
+  max_total_node_attempts: 40
+
+nodes:
+  - id: start
+    type: trigger
+    version: "1"
+    config: {}
+    routes: {next: recall}
+
+  - id: recall
+    type: memory
+    version: "1"
+    config:
+      op: recall
+      space: expense-policy
+      query: receipt limit duplicate category
+    routes: {next: sheet}
+
+  - id: sheet
+    type: connector
+    version: "1"
+    config:
+      tool: googlesheets.read_rows
+      args:
+        spreadsheet_id: =input.spreadsheet_id
+        ranges: ["=input.expenses_range"]
+    routes: {next: analyse, denied: failed, error: failed}
+
+  - id: analyse
+    type: agent
+    version: "1"
+    config:
+      agent: expense-agent
+      task: >-
+        Check the expenses dated in the seven days from week_start: put each in a category, flag anything
+        the expense policy in rules calls unusual, and prepare the summary rows and the email facts. Do not
+        change the sheet. Submit the result in the required shape.
+      inputs:
+        sheet: =nodes.sheet.output
+        week_start: =input.week_start
+        rules: =memory
+      output_schema: weekly-expense-check/report
+    routes: {next: check}
+
+  - id: check
+    type: decision
+    version: "1"
+    config:
+      rules: expense-flags
+    routes: {nothing: nothing, human_review: review, ordinary: draft}
+
+  - id: review
+    type: human_workforce
+    version: "1"
+    config:
+      title: Check the flagged expenses
+      instructions: >-
+        For each flagged expense, check the row in the expenses sheet against the expense policy. Add a note
+        where something should be followed up. Resolve the task when every flag is checked, or reject it if
+        the expenses cannot be trusted.
+      show: =nodes.analyse.output.review_items
+      timeout_s: 86400
+    routes: {resolved: draft, rejected: failed, timeout: failed}
+
+  - id: draft
+    type: agent
+    version: "1"
+    config:
+      agent: writer-agent
+      task: >-
+        Write one short summary email from the item's facts. Follow the reviewer notes when there are any.
+        Submit the result in the required shape.
+      inputs:
+        items: >-
+          =[{'to': input.email_to, 'about': 'Weekly expenses: week of ' + input.week_start,
+          'facts': nodes.analyse.output.email_facts, 'ref': 'week-' + input.week_start}]
+        review: "=has(nodes.review) ? nodes.review.output : null"
+        tone: clear and brief
+        sign_off: Weekly expense check
+      output_schema: shared/drafts
+    routes: {next: approve_sheet}
+
+  - id: approve_sheet
+    type: approval
+    version: "1"
+    config:
+      title: Add the weekly summary to the sheet
+      summary: >-
+        =(size(nodes.analyse.output.summary_rows) == 1 ? 'Add 1 row' : 'Add ' +
+        string(size(nodes.analyse.output.summary_rows)) + ' rows') + ' to the ' + input.summary_tab + ' tab'
+      timeout_s: 86400
+    routes: {granted: write, denied: failed, timeout: failed}
+
+  - id: write
+    type: connector
+    version: "1"
+    config:
+      tool: googlesheets.append_rows
+      args:
+        spreadsheetId: =input.spreadsheet_id
+        range: =input.summary_tab + '!A:D'
+        valueInputOption: RAW
+        values: =nodes.analyse.output.summary_rows
+    routes: {ok: approve_email, denied: failed, error: failed}
+
+  - id: approve_email
+    type: approval
+    version: "1"
+    config:
+      title: Send the weekly summary email
+      # The only immediate send: the approver sees the subject of the one email it sends.
+      summary: >-
+        =size(nodes.draft.output.drafts) == 1 ? 'Send the summary email "' + nodes.draft.output.drafts[0].subject
+        + '" to ' + input.email_to : 'Send the summary email to ' + input.email_to
+      timeout_s: 86400
+    routes: {granted: send, denied: failed, timeout: failed}
+
+  - id: send
+    type: connector
+    version: "1"
+    config:
+      tool: gmail.send_email
+      for_each: =nodes.draft.output.drafts
+      args:
+        recipient_email: =item.to
+        subject: =item.subject
+        body: =item.body
+    routes: {ok: verify, denied: failed, error: failed}
+
+  - id: verify
+    type: verification
+    version: "1"
+    config:
+      schema: weekly-expense-check/report
+      value: =nodes.analyse.output
+      checks:
+        - =size(nodes.draft.output.drafts) == 1
+        - =size(nodes.send.output.results) == 1
+        - =size(nodes.analyse.output.summary_rows) == size(nodes.analyse.output.categories) + 1
+    routes: {pass: done, fail: failed}
+
+  - id: nothing
+    type: end
+    version: "1"
+    config:
+      status: COMPLETED
+      deliverable: =nodes.analyse.output
+
+  - id: done
+    type: end
+    version: "1"
+    config:
+      status: COMPLETED
+      deliverable: =nodes.analyse.output
+
+  - id: failed
+    type: end
+    version: "1"
+    config:
+      status: FAILED

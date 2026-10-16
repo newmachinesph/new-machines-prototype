@@ -7,7 +7,7 @@ import { Segmented } from "@/components/base";
 import { type Column, DataTable } from "@/components/data-table";
 import { QueryState } from "@/components/query-state";
 import { Skeleton } from "@/components/skeleton";
-import { Button, Id, PageHeader, Pill, Section, type Tone } from "@/components/ui";
+import { Button, ButtonLink, Callout, Id, PageHeader, Pill, Section, type Tone } from "@/components/ui";
 import { ago, count, pct } from "@/lib/format";
 import { usePacks } from "@/lib/queries/marketplace";
 import { LiveSampleNote } from "@/components/live-sample-note";
@@ -153,6 +153,15 @@ export function MarketplaceView() {
         actions={newPack}
         below={<LiveSampleNote>Pack listings here are sample data, not the live catalog.</LiveSampleNote>}
       />
+      {live ? (
+        <div className="mb-4">
+          <Callout
+            tone="info"
+            title="Workspace listings are reviewed in the review queue."
+            action={<ButtonLink href="/listings">Open review queue</ButtonLink>}
+          />
+        </div>
+      ) : null}
       <QueryState query={packsQuery} skeleton={<Skeleton className="h-96" />}>
         {(packs) => <PackTabs packs={packs} tabParam={tabParam} onTab={(t) => void setTab(t)} />}
       </QueryState>

@@ -1,0 +1,25 @@
+kind: agent
+key: lead-agent
+schema_version: nm.agent.manifest.v1.1
+agent_id: lead-agent
+version: "1.0.0"
+publisher_id: new-machines-labs
+publisher_name: New Machines Labs
+name: Lead Agent
+summary: >-
+  Turns each enquiry email into one lead: who asked, their company, what they asked for and how soon they want an answer, ready to add to your leads sheet. It never replies to anyone.
+capabilities: [sales.leads]
+runtime:
+  adapter: google_adk
+  model_profile: fast
+  instructions: instructions.md
+  skills: [skills/extract-leads.md]
+  tools: []
+  max_turns: 4
+input_schema_ref: shared/agent-input
+output_schema_ref: inbox-lead-tracker/leads
+requested_tool_capabilities: []
+data_processing:
+  supported_regions: ["asia-south1"]
+  data_classes: ["CONFIDENTIAL"]
+  retention_policy_ref: retention/30d

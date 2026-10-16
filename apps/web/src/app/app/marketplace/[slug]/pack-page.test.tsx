@@ -43,10 +43,10 @@ const agents = [
     capabilities: [],
   },
 ];
-const state = vi.hoisted(() => ({ installed: false, live: false }));
+const state = vi.hoisted(() => ({ installed: false, live: false, extra: {} as Record<string, unknown> }));
 vi.mock("@/lib/queries/me", () => ({ useIsLive: () => state.live }));
 vi.mock("@/lib/queries/catalog", () => ({
-  usePack: () => ok({ ...pack, installed: state.installed }),
+  usePack: () => ok({ ...pack, installed: state.installed, ...state.extra }),
   useAgents: () => ok(agents),
   useAgentById: () => (id: string) => agents.find((a) => a.id === id),
 }));
@@ -54,6 +54,7 @@ vi.mock("@/lib/queries/catalog", () => ({
 afterEach(() => {
   state.installed = false;
   state.live = false;
+  state.extra = {};
 });
 
 describe("PackPage agents", () => {
@@ -99,6 +100,28 @@ describe("PackPage actions", () => {
     renderWithIntl(<PackPage slug="order-payment-reconciliation" />);
     expect(screen.queryByRole("heading", { name: "Trust Passport" })).toBeNull();
     expect(screen.queryByText(/No evaluation report/)).toBeNull();
+  });
+});
+
+describe("PackPage versions and Japanese", () => {
+  it("shows a Studio-built pack by its definition version", () => {
+    state.extra = { version: "1.0.1", builtByTeam: true, certified: false, publisher: "Acme Labs" };
+    renderWithIntl(<PackPage slug="order-payment-reconciliation" />);
+    expect(screen.getByText("Acme Labs, version 1")).toBeInTheDocument();
+    expect(screen.queryByText(/1\.0\.1/)).toBeNull();
+  });
+
+  it("names each agent with its version and publisher", () => {
+    renderWithIntl(<PackPage slug="order-payment-reconciliation" />);
+    const who = screen.getByRole("heading", { name: "Who does the work" }).closest("section")!;
+    expect(within(who).getAllByText("New Machines Labs, version 1.0.0")).toHaveLength(2);
+  });
+
+  it("translates the Trust Passport heading into Japanese", () => {
+    state.extra = { certified: false };
+    renderWithIntl(<PackPage slug="order-payment-reconciliation" />, { locale: "ja" });
+    expect(screen.getByRole("heading", { name: "トラストパスポート" })).toBeInTheDocument();
+    expect(screen.queryByText("Trust Passport")).toBeNull();
   });
 });
 

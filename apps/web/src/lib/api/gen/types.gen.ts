@@ -103,6 +103,10 @@ export type Agent = {
      */
     usedBy: Array<AgentPackRef>;
     /**
+     * Listing
+     */
+    listing?: MarketplaceListing;
+    /**
      * Source
      */
     source: 'definition' | 'sample';
@@ -364,7 +368,7 @@ export type AuditEntry = {
     /**
      * Targettype
      */
-    targetType: 'tenant' | 'pack' | 'connector' | 'reviewer' | 'guardrail' | 'incident' | 'definition' | 'memory';
+    targetType: 'tenant' | 'pack' | 'connector' | 'reviewer' | 'guardrail' | 'incident' | 'definition' | 'memory' | 'listing';
     /**
      * Targetid
      */
@@ -961,6 +965,32 @@ export type DefinitionDetail = {
 };
 
 /**
+ * DefinitionDiff
+ */
+export type DefinitionDiff = {
+    /**
+     * Kind
+     */
+    kind: string;
+    /**
+     * Key
+     */
+    key: string;
+    /**
+     * Path
+     */
+    path: string;
+    /**
+     * Change
+     */
+    change: 'added' | 'changed' | 'removed';
+    /**
+     * Unified
+     */
+    unified: string;
+};
+
+/**
  * DefinitionExport
  */
 export type DefinitionExport = {
@@ -1232,6 +1262,36 @@ export type EvidenceItem = {
      * Who
      */
     who: string;
+};
+
+/**
+ * FeeItem
+ *
+ * One listing's publisher fees in a run: the quantity charged at the unit price, and the amount.
+ */
+export type FeeItem = {
+    /**
+     * Listingid
+     */
+    listingId: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Publisher
+     */
+    publisher: string;
+    /**
+     * Kind
+     */
+    kind: 'pack_run' | 'agent_call';
+    /**
+     * Quantity
+     */
+    quantity: number;
+    unit: Money;
+    amount: Money;
 };
 
 /**
@@ -1690,6 +1750,134 @@ export type LedgerTxn = {
      */
     lines: Array<LedgerLine>;
     spent?: Spent;
+    /**
+     * Fees
+     */
+    fees?: Array<FeeItem>;
+};
+
+/**
+ * ListingCheck
+ */
+export type ListingCheck = {
+    /**
+     * Name
+     */
+    name: 'definition' | 'agents' | 'sandbox';
+    /**
+     * State
+     */
+    state: 'passed' | 'failed' | 'running';
+    /**
+     * Detail
+     */
+    detail: string;
+    /**
+     * Runid
+     */
+    runId?: string;
+};
+
+/**
+ * ListingHistoryEntry
+ *
+ * One ops action on a listing, from `ops_audit`.
+ */
+export type ListingHistoryEntry = {
+    /**
+     * At
+     */
+    at: string;
+    /**
+     * By
+     */
+    by: string;
+    /**
+     * Action
+     */
+    action: string;
+    /**
+     * Note
+     */
+    note: string;
+};
+
+/**
+ * ListingVersion
+ */
+export type ListingVersion = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Definitionversion
+     */
+    definitionVersion: number;
+    /**
+     * Status
+     */
+    status: 'checking' | 'checks_failed' | 'in_review' | 'approved' | 'changes_requested' | 'rejected';
+    price: Money;
+    /**
+     * Checks
+     */
+    checks: Array<ListingCheck>;
+    /**
+     * Submittedat
+     */
+    submittedAt: string;
+    /**
+     * Submittedby
+     */
+    submittedBy: string;
+    /**
+     * Decidedat
+     */
+    decidedAt?: string;
+    /**
+     * Decidedby
+     */
+    decidedBy?: string;
+    /**
+     * Note
+     */
+    note?: string;
+};
+
+/**
+ * MarketplaceListing
+ *
+ * Another workspace's listed agent or pack. `fee` is per run (pack) or per call (agent); 0 shows as
+ * "No fee". `version` is the newest approved version; `installed_version` and `update_available` are set on
+ * a pack the workspace has added.
+ */
+export type MarketplaceListing = {
+    /**
+     * Listingid
+     */
+    listingId: string;
+    /**
+     * Publisher
+     */
+    publisher: string;
+    fee: Money;
+    /**
+     * Feeunit
+     */
+    feeUnit: 'run' | 'call';
+    /**
+     * Version
+     */
+    version: number;
+    /**
+     * Installedversion
+     */
+    installedVersion?: number;
+    /**
+     * Updateavailable
+     */
+    updateAvailable?: boolean;
 };
 
 /**
@@ -2073,6 +2261,104 @@ export type OpsKpis = {
 };
 
 /**
+ * OpsListing
+ */
+export type OpsListing = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Kind
+     */
+    kind: 'agent' | 'pack';
+    /**
+     * Key
+     */
+    key: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Publisher
+     */
+    publisher: string;
+    /**
+     * Publisherorgid
+     */
+    publisherOrgId: string;
+    /**
+     * Status
+     */
+    status: 'pending' | 'listed' | 'unlisted';
+    price: Money;
+    /**
+     * Updatedat
+     */
+    updatedAt: string;
+    /**
+     * Pending
+     */
+    pending?: ListingVersion;
+};
+
+/**
+ * OpsListingDetail
+ */
+export type OpsListingDetail = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Kind
+     */
+    kind: 'agent' | 'pack';
+    /**
+     * Key
+     */
+    key: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Publisher
+     */
+    publisher: string;
+    /**
+     * Publisherorgid
+     */
+    publisherOrgId: string;
+    /**
+     * Status
+     */
+    status: 'pending' | 'listed' | 'unlisted';
+    price: Money;
+    /**
+     * Updatedat
+     */
+    updatedAt: string;
+    /**
+     * Pending
+     */
+    pending?: ListingVersion;
+    /**
+     * Versions
+     */
+    versions: Array<ListingVersion>;
+    /**
+     * Diff
+     */
+    diff: Array<DefinitionDiff>;
+    /**
+     * History
+     */
+    history: Array<ListingHistoryEntry>;
+};
+
+/**
  * OpsMe
  */
 export type OpsMe = {
@@ -2123,6 +2409,14 @@ export type OpsOverview = {
      * Spendmonth
      */
     spendMonth?: Money;
+    /**
+     * Listingsinreview
+     */
+    listingsInReview?: number;
+    /**
+     * Publisherearningsmonth
+     */
+    publisherEarningsMonth?: Money;
 };
 
 /**
@@ -2390,6 +2684,18 @@ export type Pack = {
      */
     perRunCap?: Money;
     /**
+     * Maxbudget
+     */
+    maxBudget?: Money;
+    /**
+     * Runfee
+     */
+    runFee?: Money;
+    /**
+     * Runbudgetlimit
+     */
+    runBudgetLimit?: Money;
+    /**
      * Reviewerpool
      */
     reviewerPool?: 'team' | 'network' | 'team_then_network';
@@ -2397,6 +2703,10 @@ export type Pack = {
      * Builtbyteam
      */
     builtByTeam?: boolean;
+    /**
+     * Listing
+     */
+    listing?: MarketplaceListing;
 };
 
 /**
@@ -2752,6 +3062,10 @@ export type PaletteAgent = {
     outputSchema?: {
         [key: string]: unknown;
     };
+    /**
+     * Listing
+     */
+    listing?: MarketplaceListing;
 };
 
 /**
@@ -2889,6 +3203,21 @@ export type Payout = {
      * Status
      */
     status: 'scheduled' | 'paid' | 'held';
+};
+
+/**
+ * PayoutMonth
+ */
+export type PayoutMonth = {
+    /**
+     * Month
+     */
+    month: string;
+    amount: Money;
+    /**
+     * Status
+     */
+    status?: 'SIMULATED';
 };
 
 /**
@@ -3065,6 +3394,86 @@ export type PublishDefinitionRequest = {
 };
 
 /**
+ * PublisherEarnings
+ *
+ * The publisher share of fees: this calendar month (UTC) and the simulated payouts of earlier months.
+ */
+export type PublisherEarnings = {
+    month: Money;
+    /**
+     * Payouts
+     */
+    payouts: Array<PayoutMonth>;
+    /**
+     * Simulated
+     */
+    simulated?: boolean;
+};
+
+/**
+ * PublisherProfile
+ */
+export type PublisherProfile = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Description
+     */
+    description: string;
+    /**
+     * Payoutnote
+     */
+    payoutNote: string;
+    /**
+     * Updatedat
+     */
+    updatedAt: string;
+};
+
+/**
+ * PublisherRequest
+ *
+ * Turn publishing on, or change the profile. `payout_note` is simulated payout details.
+ */
+export type PublisherRequest = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Description
+     */
+    description?: string;
+    /**
+     * Payoutnote
+     */
+    payoutNote?: string;
+};
+
+/**
+ * PublisherSettings
+ *
+ * `enabled` is whether the workspace may submit; `profile` is absent until publishing is first turned on
+ * and kept when it is turned off. Payout details and payouts are simulated: no money moves.
+ */
+export type PublisherSettings = {
+    /**
+     * Enabled
+     */
+    enabled: boolean;
+    /**
+     * Profile
+     */
+    profile?: PublisherProfile;
+    /**
+     * Simulated
+     */
+    simulated?: boolean;
+};
+
+/**
  * ReasonRequest
  */
 export type ReasonRequest = {
@@ -3104,6 +3513,10 @@ export type Receipt = {
      * Items
      */
     items: Array<ReceiptItem>;
+    /**
+     * Fees
+     */
+    fees?: Array<FeeItem>;
 };
 
 /**
@@ -3154,6 +3567,10 @@ export type RedactedRecord = {
      * Agentnote
      */
     agentNote: string;
+    /**
+     * Kind
+     */
+    kind?: 'reconciliation' | 'item';
 };
 
 /**
@@ -3333,6 +3750,14 @@ export type Run = {
      * Sandboxtest
      */
     sandboxTest?: boolean;
+    /**
+     * Listingcheck
+     */
+    listingCheck?: boolean;
+    /**
+     * Stopreason
+     */
+    stopReason?: 'declined';
 };
 
 /**
@@ -3481,6 +3906,14 @@ export type RunSummary = {
      * Sandboxtest
      */
     sandboxTest?: boolean;
+    /**
+     * Listingcheck
+     */
+    listingCheck?: boolean;
+    /**
+     * Stopreason
+     */
+    stopReason?: 'declined';
 };
 
 /**
@@ -3845,6 +4278,102 @@ export type StudioAgentSummary = {
 };
 
 /**
+ * StudioListing
+ *
+ * One of the workspace's listings on its Publisher tab. Earnings are simulated.
+ */
+export type StudioListing = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Kind
+     */
+    kind: 'agent' | 'pack';
+    /**
+     * Key
+     */
+    key: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Status
+     */
+    status: 'pending' | 'listed' | 'unlisted';
+    price: Money;
+    latest: ListingVersion;
+    /**
+     * Approvedversion
+     */
+    approvedVersion?: number;
+    /**
+     * Installs
+     */
+    installs: number;
+    /**
+     * Runs30D
+     */
+    runs30d: number;
+    earningsMonth: Money;
+    /**
+     * Simulated
+     */
+    simulated?: boolean;
+};
+
+/**
+ * StudioListingDetail
+ */
+export type StudioListingDetail = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Kind
+     */
+    kind: 'agent' | 'pack';
+    /**
+     * Key
+     */
+    key: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Status
+     */
+    status: 'pending' | 'listed' | 'unlisted';
+    price: Money;
+    latest: ListingVersion;
+    /**
+     * Approvedversion
+     */
+    approvedVersion?: number;
+    /**
+     * Installs
+     */
+    installs: number;
+    /**
+     * Runs30D
+     */
+    runs30d: number;
+    earningsMonth: Money;
+    /**
+     * Simulated
+     */
+    simulated?: boolean;
+    /**
+     * Versions
+     */
+    versions: Array<ListingVersion>;
+};
+
+/**
  * StudioPack
  */
 export type StudioPack = {
@@ -3906,6 +4435,29 @@ export type StudioPackSummary = {
 };
 
 /**
+ * SubmitListingRequest
+ *
+ * The price (per run for a pack, per call for an agent; 0 is "No fee") and, for a pack, the input and
+ * budget of the sandbox test run the automatic checks start.
+ */
+export type SubmitListingRequest = {
+    /**
+     * Priceminor
+     */
+    priceMinor: number;
+    /**
+     * Input
+     */
+    input?: {
+        [key: string]: unknown;
+    };
+    /**
+     * Budgetminor
+     */
+    budgetMinor?: number;
+};
+
+/**
  * SubmitReviewRequest
  */
 export type SubmitReviewRequest = {
@@ -3921,6 +4473,12 @@ export type SubmitReviewRequest = {
      * Recordcalls
      */
     recordCalls: {
+        [key: string]: string;
+    };
+    /**
+     * Recordnotes
+     */
+    recordNotes?: {
         [key: string]: string;
     };
 };
@@ -4742,7 +5300,7 @@ export type InstallWorkflowPackErrors = {
      */
     404: Problem;
     /**
-     * Conflict
+     * Conflict (CONFLICT).
      */
     409: Problem;
     /**
@@ -4761,6 +5319,56 @@ export type InstallWorkflowPackResponses = {
 };
 
 export type InstallWorkflowPackResponse = InstallWorkflowPackResponses[keyof InstallWorkflowPackResponses];
+
+export type UpgradeWorkflowPackData = {
+    body?: never;
+    path: {
+        /**
+         * Org Id
+         */
+        org_id: string;
+        /**
+         * Slug
+         */
+        slug: string;
+    };
+    query?: never;
+    url: '/v1/organizations/{org_id}/agent-installations/{slug}:upgrade';
+};
+
+export type UpgradeWorkflowPackErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict (NOT_LISTED, PACK_NOT_HIRED, UP_TO_DATE, RUNS_IN_PROGRESS, CONFLICT).
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type UpgradeWorkflowPackError = UpgradeWorkflowPackErrors[keyof UpgradeWorkflowPackErrors];
+
+export type UpgradeWorkflowPackResponses = {
+    /**
+     * Successful Response
+     */
+    200: Installation;
+};
+
+export type UpgradeWorkflowPackResponse = UpgradeWorkflowPackResponses[keyof UpgradeWorkflowPackResponses];
 
 export type ListWorkflowRunsData = {
     body?: never;
@@ -4832,7 +5440,7 @@ export type StartWorkflowRunErrors = {
      */
     404: Problem;
     /**
-     * Conflict
+     * Conflict (PLATFORM_PAUSED, PACK_NOT_HIRED, APPS_NOT_CONNECTED, RUN_BUDGET_OVER_CAP, SPEND_CAP, PACK_UNAVAILABLE, CONFLICT).
      */
     409: Problem;
     /**
@@ -7237,6 +7845,396 @@ export type SaveStudioPackResponses = {
 
 export type SaveStudioPackResponse = SaveStudioPackResponses[keyof SaveStudioPackResponses];
 
+export type DisablePublisherData = {
+    body?: never;
+    path: {
+        /**
+         * Org Id
+         */
+        org_id: string;
+    };
+    query?: never;
+    url: '/v1/organizations/{org_id}/publisher';
+};
+
+export type DisablePublisherErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed (POLICY_DENIED: owners and admins only).
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type DisablePublisherError = DisablePublisherErrors[keyof DisablePublisherErrors];
+
+export type DisablePublisherResponses = {
+    /**
+     * Successful Response
+     */
+    200: PublisherSettings;
+};
+
+export type DisablePublisherResponse = DisablePublisherResponses[keyof DisablePublisherResponses];
+
+export type GetPublisherData = {
+    body?: never;
+    path: {
+        /**
+         * Org Id
+         */
+        org_id: string;
+    };
+    query?: never;
+    url: '/v1/organizations/{org_id}/publisher';
+};
+
+export type GetPublisherErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed (POLICY_DENIED: owners and admins only).
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type GetPublisherError = GetPublisherErrors[keyof GetPublisherErrors];
+
+export type GetPublisherResponses = {
+    /**
+     * Successful Response
+     */
+    200: PublisherSettings;
+};
+
+export type GetPublisherResponse = GetPublisherResponses[keyof GetPublisherResponses];
+
+export type SavePublisherData = {
+    body: PublisherRequest;
+    path: {
+        /**
+         * Org Id
+         */
+        org_id: string;
+    };
+    query?: never;
+    url: '/v1/organizations/{org_id}/publisher';
+};
+
+export type SavePublisherErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed (POLICY_DENIED: owners and admins only).
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type SavePublisherError = SavePublisherErrors[keyof SavePublisherErrors];
+
+export type SavePublisherResponses = {
+    /**
+     * Successful Response
+     */
+    200: PublisherSettings;
+};
+
+export type SavePublisherResponse = SavePublisherResponses[keyof SavePublisherResponses];
+
+export type SubmitStudioAgentData = {
+    body: SubmitListingRequest;
+    path: {
+        /**
+         * Org Id
+         */
+        org_id: string;
+        /**
+         * Key
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/v1/organizations/{org_id}/studio/agents/{key}/submissions';
+};
+
+export type SubmitStudioAgentErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict (PUBLISHER_PROFILE_REQUIRED, SUBMISSION_OPEN, PLATFORM_PAUSED, SANDBOX_UNAVAILABLE, SPEND_CAP, PACK_UNAVAILABLE, VERSION_CONFLICT).
+     */
+    409: Problem;
+    /**
+     * Invalid request (INVALID_DEFINITION, INVALID_INPUT).
+     */
+    422: Problem;
+    /**
+     * The workflow engine is unavailable (RUNTIME_UNAVAILABLE).
+     */
+    503: Problem;
+};
+
+export type SubmitStudioAgentError = SubmitStudioAgentErrors[keyof SubmitStudioAgentErrors];
+
+export type SubmitStudioAgentResponses = {
+    /**
+     * Successful Response
+     */
+    201: StudioListingDetail;
+};
+
+export type SubmitStudioAgentResponse = SubmitStudioAgentResponses[keyof SubmitStudioAgentResponses];
+
+export type SubmitStudioPackData = {
+    body: SubmitListingRequest;
+    path: {
+        /**
+         * Org Id
+         */
+        org_id: string;
+        /**
+         * Key
+         */
+        key: string;
+    };
+    query?: never;
+    url: '/v1/organizations/{org_id}/studio/packs/{key}/submissions';
+};
+
+export type SubmitStudioPackErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict (PUBLISHER_PROFILE_REQUIRED, SUBMISSION_OPEN, PLATFORM_PAUSED, SANDBOX_UNAVAILABLE, SPEND_CAP, PACK_UNAVAILABLE, VERSION_CONFLICT).
+     */
+    409: Problem;
+    /**
+     * Invalid request (INVALID_DEFINITION, PRIVATE_AGENTS, INVALID_INPUT, BUDGET_REQUIRED, BUDGET_TOO_HIGH).
+     */
+    422: Problem;
+    /**
+     * The workflow engine is unavailable (RUNTIME_UNAVAILABLE).
+     */
+    503: Problem;
+};
+
+export type SubmitStudioPackError = SubmitStudioPackErrors[keyof SubmitStudioPackErrors];
+
+export type SubmitStudioPackResponses = {
+    /**
+     * Successful Response
+     */
+    201: StudioListingDetail;
+};
+
+export type SubmitStudioPackResponse = SubmitStudioPackResponses[keyof SubmitStudioPackResponses];
+
+export type ListStudioListingsData = {
+    body?: never;
+    path: {
+        /**
+         * Org Id
+         */
+        org_id: string;
+    };
+    query?: never;
+    url: '/v1/organizations/{org_id}/studio/listings';
+};
+
+export type ListStudioListingsErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed (POLICY_DENIED: owners and admins only).
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type ListStudioListingsError = ListStudioListingsErrors[keyof ListStudioListingsErrors];
+
+export type ListStudioListingsResponses = {
+    /**
+     * Response Liststudiolistings
+     *
+     * Successful Response
+     */
+    200: Array<StudioListing>;
+};
+
+export type ListStudioListingsResponse = ListStudioListingsResponses[keyof ListStudioListingsResponses];
+
+export type GetStudioListingData = {
+    body?: never;
+    path: {
+        /**
+         * Org Id
+         */
+        org_id: string;
+        /**
+         * Listing Id
+         */
+        listing_id: string;
+    };
+    query?: never;
+    url: '/v1/organizations/{org_id}/studio/listings/{listing_id}';
+};
+
+export type GetStudioListingErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed (POLICY_DENIED: owners and admins only).
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type GetStudioListingError = GetStudioListingErrors[keyof GetStudioListingErrors];
+
+export type GetStudioListingResponses = {
+    /**
+     * Successful Response
+     */
+    200: StudioListingDetail;
+};
+
+export type GetStudioListingResponse = GetStudioListingResponses[keyof GetStudioListingResponses];
+
+export type GetStudioEarningsData = {
+    body?: never;
+    path: {
+        /**
+         * Org Id
+         */
+        org_id: string;
+    };
+    query?: never;
+    url: '/v1/organizations/{org_id}/studio/earnings';
+};
+
+export type GetStudioEarningsErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed (POLICY_DENIED: owners and admins only).
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type GetStudioEarningsError = GetStudioEarningsErrors[keyof GetStudioEarningsErrors];
+
+export type GetStudioEarningsResponses = {
+    /**
+     * Successful Response
+     */
+    200: PublisherEarnings;
+};
+
+export type GetStudioEarningsResponse = GetStudioEarningsResponses[keyof GetStudioEarningsResponses];
+
 export type OpsListPacksData = {
     body?: never;
     path?: never;
@@ -7958,6 +8956,330 @@ export type OpsHealthCheckConnectorResponses = {
 };
 
 export type OpsHealthCheckConnectorResponse = OpsHealthCheckConnectorResponses[keyof OpsHealthCheckConnectorResponses];
+
+export type OpsListListingsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Status
+         */
+        status?: 'in_review' | 'pending' | 'listed' | 'unlisted' | null;
+    };
+    url: '/v1/ops/listings';
+};
+
+export type OpsListListingsErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type OpsListListingsError = OpsListListingsErrors[keyof OpsListListingsErrors];
+
+export type OpsListListingsResponses = {
+    /**
+     * Response Opslistlistings
+     *
+     * Successful Response
+     */
+    200: Array<OpsListing>;
+};
+
+export type OpsListListingsResponse = OpsListListingsResponses[keyof OpsListListingsResponses];
+
+export type OpsGetListingData = {
+    body?: never;
+    path: {
+        /**
+         * Listing Id
+         */
+        listing_id: string;
+    };
+    query?: never;
+    url: '/v1/ops/listings/{listing_id}';
+};
+
+export type OpsGetListingErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type OpsGetListingError = OpsGetListingErrors[keyof OpsGetListingErrors];
+
+export type OpsGetListingResponses = {
+    /**
+     * Successful Response
+     */
+    200: OpsListingDetail;
+};
+
+export type OpsGetListingResponse = OpsGetListingResponses[keyof OpsGetListingResponses];
+
+export type OpsApproveListingData = {
+    body: ReasonRequest;
+    path: {
+        /**
+         * Listing Id
+         */
+        listing_id: string;
+    };
+    query?: never;
+    url: '/v1/ops/listings/{listing_id}:approve';
+};
+
+export type OpsApproveListingErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict (INVALID_TRANSITION).
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type OpsApproveListingError = OpsApproveListingErrors[keyof OpsApproveListingErrors];
+
+export type OpsApproveListingResponses = {
+    /**
+     * Successful Response
+     */
+    200: OpsListingDetail;
+};
+
+export type OpsApproveListingResponse = OpsApproveListingResponses[keyof OpsApproveListingResponses];
+
+export type OpsRequestListingChangesData = {
+    body: ReasonRequest;
+    path: {
+        /**
+         * Listing Id
+         */
+        listing_id: string;
+    };
+    query?: never;
+    url: '/v1/ops/listings/{listing_id}:request-changes';
+};
+
+export type OpsRequestListingChangesErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict (INVALID_TRANSITION).
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type OpsRequestListingChangesError = OpsRequestListingChangesErrors[keyof OpsRequestListingChangesErrors];
+
+export type OpsRequestListingChangesResponses = {
+    /**
+     * Successful Response
+     */
+    200: OpsListingDetail;
+};
+
+export type OpsRequestListingChangesResponse = OpsRequestListingChangesResponses[keyof OpsRequestListingChangesResponses];
+
+export type OpsRejectListingData = {
+    body: ReasonRequest;
+    path: {
+        /**
+         * Listing Id
+         */
+        listing_id: string;
+    };
+    query?: never;
+    url: '/v1/ops/listings/{listing_id}:reject';
+};
+
+export type OpsRejectListingErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict (INVALID_TRANSITION).
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type OpsRejectListingError = OpsRejectListingErrors[keyof OpsRejectListingErrors];
+
+export type OpsRejectListingResponses = {
+    /**
+     * Successful Response
+     */
+    200: OpsListingDetail;
+};
+
+export type OpsRejectListingResponse = OpsRejectListingResponses[keyof OpsRejectListingResponses];
+
+export type OpsUnlistListingData = {
+    body: ReasonRequest;
+    path: {
+        /**
+         * Listing Id
+         */
+        listing_id: string;
+    };
+    query?: never;
+    url: '/v1/ops/listings/{listing_id}:unlist';
+};
+
+export type OpsUnlistListingErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict (INVALID_TRANSITION).
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type OpsUnlistListingError = OpsUnlistListingErrors[keyof OpsUnlistListingErrors];
+
+export type OpsUnlistListingResponses = {
+    /**
+     * Successful Response
+     */
+    200: OpsListingDetail;
+};
+
+export type OpsUnlistListingResponse = OpsUnlistListingResponses[keyof OpsUnlistListingResponses];
+
+export type OpsRelistListingData = {
+    body: ReasonRequest;
+    path: {
+        /**
+         * Listing Id
+         */
+        listing_id: string;
+    };
+    query?: never;
+    url: '/v1/ops/listings/{listing_id}:relist';
+};
+
+export type OpsRelistListingErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict (INVALID_TRANSITION).
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type OpsRelistListingError = OpsRelistListingErrors[keyof OpsRelistListingErrors];
+
+export type OpsRelistListingResponses = {
+    /**
+     * Successful Response
+     */
+    200: OpsListingDetail;
+};
+
+export type OpsRelistListingResponse = OpsRelistListingResponses[keyof OpsRelistListingResponses];
 
 export type OpsListDefinitionsData = {
     body?: never;
@@ -9109,7 +10431,7 @@ export type OpsListAuditData = {
         /**
          * Targettype
          */
-        targetType?: 'tenant' | 'pack' | 'connector' | 'reviewer' | 'guardrail' | 'incident' | 'definition' | 'memory' | null;
+        targetType?: 'tenant' | 'pack' | 'connector' | 'reviewer' | 'guardrail' | 'incident' | 'definition' | 'memory' | 'listing' | null;
         /**
          * Targetid
          */

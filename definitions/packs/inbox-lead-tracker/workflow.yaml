@@ -1,0 +1,112 @@
+# The inbox lead tracker graph. Values starting with "=" are CEL over the run state
+# (input, nodes.<id>.output; `item` inside a for_each). Routes name the next node for each outcome.
+kind: workflow
+key: inbox-lead-tracker
+schema_version: nm.workflow.v1
+workflow_id: inbox-lead-tracker
+version: "1"
+entry_node_id: start
+default_policy_ref: policy/default
+work_contract_ref: inbox-lead-tracker
+limits:
+  max_duration_s: 172800
+  max_cost_minor: 1000
+  currency: USD
+  max_parallel_nodes: 1
+  max_total_node_attempts: 30
+
+nodes:
+  - id: start
+    type: trigger
+    version: "1"
+    config: {}
+    routes: {next: inbox}
+
+  # At most 20 emails: the decision model is asked about 20 items per step at most.
+  - id: inbox
+    type: connector
+    version: "1"
+    config:
+      tool: gmail.list_threads
+      args:
+        query: "=has(input.query) ? input.query : 'in:inbox newer_than:7d'"
+        max_results: 20
+    routes: {next: screen, denied: failed, error: failed}
+
+  - id: screen
+    type: decision
+    version: "1"
+    config:
+      rules: lead-screen
+    routes: {nothing: nothing, leads: extract, failed: failed}
+
+  - id: extract
+    type: agent
+    version: "1"
+    config:
+      agent: lead-agent
+      task: >-
+        For every email in emails, write one lead with who asked, their company, what they asked for and how
+        urgent it is (from screening). Then write one sheet row per lead. Submit the result in the required
+        shape.
+      inputs:
+        emails: =nodes.inbox.output.messages.filter(m, m.messageId in nodes.screen.output.kept)
+        screening: =nodes.screen.output.items
+      output_schema: inbox-lead-tracker/leads
+    routes: {next: approve}
+
+  - id: approve
+    type: approval
+    version: "1"
+    config:
+      title: Add the leads to your sheet
+      summary: "='Add ' + string(size(nodes.extract.output.leads)) + (size(nodes.extract.output.leads) == 1 ? ' row' : ' rows') + ' to the Leads tab'"
+      timeout_s: 86400
+    routes: {granted: write, denied: failed, timeout: failed}
+
+  - id: write
+    type: connector
+    version: "1"
+    config:
+      tool: googlesheets.append_rows
+      args:
+        spreadsheetId: =input.spreadsheet_id
+        range: Leads!A:G
+        valueInputOption: RAW
+        # Built from the leads the run page shows, never from the agent's separate `rows`.
+        values: >-
+          =nodes.extract.output.leads.map(l, [l.received, l.name, l.company, l.email, l.request, l.urgency,
+          l.thread_id])
+    routes: {ok: verify, denied: failed, error: failed}
+
+  - id: verify
+    type: verification
+    version: "1"
+    config:
+      schema: inbox-lead-tracker/leads
+      value: =nodes.extract.output
+      checks:
+        - =size(nodes.extract.output.leads) >= 1
+        - =size(nodes.extract.output.rows) == size(nodes.extract.output.leads)
+        - =size(nodes.extract.output.leads) == size(nodes.screen.output.kept)
+    routes: {pass: done, fail: failed}
+
+  - id: nothing
+    type: end
+    version: "1"
+    config:
+      status: COMPLETED
+      deliverable: "={'summary': 'No email in the inbox looked like a real enquiry.', 'leads': [], 'rows': []}"
+
+  - id: done
+    type: end
+    version: "1"
+    config:
+      status: COMPLETED
+      deliverable: =nodes.extract.output
+
+  - id: failed
+    type: end
+    version: "1"
+    config:
+      status: FAILED

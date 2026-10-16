@@ -7,6 +7,7 @@ import { type ReactNode, useState } from "react";
 import { handleUnauthorized } from "@/lib/api/client";
 import { ApiError } from "@/lib/api/errors";
 import { SessionProvider } from "@/lib/auth/session";
+import { TourProvider } from "./tour/tour-provider";
 
 /** A rejected session signs out and returns to sign-in, whether a query or a mutation hit it. */
 function redirectOnUnauthorized(e: unknown) {
@@ -30,7 +31,9 @@ export function Providers({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <SessionProvider>
-        <NuqsAdapter>{children}</NuqsAdapter>
+        <NuqsAdapter>
+          <TourProvider>{children}</TourProvider>
+        </NuqsAdapter>
       </SessionProvider>
       {process.env.NODE_ENV === "development" ? <ReactQueryDevtools buttonPosition="bottom-left" /> : null}
     </QueryClientProvider>
