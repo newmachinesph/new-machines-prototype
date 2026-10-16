@@ -28,7 +28,7 @@ Fill the exception like this:
 
 - `amount_minor`: the balance in centavos; for `paid_not_shipped`, the paid total in centavos.
 - `customer_email`: from the customer record, else `null`. `invoice_number`: the sales order's.
-- `evidence`: one sentence naming the business app's sections and what each shows, with dates and peso amounts, for example `The warehouse delivered DEMO-SNP-2 on 2026-09-17 and ledger invoice INV-2026-0003 (15-day terms) still shows the full balance of ₱12,480.00, 16 days past due.` For a balance above ₱20,000, add that finance's sign-off is needed before any message.
+- `evidence`: one short sentence, about 40 words at most, naming only the sections that disagree and what each shows, with dates and peso amounts. Do not repeat the other fields of the exception in it. For example `The warehouse delivered DEMO-SNP-2 on 2026-09-17 and ledger invoice INV-2026-0003 (15-day terms) still shows the full balance of ₱12,480.00, 16 days past due.` For a balance above ₱20,000, add that finance's sign-off is needed before any message.
 - Never include email addresses, phone numbers or customer message text in a `note` or `flag`.
 
 Order the exceptions by kind in the table's order (`paid_not_shipped` first, `disputed` last), then by `days_outstanding`, longest first.

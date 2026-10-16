@@ -92,6 +92,10 @@ class _NodeFailed(Exception):
         self.fatal = fatal
 
 
+def _output_truncated(max_turns: int) -> str:
+    return f"OUTPUT_TRUNCATED: every answer was cut off at the output limit, {max_turns} model turns"
+
+
 def _activity_reason(node_id: str, err: ActivityError) -> str:
     """`<ErrorType>: <safe message>`; only messages written by our own activities are passed through."""
     cause = err.cause
@@ -338,7 +342,7 @@ class PackRunner:
     async def _adk_agent(self, node_id: str, attempt: int, spec: dict) -> tuple[Any, str]:
         offered = [t["name"] for t in spec["tools"]]
 
-        async def model(system: str, messages: list[dict], tools: list[dict]) -> list[dict]:
+        async def model(system: str, messages: list[dict], tools: list[dict]) -> tuple[list[dict], str]:
             call = ModelCall(
                 run_id=self._run_id,
                 snapshot=self._snapshot,
@@ -354,7 +358,7 @@ class PackRunner:
                 PackActivities.model_call, call, timeout=_MODEL_TIMEOUT, retry=_MODEL_RETRY
             )
             self._spend_ai(int(turn["cost_minor"]))
-            return turn["content"]
+            return turn["content"], turn["stop_reason"]
 
         async def tool(block: dict) -> dict:
             use = ToolUse(self._run_id, self._snapshot, node_id, attempt, self._next_step(), block, offered)
@@ -370,10 +374,13 @@ class PackRunner:
             return await adk_agent.run_agent(spec, hooks, session_user=self._run_id)
         except adk_agent.TurnsExhausted as exc:
             raise _NodeFailed(f"TURNS_EXHAUSTED: no result after {spec['max_turns']} model turns") from exc
+        except adk_agent.OutputTruncated as exc:
+            raise _NodeFailed(_output_truncated(spec["max_turns"])) from exc
 
     async def _hosted_agent(self, node_id: str, attempt: int, spec: dict) -> tuple[Any, str]:
         messages: list[dict] = list(spec["messages"])
         offered = [t["name"] for t in spec["tools"]]
+        kind = ""
         for _ in range(spec["max_turns"]):
             call = ModelCall(
                 run_id=self._run_id,
@@ -396,7 +403,9 @@ class PackRunner:
                 result = AgentResult(self._run_id, self._snapshot, node_id, attempt, self._next_step(), value)
                 done = await self._act(PackActivities.finish_node, result)
                 return done["output"], done["route"]
-            if kind == "tools":
+            if kind == "truncated":  # a call cut off at the output limit never runs: ask again, shorter
+                messages.append({"role": "user", "content": agent.cut_off_results(value)})
+            elif kind == "tools":
                 blocks = []
                 for block in value:
                     use = ToolUse(
@@ -406,6 +415,8 @@ class PackRunner:
                 messages.append({"role": "user", "content": blocks})
             else:
                 messages.append({"role": "user", "content": agent.REPROMPT})
+        if kind == "truncated":
+            raise _NodeFailed(_output_truncated(spec["max_turns"]))
         raise _NodeFailed(f"TURNS_EXHAUSTED: no result after {spec['max_turns']} model turns")
 
     # --- human tasks and approvals ----------------------------------------------------------------------

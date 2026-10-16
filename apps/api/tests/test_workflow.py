@@ -787,6 +787,66 @@ def test_an_agent_that_never_submits_fails_with_turns_exhausted(runtime_env):
     _assert_sealed(conn, run_id, snapshot, "FAILED")
 
 
+class _CutOffProvider(_RecordingProvider):
+    """finance-agent's first `cut` turns reach the output limit inside submit_result: only the schema's first
+    property arrived, as on a real model cut off mid-call. Later turns are the fake's full result."""
+
+    def __init__(self, cut: int) -> None:
+        super().__init__()
+        self.cut, self.max_tokens = cut, []
+
+    def call(self, **kwargs) -> ModelTurn:
+        self.max_tokens.append(kwargs["max_tokens"])
+        turns_so_far = sum(1 for m in kwargs["messages"] if m["role"] == "assistant")
+        if not kwargs["system"].startswith("agent:finance-agent") or turns_so_far >= self.cut:
+            return super().call(**kwargs)
+        self.systems.append(kwargs["system"])
+        self.conversations.append(kwargs["messages"])
+        partial = {"type": "tool_use", "id": f"toolu_cut_{turns_so_far}", "name": SUBMIT_TOOL, "input": {}}
+        return ModelTurn(
+            content=[partial], stop_reason="max_tokens", input_tokens=1200, output_tokens=16000, model="fake"
+        )
+
+
+@pytest.mark.parametrize("edit", [None, _hosted], ids=["google_adk", "hosted"])
+def test_a_submit_cut_off_at_the_output_limit_is_asked_again_and_the_run_completes(runtime_env, edit):
+    conn = runtime_env
+    run_id, snapshot = _new_run(conn, edit=edit)
+    provider = _CutOffProvider(cut=1)
+
+    async def scenario(env):
+        return await _run_to_end(env, run_id, snapshot)
+
+    assert asyncio.run(_drive(provider, scenario)) == "COMPLETED"
+    assert set(provider.max_tokens) == {16000}
+    retry = next(c for c in provider.conversations if "toolu_cut_0" in str(c))
+    [feedback] = retry[-1]["content"]
+    assert feedback["tool_use_id"] == "toolu_cut_0" and feedback["is_error"] is True
+    assert "cut off at the output limit" in feedback["content"]
+    entries = _entries(conn, run_id)
+    usage = [e for e in entries if e["type"] == "model.usage" and e["node_id"] == "match"]
+    assert len(usage) == 2  # the cut-off turn and the full one; the partial result was never validated
+    _assert_sealed(conn, run_id, snapshot, "COMPLETED")
+
+
+@pytest.mark.parametrize("edit", [None, _hosted], ids=["google_adk", "hosted"])
+def test_an_agent_cut_off_on_every_turn_fails_with_output_truncated(runtime_env, edit):
+    conn = runtime_env
+    run_id, snapshot = _new_run(conn, edit=edit)
+
+    async def scenario(env):
+        handle = await _start(env.client, run_id, snapshot)
+        return await handle.result()
+
+    assert asyncio.run(_drive(_CutOffProvider(cut=99), scenario)) == "FAILED"
+    entries = _entries(conn, run_id)
+    [failed] = [e for e in entries if e["type"] == "run.failed"]
+    assert failed["data"]["reason"].startswith("OUTPUT_TRUNCATED")
+    usage = [e for e in entries if e["type"] == "model.usage" and e["node_id"] == "match"]
+    assert len(usage) == snapshot["defs"]["agent"]["finance-agent"]["body"]["runtime"]["max_turns"]
+    _assert_sealed(conn, run_id, snapshot, "FAILED")
+
+
 def _finance_with_tools(snapshot: dict) -> dict:
     """finance-agent is offered shopify.list_orders and stripe.list_charges (the contract grants orders.read
     and payments.read)."""

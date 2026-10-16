@@ -24,7 +24,7 @@ from google.adk.tools import BaseTool, ToolContext
 from google.genai import types
 from pydantic import PrivateAttr
 
-from app.runtime.agent import REPROMPT
+from app.runtime.agent import REPROMPT, cut_off_results, cut_off_uses
 from app.runtime.providers import SUBMIT_TOOL
 
 log = logging.getLogger(__name__)
@@ -37,9 +37,13 @@ class TurnsExhausted(Exception):
     pass
 
 
+class OutputTruncated(Exception):
+    """Every turn left was cut off at the output limit."""
+
+
 @dataclass
 class AgentHooks:
-    model: Callable[[str, list[dict], list[dict]], Awaitable[list[dict]]]
+    model: Callable[[str, list[dict], list[dict]], Awaitable[tuple[list[dict], str]]]  # content, stop reason
     tool: Callable[[dict], Awaitable[dict]]
     submit: Callable[[Any], Awaitable[tuple[Any, str]]]
 
@@ -135,7 +139,8 @@ def _submit_wins(content: list[dict]) -> list[dict]:
 
 class NmAdkModel(BaseLlm):
     """One model turn = the workflow's model hook (our model_call activity). Counts turns across
-    invocations."""
+    invocations. A turn cut off at the output limit never reaches ADK, so its calls (a partial submit_result
+    above all) never run: the model is told so and asked again, within max_turns."""
 
     _hooks: AgentHooks = PrivateAttr()
     _max_turns: int = PrivateAttr()
@@ -146,11 +151,19 @@ class NmAdkModel(BaseLlm):
         self._hooks, self._max_turns = hooks, max_turns
 
     async def generate_content_async(self, llm_request: LlmRequest, stream: bool = False):
-        if self._turns >= self._max_turns:
-            raise TurnsExhausted(self._max_turns)
-        self._turns += 1
         system, messages, tools = to_provider_request(llm_request)
-        yield to_llm_response(_submit_wins(await self._hooks.model(system, messages, tools)))
+        cut: list[dict] = []
+        while True:
+            if self._turns >= self._max_turns:
+                raise (OutputTruncated if cut else TurnsExhausted)(self._max_turns)
+            self._turns += 1
+            content, stop_reason = await self._hooks.model(system, messages, tools)
+            cut = cut_off_uses(content, stop_reason)
+            if not cut:
+                yield to_llm_response(_submit_wins(content))
+                return
+            feedback = {"role": "user", "content": cut_off_results(cut)}
+            messages = [*messages, {"role": "assistant", "content": content}, feedback]
 
 
 def _declaration(name: str, description: str, schema: dict) -> types.FunctionDeclaration:
@@ -207,7 +220,8 @@ class SubmitTool(BaseTool):
 
 
 async def run_agent(spec: dict, hooks: AgentHooks, session_user: str) -> tuple[Any, str]:
-    """Run until submit_result succeeds; a text-only answer is re-prompted. Raises TurnsExhausted."""
+    """Run until submit_result succeeds; a text-only answer is re-prompted. Raises TurnsExhausted, or
+    OutputTruncated when the last turn was cut off at the output limit."""
     sink: dict = {}
     tools: list[BaseTool] = [GatewayTool(t, hooks) for t in spec["tools"] if t["name"] != SUBMIT_TOOL]
     submit = next(t for t in spec["tools"] if t["name"] == SUBMIT_TOOL)
@@ -236,8 +250,8 @@ async def run_agent(spec: dict, hooks: AgentHooks, session_user: str) -> tuple[A
 # --- warm-up ---------------------------------------------------------------------------------------------
 
 
-async def _warm_model(system: str, messages: list[dict], tools: list[dict]) -> list[dict]:
-    return [{"type": "tool_use", "id": "warm_up", "name": SUBMIT_TOOL, "input": {}}]
+async def _warm_model(system: str, messages: list[dict], tools: list[dict]) -> tuple[list[dict], str]:
+    return [{"type": "tool_use", "id": "warm_up", "name": SUBMIT_TOOL, "input": {}}], "tool_use"
 
 
 async def _warm_tool(block: dict) -> dict:  # never called: the warm-up agent offers only submit_result

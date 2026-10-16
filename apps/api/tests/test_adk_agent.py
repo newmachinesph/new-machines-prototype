@@ -1,6 +1,7 @@
 import asyncio
 import threading
 
+import pytest
 from google.adk.models.llm_request import LlmRequest
 from google.genai import types
 
@@ -116,6 +117,72 @@ def test_submit_wins_leaves_a_turn_without_submit_alone():
 
 def test_an_llm_response_carries_a_usage_record():
     assert adk_agent.to_llm_response([{"type": "text", "text": "hi"}]).usage_metadata is not None
+
+
+# --- a turn cut off at the output limit -----------------------------------------------------------------
+
+_SUBMIT_SPEC = {"name": "submit_result", "description": "", "input_schema": {"type": "object"}}
+
+
+def _cut_off_spec(max_turns: int) -> dict:
+    return {
+        "agent_id": "o2c-triage-agent",
+        "system": "agent:o2c-triage-agent",
+        "messages": [{"role": "user", "content": "Triage the orders."}],
+        "tools": [_SUBMIT_SPEC],
+        "max_turns": max_turns,
+    }
+
+
+def _scripted_hooks(turns: list[tuple[list[dict], str]], seen: list[list[dict]], submitted: list):
+    async def model(system: str, messages: list[dict], tools: list[dict]) -> tuple[list[dict], str]:
+        seen.append(messages)
+        return turns[min(len(seen) - 1, len(turns) - 1)]
+
+    async def tool(block: dict) -> dict:
+        raise AssertionError("no connector tool is offered")
+
+    async def submit(value):
+        submitted.append(value)
+        return value, "next"
+
+    return adk_agent.AgentHooks(model=model, tool=tool, submit=submit)
+
+
+_PARTIAL = [
+    {"type": "tool_use", "id": "toolu_cut", "name": "submit_result", "input": {"summary": "Checked 33."}}
+]
+_FULL = [
+    {
+        "type": "tool_use",
+        "id": "toolu_ok",
+        "name": "submit_result",
+        "input": {"summary": "s", "clean_count": 1},
+    }
+]
+
+
+def test_a_submit_cut_off_at_the_output_limit_is_not_run_and_the_model_is_asked_again():
+    seen: list[list[dict]] = []
+    submitted: list = []
+    hooks = _scripted_hooks([(_PARTIAL, "max_tokens"), (_FULL, "tool_use")], seen, submitted)
+    result = asyncio.run(adk_agent.run_agent(_cut_off_spec(6), hooks, session_user="u"))
+    assert result == (_FULL[0]["input"], "next")
+    assert submitted == [_FULL[0]["input"]]  # the partial submit never reached finish_node
+    assistant, feedback = seen[1][-2:]
+    assert assistant == {"role": "assistant", "content": _PARTIAL}
+    [block] = feedback["content"]
+    assert block["tool_use_id"] == "toolu_cut" and block["is_error"] is True
+    assert "cut off at the output limit" in block["content"]
+
+
+def test_an_agent_cut_off_on_every_turn_fails_with_output_truncated():
+    seen: list[list[dict]] = []
+    submitted: list = []
+    hooks = _scripted_hooks([(_PARTIAL, "max_tokens")], seen, submitted)
+    with pytest.raises(adk_agent.OutputTruncated):
+        asyncio.run(adk_agent.run_agent(_cut_off_spec(3), hooks, session_user="u"))
+    assert len(seen) == 3 and submitted == []
 
 
 # --- warm_up: bounded and once per process -----------------------------------------------------------------

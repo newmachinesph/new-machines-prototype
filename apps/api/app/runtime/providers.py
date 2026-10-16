@@ -17,7 +17,7 @@ from app import settings
 SUBMIT_TOOL = "submit_result"
 AGENT_MARKER = "agent:"
 INPUTS_HEADING = "# Inputs"
-MAX_TOKENS_CAP = 8000
+MAX_TOKENS_CAP = 16000  # every model in models.yaml allows more; non-streaming calls stay short
 FAKE_INPUT_TOKENS = 1200
 FAKE_OUTPUT_TOKENS = 300
 _TOKENS_PER_PRICE_UNIT = 1_000_000  # prices are minor units per million tokens

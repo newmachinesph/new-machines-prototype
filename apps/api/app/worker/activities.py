@@ -23,7 +23,7 @@ from app.runtime import agent, cel, decisions, drivers, gateway, memory, project
 from app.runtime.drivers import ToolResult, safe_message
 from app.runtime.providers import ModelProvider, ToolSpec
 
-MAX_TOKENS = 8000
+MAX_TOKENS = 16000
 DEFAULT_TASK_TIMEOUT_S = 86400
 MODELS_KEY = "default"
 MAX_REPORTED_ERRORS = 5

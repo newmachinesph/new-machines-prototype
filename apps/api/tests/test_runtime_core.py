@@ -469,7 +469,7 @@ def test_hosted_provider_request_shape_with_stubbed_client():
         "system": "agent:x\n\nhi",
         "messages": [{"role": "user", "content": "go"}],
         "tools": [{"name": "submit_result", "description": "Submit.", "input_schema": {"type": "object"}}],
-        "max_tokens": 8000,
+        "max_tokens": 16000,
     }
     assert turn == ModelTurn(
         content=[
@@ -523,6 +523,27 @@ def test_next_step_variants():
     )
     submit = {"type": "tool_use", "id": "b", "name": "submit_result", "input": {"x": 1}}
     assert agent.next_step(turn(use, submit)) == ("submit", {"x": 1})
+
+
+def test_a_turn_cut_off_at_the_output_limit_runs_none_of_its_tool_calls():
+    use = {"type": "tool_use", "id": "a", "name": "shopify__list_orders", "input": {}}
+    submit = {"type": "tool_use", "id": "b", "name": "submit_result", "input": {"summary": "Checked 33."}}
+    cut = ModelTurn(
+        content=[use, submit], stop_reason="max_tokens", input_tokens=1, output_tokens=1, model="m"
+    )
+    assert agent.next_step(cut) == ("truncated", [use, submit])
+    results = agent.cut_off_results([use, submit])
+    assert [r["tool_use_id"] for r in results] == ["a", "b"]
+    assert all(r["type"] == "tool_result" and r["is_error"] for r in results)
+    assert "cut off at the output limit" in results[0]["content"]
+    text = ModelTurn(
+        content=[{"type": "text", "text": "a"}],
+        stop_reason="max_tokens",
+        input_tokens=1,
+        output_tokens=1,
+        model="m",
+    )
+    assert agent.next_step(text) == ("text", "a")  # no call to hold back: re-prompted as before
 
 
 # --- receipts (Postgres) ---------------------------------------------------------------------------
