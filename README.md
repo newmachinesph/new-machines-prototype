@@ -1,275 +1,260 @@
 # New Machines
 
-New Machines runs business workflows as **workflow packs**: versioned definitions whose steps are AI agents,
-app actions (Shopify, Stripe, Google Sheets and others), approvals and human reviews. Every run is metered
-(AI, tools, reviewer pay), stays within the budget and the monthly cap the business sets, and leaves a
-hash-chained **work receipt** of each step it took.
+New Machines is a marketplace where a business picks AI agents and **workflow packs** (versioned, reviewable
+definitions of a piece of business work, such as reconciling orders against payments) and runs them on its
+own apps. Every tool call in a run is checked against policy, every write to a business system waits for a
+person in the business to approve it, and judgment steps go to qualified human reviewers. Each run is metered
+against a budget and a monthly cap, and ends with a deliverable, the evidence behind it and a hash-chained
+**work receipt** of every step it took.
 
-## What's in this repo
+This repository is the working product: the buyer workspace, the developer Studio, the reviewer portal, the
+operator console, and the API with its workflow runtime.
+
+## What works today
+
+The hosted deployment runs the real runtime (Temporal, Postgres) in the `live` workspace: each business
+signs up into its own organization. A second mode, the `demo` workspace, serves synthetic data for showing
+the product. `NM_WORKSPACE` picks one per deployment.
+
+| Area | Status |
+|------|--------|
+| Workflow runtime: runs, retries, approvals, human tasks, budgets and caps | Live (Temporal + Postgres) |
+| Agent steps (agents built on Google ADK) | Live, on hosted models; a fake provider for tests and keyless local runs |
+| Policy checks on every tool call (Tool Gateway) and decision rules | Live |
+| Work receipts (hash-chained, verified when a run page loads) | Live |
+| App connections: Gmail, Google Calendar, Docs and Sheets, Shopify, Stripe | Live per workspace through each app's own sign-in, or simulated data per app; each connection picks |
+| A workspace's own MCP servers as connectors | Live |
+| Human review: claim, review, submit in the reviewer portal | Live; network reviewers see a redacted copy |
+| Developer Studio: build, test in the sandbox, publish, list on the marketplace with operator review | Live |
+| Billing, plan, publisher fees, reviewer pay and payouts | **Simulated**: metered from real run steps, but no money moves |
+| Operator console guardrails | Pause-all-runs is enforced; the other switches are stored and labelled simulated |
+| `demo` workspace data (orders, customers, usage, tenants) | **Simulated**: synthetic, tagged in the UI |
+
+Simulated apps never read from or write to a real account, and the UI says so on every screen and
+deliverable that used them.
+
+## Repository map
 
 | Path | What it is |
 |------|------------|
-| `apps/api` | FastAPI service and the workflow runtime: a generic Temporal workflow (`PackRunner`) walks a pack's steps; agents run on Google ADK; the Tool Gateway applies policy to every app call; Postgres holds state |
-| `apps/web` | Customer app (Next.js): the **business workspace** (marketplace, runs, approvals, connections, reviewers, usage), the **reviewer portal** (claim and review tasks, earnings) and the **Developer Studio** (build agents and workflow packs) |
-| `apps/ops` | Operator console (Next.js): tenants, spend caps, connectors, definitions, guardrails, memory, run receipts |
-| `definitions/` | Agents, packs, connectors, model profiles and policies as YAML, validated against `definitions/_schemas` and applied at API startup |
-| `scripts/` | `smoke_recon.py`: drives a full reconciliation run end to end and checks its receipt |
-| `compose.yaml` | Local Postgres (pgvector) and Temporal dev server |
+| `apps/web` | Customer app (Next.js). `/app`: the buyer workspace (marketplace, runs, approvals, connections, reviewers, memory, usage, settings). `/studio`: the developer Studio (build agents and packs, publish listings). `/work`: the reviewer portal (claim and review tasks, earnings) |
+| `apps/ops` | Operator console (Next.js) for New Machines staff: tenants, marketplace review, connectors, reviewer workforce, runs and receipts, definitions, memory, guardrails, billing, health, audit log. See [`apps/ops/README.md`](apps/ops/README.md) |
+| `apps/api` | FastAPI service and the workflow runtime: `PackRunner`, one generic Temporal workflow that walks any pack; the worker (`app/worker`); the Tool Gateway and connector drivers (`app/runtime`); SQL migrations |
+| `definitions/` | Everything a run executes, as YAML validated against `definitions/_schemas`: `packs/` (workflow, contract, sandbox data per pack), `agents/` (instructions and skills), `connectors/` (tools and sandbox responses), `decisions/` (decision rules), `memory/` (policy memory spaces), `models.yaml` (model profiles), `taxonomy.yaml` |
+| `scripts/` | `smoke_recon.py` drives a full run end to end and verifies its receipt; `demo_data/` builds the Exception Desk's anonymised demo dataset ([README](scripts/demo_data/README.md)) |
+| `compose.yaml` | Local Postgres (pgvector) and a Temporal dev server |
 
-Two workspaces share one codebase: `demo` (synthetic data, simulated billing, for showing the product) and
-`live` (each business signs up, connects its own apps or uses simulated data per app, and is billed for real
-usage). `NM_WORKSPACE` selects it for a deployment.
+The API contract is `apps/api/openapi.json`; both Next.js apps generate their typed clients from it.
 
-## Quick start
+## How a run works
 
-Prerequisites: Docker, Python 3.14 with `uv`, Node 22 or newer with `pnpm`.
-
-```bash
-docker compose up -d                                         # Postgres + Temporal
-
-# API with the runtime on 8400 (from apps/api; a fake model provider, no keys needed)
-NM_RUNTIME=temporal NM_EMBEDDED_WORKER=1 NM_DEFS_AUTO_APPLY=1 AUTH_MODE=dev \
-  ALLOWED_ORIGINS=http://localhost:3100,http://localhost:3400 uv run uvicorn app.main:app --port 8400
-
-# customer app on 3100 and operator console on 3400 (each from its folder, after pnpm install)
-pnpm dev --port 3100                                         # apps/web
-pnpm dev                                                     # apps/ops
+```mermaid
+flowchart LR
+  A[Start: pin versions,<br/>check budget and caps] --> B[Agent steps<br/>Google ADK]
+  B --> C[Tool Gateway:<br/>policy, then connector]
+  C --> D{Decision rules}
+  D -->|judgment needed| E[Human review<br/>in /work]
+  D -->|clear| F[Approval<br/>before any write]
+  E --> F
+  F -->|granted| G[Writes]
+  G --> H[Verification]
+  H --> I[Deliverable, evidence,<br/>sealed work receipt]
 ```
 
-The web apps read `NEXT_PUBLIC_*` settings from `.env.local` in their folder; `.env.example` lists the names.
-`NEXT_PUBLIC_AUTH_MOCK=1` signs in without Firebase for local work.
+1. **Start.** The buyer starts a pack whose apps are all connected. The run pins a snapshot of every
+   definition version it uses, checks the per-run budget and the workspace's monthly cap, and starts
+   `PackRunner` on Temporal.
+2. **Read and reason.** Agent steps (Google ADK) call tools only through the Tool Gateway, which applies the
+   pack's contract and policy (allowed capabilities, input schemas) before routing the call to a live
+   account, sandbox data or an MCP server. Memory steps recall the business's policies.
+3. **Decide.** Ordered CEL decision rules route each item. A decision model can answer typed questions
+   first; when it is unavailable, the pack falls back (for example, to a reviewer).
+4. **Human review.** Judgment steps become tasks in the reviewer portal, for the business's own reviewers
+   or the New Machines reviewer network. Network reviewers see a redacted copy.
+5. **Approve.** Every write (a Gmail draft, a sheet row, a note in a ledger) waits for an approval from the
+   business. If the approval is denied or times out, nothing is written.
+6. **Verify and seal.** The output is checked against the contract's schema and rules, and the run ends
+   with its deliverable, the evidence behind it and a receipt whose hash chain anyone can re-verify.
 
-## Checks
+## Workflow packs that ship
 
-| App | Commands |
-|-----|----------|
-| API (`apps/api`) | `uv run pytest -q`, `uv run ruff check .`, `uv run ruff format --check .` |
-| Web, ops (`apps/web`, `apps/ops`) | `pnpm test`, `pnpm lint`, `pnpm typecheck`, `pnpm format:check`; `pnpm e2e` for the Playwright suite |
+All live in `definitions/packs/`. Prices are per-run estimates shown in the marketplace.
 
-The API contract is generated: after changing a route or model, run `uv run python scripts/export_openapi.py`
-in `apps/api`, then `pnpm api:gen` in `apps/web` and `apps/ops` to regenerate their typed clients.
-Parallel API runs can each use their own database: set `NM_TEST_DATABASE_URL` to a different database name.
+| Pack | Apps | Human step |
+|------|------|------------|
+| Order & Payment Reconciliation | Shopify, Stripe, Google Sheets | Reviewer for every mismatch; approval before the report is written |
+| Order-to-Cash Exception Desk | Business app (store, ledger, warehouse, sales app), Gmail | One approval before any reminder draft or note |
+| Overdue Invoice Follow-up | Stripe, Gmail | Reviewer checks the reminder plan; approval before drafts |
+| Refund Triage | Gmail, Shopify, Stripe | Reviewer confirms every refund decision; never issues a refund |
+| Support Inbox Triage | Gmail, Google Sheets | Reviewer for every complaint and refund request |
+| Weekly Expense Check | Google Sheets, Gmail | Reviewer for flagged expenses |
+| Inbox Lead Tracker | Gmail, Google Sheets | Approval before rows are added |
+| Meeting Follow-ups | Google Calendar, Gmail | Approval before drafts are saved |
 
-## Local stack
+**Order-to-Cash Exception Desk** was contributed by **Adrian Anton Ladia**. It follows each order from store
+to warehouse to ledger, finds payments waiting for confirmation, orders shipped but unpaid past terms, orders
+paid but not shipped and disputed invoices, applies the business's collection policy, drafts reminders for
+the largest overdue balances, and asks once before saving drafts and notes. It runs on synthetic sandbox
+fixtures by default, and can read an anonymised MongoDB demo database through a read-only MCP server
+(see [Run the Exception Desk on the demo database](#run-the-exception-desk-on-the-demo-database)).
 
-Postgres (pgvector) and a Temporal dev server run from `compose.yaml`:
+## Run locally
 
-```bash
-docker compose up -d        # from demo-app/
-docker compose ps           # postgres and temporal should report healthy
-```
-
-| Service     | Host address            | Notes                                  |
-|-------------|-------------------------|----------------------------------------|
-| Postgres    | `127.0.0.1:5442`        | user/password/db `nm`; tests use `nm_test` |
-| Temporal    | `127.0.0.1:7243`        | gRPC frontend, namespace `default`; history in volume `nm-temporal` |
-| Temporal UI | `http://127.0.0.1:8243` |                                        |
-
-Use `127.0.0.1` rather than `localhost` on Windows: `localhost` resolves to `::1` first and stalls
-about 20 seconds per connection because the containers bind IPv4 only.
-
-Environment variables (all optional, read at call time by `apps/api/app/settings.py`):
-
-| Variable | Default |
-|----------|---------|
-| `NM_DATABASE_URL` | `postgresql://nm:nm@127.0.0.1:5442/nm` |
-| `NM_TEST_DATABASE_URL` | `postgresql://nm:nm@127.0.0.1:5442/nm_test` |
-| `NM_RUNTIME` | `off` (`temporal` enables the real runtime) |
-| `TEMPORAL_TARGET` / `TEMPORAL_NAMESPACE` | `127.0.0.1:7243` / `default` |
-| `NM_TASK_QUEUE` | `nm-packs` |
-| `NM_WORKFLOW_ID_PREFIX` | empty (prepended to every run workflow id; give each database sharing one dev Temporal server its own, e.g. `qa-c-`) |
-| `NM_MODEL_ENV` | `test` (`test`, `dev`, `prod`) |
-| `NM_CONNECTOR_MODE` | `sandbox` (`auto`, `sandbox`, `live`); demo workspace only |
-| `NM_MCP_URL` | unset (the MongoDB MCP server's streamable-HTTP endpoint, e.g. `http://127.0.0.1:8085/mcp`; `driver: mcp` connectors call it in the `live` and `auto` connector modes; https, or http only to a loopback host, else it counts as unset) |
-| `NM_MCP_TOKEN` | unset (sent to the MCP server as a bearer token) |
-| `NM_MCP_DATABASE` | `nm_demo` (the database the MCP server's tools read) |
-| `NM_MCP_WRITES` | unset (set `1` to let a `driver: mcp` tool map a write to the server; reads only otherwise, enforced in the validator and on every call) |
-| `NM_WEB_ORIGIN` | first `ALLOWED_ORIGINS` entry, else `http://localhost:3100` (where app sign-in links return) |
-| `COMPOSIO_API_KEY` | unset (live workspace: real app connections; demo: the `live`/`auto` connector modes) |
-| `JEV_API_KEY` | unset (the decision model's key; never commit it) |
-| `NM_JEV` | unset: `fake` when `NM_MODEL_ENV=test`, else `live` with a key, else `off` (`off`, `fake`, `live`) |
-| `NM_JEV_URL` / `NM_JEV_MODEL` | `https://api.typesafe.ai/v1/systemone` / `jev-latest` (https only) |
-| `NM_JEV_USD_PER_MTOK_IN` / `NM_JEV_USD_PER_MTOK_OUT` | `3.0` / `15.0` (prices a call when the endpoint reports no cost; at least 0.001 USD a call) |
-| `NM_DEFS_DIR` | `<repo>/definitions` |
-| `NM_DEFS_AUTO_APPLY` | unset |
-
-Migrations in `apps/api/migrations/*.sql` are applied by `app.db.migrate`. The API suite needs no
-database; only tests that request the `db` fixture touch `nm_test` (created on demand).
-
-Both keep their state in named volumes (`nm-pg`, `nm-temporal`), so runs survive `docker compose restart`
-or `down`/`up`. Reset all local state (database and Temporal history):
+Prerequisites: Docker, Python 3.14 with [`uv`](https://docs.astral.sh/uv/), Node 22+ with `pnpm`.
 
 ```bash
-docker compose down -v
-```
-
-## Run the real workflow locally
-
-Order-payment reconciliation runs on the real runtime: a generic Temporal workflow (`PackRunner`) walks
-the versioned definitions in `definitions/`, the Tool Gateway calls sandbox connectors, state lands in
-Postgres, and every step is written to a hash-chained work receipt.
-
-One command drives a whole run (start, human review, write approval, completion) and checks the receipt:
-
-```bash
+# 1. Postgres and Temporal (from the repo root)
 docker compose up -d
-uv run --project apps/api python scripts/smoke_recon.py --model-env test   # fake model provider, no keys
-uv run --project apps/api python scripts/smoke_recon.py --model-env dev    # real model provider
+docker compose ps            # both should report healthy
+
+# 2. API with the runtime and an embedded worker on :8400 (in apps/api).
+#    NM_MODEL_ENV defaults to "test": a fake model provider, so no keys are needed.
+NM_RUNTIME=temporal NM_EMBEDDED_WORKER=1 NM_DEFS_AUTO_APPLY=1 AUTH_MODE=dev \
+  ALLOWED_ORIGINS=http://localhost:3100,http://localhost:3400 \
+  uv run uvicorn app.main:app --port 8400
+
+# 3. Customer app on :3100 (in apps/web, in another terminal)
+pnpm install && pnpm dev --port 3100
+
+# 4. Operator console on :3400 (in apps/ops; its dev script pins the port)
+cp .env.example .env.local && pnpm install && pnpm dev
 ```
 
-`--model-env dev` reads the model provider's key from `demo-app/.env`; the script never prints values. Model profiles and the provider mapping per environment live in `definitions/models.yaml`.
-`--live` swaps the sandbox connectors for live ones, and works only once that is set up: `COMPOSIO_API_KEY`
-and `DEMO_USER_UID` in `demo-app/.env`, Shopify, Stripe and Google Sheets accounts connected in Composio for
-that user, and a real spreadsheet ID in place of the sandbox default `sandbox-reconciliation-sheet-00000001`
-(the `spreadsheet_id` run input, defaulted in `definitions/packs/order-payment-reconciliation/schemas/input.json`;
-the `write` node appends to it). The script always targets
-the local Temporal (`127.0.0.1:7243`), whatever `.env` says, and exits non-zero if any step fails, including
-when the receipt does not end with its seal. Typical output: every node `COMPLETED`, AI spend of a few cents
-(minor units), `receipt verified True`.
-
-To run the pieces yourself, from `apps/api` with `demo-app/.env` loaded:
+Each Next.js app reads public settings from `.env.local` in its folder. For local work with mock sign-in
+(no Firebase), this is enough; the Firebase values only need to be non-empty:
 
 ```bash
-# worker
-NM_RUNTIME=temporal NM_MODEL_ENV=dev uv run --env-file ../../.env python -m app.worker
-# API on 8400 (applies definitions at startup). ALLOWED_ORIGINS names only the ops console here, so
-# NM_WEB_ORIGIN names the customer web app, where app sign-in links return.
-NM_RUNTIME=temporal NM_MODEL_ENV=dev NM_DEFS_AUTO_APPLY=1 AUTH_MODE=dev ALLOWED_ORIGINS=http://localhost:3400 \
-  NM_WEB_ORIGIN=http://localhost:3100 uv run --env-file ../../.env uvicorn app.main:app --port 8400
+NEXT_PUBLIC_API_URL=http://localhost:8400
+NEXT_PUBLIC_AUTH_MOCK=1
+NEXT_PUBLIC_FIREBASE_API_KEY=local
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=local
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=local
+NEXT_PUBLIC_FIREBASE_APP_ID=local
 ```
 
-Validate or apply the definition files without the API: `uv run python -m app.defs validate|apply|export`.
-The API's startup apply (`NM_DEFS_AUTO_APPLY=1`) validates first and applies nothing when a file is invalid
-(the errors are logged; the API still starts). Neither it nor `apply` replaces a definition whose latest
-version was published from the operator console: a restart keeps the console edit, and a file changed since
-its last apply is skipped with a warning. `python -m app.defs apply --force` applies the files over console
-versions.
-Human tasks and approvals appear in the customer app; the operator console (`apps/ops`) shows definitions,
-agents, work contracts, memory and each run's work receipt. A decision is recorded before its workflow is
-signalled; if the signal is lost, the same person sending the same decision again re-sends it. A run whose
-workflow Temporal no longer has is ended `FAILED`.
+`AUTH_MODE=dev` makes every API request an owner, in the `demo` workspace by default. Add
+`NM_WORKSPACE=live` to run the live workspace locally (it needs `NM_RUNTIME=temporal`). Every API setting
+and its default is in `apps/api/app/settings.py`; keys for real models or real app connections go in a
+gitignored `.env` at the repo root and are never committed.
 
-`apps/api/tests/test_replay.py` replays a recorded `PackRunner` history against the current workflow code;
-re-record it (`NM_RECORD_HISTORY=1 uv run pytest tests/test_replay.py`) only for a change meant to break
-replay, after in-flight runs have finished.
+On Windows, use `127.0.0.1` rather than `localhost` for Postgres and Temporal: the containers bind IPv4 only.
 
-### Run the Exception Desk against the demo database
+| Port | Service |
+|------|---------|
+| 8400 | API (local dev; also the API the ops e2e suite starts) |
+| 3100 | Customer app (local dev and web e2e) |
+| 3400 | Operator console (`pnpm dev`) |
+| 8100 / 3410 | API under web e2e / console under ops e2e |
+| 5442 | Postgres (user, password and database `nm`; tests use `nm_test`) |
+| 7243 / 8243 | Temporal gRPC / Temporal UI |
 
-The Order-to-Cash Exception Desk's connector (`custom-business-app`) is `driver: mcp`: besides its sandbox
-files it carries, per read tool, the MongoDB aggregation the official
-[MongoDB MCP server](https://www.npmjs.com/package/mongodb-mcp-server) runs against the demo database
-`nm_demo` (loaded by `scripts/demo_data`). Start the server read-only over streamable HTTP, then point the
-worker at it:
+`docker compose down -v` resets all local state.
+
+### Run the real workflow locally
+
+One command drives a whole run (start, human review, write approval, completion) against the local stack and
+verifies the receipt. It exits non-zero if any step fails or the receipt does not end with its seal:
+
+```bash
+uv run --project apps/api python scripts/smoke_recon.py --model-env test   # fake model provider, no keys
+uv run --project apps/api python scripts/smoke_recon.py --model-env dev    # real models; keys from .env
+uv run --project apps/api python scripts/smoke_recon.py --pack refund-triage --model-env test
+```
+
+`--pack` takes `order-payment-reconciliation` (default), `overdue-invoice-follow-up`, `refund-triage` or
+`order-to-cash-exception-desk`. `--live` swaps sandbox connectors for live ones once real app accounts are
+connected.
+
+To run the worker as its own process instead of embedding it, start `uv run python -m app.worker` in
+`apps/api` with the same `NM_RUNTIME` and model settings, and drop `NM_EMBEDDED_WORKER` from the API.
+
+Definitions are validated and applied at API startup (`NM_DEFS_AUTO_APPLY=1`); an invalid file applies
+nothing and is logged. To work on them directly, from `apps/api`:
+
+```bash
+uv run python -m app.defs validate    # check every file against the schemas
+uv run python -m app.defs apply       # apply; skips definitions last published from the operator console
+uv run python -m app.defs apply --force
+```
+
+### Run the Exception Desk on the demo database
+
+The pack's `custom-business-app` connector can read MongoDB through the official MongoDB MCP server, run
+read-only over loopback. Build and load the anonymised `nm_demo` database first
+([scripts/demo_data/README.md](scripts/demo_data/README.md)), then:
 
 ```bash
 MDB_MCP_CONNECTION_STRING=mongodb://127.0.0.1:27017/nm_demo \
   npx -y mongodb-mcp-server@3.1.0 --transport http --httpHost 127.0.0.1 --httpPort 8085 --readOnly \
   --maxDocumentsPerQuery 2000
-# set the same NM_CONNECTOR_MODE / NM_MCP_URL / NM_MCP_TOKEN for the API and the worker
-NM_CONNECTOR_MODE=auto NM_MCP_URL=http://127.0.0.1:8085/mcp uv run ... python -m app.worker
 ```
 
-In `auto` mode a `driver: mcp` connector reads the database when `NM_MCP_URL` is set and the server answers
-`tools/list`, and its sandbox file otherwise; `live` always calls the server (a run fails rather than falling
-back) and `sandbox` never does. Other connectors keep their Composio behaviour. The server's default
-`--maxDocumentsPerQuery` (100) cuts a window of orders short, and the driver reports such a read as a failed
-call rather than returning part of it, so raise the limit as above. The server stays `--readOnly`: the reads
-are live, while the two note writes (`add_ledger_note`, `add_warehouse_note`) carry no `mcp` mapping and
-answer from their sandbox responses in every mode, so a ledger or warehouse note is recorded in the run's
-receipt but never written to Mongo. The server is read-only, and the code holds the same line: a read may
-call only `aggregate`, `find` and `count`, no mapping may use `$out`, `$merge`, `$where`, `$function` or
-`$accumulator`, and `auto` mode does not use a server that lists write tools. Pass the connection string
-through `MDB_MCP_CONNECTION_STRING`, never on the command line (it shows in the process list), and bind the
-server to loopback or a private network; `NM_MCP_TOKEN` is sent as a bearer token. A run in `auto` mode
-is settled by the process that starts it (the API), which pins live or sandbox in the run's snapshot; the
-worker follows that pin and fails the call if it finds none. So the API and the worker must share
-`NM_CONNECTOR_MODE`, `NM_MCP_URL` and `NM_MCP_TOKEN` (in production they are one process: the API embeds
-the worker), and a loopback `NM_MCP_URL` must be loopback for both. The gated `tests/test_mcp_driver_live.py` runs every read against the
-server when `NM_MCP_URL` is set.
+Start the API (and the worker, if separate) with `NM_CONNECTOR_MODE=auto NM_MCP_URL=http://127.0.0.1:8085/mcp`.
+In `auto` mode the connector reads the database when the server answers and its sandbox files otherwise;
+the two note writes stay sandboxed in every mode and are recorded only in the receipt.
 
-## Build the API image
+## Tests and checks
 
-The Dockerfile lives in `apps/api` but builds from the demo-app root, so the image carries `definitions/`
-(and sets `NM_DEFS_DIR` / `NM_SCHEMAS_DIR` to it). `.dockerignore` and `.gcloudignore` at the root keep
-secrets, `node_modules` and the other apps out of the build context.
+| App | Commands |
+|-----|----------|
+| API (`apps/api`) | `uv run pytest -q`, `uv run ruff check .`, `uv run ruff format --check .` |
+| Web, ops (`apps/web`, `apps/ops`) | `pnpm test` (Vitest), `pnpm lint`, `pnpm typecheck`, `pnpm format:check`, `pnpm build` |
+| End to end | `pnpm e2e` in `apps/web` or `apps/ops` (Playwright; builds a mock-sign-in bundle and starts its own API) |
+
+- The API suite is large (about 2,000 tests, half an hour). Tests that use the database need
+  `docker compose up -d`; set `NM_TEST_DATABASE_URL` to give parallel runs their own database.
+- `pnpm e2e` uses the ports in the table above, so stop dev servers on them first. The web suite bakes
+  `NEXT_PUBLIC_API_URL` into its build, so point it at its API (`http://localhost:8100`), and run it with
+  `AUTH_MODE=dev` exported for the API it starts; `E2E_PORT` and `E2E_API_PORT` move its ports.
+- After changing an API route or model, run `uv run python scripts/export_openapi.py` in `apps/api`, then
+  `pnpm api:gen` in `apps/web` and `apps/ops`.
+- `apps/api/tests/test_replay.py` replays a recorded `PackRunner` history against the current workflow code,
+  so a change that would break in-flight runs fails the suite.
+
+## Deployment
+
+Everything runs on Google Cloud in project `nm-demo-iu7uo4`.
+
+| Piece | Where | How |
+|-------|-------|-----|
+| API + embedded worker | Cloud Run service `nm-api` (asia-south1), Cloud SQL Postgres, Temporal Cloud | Cloud Build image, then `gcloud run deploy` |
+| Customer app | Firebase App Hosting (asia-southeast1) | `firebase deploy --only apphosting` from `apps/web` |
+| Operator console | Firebase App Hosting backend `nm-ops` (asia-southeast1) | the same command from `apps/ops` |
 
 ```bash
-# from demo-app/
-docker build -f apps/api/Dockerfile -t nm-api .
-docker run --rm -p 8080:8080 -e AUTH_MODE=dev nm-api        # GET /healthz -> {"status":"ok"}
-
-# Cloud Build, then deploy the pushed image
+# API image: the Dockerfile builds from the repo root so the image carries definitions/
 gcloud builds submit --project nm-demo-iu7uo4 --region asia-south1 --config apps/api/cloudbuild.yaml \
   --substitutions _IMAGE=asia-south1-docker.pkg.dev/nm-demo-iu7uo4/nm/nm-api:<tag> .
 gcloud run deploy nm-api --project nm-demo-iu7uo4 --region asia-south1 \
   --image asia-south1-docker.pkg.dev/nm-demo-iu7uo4/nm/nm-api:<tag>
+
+# Web apps (run in apps/web, then in apps/ops)
+npx -y firebase-tools@15.33.0 deploy --only apphosting --project nm-demo-iu7uo4
 ```
 
-## Run everything in one Cloud Run service
-
-The API image can host the runtime: with `NM_EMBEDDED_WORKER=1` (and `NM_RUNTIME=temporal`) the PackRunner
-worker starts inside the API process after migrations and definitions are applied, on its own thread and
-event loop, and stops on shutdown. A worker or Temporal failure is logged and retried with backoff; the API
-keeps serving. One service then runs against Cloud SQL and Temporal Cloud, with no separate worker.
-
-Environment variables (names only; put secrets in Secret Manager):
-
-- `NM_RUNTIME=temporal`, `NM_EMBEDDED_WORKER=1`, `NM_DEFS_AUTO_APPLY=1`, `NM_WORKSPACE=demo|live`
-- `NM_DATABASE_URL`: Cloud SQL over the unix socket, passed to the driver untouched:
-  `postgresql://USER:PASS@/DB?host=/cloudsql/PROJECT:REGION:INSTANCE`
-- `TEMPORAL_TARGET`, `TEMPORAL_NAMESPACE`, `TEMPORAL_API_KEY` (the key alone switches on TLS, so regional
-  `*.api.temporal.io:7233` endpoints work as well as `*.tmprl.cloud:7233`), `NM_TASK_QUEUE`
-- `NM_WORKER_CONCURRENCY` (concurrent activities, default 8), `NM_DB_POOL_MAX` (Postgres pool, default 8;
-  activity threads never exceed it)
-- `NM_MODEL_ENV`, `NM_CONNECTOR_MODE`, `MODEL_API_KEY`, `COMPOSIO_API_KEY`, `DEMO_USER_UID`, `AUTH_MODE`,
-  `FIREBASE_PROJECT_ID`, `ALLOWED_ORIGINS`, `OPS_ADMIN_EMAILS`, `OPS_SUPPORT_EMAILS`, `JEV_API_KEY` (a secret),
-  `NM_JEV`
-
-Deploy flags that matter:
-
-```bash
-gcloud run deploy nm-api ... \
-  --add-cloudsql-instances PROJECT:REGION:INSTANCE \
-  --no-cpu-throttling \
-  --max-instances 1
-```
-
-`--no-cpu-throttling` keeps CPU allocated between requests, which the worker's long polls need.
-`--min-instances 1` keeps an instance alive: Temporal polling is outbound and does not count as traffic, so
-without it Cloud Run scales to zero when nobody uses the app and workflows stall.
-`--max-instances 1` keeps one worker pool and one API instance within the database connection budget.
-
-Sizing for a Cloud SQL f1-micro (about 25 connections): `NM_DB_POOL_MAX=10`, `NM_WORKER_CONCURRENCY=4`
-leaves headroom for migrations, the console and a second revision during a rollout. The pool is shared by
-request handlers and activities, so in embedded mode the pool must be strictly larger than the concurrency
-(the API logs a warning at startup otherwise). Shutdown fits Cloud Run's 10 s: the worker stops within 8 s at most
-(activities get a 5 s grace period) and the pool then closes within 1 s, and a Temporal outage never delays it.
-
-Local runs: unset `TEMPORAL_API_KEY` (and point `TEMPORAL_TARGET` at `127.0.0.1:7243`). The key in `.env` is the
-cloud one, and any key now switches on TLS, which the local dev server does not speak.
-
-`GET /v1/ops/runtime/status` (any operator role) reports `{runtime, workspace, database, temporal, worker,
-definitionsApplied}` for a quick check; it never returns connection strings or keys. `worker` is `running`,
-`stopped` or `not_embedded`. With the runtime off, `database` and `temporal` read `off`. Each check is
-bounded (about 3 s) and both run at once, so the route answers within about 4 s during an outage.
-
-## Deploy
-
-| Piece | Where | How |
-|-------|-------|-----|
-| API + embedded worker | Cloud Run `nm-api` | Cloud Build image, then `gcloud run deploy` (above); delete the previous revision afterwards |
-| Customer app | Firebase App Hosting | `firebase deploy --only apphosting --project <project>` from `apps/web` |
-| Operator console | Firebase App Hosting | the same command from `apps/ops` |
-
-App Hosting builds from the folder it runs in, so never leave a local `.env.local` there when deploying: its
-values would be uploaded with the source. Production settings live in each app's `apphosting.yaml` and in
-Secret Manager.
+- The API runs the Temporal worker in-process (`NM_EMBEDDED_WORKER=1`), so one service needs
+  `--no-cpu-throttling`, `--min-instances 1` (Temporal polling is outbound and does not keep an instance
+  alive) and `--max-instances 1` (one worker pool within the database connection budget). Delete the
+  previous revision after a release so two workers never poll at once.
+- Secrets live in Secret Manager and are wired as Cloud Run secrets; the app never logs connection strings
+  or keys. `GET /v1/ops/runtime/status` (operators only) reports runtime, database, Temporal and worker health.
+- Public client settings for the web apps are in each app's `apphosting.yaml`. Never leave a `.env.local`
+  in the folder you deploy from: App Hosting uploads the folder.
 
 ## Known limits
 
-- A live app action that succeeds but times out before it is recorded can repeat when the step retries.
-  Recorded results are reused on retry; sandbox calls are unaffected.
-- Connector data in workflow history is not encrypted yet. Add an encrypting payload codec (key in Secret
-  Manager) before a paying business connects a real account.
-- A run has no overall deadline; only each human task or approval times out (24 hours by default).
-- With Postgres down, real-run endpoints answer 500 rather than 503.
+- A live app write that succeeds but times out before it is recorded can repeat when the step retries.
+- Connector data in workflow history is not yet encrypted; an encrypting payload codec is required before a
+  paying business connects a real account.
+- A run has no overall deadline; each human task or approval times out (24 hours by default).
+
+## Contributing
+
+1. Branch from `master` (`feat/...`, `fix/...`).
+2. Keep the checks above green for every app you touch, and regenerate the API clients if the contract changed.
+3. Open a pull request against `master` with a short description and how you tested it. Commit messages
+   follow `type: description` (`feat`, `fix`, `docs`, `refactor`, `test`, `chore`).
+
+New packs, agents and connectors are definition files: add them under `definitions/`, run
+`uv run python -m app.defs validate` from `apps/api`, and add a sandbox fixture so the pack runs without real
+accounts.
