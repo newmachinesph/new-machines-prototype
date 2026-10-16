@@ -10,6 +10,14 @@ from celpy import celtypes
 _ENV = celpy.Environment()
 
 
+def _lower_ascii(text: Any) -> celtypes.StringType:
+    """CEL's standard `lowerAscii()`, which celpy leaves out: ASCII letters to lower case."""
+    return celtypes.StringType("".join(c.lower() if c.isascii() else c for c in str(text)))
+
+
+_FUNCTIONS = {"lowerAscii": _lower_ascii}
+
+
 class CelError(ValueError):
     """An expression failed to compile or evaluate."""
 
@@ -17,7 +25,7 @@ class CelError(ValueError):
 @lru_cache(maxsize=512)
 def _program(expr: str):
     try:
-        return _ENV.program(_ENV.compile(expr))
+        return _ENV.program(_ENV.compile(expr), functions=_FUNCTIONS)
     except celpy.CELParseError as exc:
         raise CelError(f"cannot compile {expr!r}: {str(exc).strip().splitlines()[0]}") from exc
 

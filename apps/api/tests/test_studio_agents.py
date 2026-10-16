@@ -30,6 +30,7 @@ def test_the_palette_lists_agents_tools_memory_and_result_shapes(ana):  # noqa: 
     assert {s["key"] for s in palette["spaces"]} == {
         "customer-accounts",
         "expense-policy",
+        "o2c-policy",
         "retail-commerce",
         "support-policies",
     }

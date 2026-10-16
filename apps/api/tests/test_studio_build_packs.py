@@ -458,3 +458,36 @@ def test_validator_errors_name_their_step():
     assert (issue.step, issue.path) == ("plan", f"workflow/{KEY}")
     assert issue_of(in_rules, KEY).step == "check"
     assert issue_of(DefError("contract", KEY, "", "budget: bad"), KEY).step is None
+
+
+def _with_second_write(*, also=("send2",), denied="failed", loop=False) -> PackDraft:
+    """The invoice nudges pack with a second write after `send`, which the one approval also unlocks."""
+    send = next(s for s in DRAFT.steps if s.id == "send")
+    second = StepDraft(
+        id="send2",
+        type="connector",
+        config=dict(send.config),
+        routes={"ok": "send" if loop else "verify", "denied": "failed", "error": "failed"},
+    )
+    draft = _route(_route(DRAFT, "send", "ok", "send2"), "approve", "denied", denied)
+    draft = _config(draft, "approve", also_unlocks=list(also))
+    return _add(draft, second)
+
+
+def test_an_approval_may_also_unlock_a_write_that_follows_its_granted_step():
+    assert _issues(_with_second_write()) == []
+
+
+def test_also_unlocks_refuses_a_write_a_denied_approval_reaches():
+    issues = _issues(_with_second_write(denied="send2"))
+    assert any(i.step == "send2" and "denied or times out" in i.message for i in issues), issues
+
+
+def test_also_unlocks_refuses_a_read():
+    issues = _issues(_with_second_write(also=("invoices",)))
+    assert any("not a step that changes data" in i.message for i in issues), issues
+
+
+def test_also_unlocks_refuses_a_write_on_a_loop():
+    issues = _issues(_with_second_write(loop=True))
+    assert any(i.step == "send2" and "loop" in i.message for i in issues), issues

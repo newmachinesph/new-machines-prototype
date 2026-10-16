@@ -112,6 +112,119 @@ def test_agent_tool_not_in_any_connector(bundle):
     only_error(bad, mentions="shop.missing", kind="agent")
 
 
+def _node(node_id: str, tool: str, **routes: str) -> dict:
+    return {
+        "id": node_id,
+        "type": "connector",
+        "version": "1",
+        "config": {"tool": tool, "args": {}},
+        "routes": routes,
+    }
+
+
+def _with_approval(bundle: Bundle, also_unlocks, *, wires: dict | None = None, tools: dict | None = None):
+    """The fixture workflow with an approval whose grant leads to the write `w1`, then `w2`, then the end,
+    and `also_unlocks` more. `wires` replaces a node's routes ({node: {outcome: next}}); `tools` replaces a
+    write node's tool. The fixture shop gains a write tool, `shop.add_note`."""
+    wires, tools = wires or {}, tools or {}
+
+    def add_tool(body, files):
+        body["tools"].append(
+            {
+                "id": "add_note",
+                "slug": "SHOPIFY_ADD_NOTE",
+                "action_class": "write",
+                "capability": "shop.notes.write",
+                "description": "Add a note to an order.",
+                "input_schema": {"type": "object", "properties": {"note": {"type": "string"}}},
+            }
+        )
+
+    def edit(body, files):
+        routes = {"granted": "w1", "denied": "finish", "timeout": "finish"}
+        config = {"title": "Write it", "also_unlocks": also_unlocks}
+        approve = {"id": "approve", "type": "approval", "version": "1", "config": config, "routes": routes}
+        nodes = [
+            approve,
+            _node("w1", tools.get("w1", "shop.add_note"), ok="w2"),
+            _node("w2", tools.get("w2", "shop.add_note"), ok="finish"),
+        ]
+        body["nodes"][2]["routes"]["APPROVED"] = "approve"
+        body["nodes"][3:3] = nodes
+        for node in body["nodes"]:
+            if node["id"] in wires:
+                node["routes"] = {**node["routes"], **wires[node["id"]]}
+
+    def allow(body, files):
+        body["authorization"]["tool_capabilities"].append("shop.notes.write")
+
+    with_tool = mutated(mutated(bundle, "connector", "shop", add_tool), "contract", "demo-pack", allow)
+    return mutated(with_tool, "workflow", "demo-pack", edit)
+
+
+def _errors(bundle: Bundle) -> list[str]:
+    return [e.message for e in validate_bundle(bundle)]
+
+
+def test_an_approval_may_also_unlock_the_writes_that_follow_its_grant(bundle):
+    assert _errors(_with_approval(bundle, ["w2"])) == []
+    assert _errors(_with_approval(bundle, ["w1", "w2"])) == []  # naming the granted target is harmless
+
+
+def test_also_unlocks_must_name_existing_connector_nodes_in_a_list(bundle):
+    only_error(_with_approval(bundle, ["ghost"]), mentions="'ghost' does not exist", kind="workflow")
+    only_error(_with_approval(bundle, ["analyse"]), mentions="not a connector node", kind="workflow")
+    only_error(_with_approval(bundle, "w2"), mentions="must be a list", kind="workflow")
+
+
+def test_also_unlocks_refuses_a_read(bundle):
+    bad = _with_approval(bundle, ["w2"], tools={"w2": "shop.list_orders"})
+    only_error(bad, mentions="only reads", kind="workflow")
+
+
+def test_also_unlocks_refuses_a_step_with_no_way_in(bundle):
+    bad = _with_approval(bundle, ["w2"], wires={"w1": {"ok": "finish"}})
+    only_error(bad, mentions="nothing leading to it", kind="workflow")
+
+
+def test_also_unlocks_refuses_a_step_another_route_reaches(bundle):
+    # The decision can send a run straight to w2, with no grant ever asked for.
+    bad = _with_approval(bundle, ["w2"], wires={"decide": {"HUMAN_REVIEW": "w2"}})
+    only_error(bad, mentions="can be reached from decide", kind="workflow")
+
+
+def test_also_unlocks_refuses_a_step_a_denied_approval_reaches(bundle):
+    bad = _with_approval(bundle, ["w2"], wires={"approve": {"denied": "w2"}})
+    assert any("denied or times out" in m for m in _errors(bad))
+    bad = _with_approval(bundle, ["w2"], wires={"approve": {"timeout": "w1"}})
+    assert any("denied or times out" in m for m in _errors(bad))  # reaches w2 through the granted target
+
+
+def test_also_unlocks_refuses_a_step_on_a_loop(bundle):
+    bad = _with_approval(bundle, ["w2"], wires={"w2": {"ok": "w1"}})
+    assert any("sits on a loop" in m for m in _errors(bad))
+    bad = _with_approval(bundle, ["w2"], wires={"w2": {"ok": "w2"}})
+    assert any("w2" in m and "sits on a loop" in m for m in _errors(bad))
+
+
+def test_also_unlocks_refuses_a_chain_whose_granted_target_has_another_way_in(bundle):
+    # The decision can reach w1 on its own, and w2 follows w1: the grant would cover w2 without being asked.
+    bad = _with_approval(bundle, ["w2"], wires={"decide": {"HUMAN_REVIEW": "w1"}})
+    assert any("w2" in m and "without this approval through w1" in m for m in _errors(bad))
+
+
+def test_also_unlocks_refuses_a_chain_whose_granted_target_is_on_a_loop(bundle):
+    bad = _with_approval(bundle, ["w2"], wires={"w2": {"ok": "analyse"}})
+    errors = _errors(bad)
+    assert any("w2" in m and "loop" in m for m in errors), errors
+
+
+def test_also_unlocks_issues_follow_the_order_named(bundle):
+    bad = _with_approval(bundle, ["w2", "w1"], wires={"decide": {"HUMAN_REVIEW": "w1"}})
+    errors = [m for m in _errors(bad) if "also_unlocks: node" in m]
+    assert len(errors) == 2 and "'w2'" in errors[0] and "'w1'" in errors[1]
+
+
 def _team_agent_needing_thread(bundle: Bundle, *, maps: dict | None) -> Bundle:
     """The fixture pack running an org-built copy of helper-agent whose input schema requires thread_id."""
     key = "org-abc--helper"

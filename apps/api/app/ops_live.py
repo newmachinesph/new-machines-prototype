@@ -37,7 +37,7 @@ from app.models.ops import (
 from app.models.runs import Run
 from app.run_tasks import OPEN_STATUSES, release_claims
 from app.runtime import gateway, routes
-from app.runtime.drivers import MCP_TRANSPORT
+from app.runtime.drivers import MCP_TRANSPORT, PLATFORM_MCP_DRIVER
 from app.runtime.projection import TERMINAL_RUN_STATUSES
 from app.store import iso, locked_store
 
@@ -70,7 +70,8 @@ SUCCESS_WINDOW_DAYS = 7
 HOURS = 24
 LIVE_PROVIDER = "Composio"
 LIVE_AUTH = "oauth_managed"
-MCP_PROVIDER, MCP_AUTH = "MCP", "api_key"  # an org's own MCP server: a secret header, not OAuth
+# An MCP server, an org's own (`transport: mcp`) or the platform's (`driver: mcp`): a secret header, no OAuth.
+MCP_PROVIDER, MCP_AUTH = "MCP", "api_key"
 # A connection row counts as connected only when a run could reach the app through it: the rule
 # `live_connections.shown_status` shows as connected or sandbox, in SQL.
 ROUTABLE = routes.ROUTABLE_SQL.format(c="c")
@@ -383,7 +384,7 @@ def _connectors(conn, now: datetime, key: str | None = None) -> list[ConnectorEn
     entries = []
     for version in definitions:
         body = version.body
-        mcp = body.get("transport") == MCP_TRANSPORT
+        mcp = body.get("transport") == MCP_TRANSPORT or body.get("driver") == PLATFORM_MCP_DRIVER
         owner_id, owner_name = owned.get(version.key, (None, None))
         app = str(body.get("app") or version.key)
         current = ops_state.effective_settings(body, settings.get(version.key))

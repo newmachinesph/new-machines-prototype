@@ -14,7 +14,7 @@ from typing import Any
 from jsonschema import Draft202012Validator
 from pydantic import ValidationError
 
-from app.defs import owners
+from app.defs import owners, unlocks
 from app.defs.model import Bundle, DefError, Definition, path_for
 from app.models.common import money_text
 from app.models.studio import (
@@ -503,18 +503,63 @@ def _graph_issues(draft: PackDraft, by_id: dict[str, StepDraft]) -> list[Builder
     return out
 
 
+def _unlock_issues(
+    draft: PackDraft, tools: dict[str, dict], by_id: dict[str, StepDraft]
+) -> tuple[list[BuilderIssue], set[str]]:
+    """The problems with what approvals also unlock, and the steps whose unlock is sound: a write an approval
+    also unlocks must be a step that writes, reached only through that approval's granted outcome and the
+    other steps it unlocks, and not after a refusal or on a loop (`unlocks.chain_problems`)."""
+    routes = {s.id: dict(s.routes) for s in draft.steps}
+    out: list[BuilderIssue] = []
+    sound: set[str] = set()
+    for approval in (s for s in draft.steps if s.type == "approval"):
+        also = approval.config.get("also_unlocks")
+        if also is None:
+            continue
+        if not isinstance(also, list):
+            out.append(
+                _issue(
+                    f"also_unlocks of {approval.id} must be a list of steps.",
+                    approval.id,
+                    f"steps.{approval.id}",
+                )
+            )
+            continue
+        usable = []
+        for target in also:
+            step = by_id.get(target) if isinstance(target, str) else None
+            tool = tools.get(_ref(step.config, "tool") or "") if step and step.type == "connector" else None
+            if tool is None or tool["action_class"] == READ:
+                out.append(
+                    _issue(
+                        f"{approval.id} also unlocks {target}, which is not a step that changes data.",
+                        approval.id,
+                        f"steps.{approval.id}",
+                    )
+                )
+            else:
+                usable.append(target)
+        problems = unlocks.chain_problems(routes, approval.id, usable)
+        for target, why in problems.items():
+            out.append(_issue(f"{target} {why}.", target, f"steps.{target}"))
+        sound |= {t for t in usable if t not in problems}
+    return out, sound
+
+
 def _approval_issues(draft: PackDraft, tools: dict[str, dict]) -> list[BuilderIssue]:
     """A step that changes data in an app runs only straight after an approval was granted: the gateway lets a
-    write through only for the step at an approval's granted outcome."""
+    write through only for the step at an approval's granted outcome, and for the writes that approval also
+    unlocks when they follow it in one closed chain."""
+    by_id = {s.id: s for s in draft.steps}
+    out, unlocked = _unlock_issues(draft, tools, by_id)
     incoming: dict[str, list[tuple[StepDraft, str]]] = {}
     for s in draft.steps:
         for o, target in s.routes.items():
             incoming.setdefault(target, []).append((s, o))
-    out = []
     for s in draft.steps:
         tool = tools.get(_ref(s.config, "tool") or "") if s.type == "connector" else None
-        if tool is None or tool["action_class"] == READ:  # anything that is not a read needs the approval
-            continue
+        if tool is None or tool["action_class"] == READ or s.id in unlocked:
+            continue  # anything that is not a read needs the approval
         if any(src.type != "approval" or o != "granted" for src, o in incoming.get(s.id, [])):
             out.append(
                 _issue(

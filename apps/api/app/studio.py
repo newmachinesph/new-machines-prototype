@@ -764,8 +764,9 @@ def _cut(text: object, field: str) -> str:
 
 def copy_pack(actor: Actor, source: str) -> PackCopy:
     """An unsaved draft of a pack the org may copy: the platform's or its own. Nothing is saved; the editor
-    saves it as a new pack. 404 for a pack the org cannot see, 409 NOT_COPYABLE for another publisher's, 422
-    NOT_EDITABLE for a pack that cannot form a draft. Inputs it cannot hold are left out and listed."""
+    saves it as a new pack, and `issues` holds what `:validate` finds in it. 404 for a pack the org cannot
+    see, 409 NOT_COPYABLE for another publisher's, 422 NOT_EDITABLE for a pack that cannot form a draft.
+    Inputs it cannot hold are left out and listed."""
     require_builder(actor)
     with db.connect() as conn:
         bundle = registry.visible_bundle(conn, actor.org_id)
@@ -777,6 +778,7 @@ def copy_pack(actor: Actor, source: str) -> PackCopy:
             raise ApiProblem(409, "NOT_COPYABLE", "A pack from another publisher can be added, not copied.")
         version = registry.latest(conn, "pack", source)
         taken = _taken_pack_names(conn, actor.org_id).values()
+        ctx = _context(conn, actor.org_id)
     pack = found.body
     workflow = bundle.get("workflow", str(pack["workflow"])).body
     contract_def = bundle.get("contract", str(workflow.get("work_contract_ref") or pack["contract"]))
@@ -805,6 +807,8 @@ def copy_pack(actor: Actor, source: str) -> PackCopy:
         )
     except ValidationError, TypeError, ValueError:
         raise ApiProblem(422, "NOT_EDITABLE", "This pack cannot be opened in the Studio.") from None
+    # The same check `:validate` runs, so a copy never reports fewer problems than the editor will.
+    issues = [*issues, *_pack_issues(ctx, owners.org_key(actor.org_id, DRAFT_NAME), _org(actor), draft)]
     return PackCopy(
         draft=draft,
         issues=issues,

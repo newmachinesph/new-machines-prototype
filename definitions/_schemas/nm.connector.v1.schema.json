@@ -20,6 +20,12 @@
       ],
       "default": "composio"
     },
+    "driver": {
+      "enum": [
+        "composio",
+        "mcp"
+      ]
+    },
     "toolkit": {
       "type": "string",
       "minLength": 1
@@ -75,6 +81,51 @@
           },
           "sample": {
             "type": "object"
+          },
+          "mcp": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "tool",
+              "collection"
+            ],
+            "properties": {
+              "tool": {
+                "type": "string",
+                "minLength": 1
+              },
+              "collection": {
+                "type": "string",
+                "minLength": 1
+              },
+              "pipeline": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object"
+                }
+              },
+              "filter": {
+                "type": "object"
+              },
+              "projection": {
+                "type": "object"
+              },
+              "limit": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "update": {
+                "type": "object"
+              },
+              "result_key": {
+                "type": "string",
+                "minLength": 1
+              },
+              "result": {
+                "type": "object"
+              }
+            }
           }
         }
       }
@@ -138,6 +189,9 @@
       "required": [
         "toolkit"
       ]
+    },
+    "properties": {
+      "driver": false
     }
   },
   "else": {

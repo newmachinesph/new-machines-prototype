@@ -56,21 +56,6 @@ export const zAgentSkill = z.object({
 });
 
 /**
- * ApprovalAction
- *
- * The step a real run asks to take once approved: the app it acts on, the workflow step, and the tool
- * call. `mocked` is true when that call would run against sandbox data instead of the connected app.
- */
-export const zApprovalAction = z.object({
-    app: z.string(),
-    step: z.string(),
-    tool: z.string().optional(),
-    operation: z.string().optional(),
-    summary: z.string().optional(),
-    mocked: z.boolean()
-});
-
-/**
  * ApprovalRef
  */
 export const zApprovalRef = z.object({
@@ -458,30 +443,6 @@ export const zEmailPreview = z.object({
     subject: z.string(),
     to: z.string(),
     body: z.string()
-});
-
-/**
- * Approval
- */
-export const zApproval = z.object({
-    id: z.string(),
-    runId: z.string(),
-    title: z.string(),
-    requestedBy: z.string(),
-    requestedAt: z.string(),
-    expiresAt: z.string(),
-    status: z.enum([
-        'PENDING',
-        'GRANTED',
-        'DECLINED',
-        'EXPIRED'
-    ]),
-    policyRef: z.string(),
-    reasonCodes: z.array(z.string()),
-    digest: z.array(zDigestRow),
-    preview: zEmailPreview.optional(),
-    action: zApprovalAction.optional(),
-    summary: z.string().optional()
 });
 
 /**
@@ -2722,6 +2683,62 @@ export const zSuggestion = z.object({
     pack: zPack.optional(),
     steps: z.array(z.string()),
     simulated: z.boolean()
+});
+
+/**
+ * UnlockedAction
+ *
+ * A write the same grant also lets through (an approval's `also_unlocks`): the step, its tool and the app
+ * it acts on. `mocked` is true when that call would run against sandbox data.
+ */
+export const zUnlockedAction = z.object({
+    app: z.string(),
+    step: z.string(),
+    tool: z.string(),
+    operation: z.string(),
+    mocked: z.boolean(),
+    count: z.int().optional()
+});
+
+/**
+ * ApprovalAction
+ *
+ * The step a real run asks to take once approved: the app it acts on, the workflow step, and the tool
+ * call. `mocked` is true when that call would run against sandbox data instead of the connected app.
+ */
+export const zApprovalAction = z.object({
+    app: z.string(),
+    step: z.string(),
+    tool: z.string().optional(),
+    operation: z.string().optional(),
+    summary: z.string().optional(),
+    mocked: z.boolean(),
+    count: z.int().optional(),
+    unlocked: z.array(zUnlockedAction).optional()
+});
+
+/**
+ * Approval
+ */
+export const zApproval = z.object({
+    id: z.string(),
+    runId: z.string(),
+    title: z.string(),
+    requestedBy: z.string(),
+    requestedAt: z.string(),
+    expiresAt: z.string(),
+    status: z.enum([
+        'PENDING',
+        'GRANTED',
+        'DECLINED',
+        'EXPIRED'
+    ]),
+    policyRef: z.string(),
+    reasonCodes: z.array(z.string()),
+    digest: z.array(zDigestRow),
+    preview: zEmailPreview.optional(),
+    action: zApprovalAction.optional(),
+    summary: z.string().optional()
 });
 
 /**

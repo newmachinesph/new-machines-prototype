@@ -1,0 +1,28 @@
+{
+  "customers": [
+    {
+      "id": "ZKNJ-6996",
+      "name": "Angelo L. Padilla",
+      "email": "angelo.l.padilla@example.com",
+      "phone": null,
+      "payment_terms_days": 0,
+      "balance_current": 0.0,
+      "balance_overdue": 0.0,
+      "account_manager": null,
+      "account_manager_email": null,
+      "notes": []
+    },
+    {
+      "id": "FJNY-8584",
+      "name": "Seaside Eatery",
+      "email": "seaside.eatery@example.com",
+      "phone": null,
+      "payment_terms_days": 15,
+      "balance_current": 0.0,
+      "balance_overdue": 0.0,
+      "account_manager": null,
+      "account_manager_email": null,
+      "notes": []
+    }
+  ]
+}

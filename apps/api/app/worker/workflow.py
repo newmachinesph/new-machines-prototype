@@ -122,6 +122,14 @@ def _route_reason(node: dict, route: str, output: Any) -> str:
     return _ROUTE_REASONS.get((node["type"], route), f"{node['id']} ended with {route}.")
 
 
+def unlocked_nodes(node: dict) -> list[str]:
+    """The nodes a granted approval lets through the gateway: its `granted` target, plus the connector nodes
+    its `config.also_unlocks` names (one approval covering a chain of writes)."""
+    target = (node.get("routes") or {}).get("granted")
+    also = (node.get("config") or {}).get("also_unlocks") or []
+    return [n for n in [target, *also] if isinstance(n, str) and n]
+
+
 def _max_executions(contract: dict, graph: dict) -> int:
     per_node = int((contract.get("limits") or {}).get("max_attempts") or 1)
     limit = per_node * len(graph["nodes"])
@@ -433,9 +441,9 @@ class PackRunner:
             resolutions=result["resolutions"],
         )
         closed = await self._act(PackActivities.close_task, decision)
-        target = (node.get("routes") or {}).get("granted")
-        if kind == "approval" and closed["route"] == "granted" and target:
-            self._state["approvals"][target] = True  # the gateway lets that node's tool call through
+        if kind == "approval" and closed["route"] == "granted":
+            for unlocked in unlocked_nodes(node):
+                self._state["approvals"][unlocked] = True  # the gateway lets that node's tool call through
         return closed["output"], closed["route"]
 
     # --- helpers ----------------------------------------------------------------------------------------

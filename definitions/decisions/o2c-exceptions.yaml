@@ -1,0 +1,24 @@
+# Where an exception desk run goes after triage. Rules run in order; the first whose `when` is true wins.
+# `when` is CEL over the run state: nodes.<id>.output holds each step's result.
+kind: decision_rules
+key: o2c-exceptions
+
+question: Did any order break between the business app's store, ledger, warehouse and sales app sections?
+
+rules:
+  - when: size(nodes.orders.output.orders) == 0 || size(nodes.sales_orders.output.sales_orders) == 0
+    verdict: BLOCKED
+    route: blocked
+    reason_code: DATA_MISSING
+    explanation: The store or the ledger returned no orders for this period, so nothing can be followed across the business app.
+  - when: size(nodes.triage.output.exceptions) == 0
+    verdict: APPROVED
+    route: nothing
+    reason_code: ALL_CLEAN
+    explanation: Every order agrees across the business app's sections, so the report is written and nothing is sent.
+
+default:
+  verdict: APPROVED
+  route: exceptions
+  reason_code: EXCEPTIONS_FOUND
+  explanation: Some orders break between the business app's sections, so the reminders are drafted and the buyer approves them and the notes before anything is written.

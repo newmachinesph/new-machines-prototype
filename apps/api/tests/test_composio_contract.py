@@ -1,7 +1,9 @@
-"""Every connector tool sends only arguments its Composio tool takes, with Composio's types, enums and bounds,
-requires what Composio requires, and pins the Composio toolkit version its schema was recorded at. Composio's
-schemas are recorded in tests/fixtures/composio by
-`uv run --env-file ../../.env python scripts/composio_schemas.py`; this test needs no network."""
+"""Every Composio connector tool sends only arguments its Composio tool takes, with Composio's types, enums
+and bounds, requires what Composio requires, and pins the Composio toolkit version its schema was recorded at.
+Composio's schemas are recorded in tests/fixtures/composio by
+`uv run --env-file ../../.env python scripts/composio_schemas.py`; this test needs no network. A connector
+whose tools run on the platform's MCP server (`driver: mcp`) has no Composio tool to match: its tools are
+checked against their `mcp` mappings and sandbox fixtures in test_mcp_driver and test_mcp_platform."""
 
 import json
 from pathlib import Path
@@ -10,17 +12,20 @@ import pytest
 import yaml
 
 from app import settings
-from app.runtime.drivers import META_TOOL_PREFIX
+from app.runtime.drivers import META_TOOL_PREFIX, PLATFORM_MCP_DRIVER
 
 FIXTURES = Path(__file__).parent / "fixtures" / "composio"
 RECORD = "run `uv run --env-file ../../.env python scripts/composio_schemas.py`"
 
 
 def _tools() -> list[tuple[str, dict]]:
-    """(connector key, tool) for every connector tool with a slug, except Composio meta tools."""
+    """(connector key, tool) for every tool with a slug of every Composio connector: not a connector on the
+    platform's MCP server, and not Composio meta tools."""
     found = []
     for path in sorted((settings.defs_dir() / "connectors").glob("*.yaml")):
         body = yaml.safe_load(path.read_text(encoding="utf-8"))
+        if body.get("driver") == PLATFORM_MCP_DRIVER:
+            continue
         for tool in body.get("tools") or []:
             slug = tool.get("slug")
             if slug and not str(slug).upper().startswith(META_TOOL_PREFIX):
@@ -194,6 +199,33 @@ def test_meta_tools_are_not_contract_checked(monkeypatch, tmp_path):
     (tmp_path / "connectors" / "x.yaml").write_bytes(yaml.safe_dump(body).encode("utf-8"))
     monkeypatch.setenv("NM_DEFS_DIR", str(tmp_path))
     assert [t["slug"] for _, t in _tools()] == ["GMAIL_SEND_EMAIL"]
+
+
+def test_platform_mcp_connectors_are_not_contract_checked(monkeypatch, tmp_path):
+    (tmp_path / "connectors").mkdir()
+    mcp = {
+        "key": "biz",
+        "toolkit": "biz",
+        "driver": PLATFORM_MCP_DRIVER,
+        "tools": [{"id": "r", "slug": "BIZ_R"}],
+    }
+    composio = {"key": "x", "toolkit": "x", "tools": [{"id": "send", "slug": "GMAIL_SEND_EMAIL"}]}
+    for body in (mcp, composio):
+        (tmp_path / "connectors" / f"{body['key']}.yaml").write_bytes(yaml.safe_dump(body).encode("utf-8"))
+    monkeypatch.setenv("NM_DEFS_DIR", str(tmp_path))
+    assert [(c, t["slug"]) for c, t in _tools()] == [("x", "GMAIL_SEND_EMAIL")]
+
+
+def test_the_platform_mcp_connector_is_defined_and_skipped():
+    """The skip is exercised by a real definition, so a Composio connector is never skipped by mistake."""
+    bodies = [
+        yaml.safe_load(p.read_text(encoding="utf-8"))
+        for p in (settings.defs_dir() / "connectors").glob("*.yaml")
+    ]
+    mcp = {b["key"] for b in bodies if b.get("driver") == PLATFORM_MCP_DRIVER}
+    assert mcp == {"custom-business-app"}
+    assert not mcp & {c for c, _ in TOOLS}
+    assert {c for c, _ in TOOLS} == {b["key"] for b in bodies} - mcp
 
 
 OBJ = {"type": "object", "additionalProperties": False}

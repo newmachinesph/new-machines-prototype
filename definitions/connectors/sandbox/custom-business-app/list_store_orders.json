@@ -1,0 +1,36 @@
+{
+  "orders": [
+    {
+      "id": "AAU-209245",
+      "reference": "GDA-3003-9311",
+      "customer_id": "ZKNJ-6996",
+      "customer_name": "Angelo L. Padilla",
+      "order_date": "2026-10-10T01:24:11Z",
+      "status": "closed",
+      "paid": true,
+      "scanned_out": true,
+      "out_for_delivery_at": "2026-10-10T20:27:11Z",
+      "delivered_at": "2026-10-11T03:00:26Z",
+      "grand_total": 12000.0,
+      "currency": "PHP",
+      "seller_email": "marites.l.ramos@example.com",
+      "payment_method": "GCash"
+    },
+    {
+      "id": "AYE-163416",
+      "reference": "MUR-6858-8778",
+      "customer_id": "FJNY-8584",
+      "customer_name": "Seaside Eatery",
+      "order_date": "2026-09-17T04:42:07Z",
+      "status": "closed",
+      "paid": true,
+      "scanned_out": true,
+      "out_for_delivery_at": "2026-09-17T08:22:00Z",
+      "delivered_at": "2026-09-17T13:48:51Z",
+      "grand_total": 600.0,
+      "currency": "PHP",
+      "seller_email": "kristoffer.a.evangelista@example.com",
+      "payment_method": "GCash"
+    }
+  ]
+}

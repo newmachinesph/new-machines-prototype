@@ -69,6 +69,33 @@ describe("ApprovalCard", () => {
     expect(screen.getByText("Runs against sandbox data. Nothing changes in Google Sheets.")).toBeInTheDocument();
   });
 
+  it("lists the extra writes the same approval lets through, with their simulated label", () => {
+    const approval = real(false);
+    approval.action = {
+      ...approval.action!,
+      unlocked: [
+        {
+          app: "Custom business app",
+          step: "ledger_notes",
+          tool: "x.add_ledger_note",
+          operation: "add ledger note",
+          mocked: true,
+          count: 3,
+        },
+        { app: "Gmail", step: "other_step", tool: "gmail.create_draft", operation: "create draft", mocked: false },
+      ],
+    };
+    renderWithIntl(<ApprovalCard approval={approval} onDecide={() => {}} />);
+    expect(screen.getByRole("heading", { name: "Also covered by this approval" })).toBeInTheDocument();
+    const row = screen.getByText("ledger_notes").closest("div")!;
+    expect(within(row).getByText(/Custom business app/)).toBeInTheDocument();
+    expect(within(row).getByText(/× 3/)).toBeInTheDocument();
+    expect(screen.getByText("Runs against sandbox data. Nothing changes in Custom business app.")).toBeInTheDocument();
+    expect(within(row).getByText("Simulated")).toBeInTheDocument();
+    expect(within(screen.getByText("other_step").closest("div")!).queryByText("Simulated")).not.toBeInTheDocument();
+    expect(screen.getByText(/the 2 steps listed under it/)).toBeInTheDocument();
+  });
+
   it("toasts the step, not an email, when a live step is approved", async () => {
     const user = userEvent.setup();
     renderWithIntl(<ApprovalCard approval={real(false)} onDecide={() => {}} />);

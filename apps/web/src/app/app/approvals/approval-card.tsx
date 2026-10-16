@@ -95,7 +95,13 @@ export function ApprovalCard({ approval: a, onDecide }: { approval: Approval; on
       <div className="border-t border-rule px-5 py-4">
         {state === "pending" ? (
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="max-w-[60ch] text-sm text-muted">{action ? t("actionPendingNote") : t("pendingNote")}</p>
+            <p className="max-w-[60ch] text-sm text-muted">
+              {action
+                ? action.unlocked?.length
+                  ? t("actionPendingNoteMore", { count: action.unlocked.length })
+                  : t("actionPendingNote")
+                : t("pendingNote")}
+            </p>
             <div className="flex gap-2">
               <Button variant="secondary" onClick={decline}>
                 {t("decline")}
@@ -126,6 +132,7 @@ function ActionPreview({ action }: { action: ApprovalAction }) {
     { label: t("app"), value: action.app },
     { label: t("step"), value: <Id>{action.step}</Id> },
     ...(action.tool ? [{ label: t("tool"), value: <Id>{action.tool}</Id> }] : []),
+    ...(action.count != null ? [{ label: t("calls"), value: t("times", { count: action.count }) }] : []),
     ...(action.summary ? [{ label: t("does"), value: action.summary }] : []),
   ];
   return (
@@ -136,6 +143,29 @@ function ActionPreview({ action }: { action: ApprovalAction }) {
       </h3>
       <KeyValues rows={rows} />
       {action.mocked ? <p className="mt-2 text-xs text-muted">{t("simulatedNote", { app: action.app })}</p> : null}
+      {action.unlocked?.length ? (
+        <>
+          <h3 className="label mt-4 mb-1">{t("alsoHeading")}</h3>
+          <KeyValues
+            rows={action.unlocked.map((u) => ({
+              label: <Id>{u.step}</Id>,
+              value: (
+                <span className="inline-flex flex-wrap items-center gap-2">
+                  <Id>{u.tool}</Id> · {u.app}
+                  {u.count != null ? <span className="text-muted">{t("times", { count: u.count })}</span> : null}
+                  {u.mocked ? <SimTag /> : null}
+                </span>
+              ),
+            }))}
+          />
+          {[...new Set(action.unlocked.filter((u) => u.mocked).map((u) => u.app))].map((app) => (
+            <p key={app} className="mt-2 text-xs text-muted">
+              {t("simulatedNote", { app })}
+            </p>
+          ))}
+          <p className="mt-2 text-xs text-muted">{t("alsoNote")}</p>
+        </>
+      ) : null}
     </>
   );
 }

@@ -3,6 +3,7 @@
 import math
 import os
 from pathlib import Path
+from urllib.parse import urlsplit
 
 
 def _find_defs_dir(start: Path) -> Path:
@@ -151,6 +152,44 @@ def secrets_key() -> str | None:
     """NM_SECRETS_KEY: 32 bytes, URL-safe base64, that seals the tokens of the orgs' own MCP servers
     (AES-GCM). Unset, nothing is sealed or opened (`secrets_box` fails closed)."""
     return os.environ.get("NM_SECRETS_KEY") or None
+
+
+LOOPBACK_HOSTS = frozenset({"localhost", "127.0.0.1", "::1"})
+
+
+def mcp_url() -> str | None:
+    """The MCP server a `driver: mcp` connector calls in the live and auto connector modes (the MongoDB MCP
+    server's streamable-HTTP endpoint). Only https, or http to a loopback host: the bearer token must never
+    go out in clear, so any other URL counts as unset. Never log it: it can carry a host only the deployment
+    should know."""
+    url = os.environ.get("NM_MCP_URL") or None
+    if url is None:
+        return None
+    parts = urlsplit(url)
+    if parts.scheme == "https" and parts.hostname:
+        return url
+    if parts.scheme == "http" and parts.hostname in LOOPBACK_HOSTS:
+        return url
+    return None
+
+
+def mcp_writes() -> bool:
+    """NM_MCP_WRITES=1 lets a `driver: mcp` connector map writes to the platform's MCP server. Off by default:
+    the server runs read-only and the code refuses write mappings too."""
+    return os.environ.get("NM_MCP_WRITES", "").lower() in {"1", "true", "yes", "on"}
+
+
+def mcp_token() -> str | None:
+    """Sent as a bearer token on every MCP request. Never log or return it in a response."""
+    return os.environ.get("NM_MCP_TOKEN") or None
+
+
+MCP_DATABASE = "nm_demo"
+
+
+def mcp_database() -> str:
+    """The database the MCP server's tools read and write (its connection string names the server)."""
+    return os.environ.get("NM_MCP_DATABASE") or MCP_DATABASE
 
 
 def defs_auto_apply() -> bool:

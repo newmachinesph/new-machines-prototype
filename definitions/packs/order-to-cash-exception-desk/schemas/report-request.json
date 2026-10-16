@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Exception report request",
+  "description": "What the report agent is given: the triage, the drafts, the approval decision and what was written.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["triage", "drafts", "approval", "drafts_created", "finance_notes", "warehouse_notes", "drafts_held_back", "notes_held_back", "finance_written", "warehouse_written"],
+  "properties": {
+    "triage": {"type": "object", "description": "The triage result (the triage shape)."},
+    "drafts": {"type": "array", "items": {"type": "object"}, "description": "The reminders drafted (the drafts shape); none when no reminder was due."},
+    "approval": {"type": ["object", "null"], "description": "The approval decision ({decision, by, note}); null when none was asked for."},
+    "drafts_created": {"type": "integer", "minimum": 0, "description": "Reminders saved as drafts."},
+    "finance_notes": {"type": "integer", "minimum": 0, "description": "Notes posted in the ledger."},
+    "warehouse_notes": {"type": "integer", "minimum": 0, "description": "Notes posted in the warehouse."},
+    "drafts_held_back": {"type": "array", "items": {"type": "string"}, "description": "Order ids whose reminder was not written because its recipient is not on the customer record."},
+    "notes_held_back": {"type": "array", "items": {"type": "string"}, "description": "Order ids whose note was not written because the order is not in the ledger."},
+    "finance_written": {"type": "array", "items": {"type": "string"}, "description": "Order ids that got a finance (ledger) note; empty when none ran."},
+    "warehouse_written": {"type": "array", "items": {"type": "string"}, "description": "Order ids that got a warehouse note; empty when none ran."}
+  }
+}

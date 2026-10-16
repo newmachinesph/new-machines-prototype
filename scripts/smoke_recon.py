@@ -22,26 +22,37 @@ from typing import NoReturn
 
 ROOT = Path(__file__).resolve().parents[1]
 API_DIR = ROOT / "apps" / "api"
-# Per pack: the run input, the budget, the review records the sandbox data gives with the fake models
-# (checked with --model-env test only) and the reviewer's note.
+# Per pack: the run input, the budget, how many approvals it raises, the review records the sandbox data
+# gives with the fake models (checked with --model-env test only) and the reviewer's note.
 PACKS = {
     "order-payment-reconciliation": {
         "input": "2026-10-06..2026-10-12",
         "budget": 2000,
+        "expected_approvals": 1,
         "records": ["#1004", "#1007"],
         "feedback": "Checked each flagged order against its payment.",
     },
     "overdue-invoice-follow-up": {
         "input": {"as_of": "2026-10-13"},
         "budget": 1500,
+        "expected_approvals": 1,
         "records": ["INV-0107", "INV-0098", "INV-0086", "INV-0104"],
         "feedback": "Checked each overdue invoice and its reminder stage.",
     },
     "refund-triage": {
         "input": {"since": "2026-10-06", "until": "2026-10-13"},
         "budget": 2000,
+        "expected_approvals": 1,
         "records": ["#1003", "#1005", "#1088", "18f3a0c1d2e41103"],
         "feedback": "Checked each proposed refund decision against the policy.",
+    },
+    # No reviewer: the run goes triage -> one approval -> writes -> report (one grant covers every write).
+    "order-to-cash-exception-desk": {
+        "input": {"since": "2026-09-16", "until": "2026-10-16"},
+        "budget": 2500,
+        "expected_approvals": 1,
+        "records": None,
+        "feedback": None,
     },
 }
 WAIT_SECONDS = 180
@@ -106,42 +117,56 @@ def drive(api, pack: str, model_env: str) -> int:
     run_id = res.json()["id"]
     print("started", run_id, "pack", pack)
 
-    poll(api, run_id, {"WAITING_FOR_HUMAN"})
-    tasks = [t for t in api.get("/v1/human-tasks/eligible").json() if t["runId"] == run_id]
-    if not tasks:
-        fail("run is waiting for a human but no eligible task was listed")
-    task = tasks[0]
-    full = api.get(f"/v1/human-tasks/{task['id']}").json()
-    records = [r["id"] for r in full["records"]]
-    print("human task", task["id"], "records", records)
-    if model_env == "test" and records != spec["records"]:
-        fail(f"review records {records}, expected {spec['records']}")
-    if api.post(f"/v1/human-tasks/{task['id']}:claim").status_code >= 300:
-        fail("claim failed")
-    sub = api.post(
-        f"/v1/human-tasks/{task['id']}:submit",
-        json={
-            "verdict": "APPROVED",
-            "feedbackText": spec["feedback"],
-            "recordCalls": {r: "explained" for r in records},
-        },
-    )
-    if sub.status_code >= 300:
-        fail(f"submit returned {sub.status_code}: {sub.text[:300]}")
-    print("submitted", sub.json().get("state"))
+    if spec["records"] is not None:  # the pack has a reviewer step
+        poll(api, run_id, {"WAITING_FOR_HUMAN"})
+        tasks = [t for t in api.get("/v1/human-tasks/eligible").json() if t["runId"] == run_id]
+        if not tasks:
+            fail("run is waiting for a human but no eligible task was listed")
+        task = tasks[0]
+        full = api.get(f"/v1/human-tasks/{task['id']}").json()
+        records = [r["id"] for r in full["records"]]
+        print("human task", task["id"], "records", records)
+        if model_env == "test" and records != spec["records"]:
+            fail(f"review records {records}, expected {spec['records']}")
+        if api.post(f"/v1/human-tasks/{task['id']}:claim").status_code >= 300:
+            fail("claim failed")
+        sub = api.post(
+            f"/v1/human-tasks/{task['id']}:submit",
+            json={
+                "verdict": "APPROVED",
+                "feedbackText": spec["feedback"],
+                "recordCalls": {r: "explained" for r in records},
+            },
+        )
+        if sub.status_code >= 300:
+            fail(f"submit returned {sub.status_code}: {sub.text[:300]}")
+        print("submitted", sub.json().get("state"))
 
-    poll(api, run_id, {"WAITING_FOR_EVENT"})
-    approvals = [
-        a for a in api.get("/v1/approvals").json() if a["runId"] == run_id and a["status"] == "PENDING"
-    ]
-    if not approvals:
-        fail("run is waiting for an event but no pending approval was listed")
-    apr = approvals[0]
-    print("approval", apr["id"], "|", apr["summary"])
-    if api.post(f"/v1/approvals/{apr['id']}:approve").status_code >= 300:
-        fail("approve failed")
+    # Grant every approval the run raises, then check the pack raised exactly `expected_approvals`.
+    approved: set[str] = set()
+    deadline = time.time() + WAIT_SECONDS
+    while True:
+        final = poll(api, run_id, {"WAITING_FOR_EVENT"} | TERMINAL)
+        if final["status"] in TERMINAL:
+            break
+        approvals = [
+            a
+            for a in api.get("/v1/approvals").json()
+            if a["runId"] == run_id and a["status"] == "PENDING" and a["id"] not in approved
+        ]
+        if not approvals:  # the last grant is still being taken up
+            if time.time() > deadline:
+                fail("run is waiting for an event but no pending approval was listed")
+            time.sleep(0.5)
+            continue
+        apr = approvals[0]
+        print("approval", apr["id"], "|", apr["summary"])
+        if api.post(f"/v1/approvals/{apr['id']}:approve").status_code >= 300:
+            fail("approve failed")
+        approved.add(apr["id"])
 
-    final = poll(api, run_id, TERMINAL)
+    if len(approved) != spec["expected_approvals"]:
+        fail(f"the run raised {len(approved)} approvals, expected {spec['expected_approvals']}")
     receipt = api.get(f"/v1/workflow-runs/{run_id}/receipt").json()
     print("\nnode statuses")
     for node in final["nodes"]:

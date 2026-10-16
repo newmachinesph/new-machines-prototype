@@ -1,7 +1,7 @@
 from app import run_tasks, temporal_client, workspace
 from app.auth import Actor, CurrentActor
 from app.errors import ApiProblem
-from app.models.work import Approval, ApprovalAction, DigestRow
+from app.models.work import Approval, ApprovalAction, DigestRow, UnlockedAction
 from app.routing import ApiRouter
 from app.store import get_store, iso, locked_store
 
@@ -26,6 +26,25 @@ def _target_app(row: dict, connector_key: str) -> str:
     return str(body.get("app") or connector_key or "Your workspace")
 
 
+def _unlocked(row: dict, payload: dict) -> list[UnlockedAction]:
+    """The extra writes the approval's grant lets through, from the payload the worker wrote."""
+    out = []
+    for item in payload.get("unlocked") or []:
+        tool_ref = str(item.get("tool_ref") or "")
+        connector_key, _, tool_id = tool_ref.partition(".")
+        out.append(
+            UnlockedAction(
+                app=_target_app(row, connector_key),
+                step=str(item.get("node") or ""),
+                tool=tool_ref,
+                operation=tool_id.replace("_", " "),
+                mocked=bool(item.get("mocked")),
+                count=item.get("count"),
+            )
+        )
+    return out
+
+
 def real_approval(row: dict) -> Approval:
     """A run_tasks approval row as the inbox's Approval: the step it lets the run take, not an email."""
     payload = row["payload"] or {}
@@ -41,6 +60,8 @@ def real_approval(row: dict) -> Approval:
         operation=tool_id.replace("_", " ") or None,
         summary=summary,
         mocked=bool(payload.get("mocked")),
+        count=payload.get("count"),
+        unlocked=_unlocked(row, payload) or None,
     )
     digest = [
         DigestRow(label="Run", value=row["run_id"], mono=True),

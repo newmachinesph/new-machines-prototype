@@ -6,11 +6,13 @@ from datetime import datetime, timedelta, timezone
 import pytest
 from psycopg.types.json import Jsonb
 
-from app import ops_live
+from app import ops_live, settings
 from tests.live_seed import DENY, NOW, TODAY, add_entry, add_org, add_run, connect
 
 OPS = {"Authorization": "Bearer ops"}  # signs in as the ops admin of the `live_ops` fixture
 REASON = "Testing live connectors"
+# Every connector definition, by key: the ops list is these and nothing else (no settings row without one).
+CONNECTORS = sorted(p.stem for p in (settings.defs_dir() / "connectors").glob("*.yaml"))
 DEFAULTS = {"read": "permit", "write": "require_approval", "delete": "deny", "money": "deny"}
 STRICT = {"read": "require_approval", "write": "deny", "delete": "deny", "money": "deny"}
 
@@ -49,14 +51,8 @@ def usage(defs):
 
 def test_each_definition_is_one_connector_with_its_settings_and_todays_usage(usage):
     entries = {e.id: e for e in ops_live.list_connectors(usage, NOW)}
-    assert list(entries) == [
-        "gmail",
-        "googlecalendar",
-        "googledocs",
-        "googlesheets",
-        "shopify",
-        "stripe",
-    ]  # never the ghost row
+    assert {"custom-business-app", "shopify", "stripe"} <= set(CONNECTORS)
+    assert list(entries) == CONNECTORS  # never the ghost row
 
     shopify = entries["shopify"].model_dump(by_alias=True, exclude_none=True)
     assert shopify == {
@@ -78,6 +74,11 @@ def test_each_definition_is_one_connector_with_its_settings_and_todays_usage(usa
     assert stripe.scopes == ["payments.read", "invoices.read", "payments.write"]
     assert (entries["gmail"].category, entries["googlesheets"].category) == ("Communication", "Spreadsheets")
     assert all(e.last_health_check is None for e in entries.values())
+    # A connector on the platform's MCP server is not a Composio OAuth app; nobody connects it, so no tenant.
+    business = entries["custom-business-app"]
+    assert (business.provider, business.auth_type, business.status) == ("MCP", "api_key", "enabled")
+    assert (business.tenants_connected, business.calls_today, business.owner_org_id) == (0, 0, None)
+    assert business.scopes == ["business.read", "business.write"]
 
 
 def test_tenants_connected_counts_only_connections_a_run_could_reach(usage):
@@ -126,15 +127,14 @@ def test_the_live_list_and_actions_return_the_real_entry(live_ops, defs):
     defs.commit()
     listed = live_ops.get("/v1/ops/connectors", headers=OPS)
     assert listed.status_code == 200, listed.text
-    assert [c["id"] for c in listed.json()] == [
-        "gmail",
-        "googlecalendar",
-        "googledocs",
-        "googlesheets",
-        "shopify",
-        "stripe",
-    ]
+    assert [c["id"] for c in listed.json()] == CONNECTORS
     assert all("lastHealthCheck" not in c for c in listed.json())
+    by_id = {c["id"]: c for c in listed.json()}
+    assert (by_id["custom-business-app"]["provider"], by_id["custom-business-app"]["authType"]) == (
+        "MCP",
+        "api_key",
+    )
+    assert (by_id["stripe"]["provider"], by_id["stripe"]["authType"]) == ("Composio", "oauth_managed")
 
     res = live_ops.post("/v1/ops/connectors/stripe:disable", json={"reason": REASON}, headers=OPS)
     assert res.status_code == 200, res.text

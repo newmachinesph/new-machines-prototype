@@ -9,7 +9,7 @@ import celpy
 from jsonschema import Draft202012Validator
 
 from app import settings
-from app.defs import owners
+from app.defs import mcp_mapping, owners, unlocks
 from app.defs.model import Bundle, DefError, Definition, path_for
 from app.defs.owners import SEPARATOR
 
@@ -47,7 +47,10 @@ NODE_REFS = {
 LISTING_CHECK = "listing-check"  # the reserved name of a submission's check pack (see studio.CHECK_NAME)
 
 # kinds with a same-named cross-reference method on _Checker
-CROSS_REF_KINDS = {"pack", "workflow", "contract", "agent", "decision_rules"}
+CROSS_REF_KINDS = {"pack", "workflow", "contract", "agent", "decision_rules", "connector"}
+MCP_DRIVER = (
+    "mcp"  # the connector `driver` whose tools carry an `mcp` mapping (runtime.drivers.PlatformMcpDriver)
+)
 
 _CEL_ENV = celpy.Environment()
 
@@ -192,6 +195,7 @@ class _Checker:
                     self.err(d, f"{at}.routes.{label}: target node {target!r} does not exist")
             self.node_refs(d, n, at)
             self.decision_routes(d, n, at)
+            self.approval_unlocks(d, n, at, by_id)
             for where, expr in _cel_strings(n["config"], f"{at}.config"):
                 if (msg := compile_cel(expr)) is not None:
                     self.err(d, f"{where}: CEL does not compile: {msg}")
@@ -211,6 +215,35 @@ class _Checker:
             self.err(
                 d, f"{at}.routes: decision {rules.key!r} can take route {route!r}, which this node lacks"
             )
+
+    def approval_unlocks(self, d: Definition, n: dict, at: str, by_id: dict) -> None:
+        """An approval's `also_unlocks` lets one grant cover a chain of writes, and the grant lasts for the
+        rest of the run. Each entry must name a connector node of this workflow whose tool writes, and the
+        chain must be closed: see `unlocks.chain_problems`."""
+        if n["type"] != "approval":
+            return
+        also = (n.get("config") or {}).get("also_unlocks")
+        if also is None:
+            return
+        if not isinstance(also, list):
+            self.err(d, f"{at}.config.also_unlocks: must be a list of node ids")
+            return
+        usable = []
+        for i, target in enumerate(also):
+            where = f"{at}.config.also_unlocks[{i}]"
+            if not isinstance(target, str) or target not in by_id:
+                self.err(d, f"{where}: node {target!r} does not exist")
+            elif by_id[target]["type"] != "connector":
+                self.err(d, f"{where}: node {target!r} is not a connector node")
+            else:
+                tool = self.connector_tool(str((by_id[target]["config"] or {}).get("tool")))
+                if tool is not None and tool["action_class"] == "read":
+                    self.err(d, f"{where}: node {target!r} only reads, so it needs no approval to unlock")
+                else:
+                    usable.append(target)
+        routes = {nid: dict(node.get("routes") or {}) for nid, node in by_id.items()}
+        for target, why in unlocks.chain_problems(routes, n["id"], usable).items():
+            self.err(d, f"{at}.config.also_unlocks: node {target!r} {why}")
 
     def node_refs(self, d: Definition, n: dict, at: str) -> None:
         cfg = n["config"]
@@ -251,6 +284,49 @@ class _Checker:
             )
         if not given and not missing:
             self.err(d, f"{at}.config.inputs: agent {agent_key!r} gets no inputs, so this step must map some")
+
+    def connector(self, d: Definition) -> None:
+        """A `driver: mcp` connector maps its tools to MCP calls (`mcp`): a read must, naming the key its
+        documents come back under and a query (a pipeline or a filter); a write may, with the update and the
+        filter it applies to, or carry no mapping and answer from its sandbox response in every mode. Every
+        `{{placeholder}}` in a mapping names an argument of the tool's input schema (or `now`, the call time).
+        A connector on any other driver carries no mapping."""
+        is_mcp = d.body.get("driver") == MCP_DRIVER
+        if is_mcp and owners.is_reserved(d.key):
+            self.err(d, f"driver: only a platform connector can use the platform MCP server, not {d.key!r}")
+            return
+        for i, tool in enumerate(d.body["tools"]):
+            at = f"tools[{i}] ({tool['id']}).mcp"
+            spec = tool.get("mcp")
+            if not is_mcp:
+                if spec is not None:
+                    self.err(d, f"{at}: only a `driver: {MCP_DRIVER}` connector maps tools to MCP calls")
+                continue
+            if spec is None:
+                if tool["action_class"] == "read":
+                    self.err(d, f"{at}: a `driver: {MCP_DRIVER}` connector's read must map to an MCP call")
+                continue
+            if tool["action_class"] == "read":
+                if "result_key" not in spec:
+                    self.err(d, f"{at}.result_key: a read names the key its documents come back under")
+                if "pipeline" not in spec and "filter" not in spec:
+                    self.err(d, f"{at}: a read needs a pipeline or a filter")
+                if "update" in spec:
+                    self.err(d, f"{at}.update: a read cannot update")
+            else:
+                for field in ("update", "filter"):
+                    if field not in spec:
+                        self.err(d, f"{at}.{field}: a write needs an update and the filter it applies to")
+                if "result_key" in spec or "pipeline" in spec:
+                    self.err(d, f"{at}: a write has no result_key or pipeline")
+            refused = mcp_mapping.refusal(tool["action_class"], spec, writes_enabled=settings.mcp_writes())
+            if refused and not (refused.code == "missing_filter" and "filter" not in spec):
+                self.err(d, f"{at}: {refused}")
+            if mcp_mapping.key_placeholders(spec):
+                self.err(d, f"{at}: a placeholder cannot stand in a field name")
+            allowed = set((tool.get("input_schema") or {}).get("properties") or {}) | {mcp_mapping.NOW}
+            for name in sorted(mcp_mapping.placeholders(spec) - allowed):
+                self.err(d, f"{at}: placeholder {{{{{name}}}}} is not an argument of the tool")
 
     def contract(self, d: Definition) -> None:
         for field in ("input_schema_ref", "output_schema_ref"):

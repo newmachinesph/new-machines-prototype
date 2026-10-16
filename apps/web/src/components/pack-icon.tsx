@@ -7,6 +7,7 @@ import {
   Mail,
   ReceiptText,
   RotateCcw,
+  Route,
   Scale,
   ShieldAlert,
   Truck,
@@ -26,6 +27,7 @@ const ICONS: Record<string, LucideIcon> = {
   "support-inbox-triage": LifeBuoy,
   "weekly-expense-check": ReceiptText,
   "meeting-follow-ups": CalendarCheck,
+  "order-to-cash-exception-desk": Route,
 };
 
 export function PackIcon({ slug, className }: { slug: string; className?: string }) {

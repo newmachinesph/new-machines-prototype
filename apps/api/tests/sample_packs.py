@@ -67,9 +67,11 @@ def writes_without_approval(pack: str) -> list[str]:
     """Every way into a connector step that is not a read, other than an approval's `granted` route (the
     Studio builder's rule; a grant approves exactly the step its granted route names)."""
     nodes = workflow(pack)["nodes"]
+    # A write an approval also unlocks (config.also_unlocks) is covered by that approval's grant.
+    unlocked = {t for n in nodes if n["type"] == "approval" for t in (n["config"].get("also_unlocks") or [])}
     problems = []
     for target in nodes:
-        if target["type"] != "connector" or _action_class(target) == "read":
+        if target["type"] != "connector" or _action_class(target) == "read" or target["id"] in unlocked:
             continue
         incoming = [(s, r) for s in nodes for r, t in (s.get("routes") or {}).items() if t == target["id"]]
         if not incoming:

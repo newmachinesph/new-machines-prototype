@@ -15,7 +15,7 @@ if API_ROOT not in sys.path:
     sys.path.insert(0, API_ROOT)
 
 from app import settings  # noqa: E402
-from app.runtime.drivers import META_TOOL_PREFIX  # noqa: E402
+from app.runtime.drivers import META_TOOL_PREFIX, PLATFORM_MCP_DRIVER  # noqa: E402
 
 OUT = Path(__file__).parents[1] / "tests" / "fixtures" / "composio"
 # The schema keys the contract test reads; descriptions, examples and titles change too often to record.
@@ -46,10 +46,13 @@ class UncheckedSchema(ValueError):
 
 
 def tools() -> list[tuple[str, str, str | None]]:
-    """(slug, toolkit, pinned version or None) for each connector tool slug, except Composio meta tools."""
+    """(slug, toolkit, pinned version or None) for each Composio connector tool slug: not the tools of a
+    connector on the platform's MCP server (`driver: mcp`, no Composio tool), and not Composio meta tools."""
     found: dict[str, tuple[str, str, str | None]] = {}
     for path in sorted((settings.defs_dir() / "connectors").glob("*.yaml")):
         body = yaml.safe_load(path.read_text(encoding="utf-8"))
+        if body.get("driver") == PLATFORM_MCP_DRIVER:
+            continue
         for tool in body.get("tools") or []:
             slug = str(tool.get("slug") or "")
             if slug and not slug.upper().startswith(META_TOOL_PREFIX):

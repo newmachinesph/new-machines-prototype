@@ -685,9 +685,45 @@ def _task_payload(call: NodeCall, node: dict, kind: str) -> dict:
         payload["tool_ref"] = tool_ref
         # The inbox labels the step "Simulated" only when its call would use sandbox data.
         payload["mocked"] = gateway.runs_simulated(call.snapshot, tool_ref, settings.connector_mode())
+        payload["count"] = _write_count(call, target_cfg)
+    # The grant also lets these writes through, so the approver sees every one of them.
+    payload["unlocked"] = [
+        {
+            "node": node_id,
+            "tool_ref": tool_ref,
+            "mocked": gateway.runs_simulated(call.snapshot, tool_ref, settings.connector_mode()),
+            "count": _write_count(call, _node(call.snapshot, node_id).get("config") or {}),
+        }
+        for node_id, tool_ref in _also_unlocked_tools(call, node)
+    ]
     authorization = gateway.contract_of(call.snapshot).get("authorization") or {}
     payload["policy_ref"] = authorization.get("policy_ref") or gateway.DEFAULT_POLICY_REF
     return payload
+
+
+def _write_count(call: NodeCall, cfg: dict) -> int | None:
+    """How many calls a write step will make once approved: its `for_each` list as the run state stands now,
+    else one. None when the list cannot be resolved (the step itself then fails)."""
+    if "for_each" not in cfg:
+        return 1
+    try:
+        items = cel.resolve(cfg["for_each"], call.state)
+    except cel.CelError:
+        return None
+    return len(items) if isinstance(items, list) else None
+
+
+def _also_unlocked_tools(call: NodeCall, node: dict) -> list[tuple[str, str]]:
+    """(node id, tool ref) of each connector step `config.also_unlocks` names besides the granted target."""
+    target = (node.get("routes") or {}).get("granted")
+    out = []
+    for node_id in (node.get("config") or {}).get("also_unlocks") or []:
+        if not isinstance(node_id, str) or node_id == target or any(node_id == seen for seen, _ in out):
+            continue
+        tool_ref = (_node(call.snapshot, node_id).get("config") or {}).get("tool")
+        if isinstance(tool_ref, str) and tool_ref:
+            out.append((node_id, tool_ref))
+    return out
 
 
 _REFUSALS = {
@@ -702,7 +738,12 @@ def _refused_approval(call: NodeCall, node: dict) -> tuple[str, str] | None:
     could not run (`gateway.approval_refusal`); None otherwise."""
     target = (node.get("routes") or {}).get("granted")
     tool_ref = (_node(call.snapshot, target).get("config") or {}).get("tool") if target else None
-    code = gateway.approval_refusal(call.snapshot, tool_ref) if tool_ref else None
+    # Every write the grant lets through must be able to run, not only the granted target.
+    refs = [tool_ref] if tool_ref else []
+    refs += [ref for _, ref in _also_unlocked_tools(call, node)]
+    code, tool_ref = next(
+        ((c, ref) for ref in refs if (c := gateway.approval_refusal(call.snapshot, ref))), (None, None)
+    )
     if code is None:
         return None
     found = gateway.find_tool(call.snapshot, tool_ref)

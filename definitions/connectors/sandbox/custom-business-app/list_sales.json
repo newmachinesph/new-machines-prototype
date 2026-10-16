@@ -1,0 +1,30 @@
+{
+  "sales": [
+    {
+      "id": "AAU-209245",
+      "seller_name": "Marites L. Ramos",
+      "seller_email": "marites.l.ramos@example.com",
+      "customer_id": "ZKNJ-6996",
+      "customer_name": "Angelo L. Padilla",
+      "date": "2026-10-10T01:24:11Z",
+      "total": 12000.0,
+      "currency": "PHP",
+      "paid": true,
+      "delivered": true,
+      "closed": true
+    },
+    {
+      "id": "AYE-163416",
+      "seller_name": "Kristoffer A. Evangelista",
+      "seller_email": "kristoffer.a.evangelista@example.com",
+      "customer_id": "FJNY-8584",
+      "customer_name": "Seaside Eatery",
+      "date": "2026-09-17T04:42:07Z",
+      "total": 600.0,
+      "currency": "PHP",
+      "paid": true,
+      "delivered": true,
+      "closed": true
+    }
+  ]
+}

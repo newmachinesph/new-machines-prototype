@@ -35,6 +35,7 @@ def test_every_seed_memory_space_is_readable_by_team_agents():
     assert {d.key for d in readable_spaces(_bundle())} == {
         "customer-accounts",
         "expense-policy",
+        "o2c-policy",
         "retail-commerce",
         "support-policies",
     }

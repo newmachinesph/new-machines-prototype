@@ -80,6 +80,10 @@ Environment variables (all optional, read at call time by `apps/api/app/settings
 | `NM_WORKFLOW_ID_PREFIX` | empty (prepended to every run workflow id; give each database sharing one dev Temporal server its own, e.g. `qa-c-`) |
 | `NM_MODEL_ENV` | `test` (`test`, `dev`, `prod`) |
 | `NM_CONNECTOR_MODE` | `sandbox` (`auto`, `sandbox`, `live`); demo workspace only |
+| `NM_MCP_URL` | unset (the MongoDB MCP server's streamable-HTTP endpoint, e.g. `http://127.0.0.1:8085/mcp`; `driver: mcp` connectors call it in the `live` and `auto` connector modes; https, or http only to a loopback host, else it counts as unset) |
+| `NM_MCP_TOKEN` | unset (sent to the MCP server as a bearer token) |
+| `NM_MCP_DATABASE` | `nm_demo` (the database the MCP server's tools read) |
+| `NM_MCP_WRITES` | unset (set `1` to let a `driver: mcp` tool map a write to the server; reads only otherwise, enforced in the validator and on every call) |
 | `NM_WEB_ORIGIN` | first `ALLOWED_ORIGINS` entry, else `http://localhost:3100` (where app sign-in links return) |
 | `COMPOSIO_API_KEY` | unset (live workspace: real app connections; demo: the `live`/`auto` connector modes) |
 | `JEV_API_KEY` | unset (the decision model's key; never commit it) |
@@ -148,6 +152,40 @@ workflow Temporal no longer has is ended `FAILED`.
 `apps/api/tests/test_replay.py` replays a recorded `PackRunner` history against the current workflow code;
 re-record it (`NM_RECORD_HISTORY=1 uv run pytest tests/test_replay.py`) only for a change meant to break
 replay, after in-flight runs have finished.
+
+### Run the Exception Desk against the demo database
+
+The Order-to-Cash Exception Desk's connector (`custom-business-app`) is `driver: mcp`: besides its sandbox
+files it carries, per read tool, the MongoDB aggregation the official
+[MongoDB MCP server](https://www.npmjs.com/package/mongodb-mcp-server) runs against the demo database
+`nm_demo` (loaded by `scripts/demo_data`). Start the server read-only over streamable HTTP, then point the
+worker at it:
+
+```bash
+MDB_MCP_CONNECTION_STRING=mongodb://127.0.0.1:27017/nm_demo \
+  npx -y mongodb-mcp-server@3.1.0 --transport http --httpHost 127.0.0.1 --httpPort 8085 --readOnly \
+  --maxDocumentsPerQuery 2000
+# set the same NM_CONNECTOR_MODE / NM_MCP_URL / NM_MCP_TOKEN for the API and the worker
+NM_CONNECTOR_MODE=auto NM_MCP_URL=http://127.0.0.1:8085/mcp uv run ... python -m app.worker
+```
+
+In `auto` mode a `driver: mcp` connector reads the database when `NM_MCP_URL` is set and the server answers
+`tools/list`, and its sandbox file otherwise; `live` always calls the server (a run fails rather than falling
+back) and `sandbox` never does. Other connectors keep their Composio behaviour. The server's default
+`--maxDocumentsPerQuery` (100) cuts a window of orders short, and the driver reports such a read as a failed
+call rather than returning part of it, so raise the limit as above. The server stays `--readOnly`: the reads
+are live, while the two note writes (`add_ledger_note`, `add_warehouse_note`) carry no `mcp` mapping and
+answer from their sandbox responses in every mode, so a ledger or warehouse note is recorded in the run's
+receipt but never written to Mongo. The server is read-only, and the code holds the same line: a read may
+call only `aggregate`, `find` and `count`, no mapping may use `$out`, `$merge`, `$where`, `$function` or
+`$accumulator`, and `auto` mode does not use a server that lists write tools. Pass the connection string
+through `MDB_MCP_CONNECTION_STRING`, never on the command line (it shows in the process list), and bind the
+server to loopback or a private network; `NM_MCP_TOKEN` is sent as a bearer token. A run in `auto` mode
+is settled by the process that starts it (the API), which pins live or sandbox in the run's snapshot; the
+worker follows that pin and fails the call if it finds none. So the API and the worker must share
+`NM_CONNECTOR_MODE`, `NM_MCP_URL` and `NM_MCP_TOKEN` (in production they are one process: the API embeds
+the worker), and a loopback `NM_MCP_URL` must be loopback for both. The gated `tests/test_mcp_driver_live.py` runs every read against the
+server when `NM_MCP_URL` is set.
 
 ## Build the API image
 

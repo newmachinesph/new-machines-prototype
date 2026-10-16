@@ -1,0 +1,22 @@
+{
+  "payments": [
+    {
+      "id": "TJ-9216",
+      "order_id": "AAU-209245",
+      "customer_id": "ZKNJ-6996",
+      "amount": 12000.0,
+      "currency": "PHP",
+      "method": "mobile wallet",
+      "date": "2026-10-11T15:11:09Z"
+    },
+    {
+      "id": "JX-8410",
+      "order_id": "AYE-163416",
+      "customer_id": "FJNY-8584",
+      "amount": 600.0,
+      "currency": "PHP",
+      "method": "mobile wallet",
+      "date": "2026-09-18T21:59:15Z"
+    }
+  ]
+}

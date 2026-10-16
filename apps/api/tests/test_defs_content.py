@@ -395,6 +395,17 @@ def test_connector_defaults_and_classes(bundle):
         ],
         "googlecalendar": [("list_events", "read", "calendar.read", "GOOGLECALENDAR_EVENTS_LIST")],
         "googledocs": [],  # every tool imported by scripts/import_connector.py
+        "custom-business-app": [
+            ("list_store_orders", "read", "business.read", "CUSTOM_BUSINESS_APP_LIST_STORE_ORDERS"),
+            ("list_store_payments", "read", "business.read", "CUSTOM_BUSINESS_APP_LIST_STORE_PAYMENTS"),
+            ("list_sales_orders", "read", "business.read", "CUSTOM_BUSINESS_APP_LIST_SALES_ORDERS"),
+            ("list_customers", "read", "business.read", "CUSTOM_BUSINESS_APP_LIST_CUSTOMERS"),
+            ("list_customer_payments", "read", "business.read", "CUSTOM_BUSINESS_APP_LIST_CUSTOMER_PAYMENTS"),
+            ("list_served_orders", "read", "business.read", "CUSTOM_BUSINESS_APP_LIST_SERVED_ORDERS"),
+            ("list_sales", "read", "business.read", "CUSTOM_BUSINESS_APP_LIST_SALES"),
+            ("add_ledger_note", "write", "business.write", "CUSTOM_BUSINESS_APP_ADD_LEDGER_NOTE"),
+            ("add_warehouse_note", "write", "business.write", "CUSTOM_BUSINESS_APP_ADD_WAREHOUSE_NOTE"),
+        ],
     }
     assert {c.key for c in bundle.of("connector")} == set(expected)
     for key, tools in expected.items():
@@ -465,7 +476,8 @@ def test_no_connector_tool_deletes_or_moves_money(bundle):
             slug, where = tool["slug"], f"{connector.key}.{tool['id']}"
             assert tool["action_class"] in ("read", "write"), where
             assert slug not in blocked, where
-            words = slug.split("_")[1:]
+            # The toolkit prefix can itself hold underscores (custom_business_app), so strip all of it.
+            words = slug.removeprefix(connector.body["toolkit"].upper() + "_").split("_")
             if set(words) & (ic.DELETE_WORDS | ic.MONEY_WORDS):
                 # Only a read named for reading may mention deleting or money (list_refunds, get_order).
                 assert tool["action_class"] == "read" and words[0] in ic.READ_VERBS, where

@@ -26,7 +26,7 @@ from app.worker import activities
 PACK = "order-payment-reconciliation"
 START = {"packSlug": PACK, "input": "2026-10-06..2026-10-12", "budgetMinor": 2000}
 # Seed items: retail-commerce (4), customer-accounts (6), expense-policy (4), support-policies (5).
-SEED_MEMORY = 19
+SEED_MEMORY = 27
 MISMATCHES = [
     {
         "order_id": "#1004",
@@ -800,6 +800,7 @@ def test_memory_lists_real_items_first(api):
         "Customer accounts policies",
         "Expense policy",
         "Support policies",
+        "Order-to-cash policy",
     }
     real = [m for m in items if m["scopeName"] in spaces]
     assert len(real) == SEED_MEMORY and items[: len(real)] == real
@@ -840,3 +841,25 @@ def test_startup_migrates_and_applies_definitions_when_auto_apply_is_on(db, monk
         assert api.get("/healthz").status_code == 200
     assert _rows(db, "SELECT 1 FROM definition_versions WHERE kind = 'pack' AND key = %s", PACK)
     assert len(_rows(db, "SELECT 1 FROM memory_items")) == SEED_MEMORY
+
+
+def test_a_real_approval_lists_the_extra_writes_its_grant_lets_through(api, rec, db):
+    run = _start(api)
+    unlocked = [
+        {"node": "ledger_notes", "tool_ref": "googlesheets.append_rows", "mocked": True, "count": 3},
+        {"node": "warehouse_notes", "tool_ref": "googlesheets.append_rows", "mocked": False},
+    ]
+    _add_task(db, run["id"], "approval", {**APPROVAL_PAYLOAD, "count": 2, "unlocked": unlocked})
+    action = api.get("/v1/approvals").json()[0]["action"]
+    assert [(u["step"], u["tool"], u["operation"], u["mocked"]) for u in action["unlocked"]] == [
+        ("ledger_notes", "googlesheets.append_rows", "append rows", True),
+        ("warehouse_notes", "googlesheets.append_rows", "append rows", False),
+    ]
+    assert action["unlocked"][0]["app"] and action["count"] == 2
+    assert [u.get("count") for u in action["unlocked"]] == [3, None]
+
+
+def test_a_real_approval_without_extra_writes_has_no_unlocked_list(api, rec, db):
+    run = _start(api)
+    _add_task(db, run["id"], "approval", APPROVAL_PAYLOAD)
+    assert "unlocked" not in api.get("/v1/approvals").json()[0]["action"]

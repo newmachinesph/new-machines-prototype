@@ -5,22 +5,16 @@ from dataclasses import replace
 
 import pytest
 
-from app import db
+from app import db, settings
 from app import studio_build as build
 from app.defs import owners, registry
 from tests.publishing_seed import add_listing, add_publisher, add_version, approve_and_list, defs_of
 from tests.team_seed import TEAM_AGENT, clone_pack, invoice_nudges
 from tests.test_live_catalog import As, ana, ben, live, starts  # noqa: F401
 
-PLATFORM_PACKS = [
-    "inbox-lead-tracker",
-    "meeting-follow-ups",
-    "order-payment-reconciliation",
-    "overdue-invoice-follow-up",
-    "refund-triage",
-    "support-inbox-triage",
-    "weekly-expense-check",
-]
+# Every pack in the platform catalog, so a new pack is never missed.
+PLATFORM_PACKS = sorted(p.parent.name for p in (settings.defs_dir() / "packs").glob("*/pack.yaml"))
+assert PLATFORM_PACKS
 
 
 def _base(user: As) -> str:

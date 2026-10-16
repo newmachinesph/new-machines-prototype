@@ -13199,6 +13199,17 @@
           "mocked": {
             "type": "boolean",
             "title": "Mocked"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "unlocked": {
+            "items": {
+              "$ref": "#/components/schemas/UnlockedAction"
+            },
+            "type": "array",
+            "title": "Unlocked"
           }
         },
         "type": "object",
@@ -20514,6 +20525,44 @@
           "retestTriggers"
         ],
         "title": "TrustPassport"
+      },
+      "UnlockedAction": {
+        "properties": {
+          "app": {
+            "type": "string",
+            "title": "App"
+          },
+          "step": {
+            "type": "string",
+            "title": "Step"
+          },
+          "tool": {
+            "type": "string",
+            "title": "Tool"
+          },
+          "operation": {
+            "type": "string",
+            "title": "Operation"
+          },
+          "mocked": {
+            "type": "boolean",
+            "title": "Mocked"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "app",
+          "step",
+          "tool",
+          "operation",
+          "mocked"
+        ],
+        "title": "UnlockedAction",
+        "description": "A write the same grant also lets through (an approval's `also_unlocks`): the step, its tool and the app\nit acts on. `mocked` is true when that call would run against sandbox data."
       },
       "UpdateIncidentRequest": {
         "properties": {

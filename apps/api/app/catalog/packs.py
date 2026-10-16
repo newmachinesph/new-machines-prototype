@@ -3,8 +3,9 @@
 from typing import Literal, Self
 
 from app import settings
+from app.defs import owners
 from app.models.catalog import Pack, PackConnector
-from app.runtime.drivers import SandboxDriver, driver_for
+from app.runtime.drivers import PLATFORM_MCP_DRIVER, SandboxDriver, driver_for
 from app.runtime.routes import NONE, REAL_MODES, Route, org_routes
 
 Access = Literal["read", "write (approval)", "write"]
@@ -51,11 +52,18 @@ class SandboxForecast:
         """The forecast of the org's own connections (live workspace)."""
         return cls(by_app=org_routes(org_id))
 
+    def _simulated(self, key: str, body: dict) -> bool:
+        if self.mode == "auto" and body.get("driver") == PLATFORM_MCP_DRIVER and not owners.is_reserved(key):
+            # The platform's MCP server is a forecast from its configuration alone: a catalog request never
+            # opens a session to it.
+            return not settings.mcp_url()
+        return isinstance(driver_for(body, self.mode, key=key), SandboxDriver)
+
     def __call__(self, key: str, body: dict) -> bool:
         if self._by_app is not None:
             return self._by_app.get(key, NONE).mode not in REAL_MODES
         if key not in self._seen:
-            self._seen[key] = isinstance(driver_for(body, self.mode), SandboxDriver)
+            self._seen[key] = self._simulated(key, body)
         return self._seen[key]
 
 

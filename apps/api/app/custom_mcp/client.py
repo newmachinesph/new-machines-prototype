@@ -5,7 +5,6 @@ a tool's own error text, which callers shorten with `drivers.safe_message`. Sync
 activities) are served on a fresh event loop in a helper thread."""
 
 import json
-import logging
 import re
 from collections.abc import Awaitable, Callable
 from concurrent.futures import ThreadPoolExecutor
@@ -20,32 +19,11 @@ from mcp import ClientSession
 from mcp.client.streamable_http import streamable_http_client
 from mcp.types import CallToolResult, PaginatedRequestParams, TextContent, Tool
 
+from app import mcp_logging  # noqa: F401  (quiets the SDK and httpx loggers on import)
 from app.custom_mcp import safety
 from app.custom_mcp.tools import MAX_TOOLS, ListedTool
 
 TIMEOUT_S = 30.0
-# httpx logs every request's full address at INFO and the SDK logs session ids: the address may carry a key in
-# its query. Quiet both here so it holds in the API and the worker, whatever the process sets for the root.
-for _noisy in ("httpx", "httpcore", "mcp"):
-    logging.getLogger(_noisy).setLevel(logging.WARNING)
-
-
-class _NoTraceback(logging.Filter):
-    """The SDK logs some failures with their traceback, and an httpx status error's text holds the full
-    address. Keep the record, but only the failure's type name."""
-
-    def filter(self, record: logging.LogRecord) -> bool:
-        if record.exc_info and record.exc_info[1] is not None:
-            record.msg = f"{record.getMessage()}: {type(record.exc_info[1]).__name__}"
-            record.args = None
-        record.exc_info = None
-        record.exc_text = None
-        return True
-
-
-# A logger's filters see only its own records, so each SDK module that logs exceptions gets one.
-for _module in ("mcp.client.streamable_http", "mcp.client.session", "mcp.shared.session"):
-    logging.getLogger(_module).addFilter(_NoTraceback())
 MAX_PAGES = 20  # tools/list pages read at most
 
 

@@ -18,18 +18,8 @@ RECON = {"slug": PACK, "name": "Order & Payment Reconciliation"}
 INVOICES = {"slug": "overdue-invoice-follow-up", "name": "Overdue Invoice Follow-up"}
 INVENTORY = {"slug": "weekly-inventory-report", "name": "Weekly Inventory Report"}
 REFUNDS = {"slug": "refund-triage", "name": "Refund Triage"}
-DEFINITION_AGENTS = [
-    "collections-agent",
-    "expense-agent",
-    "finance-agent",
-    "lead-agent",
-    "meeting-agent",
-    "ops-agent",
-    "refunds-agent",
-    "retail-agent",
-    "support-agent",
-    "writer-agent",
-]
+# Every agent definition, by key: the catalog lists them first, in this order.
+DEFINITION_AGENTS = sorted(key for kind, key in load_bundle(settings.defs_dir()).items if kind == "agent")
 N_DEFINED = len(DEFINITION_AGENTS)
 
 
@@ -105,6 +95,7 @@ def test_agent_schema_keeps_the_copy_optional():
 
 
 def test_demo_lists_definition_agents_first_then_samples(client):
+    assert {"finance-agent", "writer-agent", "o2c-triage-agent"} <= set(DEFINITION_AGENTS)
     agents = client.get("/v1/agents").json()
     ids = [a["id"] for a in agents]
     assert ids[:N_DEFINED] == DEFINITION_AGENTS

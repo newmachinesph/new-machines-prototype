@@ -77,3 +77,13 @@ def live_ops(defs, monkeypatch) -> TestClient:
     monkeypatch.setattr(auth.id_token, "verify_firebase_token", _verify)
     reset_store()
     return TestClient(create_app())
+
+
+@pytest.fixture(autouse=True)
+def _fresh_platform_mcp_probe():
+    """`auto` mode caches the platform MCP server check for a minute per process; no test inherits one."""
+    from app.runtime import drivers
+
+    drivers.reset_probe_cache()
+    yield
+    drivers.reset_probe_cache()

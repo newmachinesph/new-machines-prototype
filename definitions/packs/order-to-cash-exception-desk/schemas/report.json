@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Exception desk report",
+  "description": "What the buyer receives: what broke across the four systems, what was sent or posted, and one row per exception.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["summary", "sent", "clean_count", "totals", "actions", "rows"],
+  "properties": {
+    "summary": {"type": "string", "minLength": 1, "description": "Two or three plain sentences: what was found, what was sent or posted, or that nothing was sent."},
+    "sent": {"type": "boolean", "description": "Whether the approval was granted and the drafts and notes were written."},
+    "clean_count": {"type": "integer", "minimum": 0},
+    "totals": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["paid_not_shipped", "shipped_not_paid", "payment_pending_confirmation", "disputed", "currency"],
+      "properties": {
+        "paid_not_shipped": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["count", "amount_minor"],
+          "properties": {"count": {"type": "integer", "minimum": 0}, "amount_minor": {"type": "integer", "minimum": 0}}
+        },
+        "shipped_not_paid": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["count", "amount_minor"],
+          "properties": {"count": {"type": "integer", "minimum": 0}, "amount_minor": {"type": "integer", "minimum": 0}}
+        },
+        "payment_pending_confirmation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["count", "amount_minor"],
+          "properties": {"count": {"type": "integer", "minimum": 0}, "amount_minor": {"type": "integer", "minimum": 0}}
+        },
+        "disputed": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["count", "amount_minor"],
+          "properties": {"count": {"type": "integer", "minimum": 0}, "amount_minor": {"type": "integer", "minimum": 0}}
+        },
+        "currency": {"type": "string", "pattern": "^[A-Z]{3}$"}
+      }
+    },
+    "actions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reminders_drafted", "finance_notes", "warehouse_notes"],
+      "properties": {
+        "reminders_drafted": {"type": "integer", "minimum": 0},
+        "finance_notes": {"type": "integer", "minimum": 0},
+        "warehouse_notes": {"type": "integer", "minimum": 0}
+      }
+    },
+    "rows": {
+      "type": "array",
+      "description": "One per exception, in the triage's order.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["order_id", "kind", "customer_name", "amount_minor", "currency", "days_outstanding", "action", "outcome", "note"],
+        "properties": {
+          "order_id": {"type": "string", "minLength": 1},
+          "kind": {"enum": ["paid_not_shipped", "shipped_not_paid", "payment_pending_confirmation", "disputed"]},
+          "customer_name": {"type": "string", "minLength": 1},
+          "amount_minor": {"type": "integer", "minimum": 0},
+          "currency": {"type": "string", "pattern": "^[A-Z]{3}$"},
+          "days_outstanding": {"type": "integer", "minimum": 0},
+          "action": {"type": "string", "minLength": 1, "description": "The action in plain words, such as 'collection reminder from Kristoffer M. Nunez'."},
+          "outcome": {
+            "enum": ["drafted", "noted", "not_sent", "listed"],
+            "description": "drafted: a reminder was saved; noted: a note was posted; not_sent: the action was due but the approval was not granted or the cap was reached; listed: no action was due."
+          },
+          "note": {"type": "string", "minLength": 1, "description": "The evidence sentence."}
+        }
+      }
+    }
+  }
+}

@@ -83,6 +83,18 @@ class EmailPreview(Model):
     body: str
 
 
+class UnlockedAction(Model):
+    """A write the same grant also lets through (an approval's `also_unlocks`): the step, its tool and the app
+    it acts on. `mocked` is true when that call would run against sandbox data."""
+
+    app: str
+    step: str
+    tool: str  # "<connector>.<tool id>"
+    operation: str  # the tool id in words, e.g. "add ledger note"
+    mocked: bool
+    count: int | Opt = None  # how many calls the step will make (one per item of its list)
+
+
 class ApprovalAction(Model):
     """The step a real run asks to take once approved: the app it acts on, the workflow step, and the tool
     call. `mocked` is true when that call would run against sandbox data instead of the connected app."""
@@ -93,6 +105,8 @@ class ApprovalAction(Model):
     operation: str | Opt = None  # the tool id in words, e.g. "append rows"
     summary: str | Opt = None
     mocked: bool
+    count: int | Opt = None  # how many calls this step will make (one per item of its list)
+    unlocked: list[UnlockedAction] | Opt = None  # further writes this grant lets through
 
 
 class Approval(Model):

@@ -31,6 +31,7 @@ SEED_PACKS = {
     "support-inbox-triage": "Support Inbox Triage",
     "weekly-expense-check": "Weekly Expense Check",
     "meeting-follow-ups": "Meeting Follow-ups",
+    "order-to-cash-exception-desk": "Order-to-Cash Exception Desk",
 }
 USERS = {
     "ana": {"sub": "uid_ana", "email": "ana@example.com", "email_verified": True, "name": "Ana Reyes"},
@@ -189,7 +190,7 @@ def test_the_marketplace_lists_the_three_seed_packs(ana):
     assert [c["app"] for c in refunds["connectors"]] == ["Gmail", "Shopify", "Stripe"]
     detail = ana.get("/v1/workflow-packs/overdue-invoice-follow-up").json()
     assert detail["inputSchema"]["required"] == ["as_of"]
-    assert len(ana.get("/v1/agents").json()) == 10
+    assert len(ana.get("/v1/agents").json()) == 13
 
 
 def test_a_seed_pack_is_hired_connected_in_sandbox_and_started(ana, starts):

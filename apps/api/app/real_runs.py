@@ -24,7 +24,7 @@ from app.models.common import money_text
 from app.models.ops import ConnectorEntry
 from app.models.requests import StartRunRequest
 from app.models.runs import PinnedVersion, Receipt, ReceiptItem, Run, RunSummary
-from app.runtime import gateway, projection, receipt, routes
+from app.runtime import drivers, gateway, projection, receipt, routes
 from app.store import iso
 from app.worker.activities import event_key, record_events
 
@@ -334,6 +334,8 @@ def _insert_run(
     `build_snapshot`; a pin no longer available, or no longer paid for (`_fee_plan`), is 409
     PACK_UNAVAILABLE. A pack fee is checked against the monthly cap under the workspace's row lock: 409
     SPEND_CAP when it would go over."""
+    # The platform MCP server check (cached for a minute) is made before the transaction and its row locks.
+    platform_answers = settings.connector_mode() == "auto" and drivers.platform_mcp_answers()
     with db.connect() as conn:
         if catalog is None and not sandbox_test:
             if held is not None:
@@ -376,6 +378,10 @@ def _insert_run(
             # NM_CONNECTOR_MODE (`gateway.driver_of`).
             **({"connector_mode": settings.SANDBOX_MODE} if sandbox_test else {}),
         }
+        # In `auto` mode the platform's MCP server is settled once, here: every call of the run follows it.
+        pin = gateway.settle_platform_mcp(snapshot, settings.connector_mode(), answers=platform_answers)
+        if pin is not None:
+            snapshot = {**snapshot, gateway.PLATFORM_MCP_PIN: pin}
         if catalog is None:
             # The fees this run owes, at the prices of the versions it pinned (sub-project D): a later price
             # change never touches a run already started. The buyer is the snapshot's org.

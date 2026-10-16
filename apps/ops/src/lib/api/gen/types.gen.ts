@@ -294,6 +294,14 @@ export type ApprovalAction = {
      * Mocked
      */
     mocked: boolean;
+    /**
+     * Count
+     */
+    count?: number;
+    /**
+     * Unlocked
+     */
+    unlocked?: Array<UnlockedAction>;
 };
 
 /**
@@ -5069,6 +5077,39 @@ export type TrustPassport = {
      * Retesttriggers
      */
     retestTriggers: Array<string>;
+};
+
+/**
+ * UnlockedAction
+ *
+ * A write the same grant also lets through (an approval's `also_unlocks`): the step, its tool and the app
+ * it acts on. `mocked` is true when that call would run against sandbox data.
+ */
+export type UnlockedAction = {
+    /**
+     * App
+     */
+    app: string;
+    /**
+     * Step
+     */
+    step: string;
+    /**
+     * Tool
+     */
+    tool: string;
+    /**
+     * Operation
+     */
+    operation: string;
+    /**
+     * Mocked
+     */
+    mocked: boolean;
+    /**
+     * Count
+     */
+    count?: number;
 };
 
 /**

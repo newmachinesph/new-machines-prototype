@@ -1,0 +1,26 @@
+{
+  "served_orders": [
+    {
+      "id": "AAU-209245",
+      "customer_name": "Angelo L. Padilla",
+      "created_at": "2026-10-10T01:58:51Z",
+      "released": true,
+      "release_date": "2026-10-10T20:27:11Z",
+      "delivered": true,
+      "delivered_at": "2026-10-11T03:00:26Z",
+      "delivery_count": 1,
+      "notes": []
+    },
+    {
+      "id": "AYE-163416",
+      "customer_name": "Seaside Eatery",
+      "created_at": "2026-09-17T04:56:19Z",
+      "released": true,
+      "release_date": "2026-09-17T08:22:00Z",
+      "delivered": true,
+      "delivered_at": "2026-09-17T13:48:51Z",
+      "delivery_count": 1,
+      "notes": []
+    }
+  ]
+}

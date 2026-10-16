@@ -1,6 +1,7 @@
 """Sub-project C, part 2: an org's own packs and agents are seen, added and run by that org only. Every read
 that lists definitions is checked across orgs."""
 
+from app import live_catalog
 from app.defs import owners, registry
 from app.defs.model import Definition, path_for
 from app.runtime import memory
@@ -72,7 +73,15 @@ def test_connections_follow_only_the_orgs_own_packs(db, ana, ben):  # noqa: F811
 
 
 def test_suggest_never_offers_another_orgs_pack(db, ana, ben):  # noqa: F811
-    title = "Zebra Quokka Ledger"  # shares no word with any platform pack
+    title = "Zebra Quokka Wombat"
+    # The title shares no word with any platform pack, so the only pack it can match is Ana's own.
+    platform = live_catalog.definitions()
+    clashing = [
+        v.key
+        for v in platform.packs()
+        if live_catalog._words(title) & live_catalog._pack_words(platform, v.body)
+    ]
+    assert clashing == [], f"pick a title no platform pack uses a word of: {clashing}"
     key = clone_pack(db, PACK, ana.org_id, "recon", title=title)
     mine = ana.post("/v1/workflow-packs:suggest", json={"text": title})
     assert mine.status_code == 200 and mine.json()["pack"]["slug"] == key

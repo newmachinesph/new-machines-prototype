@@ -5,27 +5,42 @@ from dataclasses import dataclass
 
 from jsonschema import Draft202012Validator
 
+from app.defs import owners
 from app.runtime import routes
 from app.runtime.drivers import (
     META_TOOL_PREFIX,
+    PLATFORM_LIVE,
+    PLATFORM_MCP_DRIVER,
+    PLATFORM_SANDBOX,
     ComposioDriver,
     McpDriver,
+    PlatformMcpDriver,
     RouteChangedDriver,
     SandboxDriver,
     ToolResult,
     UnconnectedDriver,
+    UnsettledDriver,
     driver_for,
 )
 
 PERMIT, DENY, REQUIRE_APPROVAL = "PERMIT", "DENY", "REQUIRE_APPROVAL"
 DEFAULT_POLICY_REF = "policy/default"
+PLATFORM_MCP_PIN = "platform_mcp"  # snapshot key: how the run settled the platform MCP server at its start
 # Reason codes of a live-workspace call that cannot run (`approval_refusal`; the call itself fails with
 # GRANT_REVOKED as its policy reason, or with the NotConnected / RouteChanged driver errors).
 GRANT_REVOKED = "GRANT_REVOKED"  # the org's connection does not grant the pack the tool's capability
 NOT_CONNECTED = "NOT_CONNECTED"  # the app has no usable connection
 ROUTE_CHANGED = "ROUTE_CHANGED"  # the app was reconnected another way since the run started
 
-Driver = SandboxDriver | ComposioDriver | McpDriver | UnconnectedDriver | RouteChangedDriver
+Driver = (
+    SandboxDriver
+    | ComposioDriver
+    | McpDriver
+    | PlatformMcpDriver
+    | UnconnectedDriver
+    | RouteChangedDriver
+    | UnsettledDriver
+)
 
 
 @dataclass
@@ -133,12 +148,57 @@ def _mode_of(snapshot: dict, mode: str) -> str:
     return str(snapshot.get("connector_mode") or mode)
 
 
-def driver_of(snapshot: dict, connector_key: str, connector: dict, mode: str) -> Driver:
+def _unrouted_driver(snapshot: dict, connector_key: str, connector: dict, mode: str, tool: dict | None):
+    resolved = _mode_of(snapshot, mode)
+    if (
+        resolved == "auto"
+        and connector.get("driver") == PLATFORM_MCP_DRIVER
+        and not owners.is_reserved(connector_key)
+        and (tool is None or tool.get("mcp") is not None)
+        and snapshot.get(PLATFORM_MCP_PIN) not in (PLATFORM_LIVE, PLATFORM_SANDBOX)
+    ):
+        # The run did not settle the server when it started (its API process ran in another mode, or the
+        # run predates the pin): probing per call could mix live and sandbox data, so the call fails.
+        return UnsettledDriver()
+    return driver_for(
+        connector,
+        resolved,
+        pack=_pack_key(snapshot),
+        tool=tool,
+        key=connector_key,
+        platform_mcp=snapshot.get(PLATFORM_MCP_PIN),
+    )
+
+
+def settle_platform_mcp(snapshot: dict, mode: str, *, answers: bool) -> str | None:
+    """What a run starting now pins for the platform's MCP server: in `auto` mode, "live" when the server is
+    set, answers and is read-only, else "sandbox", for a snapshot with a platform `driver: mcp` connector.
+    Every call of the run then follows that one answer (a later failure fails the call instead of falling
+    back to sandbox data, and a flapping server never mixes the two inside a run). None in `live` and
+    `sandbox` mode, which already settle it, a sandbox test, an org-routed run (its connections decide)
+    and when the run has no such connector. `answers` is the server check, made by the caller before it
+    opens its transaction (`drivers.platform_mcp_answers`, cached): no network wait happens here."""
+    if mode != "auto" or snapshot.get("connector_mode") or _org_routed(snapshot):
+        return None
+    connectors = (snapshot.get("defs") or {}).get("connector") or {}
+    uses_platform = any(
+        (c.get("body") or {}).get("driver") == PLATFORM_MCP_DRIVER and not owners.is_reserved(key)
+        for key, c in connectors.items()
+    )
+    if not uses_platform:
+        return None
+    return PLATFORM_LIVE if answers else PLATFORM_SANDBOX
+
+
+def driver_of(
+    snapshot: dict, connector_key: str, connector: dict, mode: str, tool: dict | None = None
+) -> Driver:
     """The driver for one call. A live-workspace run (`routing: org`) follows the org's connection row for the
     app now (`routes.current_route`); any other run keeps the connector mode its snapshot pins, else `mode`
-    (the worker's NM_CONNECTOR_MODE)."""
+    (the worker's NM_CONNECTOR_MODE). `tool`, when known, lets an mcp connector answer its unmapped tools
+    from sandbox data (see `drivers.driver_for`)."""
     if not _org_routed(snapshot):
-        return driver_for(connector, _mode_of(snapshot, mode), pack=_pack_key(snapshot))
+        return _unrouted_driver(snapshot, connector_key, connector, mode, tool)
     return _route_driver(snapshot, connector_key, connector, _route(snapshot, connector_key))
 
 
@@ -147,7 +207,10 @@ def runs_simulated(snapshot: dict, tool_ref: str, mode: str) -> bool:
     else by the connector mode the snapshot pins (a sandbox test) or the worker's `mode` ("auto" checks the
     connection now). A forecast: the call itself checks again."""
     found = find_tool(snapshot, tool_ref)
-    return found is not None and isinstance(driver_of(snapshot, found[0], found[1], mode), SandboxDriver)
+    if found is None:
+        return False
+    connector_key, connector, tool = found
+    return isinstance(driver_of(snapshot, connector_key, connector, mode, tool=tool), SandboxDriver)
 
 
 def _install_of(snapshot: dict) -> str | None:
@@ -233,9 +296,8 @@ def call_tool(
             ok=False, data=None, mocked=False, error="invalid arguments: " + "; ".join(errors)
         )
     if route is None:
-        return decision, driver_for(connector, _mode_of(snapshot, mode), pack=_pack_key(snapshot)).execute(
-            connector_key, tool, args
-        )
+        driver = _unrouted_driver(snapshot, connector_key, connector, mode, tool)
+        return decision, driver.execute(connector_key, tool, args)
     return decision, _route_driver(snapshot, connector_key, connector, route).execute(
         connector_key, tool, args
     )
