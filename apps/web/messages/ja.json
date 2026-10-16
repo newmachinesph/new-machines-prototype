@@ -484,7 +484,9 @@
     "contract": "New Machines から、このページが想定していないデータが届きました。再読み込みしてください。",
     "codes": {
       "PUBLISHER_PROFILE_REQUIRED": "提出する前に、設定で公開をオンにしてください。",
-      "SUBMISSION_OPEN": "このエージェントまたはパックには、審査を待っているバージョンがすでにあります。"
+      "SUBMISSION_OPEN": "このエージェントまたはパックには、審査を待っているバージョンがすでにあります。",
+      "NOT_COPYABLE": "他の提供元のパックは追加できますが、コピーはできません。",
+      "NOT_EDITABLE": "このパックは Studio で開けません。"
     },
     "pageCouldNotLoad": "このページを読み込めませんでした",
     "notFound": {
@@ -897,6 +899,7 @@
       }
     },
     "pack": {
+      "editCopy": "Studio でコピーを編集",
       "seeRuns": "このパックの実行を見る",
       "packSettings": "パックの設定",
       "add": "ワークスペースに追加",
@@ -1891,6 +1894,13 @@
     "emptyMember": "まだパックはありません。オーナーまたは管理者が作成できます。",
     "notYours": "このパックは自社のものではありません。",
     "backToPacks": "パック一覧に戻る",
+    "copyTitle": "コピーを編集",
+    "copyLede": "必要な部分を変更して、自社のパックとして保存します。",
+    "copyBanner": "{name} のコピーです。保存すると自社のパックが作成され、{name} はそのまま残ります。",
+    "copyKeeps": "コピーにはステップ、エージェント、アプリが引き継がれます。結果は標準の表示で示され、認定はされません。価格の注記とリスク区分は保存時に改めて算出されます。",
+    "backToMarketplace": "マーケットプレイスに戻る",
+    "duplicate": "複製",
+    "duplicateLabel": "{name} を複製",
     "name": "名前",
     "stepsHead": "ステップ",
     "steps": "{n, plural, other {# ステップ}}",

@@ -484,7 +484,9 @@
     "contract": "New Machines sent data this page did not expect. Reload to try again.",
     "codes": {
       "PUBLISHER_PROFILE_REQUIRED": "Turn on publishing in Settings before you submit.",
-      "SUBMISSION_OPEN": "A version of this is already waiting for review."
+      "SUBMISSION_OPEN": "A version of this is already waiting for review.",
+      "NOT_COPYABLE": "A pack from another publisher can be added, not copied.",
+      "NOT_EDITABLE": "This pack cannot be opened in the Studio."
     },
     "pageCouldNotLoad": "This page could not load",
     "notFound": {
@@ -897,6 +899,7 @@
       }
     },
     "pack": {
+      "editCopy": "Edit a copy in Studio",
       "seeRuns": "See its runs",
       "packSettings": "Pack settings",
       "add": "Add to workspace",
@@ -1891,6 +1894,13 @@
     "emptyMember": "No packs yet. An owner or admin can build one.",
     "notYours": "This pack is not one of yours.",
     "backToPacks": "Back to packs",
+    "copyTitle": "Edit a copy",
+    "copyLede": "Change anything you need, then save it as your own pack.",
+    "copyBanner": "Copy of {name}. Saving creates your own pack; {name} stays as it is.",
+    "copyKeeps": "A copy keeps the steps, agents and apps. It shows results in the standard view, is not certified, and its price note and risk class are worked out again when you save.",
+    "backToMarketplace": "Back to the marketplace",
+    "duplicate": "Duplicate",
+    "duplicateLabel": "Duplicate {name}",
     "name": "Name",
     "stepsHead": "Steps",
     "steps": "{n, plural, one {# step} other {# steps}}",

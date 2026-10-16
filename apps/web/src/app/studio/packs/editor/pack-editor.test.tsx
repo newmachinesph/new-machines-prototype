@@ -10,6 +10,7 @@ import { PackEditor } from "./pack-editor";
 const ok = <T,>(data: T) => ({ isPending: false, isError: false, data });
 const mocks = vi.hoisted(() => ({
   pack: { isPending: false, isError: false, data: undefined, error: undefined } as Record<string, unknown>,
+  copy: { isPending: false, isError: false, data: undefined, error: undefined } as Record<string, unknown>,
   create: { mutate: vi.fn(), isPending: false },
   save: { mutate: vi.fn(), isPending: false },
   validate: { mutate: vi.fn(), isPending: false },
@@ -33,6 +34,7 @@ vi.mock("@/lib/queries/me", () => ({
 vi.mock("@/lib/queries/studio", () => ({
   useStudioPalette: () => ok(PALETTE),
   useStudioPack: () => mocks.pack,
+  useStudioPackCopy: () => mocks.copy,
   useCreateStudioPack: () => mocks.create,
   useSaveStudioPack: () => mocks.save,
   useValidateStudioPack: () => mocks.validate,
@@ -72,6 +74,7 @@ const budgetField = () => screen.getByLabelText("Most a run may spend on agents 
 describe("PackEditor", () => {
   beforeEach(() => {
     mocks.pack = { isPending: false, isError: false, data: undefined, error: undefined };
+    mocks.copy = { isPending: false, isError: false, data: undefined, error: undefined };
     mocks.role = "owner";
     mocks.create.isPending = false;
     mocks.refetch.mockClear();
@@ -505,5 +508,75 @@ describe("PackEditor", () => {
     renderWithIntl(<PackEditor />, { locale: "ja" });
     expect(screen.getByRole("button", { name: "パックを保存" })).toBeInTheDocument();
     expect(screen.getByText("問題は見つかりませんでした。")).toBeInTheDocument();
+  });
+});
+
+describe("a copy of a ready-made pack", () => {
+  it("opens the copy unsaved, with a banner naming the original", async () => {
+    mocks.copy = ok({
+      draft: { ...OVERDUE, name: "Overdue nudges (copy)" },
+      issues: [],
+      source: { key: "overdue-invoice-follow-up", name: "Overdue nudges", version: 2 },
+    });
+    renderWithIntl(<PackEditor from="overdue-invoice-follow-up" />);
+    expect(await screen.findByText(/Copy of Overdue nudges\. Saving creates your own pack/)).toBeInTheDocument();
+    expect(screen.getByText("Overdue nudges (copy)")).toBeInTheDocument();
+  });
+
+  it("lists steps that could not be read", async () => {
+    mocks.copy = ok({
+      draft: OVERDUE,
+      issues: [{ path: "nodes[3]", message: "Step 4 cannot be read as a step." }],
+      source: { key: "x", name: "X", version: 1 },
+    });
+    renderWithIntl(<PackEditor from="x" />);
+    expect(await screen.findByText("Step 4 cannot be read as a step.")).toBeInTheDocument();
+  });
+
+  it("says a pack from another publisher can be added, not copied", async () => {
+    mocks.copy = {
+      isPending: false,
+      isError: true,
+      data: undefined,
+      error: new ApiError(409, "NOT_COPYABLE", "A pack from another publisher can be added, not copied."),
+    };
+    renderWithIntl(<PackEditor from="someone-elses" />);
+    expect(await screen.findByText(/can be added, not copied/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Back to the marketplace" })).toHaveAttribute("href", "/app/marketplace");
+  });
+
+  it("shows the same notice for a 409 the API refuses on purpose", async () => {
+    mocks.copy = {
+      isPending: false,
+      isError: true,
+      data: undefined,
+      error: new ApiError(409, "CONFLICT", "Refused."),
+    };
+    renderWithIntl(<PackEditor from="x" />);
+    expect(await screen.findByRole("link", { name: "Back to the marketplace" })).toBeInTheDocument();
+  });
+
+  it("leaves a 503 to QueryState (the error page and its retry), not the refused-copy notice", () => {
+    const error = new ApiError(503, "UNAVAILABLE", "Try again soon.");
+    mocks.copy = { isPending: false, isError: true, data: undefined, error };
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      expect(() => renderWithIntl(<PackEditor from="x" />)).toThrow(error);
+      expect(screen.queryByRole("link", { name: "Back to the marketplace" })).toBeNull();
+    } finally {
+      log.mockRestore();
+    }
+  });
+
+  it("creates a new pack when the copy is saved", async () => {
+    mocks.copy = ok({
+      draft: OVERDUE,
+      issues: [],
+      source: { key: "overdue-invoice-follow-up", name: "Overdue nudges", version: 2 },
+    });
+    renderWithIntl(<PackEditor from="overdue-invoice-follow-up" />);
+    await userEvent.click(saveButton());
+    expect(mocks.create.mutate).toHaveBeenCalledTimes(1);
+    expect(mocks.save.mutate).not.toHaveBeenCalled();
   });
 });

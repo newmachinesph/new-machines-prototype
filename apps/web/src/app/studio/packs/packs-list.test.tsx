@@ -58,6 +58,20 @@ describe("PacksList", () => {
     );
   });
 
+  it("offers builders a Duplicate link on each row that opens a copy, and members none", () => {
+    const { unmount } = renderWithIntl(<PacksList />);
+    const links = screen.getAllByRole("link", { name: /^Duplicate / });
+    expect(links.map((l) => l.getAttribute("aria-label"))).toEqual(["Duplicate Refund check", "Duplicate Stock alert"]);
+    expect(links.map((l) => l.getAttribute("href"))).toEqual([
+      "/studio/packs/new?from=org-a1--refund-check",
+      "/studio/packs/new?from=org-a1--stock-alert",
+    ]);
+    unmount();
+    mocks.role = "member";
+    renderWithIntl(<PacksList />);
+    expect(screen.queryByRole("link", { name: /^Duplicate / })).toBeNull();
+  });
+
   it("makes the whole row the pack's link, and stacks rows as cards on narrow screens", () => {
     renderWithIntl(<PacksList />);
     const name = screen.getByRole("link", { name: "Refund check" });

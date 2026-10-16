@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from jsonschema import Draft202012Validator
+from pydantic import ValidationError
 
 from app.defs import owners
 from app.defs.model import Bundle, DefError, Definition, path_for
@@ -229,7 +230,10 @@ def outcomes(step: StepDraft) -> list[str]:
     if step.type == "decision":
         if step.rules is None:
             return []
-        return list(dict.fromkeys([r.route for r in step.rules.rules] + [step.rules.default.route]))
+        routes = [r.route for r in step.rules.rules] + [step.rules.default.route]
+        if step.rules.evaluator:  # the route taken when the decision model fails
+            routes.append(str((step.rules.evaluator.get("on_error") or {}).get("route") or ""))
+        return list(dict.fromkeys(r for r in routes if r))
     return list(ROUTES[step.type])
 
 
@@ -583,12 +587,35 @@ def input_fields(schema: dict) -> list[InputField]:
     return out
 
 
+def readable_input_fields(schema: dict, limit: int) -> tuple[list[InputField], list[BuilderIssue]]:
+    """The input fields of a schema a draft can hold (at most `limit`); each property that cannot be an
+    InputField, and each one past the limit, is left out and reported."""
+    required = set(schema.get("required") or [])
+    out: list[InputField] = []
+    issues: list[BuilderIssue] = []
+    for name, prop in (schema.get("properties") or {}).items():
+        prop = prop if isinstance(prop, dict) else {}
+        try:
+            if len(out) >= limit:
+                raise ValueError("too many")
+            [field] = input_fields({"required": list(required), "properties": {name: prop}})
+            out.append(field)
+        except ValueError, TypeError, ValidationError:
+            issues.append(
+                BuilderIssue(
+                    path=f"input_fields[{name}]",
+                    message=f"The input {name} cannot be edited in the Studio and was left out.",
+                )
+            )
+    return out, issues
+
+
 def _code(route: str) -> str:
     return _NOT_CODE.sub("_", route.upper()).strip("_") or "RULE"
 
 
 def _rules_body(rules: DecisionRules) -> dict:
-    return {
+    body = {
         "question": rules.question,
         "rules": [
             {
@@ -607,12 +634,17 @@ def _rules_body(rules: DecisionRules) -> dict:
             "explanation": rules.default.explanation,
         },
     }
+    if rules.evaluator:
+        body["evaluator"] = deepcopy(rules.evaluator)
+    return body
 
 
 def rules_of(body: dict) -> DecisionRules:
-    """A decision rules definition as the Studio edits it (reason codes are made again on save)."""
+    """A decision rules definition as the Studio edits it (reason codes are made again on save); its
+    evaluator, which the Studio does not edit, is kept as it is."""
     default = body["default"]
     return DecisionRules(
+        evaluator=deepcopy(body["evaluator"]) if body.get("evaluator") else None,
         question=body["question"],
         rules=[
             DecisionRule(when=r["when"], route=r["route"], verdict=r["verdict"], explanation=r["explanation"])

@@ -116,6 +116,8 @@ class Pack(Model):
     # Live workspace: a pack the caller's org built in the Studio ("Built by your team"). Only that org sees
     # it, and it is not certified by New Machines.
     built_by_team: bool | Opt = None
+    # Live workspace: the org may open a copy of this pack in the Studio (the platform's packs and its own).
+    copyable: bool | Opt = None
     # Live workspace: another workspace's listed pack, with its publisher and per-run fee.
     listing: MarketplaceListing | Opt = None
 

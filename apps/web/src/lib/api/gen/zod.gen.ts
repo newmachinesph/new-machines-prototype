@@ -237,6 +237,13 @@ export const zConnectorDefaultsInput = z.object({
 });
 
 /**
+ * CopyPackRequest
+ */
+export const zCopyPackRequest = z.object({
+    source: z.string().min(1).max(200)
+});
+
+/**
  * CreateTenantRequest
  */
 export const zCreateTenantRequest = z.object({
@@ -305,7 +312,8 @@ export const zDecisionRule = z.object({
 export const zDecisionRules = z.object({
     question: z.string().min(1).max(200),
     rules: z.array(zDecisionRule).max(20).optional(),
-    default: zDecisionDefault
+    default: zDecisionDefault,
+    evaluator: z.record(z.string(), z.unknown()).optional()
 });
 
 /**
@@ -1209,6 +1217,15 @@ export const zCreatePackRequest = z.object({
 });
 
 /**
+ * PackCopySource
+ */
+export const zPackCopySource = z.object({
+    key: z.string(),
+    name: z.string(),
+    version: z.int()
+});
+
+/**
  * PackCount
  */
 export const zPackCount = z.object({
@@ -2083,6 +2100,17 @@ export const zPackDraft = z.object({
 });
 
 /**
+ * PackCopy
+ *
+ * An unsaved draft of a platform pack or of the org's own, to edit and save as a new pack.
+ */
+export const zPackCopy = z.object({
+    draft: zPackDraft,
+    issues: z.array(zBuilderIssue),
+    source: zPackCopySource
+});
+
+/**
  * SavePackRequest
  */
 export const zSavePackRequest = z.object({
@@ -2556,6 +2584,7 @@ export const zPack = z.object({
         'team_then_network'
     ]).optional(),
     builtByTeam: z.boolean().optional(),
+    copyable: z.boolean().optional(),
     listing: zMarketplaceListing.optional()
 });
 
@@ -3257,6 +3286,17 @@ export const zValidateStudioPackQuery = z.object({
  * Successful Response
  */
 export const zValidateStudioPackResponse = zBuilderCheck;
+
+export const zCopyStudioPackBody = zCopyPackRequest;
+
+export const zCopyStudioPackPath = z.object({
+    org_id: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zCopyStudioPackResponse = zPackCopy;
 
 export const zImportStudioWorkflowBody = zImportWorkflowRequest;
 

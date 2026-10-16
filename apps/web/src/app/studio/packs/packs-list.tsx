@@ -72,6 +72,15 @@ export function PacksList() {
                     </td>
                     <td className="tnum col-start-2 row-start-1 text-xs text-muted sm:px-5 sm:py-3 sm:text-right sm:text-sm">
                       {tStudio("version", { n: p.version })}
+                      {canBuild ? (
+                        <Link
+                          href={`/studio/packs/new?from=${encodeURIComponent(p.key)}`}
+                          aria-label={t("duplicateLabel", { name: p.name })}
+                          className="link relative ml-3 font-medium text-ink"
+                        >
+                          {t("duplicate")}
+                        </Link>
+                      ) : null}
                     </td>
                   </tr>
                 ))}

@@ -43,7 +43,7 @@ const state = vi.hoisted(() => ({
   upgrade: vi.fn(),
   toast: vi.fn(),
 }));
-vi.mock("@/lib/queries/me", () => ({ useIsLive: () => true }));
+vi.mock("@/lib/queries/me", () => ({ useIsLive: () => true, useMe: () => ({ data: { role: "owner" } }) }));
 vi.mock("@/components/base", async (orig) => ({
   ...(await orig<typeof import("@/components/base")>()),
   useToast: () => state.toast,

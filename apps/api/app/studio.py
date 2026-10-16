@@ -10,6 +10,7 @@ Every key built here comes from `_free_key` or `_own`, so it is in the caller's 
 500 handler, whose reply never carries the message.
 """
 
+import json
 from collections.abc import Callable, Collection
 from dataclasses import dataclass, replace
 
@@ -33,6 +34,8 @@ from app.models.studio import (
     BuilderIssue,
     ImportedWorkflow,
     ImportWorkflowRequest,
+    PackCopy,
+    PackCopySource,
     PackDraft,
     Palette,
     PaletteAgent,
@@ -460,10 +463,36 @@ def _pack_names(ctx: _Context, key: str) -> list[str]:
     return [name for k, name in ctx.pack_names.items() if k != key]
 
 
+def _canonical(value: object) -> str:
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+
+
+def _evaluator_issues(ctx: _Context, org_id: str, draft: PackDraft) -> list[BuilderIssue]:
+    """A builder keeps a decision's model setup (`evaluator`) but never writes one: it must equal that of a
+    decision the platform or the org itself has."""
+    known = {
+        _canonical(d.body["evaluator"])
+        for d in ctx.bundle.of("decision_rules")
+        if d.body.get("evaluator") and _is_own_or_platform(d.key, org_id)
+    }
+    return [
+        BuilderIssue(
+            path=f"steps.{s.id}.rules.evaluator",
+            message=(
+                "This step's decision model setup can only come from a ready-made pack or one of your own."
+            ),
+            step=s.id,
+        )
+        for s in draft.steps
+        if s.rules is not None and s.rules.evaluator and _canonical(s.rules.evaluator) not in known
+    ]
+
+
 def _pack_issues(ctx: _Context, key: str, org: build.OrgRef, draft: PackDraft) -> list[BuilderIssue]:
     issues = build.pack_issues(
         draft, ctx.tools, ctx.agents, set(ctx.spaces), set(ctx.schemas), names=_pack_names(ctx, key)
     )
+    issues += _evaluator_issues(ctx, org.id, draft)
     if issues:
         return issues
     return _validator_issues(ctx.bundle, _pack_release(ctx, key, org, draft, 1), key)
@@ -668,6 +697,18 @@ def _route_failures(steps: list[StepDraft]) -> list[StepDraft]:
     return out
 
 
+def _steps_from(nodes: list, bundle: Bundle, org_id: str) -> tuple[list[StepDraft], list[BuilderIssue]]:
+    """The steps of workflow nodes, with unrouted failures sent to the FAILED end; a node that cannot be read
+    is an issue, not a failure."""
+    steps, issues = [], []
+    for i, node in enumerate(nodes):
+        try:
+            steps.append(_step_from(node, bundle, org_id))
+        except KeyError, TypeError, ValueError, AttributeError, ValidationError:
+            issues.append(BuilderIssue(path=f"nodes[{i}]", message=f"Step {i + 1} cannot be read as a step."))
+    return _route_failures(steps), issues
+
+
 def import_workflow(actor: Actor, body: ImportWorkflowRequest) -> ImportedWorkflow:
     """The steps of a workflow.yaml (decision rules that are the org's own or the platform's are inlined, and
     unrouted failure outcomes go to the FAILED end). A node that cannot be read is listed in `issues`;
@@ -682,14 +723,82 @@ def import_workflow(actor: Actor, body: ImportWorkflowRequest) -> ImportedWorkfl
         raise ApiProblem(422, "INVALID_YAML", "The YAML has no nodes.")
     with db.connect() as conn:
         bundle = registry.visible_bundle(conn, actor.org_id)
-    steps, issues = [], []
-    for i, node in enumerate(nodes):
-        try:
-            steps.append(_step_from(node, bundle, actor.org_id))
-        except KeyError, TypeError, ValueError, AttributeError, ValidationError:
-            issues.append(BuilderIssue(path=f"nodes[{i}]", message=f"Step {i + 1} cannot be read as a step."))
+    steps, issues = _steps_from(nodes, bundle, actor.org_id)
     entry = str(data.get("entry_node_id") or (steps[0].id if steps else ""))
-    return ImportedWorkflow(entry_step=entry, steps=_route_failures(steps), issues=issues)
+    return ImportedWorkflow(entry_step=entry, steps=steps, issues=issues)
+
+
+def _limit(field: str) -> int:
+    """The `max_length` of a PackDraft text field."""
+    return next(m.max_length for m in PackDraft.model_fields[field].metadata if hasattr(m, "max_length"))
+
+
+def copy_name(name: str, taken: Collection[str]) -> str:
+    """The first of "<name> (copy)", "<name> (copy 2)", ... that no pack in `taken` (names, any case) has,
+    shortening `name` so the whole thing fits a pack name."""
+    limit = _limit("name")
+    names = {t.strip().casefold() for t in taken}
+    n = 1
+    while True:
+        suffix = " (copy)" if n == 1 else f" (copy {n})"
+        candidate = name.strip()[: limit - len(suffix)].rstrip() + suffix
+        if candidate.casefold() not in names:
+            return candidate
+        n += 1
+
+
+def _cut(text: object, field: str) -> str:
+    return str(text or "")[: _limit(field)]
+
+
+def copy_pack(actor: Actor, source: str) -> PackCopy:
+    """An unsaved draft of a pack the org may copy: the platform's or its own. Nothing is saved; the editor
+    saves it as a new pack. 404 for a pack the org cannot see, 409 NOT_COPYABLE for another publisher's, 422
+    NOT_EDITABLE for a pack that cannot form a draft. Inputs it cannot hold are left out and listed."""
+    require_builder(actor)
+    with db.connect() as conn:
+        bundle = registry.visible_bundle(conn, actor.org_id)
+        found = bundle.get("pack", source)
+        if found is None:
+            raise ApiProblem(404, "NOT_FOUND", f"There is no pack called {source}.")
+        owner = registry.owner_of(conn, "pack", source)
+        if not (owner.kind == "platform" or (owner.kind == "org" and owner.id == actor.org_id)):
+            raise ApiProblem(409, "NOT_COPYABLE", "A pack from another publisher can be added, not copied.")
+        version = registry.latest(conn, "pack", source)
+        taken = _taken_pack_names(conn, actor.org_id).values()
+    pack = found.body
+    workflow = bundle.get("workflow", str(pack["workflow"])).body
+    contract_def = bundle.get("contract", str(workflow.get("work_contract_ref") or pack["contract"]))
+    contract = contract_def.body if contract_def else {}
+    schema = bundle.get("schema", str(contract.get("input_schema_ref") or ""))
+    steps, issues = _steps_from(workflow.get("nodes") or [], bundle, actor.org_id)
+    budget = contract.get("budget") or {}
+    default_budget = PackDraft.model_fields["budget_minor"].default
+    fields, field_issues = build.readable_input_fields(schema.body if schema else {}, _limit("input_fields"))
+    issues = [*issues, *field_issues]
+    try:
+        draft = PackDraft(
+            name=copy_name(str(pack.get("name") or source), taken),
+            outcome=_cut(pack.get("outcome") or pack.get("name"), "outcome"),
+            description=_cut(
+                pack.get("description") or pack.get("outcome") or pack.get("name"), "description"
+            ),
+            human_review=_cut(pack.get("human_review") or "A person reviews the result.", "human_review"),
+            function=_cut(pack.get("function") or PackDraft.model_fields["function"].default, "function"),
+            industries=[str(i) for i in pack.get("industries") or []][:5] or ["retail-commerce"],
+            input_fields=fields,
+            budget_minor=min(max(int(budget.get("maximum_minor") or default_budget), 100), 100_000),
+            human_budget_minor=min(max(int(budget.get("human_budget_minor") or 0), 0), 100_000),
+            entry_step=str(workflow.get("entry_node_id") or (steps[0].id if steps else "start")),
+            steps=steps,
+        )
+    except ValidationError, TypeError, ValueError:
+        raise ApiProblem(422, "NOT_EDITABLE", "This pack cannot be opened in the Studio.") from None
+    return PackCopy(
+        draft=draft,
+        issues=issues,
+        source=PackCopySource(key=source, name=str(pack.get("name") or source), version=version.version),
+    )
 
 
 # --- sandbox test -------------------------------------------------------------------------------------------

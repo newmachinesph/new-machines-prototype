@@ -44,6 +44,15 @@ describe("the editor's graph", () => {
     expect(outcomesOf({ type: "decision" })).toEqual([]);
   });
 
+  it("lists a decision's model-step failure route among its outcomes", () => {
+    const check = OVERDUE.steps.find((s) => s.id === "check");
+    if (!check?.rules) throw new Error("fixture");
+    const rules = { ...check.rules, evaluator: { on_error: { route: "unsorted" } } };
+    expect(outcomesOf({ type: "decision", rules })).toEqual(["nothing", "human_review", "unsorted"]);
+    const same = { ...check.rules, evaluator: { on_error: { route: "nothing" } } };
+    expect(outcomesOf({ type: "decision", rules: same })).toEqual(["nothing", "human_review"]);
+  });
+
   it("gives a bare step empty settings and routes on the way back", () => {
     const { nodes, edges } = stepsToGraph([{ id: "done", type: "end" }]);
     expect(graphToSteps(nodes, edges)).toEqual([{ id: "done", type: "end", config: {}, routes: {} }]);

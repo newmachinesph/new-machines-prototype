@@ -13,8 +13,10 @@ from app.models.runs import Run
 from app.models.studio import (
     AgentDraft,
     BuilderCheck,
+    CopyPackRequest,
     ImportedWorkflow,
     ImportWorkflowRequest,
+    PackCopy,
     PackDraft,
     Palette,
     SandboxRunRequest,
@@ -135,6 +137,21 @@ def validate_studio_pack(
     draft is checked as a new pack, so a saved pack's own name reads as taken."""
     _live(org_id, actor)
     return studio.validate_pack(actor, body, key)
+
+
+@router.post(
+    "/packs:copy",
+    operation_id="copyStudioPack",
+    response_model=PackCopy,
+    responses=conflicts("NOT_COPYABLE"),
+)
+def copy_studio_pack(org_id: str, body: CopyPackRequest, actor: CurrentActor) -> PackCopy:
+    """An unsaved copy of a pack to edit in the Studio: the platform's or one the org built. Nothing is
+    saved until the draft is created as a new pack. 404 for a pack the org cannot see; 409 NOT_COPYABLE for
+    another publisher's pack, which can be added but not copied; 422 NOT_EDITABLE for a pack the Studio
+    cannot open."""
+    _live(org_id, actor)
+    return studio.copy_pack(actor, body.source)
 
 
 @router.post("/workflow:import", operation_id="importStudioWorkflow", response_model=ImportedWorkflow)

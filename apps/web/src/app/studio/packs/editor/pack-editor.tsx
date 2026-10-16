@@ -10,7 +10,7 @@ import { Segmented, useToast } from "@/components/base";
 import { QueryState } from "@/components/query-state";
 import { Skeleton } from "@/components/skeleton";
 import { Button, ButtonLink, Callout, EmptyState, Section } from "@/components/ui";
-import type { BuilderIssue, PackDraft, Palette, StudioPack } from "@/lib/api/gen/types.gen";
+import type { BuilderIssue, PackCopy, PackDraft, Palette, StudioPack } from "@/lib/api/gen/types.gen";
 import { ApiError, toApiError } from "@/lib/api/errors";
 import { useErrorText } from "@/lib/api/use-error-text";
 import { blocksRequest, detailsIssues, type DetailsIssue, type EditorIssue } from "@/lib/builder/details";
@@ -22,6 +22,7 @@ import {
   useCreateStudioPack,
   useSaveStudioPack,
   useStudioPack,
+  useStudioPackCopy,
   useStudioPalette,
   useValidateStudioPack,
 } from "@/lib/queries/studio";
@@ -41,6 +42,8 @@ import { useMatches } from "./use-matches";
 import { YamlDialog } from "./yaml-dialog";
 
 const NO_ISSUES: ServerIssue[] = [];
+/** The statuses of a copy the API refuses on purpose: not found, not copyable, not editable. */
+const REFUSED_COPY = new Set([404, 409, 422]);
 // Tailwind's md: below it the canvas is left out and the panels stack.
 const CANVAS_QUERY = "(min-width: 48rem)";
 
@@ -57,14 +60,32 @@ function useStarter(): PackDraft {
   });
 }
 
-/** A new pack (no key) or the latest version of one the org built, in the workflow editor. */
-export function PackEditor({ packKey }: { packKey?: string }) {
+/** What a copy kept and could not carry over, above the editor that opened on it. */
+function CopyBanner({ copy }: { copy: PackCopy }) {
+  const t = useTranslations("studioPacks");
+  return (
+    <Callout tone="info" title={t("copyBanner", { name: copy.source.name })}>
+      <p>{t("copyKeeps")}</p>
+      {copy.issues.length ? (
+        <ul className="mt-2 list-disc pl-5">
+          {copy.issues.map((i) => (
+            <li key={`${i.path}:${i.message}`}>{i.message}</li>
+          ))}
+        </ul>
+      ) : null}
+    </Callout>
+  );
+}
+
+/** A new pack (no key), a copy of another (`from`), or the latest version of one the org built, in the editor. */
+export function PackEditor({ packKey, from }: { packKey?: string; from?: string }) {
   const t = useTranslations("studioPacks");
   const tEditor = useTranslations("studioEditor");
   const tStudio = useTranslations("studio");
   const canBuild = useCanBuild();
   const palette = useStudioPalette();
   const pack = useStudioPack(packKey);
+  const copy = useStudioPackCopy(packKey ? undefined : from);
   const starter = useStarter();
   const errorText = useErrorText();
   const toast = useToast();
@@ -90,6 +111,45 @@ export function PackEditor({ packKey }: { packKey?: string }) {
         <EmptyState action={back}>{tStudio("buildersOnly")}</EmptyState>
       </Section>
     );
+  if (!packKey && from) {
+    // A copy the API refuses (an unknown key, another publisher's pack, a pack the Studio cannot open) is a
+    // notice with the API's words; any other failure (offline, 5xx) goes to QueryState and its retry.
+    if (
+      copy.isError &&
+      copy.data === undefined &&
+      copy.error instanceof ApiError &&
+      REFUSED_COPY.has(copy.error.status)
+    )
+      return (
+        <Section>
+          <EmptyState
+            action={
+              <ButtonLink href="/app/marketplace" variant="secondary">
+                {t("backToMarketplace")}
+              </ButtonLink>
+            }
+          >
+            {errorText(copy.error)}
+          </EmptyState>
+        </Section>
+      );
+    return (
+      <QueryState query={copy} skeleton={skeleton}>
+        {(c) => (
+          <QueryState query={palette} skeleton={skeleton}>
+            {(p) => (
+              <>
+                <div className="mb-4">
+                  <CopyBanner copy={c} />
+                </div>
+                <Editor initial={c.draft} palette={p} />
+              </>
+            )}
+          </QueryState>
+        )}
+      </QueryState>
+    );
+  }
   if (!packKey)
     return (
       <QueryState query={palette} skeleton={skeleton}>

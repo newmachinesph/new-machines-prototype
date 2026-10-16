@@ -76,7 +76,16 @@ export type StepShape = { type: StepType; rules?: DecisionRules };
 export function outcomesOf(step: StepShape): string[] {
   if (step.type !== "decision") return [...ROUTES[step.type]];
   if (!step.rules) return [];
-  return [...new Set([...(step.rules.rules ?? []).map((r) => r.route), step.rules.default.route])];
+  const routes = [...(step.rules.rules ?? []).map((r) => r.route), step.rules.default.route];
+  const onError = evaluatorErrorRoute(step.rules);
+  return [...new Set(onError ? [...routes, onError] : routes)];
+}
+
+/** Where a decision's model step goes when it fails: the Studio never edits the evaluator, but it routes this. */
+function evaluatorErrorRoute(rules: DecisionRules): string | undefined {
+  const onError: unknown = (rules.evaluator as { on_error?: unknown } | undefined)?.on_error;
+  const route = typeof onError === "object" && onError !== null ? (onError as { route?: unknown }).route : undefined;
+  return typeof route === "string" && route !== "" ? route : undefined;
 }
 
 /** The first free id for a new step of `type`: review, then review_2, review_3 and so on. */

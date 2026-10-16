@@ -684,6 +684,16 @@ export type ConnectorEntry = {
 };
 
 /**
+ * CopyPackRequest
+ */
+export type CopyPackRequest = {
+    /**
+     * Source
+     */
+    source: string;
+};
+
+/**
  * CreatePackRequest
  */
 export type CreatePackRequest = {
@@ -895,6 +905,12 @@ export type DecisionRules = {
      */
     rules?: Array<DecisionRule>;
     default: DecisionDefault;
+    /**
+     * Evaluator
+     */
+    evaluator?: {
+        [key: string]: unknown;
+    };
 };
 
 /**
@@ -2704,6 +2720,10 @@ export type Pack = {
      */
     builtByTeam?: boolean;
     /**
+     * Copyable
+     */
+    copyable?: boolean;
+    /**
      * Listing
      */
     listing?: MarketplaceListing;
@@ -2739,6 +2759,38 @@ export type PackConnectorInput = {
      * Access
      */
     access: 'read' | 'write (approval)' | 'write';
+};
+
+/**
+ * PackCopy
+ *
+ * An unsaved draft of a platform pack or of the org's own, to edit and save as a new pack.
+ */
+export type PackCopy = {
+    draft: PackDraft;
+    /**
+     * Issues
+     */
+    issues: Array<BuilderIssue>;
+    source: PackCopySource;
+};
+
+/**
+ * PackCopySource
+ */
+export type PackCopySource = {
+    /**
+     * Key
+     */
+    key: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Version
+     */
+    version: number;
 };
 
 /**
@@ -7594,6 +7646,52 @@ export type ValidateStudioPackResponses = {
 };
 
 export type ValidateStudioPackResponse = ValidateStudioPackResponses[keyof ValidateStudioPackResponses];
+
+export type CopyStudioPackData = {
+    body: CopyPackRequest;
+    path: {
+        /**
+         * Org Id
+         */
+        org_id: string;
+    };
+    query?: never;
+    url: '/v1/organizations/{org_id}/studio/packs:copy';
+};
+
+export type CopyStudioPackErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict (NOT_COPYABLE).
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type CopyStudioPackError = CopyStudioPackErrors[keyof CopyStudioPackErrors];
+
+export type CopyStudioPackResponses = {
+    /**
+     * Successful Response
+     */
+    200: PackCopy;
+};
+
+export type CopyStudioPackResponse = CopyStudioPackResponses[keyof CopyStudioPackResponses];
 
 export type ImportStudioWorkflowData = {
     body: ImportWorkflowRequest;

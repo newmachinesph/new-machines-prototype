@@ -26,6 +26,7 @@ import { useIsLive } from "@/lib/queries/me";
 import { shownVersion } from "@/lib/shown-version";
 import { useFormat } from "@/lib/use-format";
 import { useCapabilityLabel } from "@/app/app/agents/capability-label";
+import { useCanBuild } from "@/app/studio/can-build";
 import { usePerRunPrice } from "../per-run";
 import { SandboxTrial, TRIAL_ID } from "./sandbox-trial";
 
@@ -72,6 +73,7 @@ export function PackPage({ slug }: { slug: string }) {
   const agentsQuery = useAgents();
   const agentById = useAgentById();
   const live = useIsLive();
+  const canBuild = useCanBuild();
   if (packQuery.error instanceof ApiError && packQuery.error.status === 404) notFound();
 
   return (
@@ -80,6 +82,12 @@ export function PackPage({ slug }: { slug: string }) {
         <QueryState query={agentsQuery} skeleton={<Skeleton className="h-96" />}>
           {() => {
             const passport = p.passport;
+            const editCopy =
+              live && canBuild && p.copyable ? (
+                <ButtonLink href={`/studio/packs/new?from=${encodeURIComponent(p.slug)}`} variant="secondary">
+                  {t("editCopy")}
+                </ButtonLink>
+              ) : null;
             return (
               <>
                 <title>{`${p.name} | New Machines`}</title>
@@ -89,6 +97,7 @@ export function PackPage({ slug }: { slug: string }) {
                   actions={
                     p.installed ? (
                       <>
+                        {editCopy}
                         {live ? (
                           <ButtonLink href={`/app/marketplace/${p.slug}/install`} variant="secondary">
                             {t("packSettings")}
@@ -101,6 +110,7 @@ export function PackPage({ slug }: { slug: string }) {
                     ) : (
                       // One thing to do (add), and the no-risk way to look first: the trial further down the page.
                       <>
+                        {editCopy}
                         <ButtonLink href={`#${TRIAL_ID}`} variant="secondary">
                           {t("tryFirst")}
                         </ButtonLink>

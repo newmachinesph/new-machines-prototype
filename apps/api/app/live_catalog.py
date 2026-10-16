@@ -219,6 +219,7 @@ def pack_of(
         per_run_cap=Money(amount_minor=cap_minor) if installed and cap_minor is not None else None,
         reviewer_pool=reviewer_pool if installed else None,
         built_by_team=True if team else None,
+        copyable=True if team or (row is None and not owners.is_reserved(version.key)) else None,
         listing=market_listing(
             row,
             "run",

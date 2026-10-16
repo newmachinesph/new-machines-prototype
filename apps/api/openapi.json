@@ -5064,6 +5064,104 @@
         }
       }
     },
+    "/v1/organizations/{org_id}/studio/packs:copy": {
+      "post": {
+        "tags": [
+          "studio"
+        ],
+        "summary": "Copy Studio Pack",
+        "description": "An unsaved copy of a pack to edit in the Studio: the platform's or one the org built. Nothing is\nsaved until the draft is created as a new pack. 404 for a pack the org cannot see; 409 NOT_COPYABLE for\nanother publisher's pack, which can be added but not copied; 422 NOT_EDITABLE for a pack the Studio\ncannot open.",
+        "operationId": "copyStudioPack",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Org Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CopyPackRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PackCopy"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict (NOT_COPYABLE).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/organizations/{org_id}/studio/workflow:import": {
       "post": {
         "tags": [
@@ -13041,6 +13139,22 @@
         ],
         "title": "ConnectorEntry"
       },
+      "CopyPackRequest": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Source"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source"
+        ],
+        "title": "CopyPackRequest"
+      },
       "CreatePackRequest": {
         "properties": {
           "name": {
@@ -13418,6 +13532,11 @@
           },
           "default": {
             "$ref": "#/components/schemas/DecisionDefault"
+          },
+          "evaluator": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Evaluator"
           }
         },
         "additionalProperties": false,
@@ -16115,6 +16234,10 @@
             "type": "boolean",
             "title": "Builtbyteam"
           },
+          "copyable": {
+            "type": "boolean",
+            "title": "Copyable"
+          },
           "listing": {
             "$ref": "#/components/schemas/MarketplaceListing",
             "title": "Listing"
@@ -16192,6 +16315,54 @@
           "access"
         ],
         "title": "PackConnectorInput"
+      },
+      "PackCopy": {
+        "properties": {
+          "draft": {
+            "$ref": "#/components/schemas/PackDraft"
+          },
+          "issues": {
+            "items": {
+              "$ref": "#/components/schemas/BuilderIssue"
+            },
+            "type": "array",
+            "title": "Issues"
+          },
+          "source": {
+            "$ref": "#/components/schemas/PackCopySource"
+          }
+        },
+        "type": "object",
+        "required": [
+          "draft",
+          "issues",
+          "source"
+        ],
+        "title": "PackCopy",
+        "description": "An unsaved draft of a platform pack or of the org's own, to edit and save as a new pack."
+      },
+      "PackCopySource": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "name",
+          "version"
+        ],
+        "title": "PackCopySource"
       },
       "PackCount": {
         "properties": {

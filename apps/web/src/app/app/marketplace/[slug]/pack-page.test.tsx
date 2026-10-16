@@ -43,8 +43,16 @@ const agents = [
     capabilities: [],
   },
 ];
-const state = vi.hoisted(() => ({ installed: false, live: false, extra: {} as Record<string, unknown> }));
-vi.mock("@/lib/queries/me", () => ({ useIsLive: () => state.live }));
+const state = vi.hoisted(() => ({
+  installed: false,
+  live: false,
+  role: "owner",
+  extra: {} as Record<string, unknown>,
+}));
+vi.mock("@/lib/queries/me", () => ({
+  useIsLive: () => state.live,
+  useMe: () => ({ data: { role: state.role } }),
+}));
 vi.mock("@/lib/queries/catalog", () => ({
   usePack: () => ok({ ...pack, installed: state.installed, ...state.extra }),
   useAgents: () => ok(agents),
@@ -54,6 +62,7 @@ vi.mock("@/lib/queries/catalog", () => ({
 afterEach(() => {
   state.installed = false;
   state.live = false;
+  state.role = "owner";
   state.extra = {};
 });
 
@@ -138,5 +147,32 @@ describe("PackPage pack settings", () => {
     state.live = false;
     renderWithIntl(<PackPage slug="order-payment-reconciliation" />);
     expect(screen.queryByRole("link", { name: "Pack settings" })).toBeNull();
+  });
+});
+
+describe("PackPage edit a copy", () => {
+  const editCopy = () => screen.queryByRole("link", { name: "Edit a copy in Studio" });
+
+  it("links a copyable pack to a Studio copy for a builder in a live workspace", () => {
+    state.live = true;
+    state.extra = { copyable: true };
+    renderWithIntl(<PackPage slug="order-payment-reconciliation" />);
+    expect(editCopy()).toHaveAttribute("href", "/studio/packs/new?from=order-payment-reconciliation");
+  });
+
+  it("offers no copy when copyable is missing, the user cannot build, or the workspace is not live", () => {
+    state.live = true;
+    const { unmount } = renderWithIntl(<PackPage slug="order-payment-reconciliation" />);
+    expect(editCopy()).toBeNull();
+    unmount();
+    state.extra = { copyable: true };
+    state.role = "member";
+    const second = renderWithIntl(<PackPage slug="order-payment-reconciliation" />);
+    expect(editCopy()).toBeNull();
+    second.unmount();
+    state.role = "owner";
+    state.live = false;
+    renderWithIntl(<PackPage slug="order-payment-reconciliation" />);
+    expect(editCopy()).toBeNull();
   });
 });

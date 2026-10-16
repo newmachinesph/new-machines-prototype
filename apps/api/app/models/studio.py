@@ -88,6 +88,9 @@ class DecisionRules(RequestModel):
     question: str = Field(min_length=1, max_length=200)
     rules: list[DecisionRule] = Field(default_factory=list, max_length=20)
     default: DecisionDefault
+    # The decision model's setup of a ready-made decision, carried through unchanged: the Studio does not edit
+    # it, and a draft may only hold one that is the platform's or the org's own.
+    evaluator: dict[str, Any] | Opt = None
 
 
 class StepDraft(RequestModel):
@@ -197,6 +200,24 @@ class ImportedWorkflow(Model):
     entry_step: str
     steps: list[StepDraft]
     issues: list[BuilderIssue]
+
+
+class CopyPackRequest(RequestModel):
+    source: str = Field(min_length=1, max_length=200)
+
+
+class PackCopySource(Model):
+    key: str
+    name: str
+    version: int
+
+
+class PackCopy(Model):
+    """An unsaved draft of a platform pack or of the org's own, to edit and save as a new pack."""
+
+    draft: PackDraft
+    issues: list[BuilderIssue]
+    source: PackCopySource
 
 
 class PaletteAgent(Model):

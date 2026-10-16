@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { PackDraft } from "@/lib/api/gen/types.gen";
 import { edgeIdOf } from "./graph";
 import { createEditorStore, draftOf, startCount } from "./store";
 import { OVERDUE, PALETTE } from "./test-fixtures";
@@ -122,6 +123,34 @@ describe("the editor store", () => {
     store.getState().updateStep("check", { rules: { ...rules, rules: [] } });
     expect(edge(store, "check", "none_due")).toBeUndefined();
     expect(edge(store, "check", "human_review")?.target).toBe("review");
+  });
+
+  it("keeps a decision's model step and its failure route when a rule is edited", () => {
+    const check = OVERDUE.steps.find((s) => s.id === "check");
+    const base = check?.rules;
+    if (!base) throw new Error("fixture");
+    const evaluator = { model: "x", on_error: { route: "unsorted" } };
+    const draft = {
+      ...OVERDUE,
+      steps: OVERDUE.steps.map((s) =>
+        s.id === "check"
+          ? {
+              ...s,
+              rules: { ...base, question: base.question ?? "Q?", evaluator },
+              routes: { ...s.routes, unsorted: "review" },
+            }
+          : s,
+      ) as PackDraft["steps"],
+    };
+    const store = createEditorStore({ draft, palette: PALETTE });
+    expect(edge(store, "check", "unsorted")?.target).toBe("review");
+    const rules = store.getState().nodes.find((n) => n.id === "check")?.data.rules;
+    if (!rules) throw new Error("rules");
+    store.getState().updateStep("check", { rules: { ...rules, question: "Changed?" } });
+    expect(edge(store, "check", "unsorted")?.target).toBe("review");
+    const kept = draftOf(store.getState()).steps.find((s) => s.id === "check");
+    expect(kept?.rules?.evaluator).toEqual(evaluator);
+    expect(kept?.routes).toMatchObject({ unsorted: "review" });
   });
 
   it("keeps edges by name when a decision's routes are reordered", () => {

@@ -2,6 +2,7 @@
 
 import { type QueryClient, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as q from "@/lib/api/gen/@tanstack/react-query.gen";
+import { copyStudioPack } from "@/lib/api/gen/sdk.gen";
 import { byOperation, orgScoped, useIsLive } from "./me";
 import { useOrgPath } from "./org";
 
@@ -38,6 +39,29 @@ export function useStudioPack(key: string | undefined) {
   const { me, orgId, enabled } = useStudioPath();
   const options = q.getStudioPackOptions({ path: { org_id: orgId, key: key ?? "" } });
   return orgScoped(me, useQuery({ ...options, enabled: enabled && key !== undefined }));
+}
+
+/** An unsaved copy of a ready-made pack or the org's own, to open in the editor. Read once: it is a draft. */
+export function useStudioPackCopy(source: string | undefined) {
+  const { me, orgId, enabled } = useStudioPath();
+  return orgScoped(
+    me,
+    useQuery({
+      queryKey: ["copyStudioPack", orgId, source],
+      queryFn: async () => {
+        const { data } = await copyStudioPack({
+          path: { org_id: orgId },
+          body: { source: source ?? "" },
+          throwOnError: true,
+        });
+        return data;
+      },
+      enabled: enabled && !!source,
+      staleTime: Infinity,
+      gcTime: 0,
+      retry: false,
+    }),
+  );
 }
 
 /** The saved version's workflow.yaml; fetched only while the YAML dialog shows it. */
