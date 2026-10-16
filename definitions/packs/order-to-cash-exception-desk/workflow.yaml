@@ -34,13 +34,13 @@ nodes:
       limit: 10
     routes: {next: orders}
 
-  # An order keeps the same id in every system, so each read covers the window and the 60 days before it:
+  # An order keeps the same id in every section of the business app, so each read covers the window and the 60 days before it:
   # an older invoice that is still open, or an older order still in the warehouse, is checked too.
   - id: orders
     type: connector
     version: "1"
     config:
-      tool: ecommerce.list_orders
+      tool: custom-business-app.list_store_orders
       args:
         since: =timestamp(input.since + "T00:00:00Z") - duration("1440h")
         until: =input.until + "T23:59:59Z"
@@ -51,7 +51,7 @@ nodes:
     type: connector
     version: "1"
     config:
-      tool: ecommerce.list_payments
+      tool: custom-business-app.list_store_payments
       args:
         since: =timestamp(input.since + "T00:00:00Z") - duration("1440h")
         until: =input.until + "T23:59:59Z"
@@ -61,7 +61,7 @@ nodes:
     type: connector
     version: "1"
     config:
-      tool: accounting.list_sales_orders
+      tool: custom-business-app.list_sales_orders
       args:
         since: =timestamp(input.since + "T00:00:00Z") - duration("1440h")
         until: =input.until + "T23:59:59Z"
@@ -71,7 +71,7 @@ nodes:
     type: connector
     version: "1"
     config:
-      tool: accounting.list_customers
+      tool: custom-business-app.list_customers
       args: {}
     routes: {next: served, denied: failed, error: failed}
 
@@ -79,7 +79,7 @@ nodes:
     type: connector
     version: "1"
     config:
-      tool: warehouse.list_served_orders
+      tool: custom-business-app.list_served_orders
       args:
         since: =timestamp(input.since + "T00:00:00Z") - duration("1440h")
         until: =input.until + "T23:59:59Z"
@@ -89,7 +89,7 @@ nodes:
     type: connector
     version: "1"
     config:
-      tool: salesapp.list_sales
+      tool: custom-business-app.list_sales
       args:
         since: =timestamp(input.since + "T00:00:00Z") - duration("1440h")
         until: =input.until + "T23:59:59Z"
@@ -101,7 +101,7 @@ nodes:
     config:
       agent: o2c-triage-agent
       task: >-
-        Follow every order across the store, the ledger, the warehouse and the sales app, list each break as
+        Follow every order across the business app's store, ledger, warehouse and sales app sections, list each break as
         an exception with the evidence from each system and the action the policy in rules calls for, and
         count the orders that agree. Days are counted up to as_of; an unpaid invoice is chased only
         grace_days after its terms. Submit the result in the required shape.
@@ -162,7 +162,7 @@ nodes:
         string(nodes.triage.output.totals.payment_pending_confirmation.count +
         nodes.triage.output.totals.disputed.count) + ' finance ' +
         (nodes.triage.output.totals.payment_pending_confirmation.count + nodes.triage.output.totals.disputed.count
-        == 1 ? 'note' : 'notes') + ' in Accounting (' +
+        == 1 ? 'note' : 'notes') + ' in the ledger (' +
         string(nodes.triage.output.totals.payment_pending_confirmation.count) + ' ' +
         (nodes.triage.output.totals.payment_pending_confirmation.count == 1 ? 'payment' : 'payments') +
         ' pending confirmation, ₱' +
@@ -201,7 +201,7 @@ nodes:
     type: connector
     version: "1"
     config:
-      tool: accounting.add_order_note
+      tool: custom-business-app.add_ledger_note
       for_each: >-
         =nodes.triage.output.exceptions.filter(e, e.recommended_action == 'confirm_payment' ||
         e.recommended_action == 'escalate_finance')
@@ -217,7 +217,7 @@ nodes:
     type: connector
     version: "1"
     config:
-      tool: warehouse.add_order_note
+      tool: custom-business-app.add_warehouse_note
       for_each: =nodes.triage.output.exceptions.filter(e, e.recommended_action == 'nudge_warehouse')
       args:
         order_id: =item.order_id

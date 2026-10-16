@@ -7,7 +7,7 @@ publisher_id: new-machines-labs
 publisher_name: New Machines Labs
 name: Order-to-Cash Report Agent
 summary: >-
-  Turns the exception triage, the drafts and the approval into the exception desk report: what broke across the four systems, what was drafted or posted, or that nothing was sent, with one row per exception.
+  Turns the exception triage, the drafts and the approval into the exception desk report: what broke across the business app's sections, what was drafted or posted, or that nothing was sent, with one row per exception.
 capabilities: [finance.order_to_cash_report]
 runtime:
   adapter: google_adk

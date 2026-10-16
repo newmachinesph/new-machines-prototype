@@ -19,7 +19,7 @@ _LABELS = {  # kind -> (one, many)
     "disputed": ("disputed invoice", "disputed invoices"),
 }
 _ACTIONS = {
-    "confirm_payment": "confirm the payment in accounting",
+    "confirm_payment": "confirm the payment in the ledger",
     "escalate_finance": "flag for finance",
     "nudge_warehouse": "warehouse note",
     "none": "watch: inside the warehouse window",
@@ -87,7 +87,7 @@ def _classify(so: dict, joined: dict, as_of: date, grace: int) -> tuple | None:
     terms_text = f"{terms}-day terms" if terms else "payment on delivery"
     if balance > 0 and any(has_word(n, *_DISPUTE_WORDS) for n in customer.get("notes") or []):
         evidence = (
-            f"Accounting invoice {invoice} ({terms_text}) is {past_due} days past due with a balance of "
+            f"Ledger invoice {invoice} ({terms_text}) is {past_due} days past due with a balance of "
             f"{pesos(balance)}, but the customer's account notes record a dispute and a pending credit memo: "
             "no reminder."
         )
@@ -95,14 +95,14 @@ def _classify(so: dict, joined: dict, as_of: date, grace: int) -> tuple | None:
     if balance > 0 and pending:
         p = pending[0]
         evidence = (
-            f"Accounting invoice {invoice} shows a balance of {pesos(balance)}, but the store has a pending "
+            f"Ledger invoice {invoice} shows a balance of {pesos(balance)}, but the store has a pending "
             f"{p.get('mode_of_payment') or 'store'} payment of {pesos(_minor(p.get('amount')))} created on "
-            f"{day(p.get('created_at'))}: confirm it in accounting before any reminder."
+            f"{day(p.get('created_at'))}: confirm it in the ledger before any reminder."
         )
         return "payment_pending_confirmation", "confirm_payment", evidence, balance, invoice_day
     if delivered and balance > 0 and age > terms + grace:
         evidence = (
-            f"Warehouse delivered {oid} on {delivered_on or 'an unrecorded day'} and Accounting invoice "
+            f"The warehouse delivered {oid} on {delivered_on or 'an unrecorded day'} and ledger invoice "
             f"{invoice} ({terms_text}) still shows the full balance of {pesos(balance)}, {past_due} days "
             f"past due and beyond the {grace}-day grace."
         )
@@ -116,9 +116,9 @@ def _classify(so: dict, joined: dict, as_of: date, grace: int) -> tuple | None:
         paid_on = day(confirmed.get("payment_date")) or order_day
         method = confirmed.get("mode_of_payment") or order.get("payment_method") or "a confirmed payment"
         working = _working_days(date.fromisoformat(order_day), as_of)
-        where = "Warehouse has no served order" if not served else "Warehouse has not released it"
+        where = "the warehouse has no served order" if not served else "the warehouse has not released it"
         evidence = (
-            f"The store shows {oid} paid on {paid_on} ({method}, confirmed) and Accounting shows a zero "
+            f"The store shows {oid} paid on {paid_on} ({method}, confirmed) and the ledger shows a zero "
             f"balance, but {where} after {_plural(working, 'working day')}."
         )
         action = "nudge_warehouse" if working > WAREHOUSE_WORKING_DAYS else "none"

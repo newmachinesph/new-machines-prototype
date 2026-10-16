@@ -24,37 +24,37 @@ REAL_PHONE = "+63 917 123 4567"
 REAL_URL = "https://firebasestorage.googleapis.com/v0/b/app/o/invoice.jpg"
 # Each fixture file, the key its tool returns and the exact field set of every row (the connector contract).
 CONTRACT = {
-    "ecommerce/list_orders.json": (
+    "custom-business-app/list_store_orders.json": (
         "orders",
         {"id", "reference", "customer_id", "customer_name", "order_date", "status", "paid", "scanned_out",
          "out_for_delivery_at", "delivered_at", "grand_total", "currency", "seller_email", "payment_method"},
     ),
-    "ecommerce/list_payments.json": (
+    "custom-business-app/list_store_payments.json": (
         "payments",
         {"id", "order_id", "customer_id", "amount", "currency", "mode_of_payment", "status", "payment_date",
          "created_at", "reference"},
     ),
-    "accounting/list_sales_orders.json": (
+    "custom-business-app/list_sales_orders.json": (
         "sales_orders",
         {"id", "invoice_number", "invoice_date", "customer_id", "customer_name", "payment_terms_days",
          "account_manager", "account_manager_email", "grand_total", "total_payment_received", "balance",
          "currency", "paid", "delivered", "delivery_date", "is_from_ecommerce", "created_at"},
     ),
-    "accounting/list_customers.json": (
+    "custom-business-app/list_customers.json": (
         "customers",
         {"id", "name", "email", "phone", "payment_terms_days", "balance_current", "balance_overdue",
          "account_manager", "account_manager_email", "notes"},
     ),
-    "accounting/list_customer_payments.json": (
+    "custom-business-app/list_customer_payments.json": (
         "payments",
         {"id", "order_id", "customer_id", "amount", "currency", "method", "date"},
     ),
-    "warehouse/list_served_orders.json": (
+    "custom-business-app/list_served_orders.json": (
         "served_orders",
         {"id", "customer_name", "created_at", "released", "release_date", "delivered", "delivered_at",
          "delivery_count", "notes"},
     ),
-    "salesapp/list_sales.json": (
+    "custom-business-app/list_sales.json": (
         "sales",
         {"id", "seller_name", "seller_email", "customer_id", "customer_name", "date", "total", "currency",
          "paid", "delivered", "closed"},
@@ -512,26 +512,49 @@ def test_fixtures_follow_the_contract(planted, tmp_path):
         raw = path.read_bytes()
         assert b"\r" not in raw and raw.endswith(b"}\n") and not raw.endswith(b"\n\n"), path
     assert (
-        json.loads((tmp_path / "accounting" / "list_customers.json").read_text(encoding="utf-8"))
-        == built["accounting/list_customers.json"]
+        json.loads((tmp_path / "custom-business-app" / "list_customers.json").read_text(encoding="utf-8"))
+        == built["custom-business-app/list_customers.json"]
     )
+
+
+def test_write_removes_stale_fixture_dirs_only_inside_the_sandbox(planted, tmp_path):
+    sandbox = tmp_path / "sandbox"
+    for stale in ("ecommerce", "accounting", "warehouse", "salesapp", "erp"):
+        (sandbox / stale).mkdir(parents=True)
+        (sandbox / stale / "old.json").write_text("{}", encoding="utf-8")
+    (sandbox / "custom-business-app").mkdir()
+    (sandbox / "custom-business-app" / "add_order_note.json").write_text(
+        '{"ok": true}', encoding="utf-8"
+    )  # pack-owned
+    (tmp_path / "ecommerce").mkdir()  # outside the sandbox: never touched
+    fixtures.write(fixtures.build(planted, AS_OF), sandbox)
+    assert sorted(p.name for p in sandbox.iterdir()) == ["custom-business-app"]
+    assert (sandbox / "custom-business-app" / "add_order_note.json").read_text(
+        encoding="utf-8"
+    ) == '{"ok": true}'
+    assert (sandbox / "custom-business-app" / "list_store_orders.json").is_file()
+    assert (tmp_path / "ecommerce").is_dir()
 
 
 def test_fixtures_carry_the_planted_cases(planted):
     built = fixtures.build(planted, AS_OF)
-    orders = by_id(built["ecommerce/list_orders.json"]["orders"], "id")
+    orders = by_id(built["custom-business-app/list_store_orders.json"]["orders"], "id")
     assert set(orders) == {c["id"] for c in plant.CASES}
     assert orders["DEMO-PNS-1"]["paid"] is True and orders["DEMO-PNS-1"]["delivered_at"] is None
-    served = {s["id"] for s in built["warehouse/list_served_orders.json"]["served_orders"]}
+    served = {s["id"] for s in built["custom-business-app/list_served_orders.json"]["served_orders"]}
     assert not any(oid.startswith("DEMO-PNS") for oid in served) and "DEMO-SNP-1" in served
-    acct = by_id(built["accounting/list_sales_orders.json"]["sales_orders"], "id")
+    acct = by_id(built["custom-business-app/list_sales_orders.json"]["sales_orders"], "id")
     assert acct["DEMO-SNP-1"]["balance"] == 40252.80 and acct["DEMO-SNP-1"]["payment_terms_days"] == 30
     assert acct["DEMO-SNP-1"]["invoice_date"] == "2026-09-01T08:00:00Z"
     assert acct["DEMO-SNP-1"]["account_manager"] and acct["DEMO-SNP-1"]["account_manager_email"]
-    customers = by_id(built["accounting/list_customers.json"]["customers"], "id")
+    customers = by_id(built["custom-business-app/list_customers.json"]["customers"], "id")
     assert customers["DEMO-CUST-DSP-1"]["name"] == "Marisol Dizon - Bayview Catering"
     assert customers["DEMO-CUST-DSP-1"]["notes"] == [plant.DISPUTE_NOTE]
-    pending = [p for p in built["ecommerce/list_payments.json"]["payments"] if p["status"] == "pending"]
+    pending = [
+        p
+        for p in built["custom-business-app/list_store_payments.json"]["payments"]
+        if p["status"] == "pending"
+    ]
     assert [p["order_id"] for p in pending] == ["DEMO-PPC-1"]
 
 
@@ -556,25 +579,33 @@ def test_fixtures_keep_a_spread_of_clean_orders_present_in_all_four_systems(plan
             {"_id": f"cpay-{day}", "orderReferenceOfPayment": f"real-{day}", "customer": {"_id": f"c{day}"}}
         )
     built = fixtures.build(data, AS_OF, clean=25)
-    real = [o for o in built["ecommerce/list_orders.json"]["orders"] if o["id"].startswith("real-")]
+    real = [
+        o
+        for o in built["custom-business-app/list_store_orders.json"]["orders"]
+        if o["id"].startswith("real-")
+    ]
     assert len(real) == 20  # 21 of the 31 in-window days exist everywhere; spread keeps 20 of them
     days = sorted(int(o["id"].removeprefix("real-")) for o in real)
     assert days[-1] <= 30 and all(day % 3 for day in days)
-    customers = {c["id"] for c in built["accounting/list_customers.json"]["customers"]}
+    customers = {c["id"] for c in built["custom-business-app/list_customers.json"]["customers"]}
     assert {o["customer_id"] for o in real} <= customers
     assert_ids_agree_across_systems(built)
 
 
 def assert_ids_agree_across_systems(built: dict[str, dict]) -> None:
-    orders = {o["id"] for o in built["ecommerce/list_orders.json"]["orders"]}
-    accounting = {o["id"] for o in built["accounting/list_sales_orders.json"]["sales_orders"]}
-    sales = {s["id"] for s in built["salesapp/list_sales.json"]["sales"]}
-    served = {s["id"] for s in built["warehouse/list_served_orders.json"]["served_orders"]}
+    orders = {o["id"] for o in built["custom-business-app/list_store_orders.json"]["orders"]}
+    accounting = {o["id"] for o in built["custom-business-app/list_sales_orders.json"]["sales_orders"]}
+    sales = {s["id"] for s in built["custom-business-app/list_sales.json"]["sales"]}
+    served = {s["id"] for s in built["custom-business-app/list_served_orders.json"]["served_orders"]}
     assert orders == accounting == sales
     # Paid-but-not-shipped is the one planted case with no served order, by design.
     assert served == orders - {c["id"] for c in plant.CASES if c["kind"] == "pns"}
-    assert {p["order_id"] for p in built["ecommerce/list_payments.json"]["payments"]} <= orders
-    assert {p["order_id"] for p in built["accounting/list_customer_payments.json"]["payments"]} <= orders
+    assert {
+        p["order_id"] for p in built["custom-business-app/list_store_payments.json"]["payments"]
+    } <= orders
+    assert {
+        p["order_id"] for p in built["custom-business-app/list_customer_payments.json"]["payments"]
+    } <= orders
 
 
 def test_fixture_ids_agree_across_systems_for_planted_data(planted):

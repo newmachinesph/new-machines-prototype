@@ -8,8 +8,8 @@ function: finance-ops
 industries: [manufacturing, retail-commerce]
 outcome: Every order followed from store to warehouse to ledger, with each break found and acted on after one approval.
 description: >-
-  Reads your orders, payments, invoices, deliveries and sales from four systems and follows each order
-  across them. It finds payments waiting to be confirmed, orders shipped but not paid past their terms,
+  Reads your orders, payments, invoices, deliveries and sales from the four sections of your business app
+  (store, ledger, warehouse and sales app) and follows each order across them. It finds payments waiting to be confirmed, orders shipped but not paid past their terms,
   orders paid but not shipped and disputed invoices, and applies your collection policy to each. It drafts a
   collection reminder from each account manager for the largest overdue balances, then asks you once. On
   your approval it saves the reminders as Gmail drafts, flags the pending payments and disputes for finance
@@ -19,7 +19,7 @@ price_note: "About $0.80 to $3.00 of AI work per run. No reviewer time: you appr
 workflow: order-to-cash-exception-desk
 contract: order-to-cash-exception-desk
 agents: [o2c-triage-agent, collections-writer, o2c-report-agent]
-connectors: [ecommerce, accounting, warehouse, salesapp, gmail]
+connectors: [custom-business-app, gmail]
 human_review: One approval before anything is written. If it is not granted, the run ends with the report and nothing is sent or posted.
 # How the run page shows the result. Strings starting with "=" are CEL over {deliverable, mocked} (the end
 # node's deliverable, and whether any tool call used sandbox data; item fields also see `item`).

@@ -1,9 +1,9 @@
-"""Order-to-Cash Exception Desk: definitions, the planted sandbox cases across the four systems, the fake
-triage, writer and report agents, the decision, the one approval, and a sandbox run.
+"""Order-to-Cash Exception Desk: definitions, the planted sandbox cases across the business app's sections,
+the fake triage, writer and report agents, the decision, the one approval, and a sandbox run.
 
-The pack's sandbox fixtures are generated from the anonymised export (scripts/demo_data), so the checks
-read ids, dates and amounts from the fixture files; only the planted cases' amounts (DEMO_CASES.md) and the
-sellers are fixed."""
+The pack's sandbox fixtures (sandbox/custom-business-app/<tool>.json) are generated from the anonymised export
+(scripts/demo_data), so the checks read ids, dates and amounts from the fixture files; only the planted
+cases' amounts (DEMO_CASES.md) and the sellers are fixed."""
 
 from datetime import date
 
@@ -42,23 +42,23 @@ ACTIONS = {
     "disputed": "escalate_finance",
 }
 READS = [
-    "ecommerce.list_orders",
-    "ecommerce.list_payments",
-    "accounting.list_sales_orders",
-    "accounting.list_customers",
-    "warehouse.list_served_orders",
-    "salesapp.list_sales",
+    "custom-business-app.list_store_orders",
+    "custom-business-app.list_store_payments",
+    "custom-business-app.list_sales_orders",
+    "custom-business-app.list_customers",
+    "custom-business-app.list_served_orders",
+    "custom-business-app.list_sales",
 ]
 
 
 def _inputs() -> dict:
     return {
-        "orders": sp.sandbox(PACK, "ecommerce", "list_orders"),
-        "payments": sp.sandbox(PACK, "ecommerce", "list_payments"),
-        "sales_orders": sp.sandbox(PACK, "accounting", "list_sales_orders"),
-        "customers": sp.sandbox(PACK, "accounting", "list_customers"),
-        "served_orders": sp.sandbox(PACK, "warehouse", "list_served_orders"),
-        "sales": sp.sandbox(PACK, "salesapp", "list_sales"),
+        "orders": sp.sandbox(PACK, "custom-business-app", "list_store_orders"),
+        "payments": sp.sandbox(PACK, "custom-business-app", "list_store_payments"),
+        "sales_orders": sp.sandbox(PACK, "custom-business-app", "list_sales_orders"),
+        "customers": sp.sandbox(PACK, "custom-business-app", "list_customers"),
+        "served_orders": sp.sandbox(PACK, "custom-business-app", "list_served_orders"),
+        "sales": sp.sandbox(PACK, "custom-business-app", "list_sales"),
         "as_of": AS_OF,
         "grace_days": 7,
         "rules": [],
@@ -125,7 +125,7 @@ def test_the_pack_and_its_input():
     pack = sp.body("pack", PACK)
     assert (pack["function"], pack["risk_class"]) == ("finance-ops", "medium")
     assert pack["agents"] == ["o2c-triage-agent", "collections-writer", "o2c-report-agent"]
-    assert pack["connectors"] == ["ecommerce", "accounting", "warehouse", "salesapp", "gmail"]
+    assert pack["connectors"] == ["custom-business-app", "gmail"]
     schema = sp.body("schema", f"{PACK}/input")
     defaults = {k: v.get("default") for k, v in schema["properties"].items()}
     assert defaults == {
@@ -151,7 +151,7 @@ def test_one_approval_unlocks_the_drafts_and_the_notes_after_them():
     assert nodes["ledger_notes"]["routes"]["ok"] == "warehouse_notes"
     assert nodes["warehouse_notes"]["routes"]["ok"] == "report"
     assert sp.writes_without_approval(PACK) == []
-    for key in ("accounting", "warehouse", "gmail"):
+    for key in ("custom-business-app", "gmail"):
         assert sp.body("connector", key)["defaults"]["write"] == "require_approval"
 
 
@@ -230,7 +230,7 @@ def test_the_account_manager_falls_back_to_the_sales_app_seller():
     sales = {s["id"]: s for s in inputs["sales"]["sales"]}
     triage = _triage(inputs)
     unrecorded = [e for e in triage["exceptions"] if customers[e["customer_id"]]["account_manager"] is None]
-    assert unrecorded  # accounting rarely records one, so the fallback is exercised by the fixtures
+    assert unrecorded  # the ledger rarely records one, so the fallback is exercised by the fixtures
     for e in unrecorded:
         sale = sales[e["order_id"]]
         assert (e["account_manager"], e["account_manager_email"]) == (
@@ -332,7 +332,7 @@ def test_the_approval_says_what_it_sends_and_posts_in_pesos():
     reminders, notes = len(drafts["drafts"]), ppc["count"] + dsp["count"]
     expected = (
         f"Save {reminders} collection reminders as Gmail drafts for {snp['count']} shipped-but-not-paid "
-        f"invoices ({_pesos(snp['amount_minor'])} outstanding); post {notes} finance notes in Accounting "
+        f"invoices ({_pesos(snp['amount_minor'])} outstanding); post {notes} finance notes in the ledger "
         f"({ppc['count']} payment pending confirmation, {_pesos(ppc['amount_minor'])}; {dsp['count']} "
         f"disputed, {_pesos(dsp['amount_minor'])}) and {nudges} warehouse nudges ({pns['count']} paid orders "
         f"waiting, {_pesos(pns['amount_minor'])}). {triage['sign_off_note']}"
@@ -441,8 +441,8 @@ def test_a_sandbox_run_triages_approves_once_and_writes_everything(runtime_env):
     entries = _entries(conn, run_id)
     calls = [e["data"] for e in entries if e["type"] == "tool.call"]
     assert [c["tool_ref"] for c in calls] == READS + ["gmail.create_draft"] * 3 + [
-        "accounting.add_order_note"
-    ] * finance + ["warehouse.add_order_note"] * nudges
+        "custom-business-app.add_ledger_note"
+    ] * finance + ["custom-business-app.add_warehouse_note"] * nudges
     assert all(c["policy"]["verdict"] == "PERMIT" for c in calls)
     assert {tuple(c["policy"]["reason_codes"]) for c in calls[len(READS) :]} == {("APPROVAL_GRANTED",)}
     [decided] = [e["data"] for e in entries if e["type"] == "decision"]

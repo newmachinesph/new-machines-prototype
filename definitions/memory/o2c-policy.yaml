@@ -10,8 +10,8 @@ seed_items:
   - Payment terms are per customer. An invoice is past its terms only when the days since its invoice date are more than the customer's payment_terms_days; 0-day terms mean payment is due on delivery.
   - A delivered, unpaid invoice is chased only after a grace period past its terms (grace_days, 7 by default); within the grace it is clean and not listed.
   - Never chase a customer whose account notes mention a dispute or a pending credit memo. Flag the invoice for finance instead and send no reminder.
-  - A pending payment in the store means the customer says they have paid. Confirm it in accounting first; do not remind the customer while a pending payment exists.
+  - A pending payment in the store means the customer says they have paid. Confirm it in the ledger first; do not remind the customer while a pending payment exists.
   - Balances above ₱20,000 need finance's sign-off before any message goes to the customer.
-  - Collection messages come from the customer's account manager. Accounting rarely records one, so fall back to the sales app seller for the order, then to the store's seller email, and otherwise to the business's Accounts desk.
+  - Collection messages come from the customer's account manager. The ledger rarely records one, so fall back to the sales app seller for the order, then to the store's seller email, and otherwise to the business's Accounts desk.
   - Collection messages are in a polite Filipino business tone and restate the invoice, the amount in pesos, the delivery date and the payment terms. They never offer discounts, instalments or new due dates.
   - A paid order that the warehouse has not released within 2 working days gets a warehouse note. Within 2 working days it is listed but not chased.

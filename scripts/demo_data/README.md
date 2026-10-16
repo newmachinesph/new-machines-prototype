@@ -9,7 +9,7 @@ the result into a fresh MongoDB database and regenerates the pack's sandbox fixt
 | `export.py` | Reads the sources read-only, trims + anonymises, plants, writes `out/<collection>.json` |
 | `anonymize.py` | Pure, deterministic anonymiser and the per-collection field shapes (no database) |
 | `plant.py` | Pure builder for the `DEMO-*` exception cases, consistent across all four systems |
-| `fixtures.py` | Pure projection of `out/` into `definitions/packs/order-to-cash-exception-desk/sandbox/` |
+| `fixtures.py` | Pure projection of `out/` into `definitions/packs/order-to-cash-exception-desk/sandbox/custom-business-app/` |
 | `load.py` | Loads `out/*.json` into a new database such as `nm_demo` |
 | `DEMO_CASES.md` | Every planted case: id, customer, amounts, dates, expected handling |
 
@@ -63,11 +63,15 @@ commissions, served orders and customer payments; the customers and users they r
 by id/email regardless of date. If the URL names no database, the defaults `ecommerce`, `accounting`,
 `warehouse` and `salesApp` are used.
 
-`fixtures.py` writes the seven read-tool files the pack uses (`salesapp_commissions` is exported and
-loaded but has no fixture: the pack does not read commissions). It keeps every `DEMO-*` document plus up to `--clean 25` real-derived orders that
-exist in all four systems, spread evenly over the 30 days before `--as-of`, with their payments,
-customer payments, customers, served orders and sales. When `out/` is missing or holds no planted documents it plants them itself, so the
-fixtures can be regenerated without any production data at all.
+`fixtures.py` writes the seven read-tool files of the pack's single `custom-business-app` connector
+(`list_store_orders`, `list_store_payments`, `list_sales_orders`, `list_customers`,
+`list_customer_payments`, `list_served_orders`, `list_sales`) and deletes the stale directories
+`ecommerce/`, `accounting/`, `warehouse/`, `salesapp/` and the old `erp/` inside that sandbox
+(`salesapp_commissions` is exported and loaded but has no fixture: the pack does not read commissions).
+It keeps every `DEMO-*` document plus up to `--clean 25` real-derived orders that exist in all four
+systems, spread evenly over the 30 days before `--as-of`, with their payments, customer payments,
+customers, served orders and sales. When `out/` is missing or holds no planted documents it plants them
+itself, so the fixtures can be regenerated without any production data at all.
 
 ## Output
 

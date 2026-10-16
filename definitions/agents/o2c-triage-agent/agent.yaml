@@ -7,7 +7,7 @@ publisher_id: new-machines-labs
 publisher_name: New Machines Labs
 name: Order-to-Cash Triage Agent
 summary: >-
-  Follows each order across the store, the ledger, the warehouse and the sales app, names every break with the evidence from each system and the action the collection policy calls for, so a reviewer can confirm it.
+  Follows each order across the business app's store, ledger, warehouse and sales app sections, names every break with the evidence from each section and the action the collection policy calls for, so a reviewer can confirm it.
 capabilities: [finance.order_to_cash]
 runtime:
   adapter: google_adk

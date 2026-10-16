@@ -13,7 +13,7 @@ Build one row per exception in the triage, in the same order:
 - `note`: the exception's `evidence`.
 - `action`, in plain words, from `recommended_action`:
   - `draft_collection_message`: `collection reminder from <account_manager>` (or `from the Accounts desk` when null)
-  - `confirm_payment`: `confirm the payment in accounting`
+  - `confirm_payment`: `confirm the payment in the ledger`
   - `escalate_finance`: `flag for finance`
   - `nudge_warehouse`: `warehouse note`
   - `none`: `watch: inside the warehouse window`

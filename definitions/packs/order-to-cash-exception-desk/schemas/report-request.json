@@ -10,7 +10,7 @@
     "drafts": {"type": "array", "items": {"type": "object"}, "description": "The reminders drafted (the drafts shape); none when no reminder was due."},
     "approval": {"type": ["object", "null"], "description": "The approval decision ({decision, by, note}); null when none was asked for."},
     "drafts_created": {"type": "integer", "minimum": 0, "description": "Reminders saved as drafts."},
-    "finance_notes": {"type": "integer", "minimum": 0, "description": "Notes posted in accounting."},
+    "finance_notes": {"type": "integer", "minimum": 0, "description": "Notes posted in the ledger."},
     "warehouse_notes": {"type": "integer", "minimum": 0, "description": "Notes posted in the warehouse."}
   }
 }

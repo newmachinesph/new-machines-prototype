@@ -5,14 +5,17 @@
 
 Reads `out/*.json` (written by export.py), re-plants the demo cases when none are present, keeps the
 planted orders plus up to `--clean` representative real-derived orders from the last 30 days, and writes
-one JSON file per read tool the pack uses under
-`definitions/packs/order-to-cash-exception-desk/sandbox/<connector>/` in the connector contract shape
-(ISO-8601 UTC strings, amounts in PHP major units). The write tools' fixtures belong to the pack and are
-never touched; `salesapp_commissions` is exported and loaded but has no fixture (the pack does not read it).
+one JSON file per read tool of the pack's single `custom-business-app` connector under
+`definitions/packs/order-to-cash-exception-desk/sandbox/custom-business-app/` in the connector contract
+shape (ISO-8601 UTC strings, amounts in PHP major units). It also removes the stale fixture directories
+(`ecommerce/`, `accounting/`, `warehouse/`, `salesapp/` and the old `erp/`) inside that sandbox. The
+write tools' fixtures belong to the pack and are never touched; `salesapp_commissions` is exported and
+loaded but has no fixture (the pack does not read it).
 """
 
 import argparse
 import json
+import shutil
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -32,13 +35,13 @@ CLEAN_ORDERS = 25
 
 # Published fixture file -> the top-level key its connector tool returns.
 FIXTURE_FILES = {
-    "ecommerce/list_orders.json": "orders",
-    "ecommerce/list_payments.json": "payments",
-    "accounting/list_sales_orders.json": "sales_orders",
-    "accounting/list_customers.json": "customers",
-    "accounting/list_customer_payments.json": "payments",
-    "warehouse/list_served_orders.json": "served_orders",
-    "salesapp/list_sales.json": "sales",
+    "custom-business-app/list_store_orders.json": "orders",
+    "custom-business-app/list_store_payments.json": "payments",
+    "custom-business-app/list_sales_orders.json": "sales_orders",
+    "custom-business-app/list_customers.json": "customers",
+    "custom-business-app/list_customer_payments.json": "payments",
+    "custom-business-app/list_served_orders.json": "served_orders",
+    "custom-business-app/list_sales.json": "sales",
 }
 
 
@@ -243,35 +246,35 @@ def build(data: dict[str, list[dict]], as_of: datetime, clean: int = CLEAN_ORDER
         if str(d.get("orderReferenceOfPayment")) in ids
     ]
     return {
-        "ecommerce/list_orders.json": {"orders": [ecommerce_order(d) for d in orders]},
-        "ecommerce/list_payments.json": {
+        "custom-business-app/list_store_orders.json": {"orders": [ecommerce_order(d) for d in orders]},
+        "custom-business-app/list_store_payments.json": {
             "payments": [
                 ecommerce_payment(d)
                 for d in data.get("ecommerce_payments", [])
                 if str(d.get("salesOrderId")) in ids
             ]
         },
-        "accounting/list_sales_orders.json": {
+        "custom-business-app/list_sales_orders.json": {
             "sales_orders": [accounting_sales_order(d) for d in acct_orders]
         },
-        "accounting/list_customers.json": {
+        "custom-business-app/list_customers.json": {
             "customers": [
                 accounting_customer(d)
                 for d in data.get("accounting_customers", [])
                 if str(d["_id"]) in customer_ids
             ]
         },
-        "accounting/list_customer_payments.json": {
+        "custom-business-app/list_customer_payments.json": {
             "payments": [accounting_customer_payment(d) for d in customer_payments]
         },
-        "warehouse/list_served_orders.json": {
+        "custom-business-app/list_served_orders.json": {
             "served_orders": [
                 warehouse_served_order(d)
                 for d in data.get("warehouse_served_orders", [])
                 if str(d["_id"]) in ids
             ]
         },
-        "salesapp/list_sales.json": {"sales": [salesapp_sale(d) for d in sales]},
+        "custom-business-app/list_sales.json": {"sales": [salesapp_sale(d) for d in sales]},
     }
 
 
@@ -281,8 +284,15 @@ def write_lf(path: Path, text: str) -> None:
         handle.write(text.rstrip("\n") + "\n")
 
 
+# Fixture directories from before the four systems were folded into one connector (and its old `erp` name).
+STALE_DIRS = ("ecommerce", "accounting", "warehouse", "salesapp", "erp")
+
+
 def write(fixtures: dict[str, dict], pack_dir: Path = PACK_DIR) -> list[Path]:
+    """Write the fixture files under `pack_dir` and drop the stale per-system directories inside it."""
     written = []
+    for stale in STALE_DIRS:
+        shutil.rmtree(pack_dir / stale, ignore_errors=True)
     for relative, body in fixtures.items():
         path = pack_dir / relative
         path.parent.mkdir(parents=True, exist_ok=True)

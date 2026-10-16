@@ -1,6 +1,6 @@
 ---
 name: classify-orders
-description: Follow each order across the four systems and give every break one kind and one action.
+description: Follow each order across the business app's four sections and give every break one kind and one action.
 ---
 
 Start from the ledger. For every sales order in `sales_orders` (the list is under `sales_orders`), find by the same `id`: the store order in `orders`, its store payments in `payments` (by `order_id`), the served order in `served_orders` and the sale in `sales`. Find the customer in `customers` by `customer_id`; its `payment_terms_days` wins over the sales order's when they differ.
@@ -11,7 +11,7 @@ Then:
 - `due_date` is the invoice date plus the customer's payment terms. `delivered_on` is the day the warehouse delivered the order (`delivered_at`), or null. `days_outstanding` is the whole days from the reference date to `as_of`.
 - A store payment is pending when its `status` is `pending`. An order is paid when the sales order's `balance` is 0 or its `paid` is true.
 - An order is delivered when the sales order's `delivered` is true or the served order's `delivered` is true. It is released when a served order exists and its `released` is true.
-- The account manager is the customer's `account_manager` and `account_manager_email` when accounting records them; otherwise the sale's `seller_name` and `seller_email`; otherwise the store order's `seller_email` with no name; otherwise null for both.
+- The account manager is the customer's `account_manager` and `account_manager_email` when the ledger records them; otherwise the sale's `seller_name` and `seller_email`; otherwise the store order's `seller_email` with no name; otherwise null for both.
 
 Give each order the first kind that fits, in this order. One order gets one exception at most.
 
@@ -28,7 +28,7 @@ Fill the exception like this:
 
 - `amount_minor`: the balance in centavos; for `paid_not_shipped`, the paid total in centavos.
 - `customer_email`: from the customer record, else `null`. `invoice_number`: the sales order's.
-- `evidence`: one sentence naming the systems and what each shows, with dates and peso amounts, for example `Warehouse delivered DEMO-SNP-2 on 2026-09-17 and Accounting invoice INV-2026-0003 (15-day terms) still shows the full balance of ₱12,480.00, 16 days past due.` For a balance above ₱20,000, add that finance's sign-off is needed before any message.
+- `evidence`: one sentence naming the business app's sections and what each shows, with dates and peso amounts, for example `The warehouse delivered DEMO-SNP-2 on 2026-09-17 and ledger invoice INV-2026-0003 (15-day terms) still shows the full balance of ₱12,480.00, 16 days past due.` For a balance above ₱20,000, add that finance's sign-off is needed before any message.
 - Never include email addresses, phone numbers or customer message text in a `note` or `flag`.
 
 Order the exceptions by kind in the table's order (`paid_not_shipped` first, `disputed` last), then by `days_outstanding`, longest first.
@@ -37,4 +37,4 @@ Totals: per kind, the count and the sum of `amount_minor` of its exceptions; `cu
 
 `sign_off_note`: one sentence naming each `shipped_not_paid` order whose balance is above ₱20,000 with its amount, such as `DEMO-SNP-1 (₱40,252.80) is above ₱20,000 and needs finance's sign-off before its reminder goes out.`; an empty string when there is none.
 
-The summary is two or three sentences: orders checked across the four systems, how many are clean, and the count and peso total per kind found, pending payments first.
+The summary is two or three sentences: orders checked across the business app's four sections, how many are clean, and the count and peso total per kind found, pending payments first.
