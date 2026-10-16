@@ -1,0 +1,52 @@
+{
+  "url": "sample",
+  "data": [
+    {
+      "id": "sample",
+      "type": "one_time",
+      "tiers": [
+        {
+          "up_to": 1,
+          "flat_amount": 1,
+          "unit_amount": 1,
+          "flat_amount_decimal": "sample",
+          "unit_amount_decimal": "sample"
+        }
+      ],
+      "active": true,
+      "object": "sample",
+      "created": 1,
+      "product": "sample",
+      "currency": "sample",
+      "livemode": true,
+      "metadata": {},
+      "nickname": "sample",
+      "recurring": {
+        "meter": "sample",
+        "interval": "day",
+        "usage_type": "metered",
+        "interval_count": 1,
+        "trial_period_days": 1
+      },
+      "lookup_key": "sample",
+      "tiers_mode": "graduated",
+      "unit_amount": 1,
+      "tax_behavior": "inclusive",
+      "billing_scheme": "per_unit",
+      "currency_options": {},
+      "custom_unit_amount": {
+        "preset": 1,
+        "maximum": 1,
+        "minimum": 1
+      },
+      "transform_quantity": {
+        "round": "up",
+        "divide_by": 1
+      },
+      "unit_amount_decimal": "sample"
+    }
+  ],
+  "object": "sample",
+  "has_more": true,
+  "next_page": "sample"
+}

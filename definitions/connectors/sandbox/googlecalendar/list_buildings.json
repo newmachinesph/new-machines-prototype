@@ -1,0 +1,34 @@
+{
+  "etag": "sample",
+  "kind": "sample",
+  "buildings": [
+    {
+      "kind": "sample",
+      "etags": "sample",
+      "address": {
+        "locality": "Mountain View",
+        "postalCode": "94043",
+        "regionCode": "US",
+        "sublocality": "Downtown",
+        "addressLines": [
+          "1600 Amphitheatre Parkway"
+        ],
+        "languageCode": "en",
+        "administrativeArea": "California"
+      },
+      "buildingId": "building-1",
+      "floorNames": [
+        "Ground Floor",
+        "First Floor",
+        "Second Floor"
+      ],
+      "coordinates": {
+        "latitude": 1,
+        "longitude": 1
+      },
+      "description": "Headquarters building with conference rooms",
+      "buildingName": "Main Office"
+    }
+  ],
+  "nextPageToken": "sample"
+}

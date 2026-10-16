@@ -1,0 +1,21 @@
+{
+  "labels": [
+    {
+      "id": "sample",
+      "name": "sample",
+      "type": "sample",
+      "color": {
+        "textColor": "sample",
+        "backgroundColor": "sample"
+      },
+      "display_url": "sample",
+      "threadsTotal": 1,
+      "messagesTotal": 1,
+      "threadsUnread": 1,
+      "messagesUnread": 1,
+      "labelListVisibility": "sample",
+      "messageListVisibility": "sample"
+    }
+  ],
+  "display_url": "sample"
+}

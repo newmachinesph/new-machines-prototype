@@ -1,0 +1,48 @@
+{
+  "input_parameters": {
+    "properties": {
+      "color": {
+        "additionalProperties": false,
+        "properties": {
+          "backgroundColor": {
+            "type": "string"
+          },
+          "textColor": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "id": {
+        "type": "string"
+      },
+      "labelListVisibility": {
+        "enum": [
+          "labelShow",
+          "labelShowIfUnread",
+          "labelHide"
+        ],
+        "type": "string"
+      },
+      "messageListVisibility": {
+        "enum": [
+          "show",
+          "hide"
+        ],
+        "type": "string"
+      },
+      "name": {
+        "type": "string"
+      },
+      "userId": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "id"
+    ],
+    "type": "object"
+  },
+  "slug": "GMAIL_UPDATE_LABEL",
+  "version": "20261015_00"
+}

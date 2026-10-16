@@ -1,0 +1,37 @@
+{
+  "input_parameters": {
+    "properties": {
+      "documentId": {
+        "type": "string"
+      },
+      "name": {
+        "maxLength": 256,
+        "minLength": 1,
+        "type": "string"
+      },
+      "rangeEndIndex": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "rangeSegmentId": {
+        "type": "string"
+      },
+      "rangeStartIndex": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "tabId": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "documentId",
+      "name",
+      "rangeStartIndex",
+      "rangeEndIndex"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLEDOCS_CREATE_NAMED_RANGE",
+  "version": "20261008_00"
+}

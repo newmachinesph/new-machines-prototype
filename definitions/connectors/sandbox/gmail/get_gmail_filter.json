@@ -1,0 +1,23 @@
+{
+  "id": "sample",
+  "action": {
+    "forward": "sample",
+    "addLabelIds": [
+      "sample"
+    ],
+    "removeLabelIds": [
+      "sample"
+    ]
+  },
+  "criteria": {
+    "to": "sample",
+    "from": "sample",
+    "size": 1,
+    "query": "sample",
+    "subject": "sample",
+    "excludeChats": true,
+    "negatedQuery": "sample",
+    "hasAttachment": true,
+    "sizeComparison": "sample"
+  }
+}

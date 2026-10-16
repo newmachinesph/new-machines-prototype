@@ -1,0 +1,15 @@
+{
+  "input_parameters": {
+    "properties": {
+      "file_id": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "file_id"
+    ],
+    "type": "object"
+  },
+  "slug": "STRIPE_DOWNLOAD_FILE_CONTENTS",
+  "version": "20261014_00"
+}

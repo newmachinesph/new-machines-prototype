@@ -1,0 +1,125 @@
+{
+  "url": "sample",
+  "data": [
+    {
+      "id": "sample",
+      "items": {
+        "url": "sample",
+        "data": [],
+        "object": "sample",
+        "has_more": true
+      },
+      "object": "sample",
+      "status": "sample",
+      "created": 1,
+      "currency": "sample",
+      "customer": "sample",
+      "discount": {},
+      "ended_at": 1,
+      "livemode": true,
+      "metadata": {},
+      "schedule": "sample",
+      "cancel_at": 1,
+      "discounts": [
+        "sample"
+      ],
+      "trial_end": 1,
+      "start_date": 1,
+      "test_clock": "sample",
+      "application": "sample",
+      "canceled_at": 1,
+      "description": "sample",
+      "trial_start": 1,
+      "billing_mode": {
+        "type": "sample",
+        "flexible": {
+          "proration_discounts": null
+        },
+        "updated_at": 1
+      },
+      "on_behalf_of": "sample",
+      "automatic_tax": {
+        "enabled": true,
+        "liability": {
+          "type": null,
+          "account": null
+        },
+        "disabled_reason": "sample"
+      },
+      "transfer_data": {
+        "destination": "sample",
+        "amount_percent": 1
+      },
+      "days_until_due": 1,
+      "default_source": "sample",
+      "latest_invoice": "sample",
+      "pending_update": {
+        "trial_end": 1,
+        "expires_at": 1,
+        "trial_from_plan": true,
+        "subscription_items": [
+          {}
+        ],
+        "billing_cycle_anchor": 1
+      },
+      "trial_settings": {
+        "end_behavior": {
+          "missing_payment_method": null
+        }
+      },
+      "invoice_settings": {
+        "issuer": {
+          "type": null,
+          "account": null
+        },
+        "account_tax_ids": [
+          "sample"
+        ]
+      },
+      "pause_collection": {
+        "behavior": "sample",
+        "resumes_at": 1
+      },
+      "payment_settings": {
+        "payment_method_types": [
+          "sample"
+        ],
+        "payment_method_options": {},
+        "save_default_payment_method": "sample"
+      },
+      "collection_method": "sample",
+      "default_tax_rates": [
+        {}
+      ],
+      "billing_thresholds": {
+        "amount_gte": 1,
+        "reset_billing_cycle_anchor": true
+      },
+      "billing_cycle_anchor": 1,
+      "cancel_at_period_end": true,
+      "cancellation_details": {
+        "reason": "sample",
+        "comment": "sample",
+        "feedback": "sample"
+      },
+      "pending_setup_intent": "sample",
+      "default_payment_method": "sample",
+      "application_fee_percent": 1,
+      "billing_cycle_anchor_config": {
+        "hour": 1,
+        "month": 1,
+        "minute": 1,
+        "second": 1,
+        "day_of_month": 1
+      },
+      "pending_invoice_item_interval": {
+        "interval": "sample",
+        "interval_count": 1
+      },
+      "next_pending_invoice_item_invoice": 1
+    }
+  ],
+  "object": "sample",
+  "has_more": true,
+  "next_page": "sample"
+}

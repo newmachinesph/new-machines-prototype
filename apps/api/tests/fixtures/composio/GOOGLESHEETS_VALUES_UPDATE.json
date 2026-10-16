@@ -1,0 +1,78 @@
+{
+  "input_parameters": {
+    "properties": {
+      "auto_expand_sheet": {
+        "type": "boolean"
+      },
+      "include_values_in_response": {
+        "type": "boolean"
+      },
+      "major_dimension": {
+        "enum": [
+          "ROWS",
+          "COLUMNS"
+        ],
+        "type": "string"
+      },
+      "range": {
+        "type": "string"
+      },
+      "response_datetime_render_option": {
+        "enum": [
+          "SERIAL_NUMBER",
+          "FORMATTED_STRING"
+        ],
+        "type": "string"
+      },
+      "response_value_render_option": {
+        "enum": [
+          "FORMATTED_VALUE",
+          "UNFORMATTED_VALUE",
+          "FORMULA"
+        ],
+        "type": "string"
+      },
+      "spreadsheet_id": {
+        "type": "string"
+      },
+      "value_input_option": {
+        "enum": [
+          "RAW",
+          "USER_ENTERED"
+        ],
+        "type": "string"
+      },
+      "values": {
+        "items": {
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "type": "array"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "spreadsheet_id",
+      "range",
+      "value_input_option",
+      "values"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLESHEETS_VALUES_UPDATE",
+  "version": "20261001_00"
+}

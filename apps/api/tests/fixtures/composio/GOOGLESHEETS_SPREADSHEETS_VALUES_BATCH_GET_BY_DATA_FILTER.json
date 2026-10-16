@@ -1,0 +1,70 @@
+{
+  "input_parameters": {
+    "properties": {
+      "dataFilters": {
+        "items": {
+          "properties": {
+            "a1Range": {
+              "type": "string"
+            },
+            "gridRange": {
+              "additionalProperties": false,
+              "properties": {
+                "endColumnIndex": {
+                  "type": "integer"
+                },
+                "endRowIndex": {
+                  "type": "integer"
+                },
+                "sheetId": {
+                  "type": "integer"
+                },
+                "startColumnIndex": {
+                  "type": "integer"
+                },
+                "startRowIndex": {
+                  "type": "integer"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "type": "array"
+      },
+      "dateTimeRenderOption": {
+        "enum": [
+          "SERIAL_NUMBER",
+          "FORMATTED_STRING"
+        ],
+        "type": "string"
+      },
+      "majorDimension": {
+        "enum": [
+          "ROWS",
+          "COLUMNS"
+        ],
+        "type": "string"
+      },
+      "spreadsheetId": {
+        "type": "string"
+      },
+      "valueRenderOption": {
+        "enum": [
+          "FORMATTED_VALUE",
+          "UNFORMATTED_VALUE",
+          "FORMULA"
+        ],
+        "type": "string"
+      }
+    },
+    "required": [
+      "spreadsheetId",
+      "dataFilters"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLESHEETS_SPREADSHEETS_VALUES_BATCH_GET_BY_DATA_FILTER",
+  "version": "20261001_00"
+}

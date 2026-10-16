@@ -1,0 +1,18 @@
+{
+  "input_parameters": {
+    "properties": {
+      "draft_order_id": {
+        "type": "string"
+      },
+      "fields": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "draft_order_id"
+    ],
+    "type": "object"
+  },
+  "slug": "SHOPIFY_GET_DRAFT_ORDER",
+  "version": "20261014_00"
+}

@@ -1,0 +1,78 @@
+{
+  "input_parameters": {
+    "properties": {
+      "backgroundColor": {
+        "type": "string"
+      },
+      "calendar_id": {
+        "type": "string"
+      },
+      "colorId": {
+        "type": "string"
+      },
+      "colorRgbFormat": {
+        "type": "boolean"
+      },
+      "defaultReminders": {
+        "items": {
+          "properties": {
+            "method": {
+              "type": "string"
+            },
+            "minutes": {
+              "type": "integer"
+            }
+          },
+          "required": [
+            "method",
+            "minutes"
+          ],
+          "type": "object"
+        },
+        "type": "array"
+      },
+      "foregroundColor": {
+        "type": "string"
+      },
+      "hidden": {
+        "type": "boolean"
+      },
+      "notificationSettings": {
+        "additionalProperties": false,
+        "properties": {
+          "notifications": {
+            "items": {
+              "properties": {
+                "method": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "method",
+                "type"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "selected": {
+        "type": "boolean"
+      },
+      "summaryOverride": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "calendar_id"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLECALENDAR_CALENDAR_LIST_UPDATE",
+  "version": "20261010_00"
+}

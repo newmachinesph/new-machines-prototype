@@ -1,0 +1,117 @@
+{
+  "id": "sample",
+  "tax": {
+    "location": {
+      "state": "sample",
+      "source": "sample",
+      "country": "sample"
+    },
+    "ip_address": "sample",
+    "automatic_tax": "sample"
+  },
+  "name": "sample",
+  "email": "sample",
+  "phone": "sample",
+  "object": "sample",
+  "address": {
+    "city": "sample",
+    "line1": "sample",
+    "line2": "sample",
+    "state": "sample",
+    "country": "sample",
+    "postal_code": "sample"
+  },
+  "balance": 1,
+  "created": 1,
+  "sources": {
+    "url": "sample",
+    "data": [
+      {}
+    ],
+    "object": "sample",
+    "has_more": true
+  },
+  "tax_ids": {
+    "url": "sample",
+    "data": [
+      {}
+    ],
+    "object": "sample",
+    "has_more": true
+  },
+  "currency": "sample",
+  "discount": {
+    "id": "sample",
+    "end": 1,
+    "start": 1,
+    "object": "sample",
+    "source": {
+      "type": "sample",
+      "coupon": "sample"
+    },
+    "invoice": "sample",
+    "customer": "sample",
+    "invoice_item": "sample",
+    "subscription": "sample",
+    "promotion_code": "sample",
+    "checkout_session": "sample",
+    "subscription_item": "sample"
+  },
+  "livemode": true,
+  "metadata": {},
+  "shipping": {
+    "name": "sample",
+    "phone": "sample",
+    "address": {
+      "city": "sample",
+      "line1": "sample",
+      "line2": "sample",
+      "state": "sample",
+      "country": "sample",
+      "postal_code": "sample"
+    }
+  },
+  "delinquent": true,
+  "tax_exempt": "sample",
+  "test_clock": "sample",
+  "description": "sample",
+  "cash_balance": {
+    "object": "sample",
+    "customer": "sample",
+    "livemode": true,
+    "settings": {
+      "reconciliation_mode": "sample",
+      "using_merchant_default": true
+    },
+    "available": {}
+  },
+  "subscriptions": {
+    "url": "sample",
+    "data": [
+      {}
+    ],
+    "object": "sample",
+    "has_more": true
+  },
+  "default_source": "sample",
+  "invoice_prefix": "sample",
+  "invoice_settings": {
+    "footer": "sample",
+    "custom_fields": [
+      {
+        "name": "sample",
+        "value": "sample"
+      }
+    ],
+    "rendering_options": {
+      "template": "sample",
+      "amount_tax_display": "sample"
+    },
+    "default_payment_method": "sample"
+  },
+  "preferred_locales": [
+    "sample"
+  ],
+  "next_invoice_sequence": 1,
+  "invoice_credit_balance": {}
+}

@@ -1,0 +1,57 @@
+# Reviewed choices for `scripts/import_connector.py gmail`. They win over the importer's guesses.
+# Account and security settings are left out: a pack must not change how the mailbox is reached or who it
+# sends as, or quietly forward or delete mail through a filter.
+capability_prefix: mail
+
+tools:
+  GMAIL_REPLY_TO_THREAD:
+    capability: mail.send
+  GMAIL_FORWARD_MESSAGE:
+    capability: mail.send
+  GMAIL_SEND_DRAFT:
+    action_class: write
+    capability: mail.send
+    why: Sends a saved draft; Composio marks it destructive, but as a send it asks first like send_email.
+  GMAIL_CREATE_FILTER:
+    skip: A filter can forward or delete mail without anyone seeing it.
+  GMAIL_PATCH_SEND_AS:
+    skip: Changes who the mailbox sends as.
+  GMAIL_UPDATE_SEND_AS:
+    skip: Changes who the mailbox sends as.
+  GMAIL_UPDATE_IMAP_SETTINGS:
+    skip: Changes how the mailbox can be reached.
+  GMAIL_UPDATE_POP_SETTINGS:
+    skip: Changes how the mailbox can be reached.
+  GMAIL_UPDATE_LANGUAGE_SETTINGS:
+    skip: An account setting no pack needs.
+  GMAIL_IMPORT_MESSAGE:
+    skip: Puts raw messages into the mailbox as if they had been received.
+  GMAIL_INSERT_MESSAGE:
+    skip: Puts raw messages into the mailbox as if they had been received.
+  GMAIL_LIST_CSE_IDENTITIES:
+    skip: Encryption key details.
+  GMAIL_LIST_CSE_KEYPAIRS:
+    skip: Encryption key details.
+  GMAIL_LIST_SMIME_INFO:
+    skip: Encryption key details.
+  GMAIL_WHO_AM_I:
+    skip: Describes the connection itself.
+  GMAIL_LIST_SEND_AS:
+    action_class: read
+    capability: mail.read
+    why: Lists the addresses the mailbox can send from; sends nothing.
+  GMAIL_SETTINGS_SEND_AS_GET:
+    action_class: read
+    capability: mail.read
+    why: Reads one send-from address's settings; sends nothing.
+  GMAIL_UPDATE_VACATION_SETTINGS:
+    skip: Sends an automatic reply to everyone who writes in.
+  GMAIL_ADD_LABEL_TO_EMAIL:
+    restrict:
+      add_label_ids.items: {pattern: '^(?!(?:[Tt][Rr][Aa][Ss][Hh]|[Ss][Pp][Aa][Mm])$).+$'}  # labelling TRASH or SPAM would delete the mail
+  GMAIL_MODIFY_THREAD_LABELS:
+    restrict:
+      add_label_ids.items: {pattern: '^(?!(?:[Tt][Rr][Aa][Ss][Hh]|[Ss][Pp][Aa][Mm])$).+$'}  # labelling TRASH or SPAM would delete the mail
+  GMAIL_BATCH_MODIFY_MESSAGES:
+    restrict:
+      addLabelIds.items: {pattern: '^(?!(?:[Tt][Rr][Aa][Ss][Hh]|[Ss][Pp][Aa][Mm])$).+$'}  # labelling TRASH or SPAM would delete the mail

@@ -1,0 +1,226 @@
+{
+  "id": "sample",
+  "hooks": {
+    "inputs": {
+      "tax": {
+        "calculation": "sample"
+      }
+    }
+  },
+  "amount": 1,
+  "object": "sample",
+  "review": "sample",
+  "source": {
+    "id": "sample",
+    "flow": "sample",
+    "type": "sample",
+    "owner": {
+      "name": "sample",
+      "email": "sample",
+      "phone": "sample",
+      "address": {
+        "city": "sample",
+        "line1": "sample",
+        "line2": "sample",
+        "state": "sample",
+        "country": "sample",
+        "postal_code": "sample"
+      },
+      "verified_name": "sample",
+      "verified_email": "sample",
+      "verified_phone": "sample",
+      "verified_address": {
+        "city": "sample",
+        "line1": "sample",
+        "line2": "sample",
+        "state": "sample",
+        "country": "sample",
+        "postal_code": "sample"
+      }
+    },
+    "usage": "sample",
+    "amount": 1,
+    "object": "sample",
+    "status": "sample",
+    "created": 1,
+    "currency": "sample",
+    "customer": "sample",
+    "livemode": true,
+    "metadata": {},
+    "client_secret": "sample"
+  },
+  "status": "sample",
+  "created": 1,
+  "currency": "sample",
+  "customer": "sample",
+  "livemode": true,
+  "metadata": {},
+  "shipping": {
+    "name": "sample",
+    "phone": "sample",
+    "address": {
+      "city": "sample",
+      "line1": "sample",
+      "line2": "sample",
+      "state": "sample",
+      "country": "sample",
+      "postal_code": "sample"
+    },
+    "carrier": "sample",
+    "tracking_number": "sample"
+  },
+  "processing": {
+    "card": {
+      "network": "sample"
+    }
+  },
+  "application": "sample",
+  "canceled_at": 1,
+  "description": "sample",
+  "next_action": {
+    "type": "sample",
+    "use_stripe_sdk": {},
+    "redirect_to_url": {
+      "url": "sample",
+      "return_url": "sample"
+    }
+  },
+  "on_behalf_of": "sample",
+  "client_secret": "sample",
+  "latest_charge": "sample",
+  "receipt_email": "sample",
+  "transfer_data": {
+    "amount": 1,
+    "destination": "sample"
+  },
+  "amount_details": {
+    "tax": {
+      "total_tax_amount": 1
+    },
+    "tip": {
+      "amount": 1
+    },
+    "shipping": {
+      "amount": 1,
+      "to_postal_code": "sample",
+      "from_postal_code": "sample"
+    },
+    "line_items": {
+      "data": [
+        {
+          "id": null,
+          "tax": null,
+          "object": null,
+          "quantity": null,
+          "unit_cost": null,
+          "product_code": null,
+          "product_name": null,
+          "discount_amount": null,
+          "unit_of_measure": null
+        }
+      ]
+    },
+    "discount_amount": 1
+  },
+  "capture_method": "sample",
+  "payment_method": "sample",
+  "transfer_group": "sample",
+  "amount_received": 1,
+  "amount_capturable": 1,
+  "last_payment_error": {
+    "code": "sample",
+    "param": "sample",
+    "charge": "sample",
+    "source": {
+      "id": "sample",
+      "flow": "sample",
+      "type": "sample",
+      "owner": {
+        "name": "sample",
+        "email": "sample",
+        "phone": "sample",
+        "address": null,
+        "verified_name": "sample",
+        "verified_email": "sample",
+        "verified_phone": "sample",
+        "verified_address": null
+      },
+      "usage": "sample",
+      "amount": 1,
+      "object": "sample",
+      "status": "sample",
+      "created": 1,
+      "currency": "sample",
+      "customer": "sample",
+      "livemode": true,
+      "metadata": {},
+      "client_secret": "sample"
+    },
+    "doc_url": "sample",
+    "message": "sample",
+    "advice_code": "sample",
+    "decline_code": "sample",
+    "payment_method": {
+      "id": "sample",
+      "type": "sample",
+      "object": "sample",
+      "created": 1,
+      "customer": "sample",
+      "livemode": true,
+      "metadata": {},
+      "billing_details": {
+        "name": "sample",
+        "email": "sample",
+        "phone": "sample",
+        "address": null
+      }
+    },
+    "network_advice_code": "sample",
+    "payment_method_type": "sample",
+    "network_decline_code": "sample"
+  },
+  "setup_future_usage": "sample",
+  "cancellation_reason": "sample",
+  "confirmation_method": "sample",
+  "payment_method_types": [
+    "sample"
+  ],
+  "statement_descriptor": "sample",
+  "application_fee_amount": 1,
+  "payment_method_options": {
+    "card": {
+      "network": "sample",
+      "installments": {
+        "plan": null,
+        "enabled": true
+      },
+      "mandate_options": {
+        "amount": 1,
+        "end_date": 1,
+        "interval": "sample",
+        "reference": "sample",
+        "start_date": 1,
+        "amount_type": "sample",
+        "description": "sample",
+        "interval_count": 1,
+        "supported_types": []
+      },
+      "request_three_d_secure": "sample"
+    },
+    "link": {
+      "persistent_token": "sample"
+    }
+  },
+  "automatic_payment_methods": {
+    "enabled": true,
+    "allow_redirects": "sample"
+  },
+  "statement_descriptor_suffix": "sample",
+  "excluded_payment_method_types": [
+    "sample"
+  ],
+  "payment_method_configuration_details": {
+    "id": "sample",
+    "parent": "sample"
+  }
+}

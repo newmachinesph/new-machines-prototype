@@ -1,0 +1,14 @@
+{
+  "id": "sample",
+  "object": "sample",
+  "livemode": true,
+  "entitlement_feature": {
+    "id": "sample",
+    "name": "sample",
+    "active": true,
+    "object": "sample",
+    "livemode": true,
+    "metadata": {},
+    "lookup_key": "sample"
+  }
+}

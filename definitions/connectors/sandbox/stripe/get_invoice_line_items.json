@@ -1,0 +1,75 @@
+{
+  "url": "sample",
+  "data": [
+    {
+      "id": "sample",
+      "taxes": [
+        {
+          "type": "sample",
+          "amount": 1,
+          "tax_behavior": "sample",
+          "taxable_amount": 1,
+          "tax_rate_details": null,
+          "taxability_reason": "sample"
+        }
+      ],
+      "amount": 1,
+      "object": "sample",
+      "parent": {
+        "type": "sample",
+        "invoice_item_details": {
+          "proration": null,
+          "invoice_item": null,
+          "subscription": null,
+          "proration_details": null
+        },
+        "subscription_item_details": {
+          "proration": null,
+          "invoice_item": null,
+          "subscription": null,
+          "proration_details": null,
+          "subscription_item": null
+        }
+      },
+      "period": {
+        "end": 1,
+        "start": 1
+      },
+      "invoice": "sample",
+      "pricing": {
+        "type": "sample",
+        "price_details": {
+          "price": null,
+          "product": null
+        },
+        "unit_amount_decimal": "sample"
+      },
+      "currency": "sample",
+      "livemode": true,
+      "metadata": {},
+      "quantity": 1,
+      "subtotal": 1,
+      "discounts": [
+        "sample"
+      ],
+      "description": "sample",
+      "discountable": true,
+      "discount_amounts": [
+        {
+          "amount": 1,
+          "discount": "sample"
+        }
+      ],
+      "pretax_credit_amounts": [
+        {
+          "type": "sample",
+          "amount": 1,
+          "discount": "sample",
+          "credit_balance_transaction": "sample"
+        }
+      ]
+    }
+  ],
+  "object": "sample",
+  "has_more": true
+}

@@ -1,0 +1,33 @@
+{
+  "url": "sample",
+  "data": [
+    {
+      "id": "sample",
+      "fee": 1,
+      "net": 1,
+      "type": "sample",
+      "amount": 1,
+      "object": "sample",
+      "source": "sample",
+      "status": "sample",
+      "created": 1,
+      "currency": "sample",
+      "description": "sample",
+      "fee_details": [
+        {
+          "type": "sample",
+          "amount": 1,
+          "currency": "sample",
+          "application": "sample",
+          "description": "sample"
+        }
+      ],
+      "available_on": 1,
+      "balance_type": "sample",
+      "exchange_rate": 1,
+      "reporting_category": "sample"
+    }
+  ],
+  "object": "sample",
+  "has_more": true
+}

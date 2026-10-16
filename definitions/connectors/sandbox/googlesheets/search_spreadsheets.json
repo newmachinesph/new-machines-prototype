@@ -1,0 +1,54 @@
+{
+  "display_url": "sample",
+  "total_found": 1,
+  "spreadsheets": [
+    {
+      "id": "sample",
+      "name": "sample",
+      "size": "sample",
+      "owners": [
+        {
+          "me": true,
+          "kind": "sample",
+          "photoLink": "sample",
+          "displayName": "sample",
+          "emailAddress": "sample",
+          "permissionId": "sample"
+        }
+      ],
+      "shared": true,
+      "starred": true,
+      "trashed": true,
+      "mimeType": "sample",
+      "createdTime": "sample",
+      "display_url": "sample",
+      "permissions": [
+        {
+          "id": "sample",
+          "kind": "sample",
+          "role": "owner",
+          "type": "user",
+          "domain": "sample",
+          "deleted": true,
+          "photoLink": "sample",
+          "displayName": "sample",
+          "emailAddress": "sample",
+          "pendingOwner": true,
+          "allowFileDiscovery": true
+        }
+      ],
+      "webViewLink": "sample",
+      "modifiedTime": "sample",
+      "lastModifyingUser": {
+        "me": true,
+        "kind": "sample",
+        "photoLink": "sample",
+        "displayName": "sample",
+        "emailAddress": "sample",
+        "permissionId": "sample"
+      }
+    }
+  ],
+  "search_message": "sample",
+  "next_page_token": "sample"
+}

@@ -1,0 +1,18 @@
+{
+  "input_parameters": {
+    "properties": {
+      "folder_id": {
+        "type": "string"
+      },
+      "folder_name": {
+        "type": "string"
+      },
+      "title": {
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "slug": "GOOGLESHEETS_CREATE_GOOGLE_SHEET1",
+  "version": "20261001_00"
+}

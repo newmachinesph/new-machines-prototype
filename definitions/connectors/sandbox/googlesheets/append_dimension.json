@@ -1,0 +1,55 @@
+{
+  "replies": [
+    {}
+  ],
+  "display_url": "sample",
+  "spreadsheetId": "sample",
+  "updatedSpreadsheet": {
+    "sheets": [
+      {
+        "properties": {
+          "index": null,
+          "title": null,
+          "hidden": null,
+          "sheetId": null,
+          "tabColor": null,
+          "sheetType": null,
+          "rightToLeft": null,
+          "gridProperties": null
+        }
+      }
+    ],
+    "properties": {
+      "title": "sample",
+      "locale": "sample",
+      "timeZone": "sample",
+      "autoRecalc": "sample"
+    },
+    "dataSources": [
+      {
+        "dataSourceId": "sample"
+      }
+    ],
+    "namedRanges": [
+      {
+        "name": "sample",
+        "namedRangeId": "sample"
+      }
+    ],
+    "spreadsheetId": "sample",
+    "spreadsheetUrl": "sample",
+    "developerMetadata": [
+      {
+        "metadataId": 1,
+        "visibility": "sample",
+        "metadataKey": "sample",
+        "metadataValue": "sample"
+      }
+    ],
+    "dataSourceSchedules": [
+      {
+        "enabled": true
+      }
+    ]
+  }
+}

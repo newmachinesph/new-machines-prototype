@@ -1,0 +1,29 @@
+{
+  "drafts": [
+    {
+      "id": "sample",
+      "message": {
+        "to": "sample",
+        "sender": "sample",
+        "payload": {},
+        "preview": {
+          "body": null,
+          "subject": null
+        },
+        "subject": "sample",
+        "labelIds": [
+          "sample"
+        ],
+        "threadId": "sample",
+        "messageId": "sample",
+        "messageText": "sample",
+        "attachmentList": [
+          {}
+        ],
+        "messageTimestamp": "sample"
+      }
+    }
+  ],
+  "display_url": "sample",
+  "next_page_token": "sample"
+}

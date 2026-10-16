@@ -1,0 +1,29 @@
+{
+  "input_parameters": {
+    "properties": {
+      "customer_id": {
+        "type": "string"
+      },
+      "limit": {
+        "maximum": 250,
+        "minimum": 1,
+        "type": "integer"
+      },
+      "page_info": {
+        "type": "string"
+      },
+      "since_id": {
+        "type": "integer"
+      },
+      "status": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "customer_id"
+    ],
+    "type": "object"
+  },
+  "slug": "SHOPIFY_GET_CUSTOMER_ORDERS",
+  "version": "20261014_00"
+}

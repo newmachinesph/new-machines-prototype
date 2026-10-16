@@ -1,0 +1,329 @@
+{
+  "input_parameters": {
+    "properties": {
+      "active": {
+        "type": "boolean"
+      },
+      "billing_scheme": {
+        "type": "string"
+      },
+      "currency": {
+        "type": "string"
+      },
+      "currency_options": {
+        "additionalProperties": {
+          "properties": {
+            "custom_unit_amount": {
+              "anyOf": [
+                {
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "maximum": {
+                      "anyOf": [
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "minimum": {
+                      "anyOf": [
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "preset": {
+                      "anyOf": [
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "tax_behavior": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "tiers": {
+              "anyOf": [
+                {
+                  "items": {
+                    "properties": {
+                      "flat_amount": {
+                        "anyOf": [
+                          {
+                            "type": "integer"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "flat_amount_decimal": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "unit_amount": {
+                        "anyOf": [
+                          {
+                            "type": "integer"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "unit_amount_decimal": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "up_to": {
+                        "anyOf": [
+                          {
+                            "type": "integer"
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "up_to"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "unit_amount": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "unit_amount_decimal": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "type": "object"
+        },
+        "type": "object"
+      },
+      "custom_unit_amount": {
+        "additionalProperties": false,
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "maximum": {
+            "type": "integer"
+          },
+          "minimum": {
+            "type": "integer"
+          },
+          "preset": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "enabled"
+        ],
+        "type": "object"
+      },
+      "lookup_key": {
+        "type": "string"
+      },
+      "metadata": {
+        "additionalProperties": {
+          "type": "string"
+        },
+        "type": "object"
+      },
+      "nickname": {
+        "type": "string"
+      },
+      "product": {
+        "type": "string"
+      },
+      "product_data": {
+        "additionalProperties": false,
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "metadata": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "name": {
+            "type": "string"
+          },
+          "statement_descriptor": {
+            "type": "string"
+          },
+          "tax_code": {
+            "type": "string"
+          },
+          "unit_label": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      },
+      "recurring": {
+        "additionalProperties": false,
+        "properties": {
+          "aggregate_usage": {
+            "type": "string"
+          },
+          "interval": {
+            "type": "string"
+          },
+          "interval_count": {
+            "type": "integer"
+          },
+          "meter": {
+            "type": "string"
+          },
+          "usage_type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "interval"
+        ],
+        "type": "object"
+      },
+      "tax_behavior": {
+        "type": "string"
+      },
+      "tiers": {
+        "items": {
+          "properties": {
+            "flat_amount": {
+              "type": "integer"
+            },
+            "flat_amount_decimal": {
+              "type": "string"
+            },
+            "unit_amount": {
+              "type": "integer"
+            },
+            "unit_amount_decimal": {
+              "type": "string"
+            },
+            "up_to": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "required": [
+            "up_to"
+          ],
+          "type": "object"
+        },
+        "type": "array"
+      },
+      "tiers_mode": {
+        "type": "string"
+      },
+      "transfer_lookup_key": {
+        "type": "boolean"
+      },
+      "transform_quantity": {
+        "additionalProperties": false,
+        "properties": {
+          "divide_by": {
+            "type": "integer"
+          },
+          "round": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "divide_by",
+          "round"
+        ],
+        "type": "object"
+      },
+      "unit_amount": {
+        "type": "integer"
+      },
+      "unit_amount_decimal": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "currency"
+    ],
+    "type": "object"
+  },
+  "slug": "STRIPE_CREATE_PRICE",
+  "version": "20261014_00"
+}

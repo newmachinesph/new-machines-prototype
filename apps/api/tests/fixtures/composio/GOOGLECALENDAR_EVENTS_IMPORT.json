@@ -1,0 +1,209 @@
+{
+  "input_parameters": {
+    "properties": {
+      "attachments": {
+        "items": {
+          "properties": {
+            "fileId": {
+              "type": "string"
+            },
+            "fileUrl": {
+              "type": "string"
+            },
+            "iconLink": {
+              "type": "string"
+            },
+            "mimeType": {
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "type": "array"
+      },
+      "attendees": {
+        "items": {
+          "properties": {
+            "additionalGuests": {
+              "type": "integer"
+            },
+            "comment": {
+              "type": "string"
+            },
+            "displayName": {
+              "type": "string"
+            },
+            "email": {
+              "type": "string"
+            },
+            "id": {
+              "type": "string"
+            },
+            "optional": {
+              "type": "boolean"
+            },
+            "organizer": {
+              "type": "boolean"
+            },
+            "resource": {
+              "type": "boolean"
+            },
+            "responseStatus": {
+              "type": "string"
+            },
+            "self": {
+              "type": "boolean"
+            }
+          },
+          "type": "object"
+        },
+        "type": "array"
+      },
+      "calendar_id": {
+        "type": "string"
+      },
+      "colorId": {
+        "type": "string"
+      },
+      "conferenceDataVersion": {
+        "type": "integer"
+      },
+      "description": {
+        "type": "string"
+      },
+      "end": {
+        "additionalProperties": false,
+        "properties": {
+          "date": {
+            "type": "string"
+          },
+          "dateTime": {
+            "type": "string"
+          },
+          "timeZone": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "extendedProperties": {
+        "additionalProperties": false,
+        "properties": {
+          "private": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "shared": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      },
+      "guestsCanInviteOthers": {
+        "type": "boolean"
+      },
+      "guestsCanModify": {
+        "type": "boolean"
+      },
+      "guestsCanSeeOtherGuests": {
+        "type": "boolean"
+      },
+      "iCalUID": {
+        "type": "string"
+      },
+      "location": {
+        "type": "string"
+      },
+      "recurrence": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "reminders": {
+        "additionalProperties": false,
+        "properties": {
+          "overrides": {
+            "items": {
+              "properties": {
+                "method": {
+                  "type": "string"
+                },
+                "minutes": {
+                  "type": "integer"
+                }
+              },
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "useDefault": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "sequence": {
+        "type": "integer"
+      },
+      "source": {
+        "additionalProperties": false,
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "start": {
+        "additionalProperties": false,
+        "properties": {
+          "date": {
+            "type": "string"
+          },
+          "dateTime": {
+            "type": "string"
+          },
+          "timeZone": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "status": {
+        "type": "string"
+      },
+      "summary": {
+        "type": "string"
+      },
+      "supportsAttachments": {
+        "type": "boolean"
+      },
+      "transparency": {
+        "type": "string"
+      },
+      "visibility": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "iCalUID",
+      "start",
+      "end"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLECALENDAR_EVENTS_IMPORT",
+  "version": "20261010_00"
+}

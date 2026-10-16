@@ -1,0 +1,40 @@
+{
+  "input_parameters": {
+    "properties": {
+      "other_contacts": {
+        "type": "boolean"
+      },
+      "page_size": {
+        "maximum": 1000,
+        "minimum": 1,
+        "type": "integer"
+      },
+      "page_token": {
+        "type": "string"
+      },
+      "person_fields": {
+        "type": "string"
+      },
+      "resource_name": {
+        "type": "string"
+      },
+      "sources": {
+        "items": {
+          "enum": [
+            "READ_SOURCE_TYPE_CONTACT",
+            "READ_SOURCE_TYPE_PROFILE"
+          ],
+          "type": "string"
+        },
+        "minItems": 1,
+        "type": "array"
+      },
+      "sync_token": {
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "slug": "GMAIL_GET_PEOPLE",
+  "version": "20261015_00"
+}

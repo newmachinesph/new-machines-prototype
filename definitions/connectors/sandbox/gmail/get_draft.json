@@ -1,0 +1,22 @@
+{
+  "id": "sample",
+  "message": {
+    "to": "sample",
+    "raw": "sample",
+    "sender": "sample",
+    "payload": {},
+    "preview": {},
+    "subject": "sample",
+    "labelIds": [
+      "sample"
+    ],
+    "threadId": "sample",
+    "messageId": "sample",
+    "messageText": "sample",
+    "attachmentList": [
+      {}
+    ],
+    "messageTimestamp": "sample"
+  },
+  "display_url": "sample"
+}

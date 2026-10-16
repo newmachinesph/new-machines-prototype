@@ -75,4 +75,1434 @@ tools:
           maxLength: 4000
           description: The plain-text body.
 
+  # Imported from Composio by scripts/import_connector.py gmail; reviewed choices are in
+  # scripts/connector_imports/gmail.yaml.
+  - id: modify_email_labels
+    slug: GMAIL_ADD_LABEL_TO_EMAIL
+    version: '20261015_00'
+    action_class: write
+    capability: mail.write
+    description: Adds and/or removes specified Gmail labels for a message; ensure `message_id` and all `label_ids`
+      are valid (use 'listLabels' for custom label IDs).
+    input_schema:
+      type: object
+      required:
+      - message_id
+      properties:
+        user_id:
+          type: string
+          description: User's email address or 'me' for the authenticated user.
+        message_id:
+          type: string
+          pattern: ^[0-9a-fA-F]+$
+          description: 'Immutable ID of the message to modify. Gmail message IDs are hexadecimal strings (e.g., ''1a2b3c4d5e6f7890'').
+            IMPORTANT: Do NOT use UUIDs (32-character strings like ''093ca4662b214d5eba8f4ceeaad63433''), thread IDs,
+            or internal system IDs - these will cause ''Invalid id value'' errors. Obtain valid message IDs from:
+            (1) ''GMAIL_FETCH_EMAILS'' response ''messageId'' field, (2) ''GMAIL_FETCH_MESSAGE_BY_THREAD_ID'' response,
+            or (3) ''GMAIL_LIST_THREADS'' and then fetching thread messages.'
+        add_label_ids:
+          type: array
+          items:
+            type: string
+            pattern: ^(?!(?:[Tt][Rr][Aa][Ss][Hh]|[Ss][Pp][Aa][Mm])$).+$
+          description: 'Label IDs to add (IDs, not display names). System labels: INBOX, SPAM, TRASH, UNREAD, STARRED,
+            IMPORTANT, CATEGORY_PERSONAL, CATEGORY_SOCIAL, CATEGORY_PROMOTIONS, CATEGORY_UPDATES, CATEGORY_FORUMS.
+            Use full CATEGORY_ prefix (e.g., ''CATEGORY_UPDATES'' not ''UPDATES''). Custom labels: call ''listLabels''
+            first to get the ID (format: ''Label_<number>''). Do NOT use the label display name; the API requires
+            the ID. SENT, DRAFT, CHAT are immutable and cannot be added or removed. A label cannot appear in both
+            add_label_ids and remove_label_ids.'
+        remove_label_ids:
+          type: array
+          items:
+            type: string
+          description: 'Label IDs to remove (IDs, not display names). System labels: INBOX, SPAM, TRASH, UNREAD, STARRED,
+            IMPORTANT, CATEGORY_PERSONAL, CATEGORY_SOCIAL, CATEGORY_PROMOTIONS, CATEGORY_UPDATES, CATEGORY_FORUMS.
+            Use full CATEGORY_ prefix (e.g., ''CATEGORY_UPDATES'' not ''UPDATES''). Custom labels: call ''listLabels''
+            first to get the ID (format: ''Label_<number>''). SENT, DRAFT, CHAT are immutable and cannot be removed.
+            Common operations: to mark as read, remove ''UNREAD''; to archive, remove ''INBOX''. A label cannot appear
+            in both add_label_ids and remove_label_ids.'
+      additionalProperties: false
+  - id: batch_modify_gmail_messages
+    slug: GMAIL_BATCH_MODIFY_MESSAGES
+    version: '20261015_00'
+    action_class: write
+    capability: mail.write
+    description: Modify labels on multiple Gmail messages in one efficient API call. Supports up to 1,000 messages
+      per request for bulk operations like archiving, marking as read/unread, or applying custom labels.
+    input_schema:
+      type: object
+      required:
+      - messageIds
+      properties:
+        userId:
+          type: string
+          description: User's email address or 'me' for the authenticated user.
+        messageIds:
+          type: array
+          items:
+            type: string
+          maxItems: 1000
+          minItems: 1
+          description: List of message IDs to modify. Maximum 1,000 message IDs per request. Get message IDs from
+            GMAIL_FETCH_EMAILS or GMAIL_LIST_THREADS actions. Accepts 'messageIds', 'ids', or 'message_ids' as the
+            parameter name.
+        addLabelIds:
+          type: array
+          items:
+            type: string
+            pattern: ^(?!(?:[Tt][Rr][Aa][Ss][Hh]|[Ss][Pp][Aa][Mm])$).+$
+          description: 'List of label IDs to add to the messages. IMPORTANT: Use label IDs, NOT label display names.
+            System labels use their name as ID: INBOX, STARRED, IMPORTANT, SENT, DRAFT, SPAM, TRASH, UNREAD, CATEGORY_PERSONAL,
+            CATEGORY_SOCIAL, CATEGORY_PROMOTIONS, CATEGORY_UPDATES, CATEGORY_FORUMS. Custom labels MUST use their
+            ID (format: ''Label_XXX'', e.g., ''Label_1'', ''Label_25''), NOT the display name (e.g., do NOT use ''Work''
+            or ''Projects''). Call GMAIL_LIST_LABELS first to get the ''id'' field for custom labels. At least one
+            of add_label_ids or remove_label_ids must be provided. CONSTRAINT: Label IDs must NOT overlap with remove_label_ids
+            - cannot add and remove the same label.'
+        removeLabelIds:
+          type: array
+          items:
+            type: string
+          description: 'List of label IDs to remove from the messages. IMPORTANT: Use label IDs, NOT label display
+            names. System labels use their name as ID: INBOX, STARRED, IMPORTANT, SENT, SPAM, TRASH, UNREAD. Custom
+            labels MUST use their ID (format: ''Label_XXX'', e.g., ''Label_1'', ''Label_25''), NOT the display name
+            (e.g., do NOT use ''Work'' or ''Projects''). Call GMAIL_LIST_LABELS first to get the ''id'' field for
+            custom labels. Common use cases: Remove ''UNREAD'' to mark as read, remove ''INBOX'' to archive. Note:
+            ''DRAFT'' cannot be removed - use GMAIL_DELETE_DRAFT instead. At least one of add_label_ids or remove_label_ids
+            must be provided. CONSTRAINT: Label IDs must NOT overlap with add_label_ids - cannot add and remove the
+            same label.'
+      additionalProperties: false
+  - id: create_label
+    slug: GMAIL_CREATE_LABEL
+    version: '20261015_00'
+    action_class: write
+    capability: mail.write
+    description: Creates a new label with a unique name in the specified user's Gmail account.
+    input_schema:
+      type: object
+      required:
+      - label_name
+      properties:
+        user_id:
+          type: string
+          description: The email address of the user in whose account the label will be created.
+        label_name:
+          type: string
+          description: 'REQUIRED. The name for the new label. Must be unique within the account, non-blank, maximum
+            length 225 characters, cannot contain commas ('',''), not only whitespace, and must not be a reserved
+            system label. Reserved English system labels include: Inbox, Starred, Important, Sent, Draft, Drafts,
+            Spam, Trash, etc. Forward slashes (''/'') are allowed and used to create hierarchical nested labels (e.g.,
+            ''Work/Projects'', ''Personal/Finance''). When creating nested labels, any missing parent labels will
+            be automatically created (similar to ''mkdir -p''). Periods (''.'') are allowed and commonly used for
+            numbering schemes (e.g., ''1. Action Items'', ''2. Projects''). Note: ''name'' is also accepted as an
+            alias for this field. If a label with this name already exists, returns a 409 conflict; use GMAIL_LIST_LABELS
+            to check existing labels and reuse the existing labelId, or use GMAIL_PATCH_LABEL to update it.'
+        text_color:
+          enum:
+          - '#000000'
+          - '#434343'
+          - '#666666'
+          - '#999999'
+          - '#cccccc'
+          - '#efefef'
+          - '#f3f3f3'
+          - '#ffffff'
+          - '#fb4c2f'
+          - '#ffad47'
+          - '#fad165'
+          - '#16a766'
+          - '#43d692'
+          - '#4a86e8'
+          - '#a479e2'
+          - '#f691b3'
+          - '#f6c5be'
+          - '#ffe6c7'
+          - '#fef1d1'
+          - '#b9e4d0'
+          - '#c6f3de'
+          - '#c9daf8'
+          - '#e4d7f5'
+          - '#fcdee8'
+          - '#efa093'
+          - '#ffd6a2'
+          - '#fce8b3'
+          - '#89d3b2'
+          - '#a0eac9'
+          - '#a4c2f4'
+          - '#d0bcf1'
+          - '#fbc8d9'
+          - '#e66550'
+          - '#ffbc6b'
+          - '#fcda83'
+          - '#44b984'
+          - '#68dfa9'
+          - '#6d9eeb'
+          - '#b694e8'
+          - '#f7a7c0'
+          - '#cc3a21'
+          - '#eaa041'
+          - '#f2c960'
+          - '#149e60'
+          - '#3dc789'
+          - '#3c78d8'
+          - '#8e63ce'
+          - '#e07798'
+          - '#ac2b16'
+          - '#cf8933'
+          - '#d5ae49'
+          - '#0b804b'
+          - '#2a9c68'
+          - '#285bac'
+          - '#653e9b'
+          - '#b65775'
+          - '#464646'
+          - '#e7e7e7'
+          - '#0d3472'
+          - '#b6cff5'
+          - '#0d3b44'
+          - '#98d7e4'
+          - '#3d188e'
+          - '#e3d7ff'
+          - '#711a36'
+          - '#fbd3e0'
+          - '#8a1c0a'
+          - '#f2b2a8'
+          - '#7a2e0b'
+          - '#ffc8af'
+          - '#7a4706'
+          - '#ffdeb5'
+          - '#594c05'
+          - '#fbe983'
+          - '#684e07'
+          - '#fdedc1'
+          - '#0b4f30'
+          - '#b3efd3'
+          - '#04502e'
+          - '#a2dcc1'
+          - '#c2c2c2'
+          - '#4986e7'
+          - '#2da2bb'
+          - '#b99aff'
+          - '#994a64'
+          - '#f691b2'
+          - '#ff7537'
+          - '#ffad46'
+          - '#662e37'
+          - '#cca6ac'
+          - '#094228'
+          - '#42d692'
+          - '#076239'
+          - '#16a765'
+          - '#1a764d'
+          - '#1c4587'
+          - '#41236d'
+          - '#822111'
+          - '#83334c'
+          - '#a46a21'
+          - '#aa8831'
+          - '#ebdbde'
+          type: string
+          description: 'Text color for the label. Gmail only accepts colors from a predefined palette of 102 specific
+            hex values. Common color names like ''YELLOW'', ''RED'', ''BLUE'', ''GREEN'', ''ORANGE'', ''PURPLE'',
+            ''PINK'' are automatically mapped to the closest Gmail palette color. Provide either a common color name,
+            a Gmail palette color name (e.g., ''BLACK'', ''ROYAL_BLUE''), or exact hex value (e.g., ''#000000'', ''#4a86e8'').
+            If only text_color is provided without background_color, a complementary background color (white or black)
+            will be auto-selected for optimal contrast. Full palette: https://developers.google.com/workspace/gmail/api/reference/rest/v1/users.labels#Color
+            Must be supplied together with background_color — providing only one will cause a 400 error. The auto-selected
+            complementary color behavior does not apply; both colors are required.'
+        background_color:
+          enum:
+          - '#000000'
+          - '#434343'
+          - '#666666'
+          - '#999999'
+          - '#cccccc'
+          - '#efefef'
+          - '#f3f3f3'
+          - '#ffffff'
+          - '#fb4c2f'
+          - '#ffad47'
+          - '#fad165'
+          - '#16a766'
+          - '#43d692'
+          - '#4a86e8'
+          - '#a479e2'
+          - '#f691b3'
+          - '#f6c5be'
+          - '#ffe6c7'
+          - '#fef1d1'
+          - '#b9e4d0'
+          - '#c6f3de'
+          - '#c9daf8'
+          - '#e4d7f5'
+          - '#fcdee8'
+          - '#efa093'
+          - '#ffd6a2'
+          - '#fce8b3'
+          - '#89d3b2'
+          - '#a0eac9'
+          - '#a4c2f4'
+          - '#d0bcf1'
+          - '#fbc8d9'
+          - '#e66550'
+          - '#ffbc6b'
+          - '#fcda83'
+          - '#44b984'
+          - '#68dfa9'
+          - '#6d9eeb'
+          - '#b694e8'
+          - '#f7a7c0'
+          - '#cc3a21'
+          - '#eaa041'
+          - '#f2c960'
+          - '#149e60'
+          - '#3dc789'
+          - '#3c78d8'
+          - '#8e63ce'
+          - '#e07798'
+          - '#ac2b16'
+          - '#cf8933'
+          - '#d5ae49'
+          - '#0b804b'
+          - '#2a9c68'
+          - '#285bac'
+          - '#653e9b'
+          - '#b65775'
+          - '#464646'
+          - '#e7e7e7'
+          - '#0d3472'
+          - '#b6cff5'
+          - '#0d3b44'
+          - '#98d7e4'
+          - '#3d188e'
+          - '#e3d7ff'
+          - '#711a36'
+          - '#fbd3e0'
+          - '#8a1c0a'
+          - '#f2b2a8'
+          - '#7a2e0b'
+          - '#ffc8af'
+          - '#7a4706'
+          - '#ffdeb5'
+          - '#594c05'
+          - '#fbe983'
+          - '#684e07'
+          - '#fdedc1'
+          - '#0b4f30'
+          - '#b3efd3'
+          - '#04502e'
+          - '#a2dcc1'
+          - '#c2c2c2'
+          - '#4986e7'
+          - '#2da2bb'
+          - '#b99aff'
+          - '#994a64'
+          - '#f691b2'
+          - '#ff7537'
+          - '#ffad46'
+          - '#662e37'
+          - '#cca6ac'
+          - '#094228'
+          - '#42d692'
+          - '#076239'
+          - '#16a765'
+          - '#1a764d'
+          - '#1c4587'
+          - '#41236d'
+          - '#822111'
+          - '#83334c'
+          - '#a46a21'
+          - '#aa8831'
+          - '#ebdbde'
+          type: string
+          description: 'Background color for the label. Gmail only accepts colors from a predefined palette of 102
+            specific hex values. Common color names like ''YELLOW'', ''RED'', ''BLUE'', ''GREEN'', ''ORANGE'', ''PURPLE'',
+            ''PINK'' are automatically mapped to the closest Gmail palette color. Provide either a common color name,
+            a Gmail palette color name (e.g., ''ROYAL_BLUE'', ''CARIBBEAN_GREEN''), or exact hex value (e.g., ''#4a86e8'',
+            ''#43d692''). If only background_color is provided without text_color, a complementary text color (white
+            or black) will be auto-selected for optimal contrast. Full palette: https://developers.google.com/workspace/gmail/api/reference/rest/v1/users.labels#Color
+            Must be supplied together with text_color — providing only one will cause a 400 error. The auto-selected
+            complementary color behavior does not apply; both colors are required.'
+        label_list_visibility:
+          enum:
+          - labelShow
+          - labelShowIfUnread
+          - labelHide
+          type: string
+          description: 'Controls how the label is displayed in the label list in the Gmail sidebar. Valid values:
+            ''labelShow'' (always show), ''labelShowIfUnread'' (show only if unread messages), ''labelHide'' (hide
+            from list).'
+        message_list_visibility:
+          enum:
+          - show
+          - hide
+          type: string
+          description: 'Controls how messages with this label are displayed in the message list. Valid values: ''show''
+            or ''hide''. Note: These values are different from label_list_visibility - do NOT use ''labelShow'' or
+            ''labelHide'' here.'
+      additionalProperties: false
+  - id: fetch_message_by_message_id
+    slug: GMAIL_FETCH_MESSAGE_BY_MESSAGE_ID
+    version: '20261015_00'
+    action_class: read
+    capability: mail.read
+    description: Fetches a specific email message by its ID, provided the `message_id` exists and is accessible to
+      the authenticated `user_id`. Spam/trash messages are excluded unless upstream list/search calls used `include_spam_trash=true`.
+    input_schema:
+      type: object
+      required:
+      - message_id
+      properties:
+        format:
+          type: string
+          description: 'Format for message content. ''minimal'': lightest (ID, thread ID, labels only). ''metadata'':
+            headers and message metadata without body content - ideal for summarization, analysis, or when you only
+            need subject/sender/timestamp (recommended for most use cases). ''full'': complete MIME structure with
+            50+ headers, nested parts, and base64url-encoded body data - heavy payload, only use when you need the
+            complete raw MIME structure for parsing attachments or body content. ''raw'': entire RFC 2822 formatted
+            message as base64url string.'
+        user_id:
+          type: string
+          description: User's email address or 'me' for the authenticated user.
+        message_id:
+          type: string
+          minLength: 1
+          description: The Gmail API message ID (hexadecimal string, typically 15-16 characters like '19b11732c1b578fd').
+            Must be obtained from Gmail API responses (e.g., List Messages, Search Messages). Do NOT use email subjects,
+            dates, sender names, or custom identifiers. Do NOT use `threadId` (use GMAIL_FETCH_MESSAGE_BY_THREAD_ID
+            for threads), the Message-ID email header, or any fabricated value — only IDs from Gmail API list/search
+            responses.
+      additionalProperties: false
+  - id: fetch_message_by_thread_id
+    slug: GMAIL_FETCH_MESSAGE_BY_THREAD_ID
+    version: '20261015_00'
+    action_class: read
+    capability: mail.read
+    description: Retrieves messages from a Gmail thread using its `thread_id`, where the thread must be accessible
+      by the specified `user_id`. Returns a `messages` array; `thread_id` is not echoed in the response.
+    input_schema:
+      type: object
+      required:
+      - thread_id
+      properties:
+        user_id:
+          type: string
+          description: The email address of the user.
+        thread_id:
+          type: string
+          description: Hexadecimal thread ID from Gmail API (e.g., '19bf77729bcb3a44'). Obtain from GMAIL_LIST_THREADS
+            or GMAIL_FETCH_EMAILS. Prefixes like 'msg-f:' or 'thread-f:' are auto-stripped. Legacy Gmail web UI IDs
+            (e.g., 'FMfcgzQfBZdVqKZcSVBhqwWLKWCtDdWQ') are NOT supported - use the API thread ID instead. Deduplicate
+            thread_ids before calling when multiple listed messages share the same threadId to avoid redundant calls.
+        page_token:
+          type: string
+          description: Opaque page token for fetching a specific page of messages if results are paginated. Iterate
+            calls by passing the returned `nextPageToken` until it is absent; stopping early will miss messages in
+            long threads.
+      additionalProperties: false
+  - id: forward_email_message
+    slug: GMAIL_FORWARD_MESSAGE
+    version: '20261015_00'
+    action_class: write
+    capability: mail.send
+    description: Forward an existing Gmail message to specified recipients, preserving original body and attachments.
+      Verify recipients and content before forwarding to avoid unintended exposure. Bulk forwarding may trigger 429/5xx
+      rate limits;
+    input_schema:
+      type: object
+      required:
+      - message_id
+      - recipients
+      properties:
+        cc:
+          type: array
+          items:
+            type: string
+          description: List of email addresses to CC.
+        bcc:
+          type: array
+          items:
+            type: string
+          description: List of email addresses to BCC.
+        user_id:
+          type: string
+          description: User's email address or 'me' for the authenticated user.
+        message_id:
+          type: string
+          pattern: ^[0-9a-fA-F]+$
+          description: Gmail message ID (hexadecimal string, e.g., '17f45ec49a9c3f1b'). Must contain only hex characters
+            [0-9a-fA-F]. Obtain this from actions like 'List Messages' or 'Fetch Emails'.
+        recipients:
+          type: array
+          items:
+            type: string
+          minItems: 1
+          description: List of email addresses to forward the message to.
+        additional_text:
+          type: string
+          description: Optional additional text to include before the forwarded content.
+      additionalProperties: false
+  - id: get_gmail_attachment
+    slug: GMAIL_GET_ATTACHMENT
+    version: '20261015_00'
+    action_class: read
+    capability: mail.read
+    description: Retrieves a specific attachment by ID from a message in a user's Gmail mailbox, requiring valid message
+      and attachment IDs. Returns the downloaded file with its MIME type and filename.
+    input_schema:
+      type: object
+      required:
+      - message_id
+      - attachment_id
+      - file_name
+      properties:
+        user_id:
+          type: string
+          description: User's email address ('me' for authenticated user).
+        file_name:
+          type: string
+          minLength: 1
+          description: Desired filename for the downloaded attachment. This is a required string field - do not pass
+            null.
+        message_id:
+          type: string
+          minLength: 1
+          description: Immutable ID of the message containing the attachment. This is a required string field - do
+            not pass null. Obtain the message_id from Gmail API responses (e.g., fetchEmails, listThreads).
+        attachment_id:
+          type: string
+          minLength: 1
+          description: 'The internal Gmail attachment ID (NOT the filename). This is a system-generated token string
+            like ''ANGjdJ8s...''. Obtain this ID from the ''attachmentId'' field in the ''attachmentList'' array returned
+            by fetchEmails or fetchMessageByMessageId actions. Do NOT pass the filename (e.g., ''report.pdf''). Requires
+            a fully hydrated message payload: call GMAIL_FETCH_MESSAGE_BY_MESSAGE_ID with format=''full'' to obtain
+            valid attachment IDs — lightweight fetch modes may omit attachmentList entirely.'
+      additionalProperties: false
+  - id: get_auto_forwarding_settings
+    slug: GMAIL_GET_AUTO_FORWARDING
+    version: '20261015_00'
+    action_class: read
+    capability: mail.read
+    description: Tool to get the auto-forwarding setting for the specified account. Use when you need to retrieve
+      the current auto-forwarding configuration including enabled status, forwarding email address, and message disposition.
+    input_schema:
+      type: object
+      properties:
+        user_id:
+          type: string
+          description: The user's email address. The special value 'me' can be used to indicate the authenticated
+            user.
+      additionalProperties: false
+  - id: get_contacts
+    slug: GMAIL_GET_CONTACTS
+    version: '20261015_00'
+    action_class: read
+    capability: mail.read
+    description: Fetches contacts (connections) for the authenticated Google account, allowing selection of specific
+      data fields and pagination. Only covers saved contacts and 'Other Contacts'; email-header-only senders are out
+      of scope.
+    input_schema:
+      type: object
+      properties:
+        page_token:
+          type: string
+          description: Token to retrieve a specific page of results, obtained from 'nextPageToken' in a previous response.
+            Repeat calls with each successive `nextPageToken` until it is absent — stopping early silently omits contacts.
+        person_fields:
+          type: string
+          description: Comma-separated person fields to retrieve for each contact (e.g., 'names,emailAddresses').
+        resource_name:
+          type: string
+          description: Identifier for the person resource whose connections are listed; use 'people/me' for the authenticated
+            user.
+        include_other_contacts:
+          type: boolean
+          description: 'Include ''Other Contacts'' (interacted with but not explicitly saved) in addition to regular
+            contacts. WARNING: ''Other Contacts'' often have incomplete data - they may lack names, phone numbers,
+            and other fields even when requested. These auto-generated contacts are created from email interactions
+            and typically only have email addresses. Set to False if you need contacts with complete name information.
+            When True, each contact will have a ''contactSource'' field indicating its origin. When True, `person_fields`
+            is restricted to `emailAddresses`, `names`, `phoneNumbers`, and `metadata` only — requesting other fields
+            (e.g., `organizations`, `birthdays`) causes validation errors or silent omissions.'
+      additionalProperties: false
+  - id: get_draft
+    slug: GMAIL_GET_DRAFT
+    version: '20261015_00'
+    action_class: read
+    capability: mail.read
+    description: Retrieves a single Gmail draft by its ID. Use this to fetch and inspect draft content before sending
+      via GMAIL_SEND_DRAFT. The format parameter controls the level of detail returned.
+    input_schema:
+      type: object
+      required:
+      - draft_id
+      properties:
+        format:
+          type: string
+          description: 'Format for the draft message: ''minimal'' (ID/labels only), ''full'' (complete data with parsed
+            payload), ''raw'' (base64url-encoded RFC 2822 format), ''metadata'' (ID/labels/headers only).'
+        user_id:
+          type: string
+          description: The user's email address. The special value `me` can be used to indicate the authenticated
+            user.
+        draft_id:
+          type: string
+          description: The ID of the draft to retrieve. Draft IDs are typically alphanumeric strings (e.g., 'r99885592323229922').
+            Use GMAIL_LIST_DRAFTS to retrieve valid draft IDs.
+      additionalProperties: false
+  - id: get_gmail_filter
+    slug: GMAIL_GET_FILTER
+    version: '20261015_00'
+    action_class: read
+    capability: mail.read
+    description: Tool to retrieve a specific Gmail filter by its ID. Use when you need to inspect the criteria and
+      actions of an existing filter.
+    input_schema:
+      type: object
+      required:
+      - id
+      properties:
+        id:
+          type: string
+          description: The ID of the filter to be fetched.
+        user_id:
+          type: string
+          description: The user's email address or the special value 'me' to indicate the authenticated user.
+      additionalProperties: false
+  - id: get_label_details
+    slug: GMAIL_GET_LABEL
+    version: '20261015_00'
+    action_class: read
+    capability: mail.read
+    description: Gets details for a specified Gmail label. Use this to retrieve label information including name,
+      type, visibility settings, message/thread counts, and color.
+    input_schema:
+      type: object
+      required:
+      - id
+      properties:
+        id:
+          type: string
+          description: The ID of the label to retrieve. Can be a system label (e.g., INBOX, SENT, DRAFT, UNREAD, STARRED,
+            SPAM, TRASH) or a user-created label ID (e.g., Label_1, Label_42).
+        user_id:
+          type: string
+          description: The user's email address. The special value 'me' can be used to indicate the authenticated
+            user.
+      additionalProperties: false
+  - id: get_language_settings
+    slug: GMAIL_GET_LANGUAGE_SETTINGS
+    version: '20261015_00'
+    action_class: read
+    capability: mail.read
+    description: Tool to retrieve the language settings for a Gmail user. Use when you need to determine the display
+      language preference for the authenticated user or a specific Gmail account.
+    input_schema:
+      type: object
+      properties:
+        user_id:
+          type: string
+          description: The email address of the Gmail user whose language settings are to be retrieved, or the special
+            value 'me' to indicate the currently authenticated user.
+      additionalProperties: false
+  - id: get_people
+    slug: GMAIL_GET_PEOPLE
+    version: '20261015_00'
+    action_class: read
+    capability: mail.read
+    description: Retrieves either a specific person's details (using `resource_name`) or lists 'Other Contacts' (if
+      `other_contacts` is true), with `person_fields` specifying the data to return.
+    input_schema:
+      type: object
+      properties:
+        sources:
+          type: array
+          items:
+            enum:
+            - READ_SOURCE_TYPE_CONTACT
+            - READ_SOURCE_TYPE_PROFILE
+            type: string
+            description: Source types for reading other contacts.
+          minItems: 1
+          description: Source types to include when retrieving other contacts. READ_SOURCE_TYPE_CONTACT supports basic
+            fields (emailAddresses, metadata, names, phoneNumbers, photos). READ_SOURCE_TYPE_PROFILE supports extended
+            fields (birthdays, genders, organizations, etc.) but requires READ_SOURCE_TYPE_CONTACT to also be included.
+            Applicable only when `other_contacts` is true.
+        page_size:
+          type: integer
+          maximum: 1000
+          minimum: 1
+          description: The number of 'Other Contacts' to return per page. Applicable only when `other_contacts` is
+            true.
+        page_token:
+          type: string
+          description: An opaque token from a previous response to retrieve the next page of 'Other Contacts' results.
+            Applicable only when `other_contacts` is true and paginating.
+        sync_token:
+          type: string
+          description: A token from a previous 'Other Contacts' list call to retrieve only changes since the last
+            sync; leave empty for an initial full sync. Applicable only when `other_contacts` is true.
+        person_fields:
+          type: string
+          description: A comma-separated field mask to restrict which fields on the person (or persons) are returned.
+            Consult the Google People API documentation for a comprehensive list of valid fields. Omitted fields are
+            silently absent from the response — no error is raised. When `other_contacts` is true, only a restricted
+            subset is valid (`emailAddresses`, `names`, `phoneNumbers`, `metadata`); extended fields like `organizations`
+            or `birthdays` may cause validation errors or silent omissions in that mode.
+        resource_name:
+          type: string
+          description: Resource name identifying the person for whom to retrieve information (like the authenticated
+            user or a specific contact). Used only when `other_contacts` is false. Deleted or stale resource_names
+            may return partial records with missing `emailAddresses`, `names`, or other fields.
+        other_contacts:
+          type: boolean
+          description: If true, retrieves 'Other Contacts' (people interacted with but not explicitly saved), ignoring
+            `resource_name` and enabling pagination/sync. If false, retrieves information for the single person specified
+            by `resource_name`.
+      additionalProperties: false
+  - id: get_profile
+    slug: GMAIL_GET_PROFILE
+    version: '20261015_00'
+    action_class: read
+    capability: mail.read
+    description: Retrieves Gmail profile information (email address, aggregate messagesTotal/threadsTotal, historyId)
+      for a user. messagesTotal counts individual emails; threadsTotal counts conversations;
+    input_schema:
+      type: object
+      properties:
+        user_id:
+          type: string
+          description: The email address of the Gmail user whose profile is to be retrieved, or the special value
+            'me' to indicate the currently authenticated user. Prefer 'me' unless explicitly targeting another account;
+            passing a raw email address that does not match the connected account may fail or access the wrong mailbox.
+      additionalProperties: false
+  - id: get_vacation_settings
+    slug: GMAIL_GET_VACATION_SETTINGS
+    version: '20261015_00'
+    action_class: read
+    capability: mail.read
+    description: Tool to retrieve vacation responder settings for a Gmail user. Use when you need to check if out-of-office
+      auto-replies are configured and view their content.
+    input_schema:
+      type: object
+      properties:
+        user_id:
+          type: string
+          description: The email address of the Gmail user whose vacation settings are to be retrieved, or the special
+            value 'me' to indicate the currently authenticated user.
+      additionalProperties: false
+  - id: list_drafts
+    slug: GMAIL_LIST_DRAFTS
+    version: '20261015_00'
+    action_class: read
+    capability: mail.read
+    description: Retrieves a paginated list of email drafts from a user's Gmail account. Use verbose=true to get full
+      draft details including subject, body, sender, and timestamp. Draft ordering is non-guaranteed;
+    input_schema:
+      type: object
+      properties:
+        user_id:
+          type: string
+          description: User's mailbox ID; use 'me' for the authenticated user.
+        verbose:
+          type: boolean
+          description: If true, fetches full draft details including subject, sender, recipient, body, and timestamp.
+            If false, returns only draft IDs (faster). Increases response payload size; tune max_results accordingly.
+            Use verbose=true before destructive operations to confirm draft identity by subject, recipient, and timestamp.
+        page_token:
+          type: string
+          description: Token from a previous response to retrieve a specific page of drafts. Ordering is non-guaranteed;
+            continue paginating until page_token is absent in the response to retrieve all drafts.
+        max_results:
+          type: integer
+          maximum: 500
+          minimum: 1
+          description: Maximum number of drafts to return per page.
+      additionalProperties: false
+  - id: list_gmail_filters
+    slug: GMAIL_LIST_FILTERS
+    version: '20261015_00'
+    action_class: read
+    capability: mail.read
+    description: Tool to list all Gmail filters (rules) in the mailbox. Use for security audits to detect malicious
+      filter rules or before creating new filters to avoid duplicates.
+    input_schema:
+      type: object
+      properties:
+        user_id:
+          type: string
+          description: The user's email address or the special value 'me' to indicate the authenticated user whose
+            filters will be retrieved.
+      additionalProperties: false
+  - id: list_forwarding_addresses
+    slug: GMAIL_LIST_FORWARDING_ADDRESSES
+    version: '20261015_00'
+    action_class: read
+    capability: mail.read
+    description: Tool to list all forwarding addresses for the specified Gmail account. Use when you need to retrieve
+      the email addresses that are allowed to be used for forwarding messages.
+    input_schema:
+      type: object
+      properties:
+        user_id:
+          type: string
+          description: The user's email address or the special value 'me' to indicate the authenticated user whose
+            forwarding addresses will be retrieved.
+      additionalProperties: false
+  - id: list_gmail_history
+    slug: GMAIL_LIST_HISTORY
+    version: '20261015_00'
+    action_class: read
+    capability: mail.read
+    description: Tool to list Gmail mailbox change history since a known startHistoryId. Use for incremental mailbox
+      syncs. Persist the latest historyId as a checkpoint across sessions; without it, incremental sync is unreliable.
+    input_schema:
+      type: object
+      required:
+      - start_history_id
+      properties:
+        user_id:
+          type: string
+          description: The user's email address. Use 'me' to specify the authenticated user.
+        label_id:
+          type: string
+          description: Only return history records involving messages with this label ID.
+        page_token:
+          type: string
+          description: Token to retrieve a specific page of results. If the response includes nextPageToken, loop
+            requests using this parameter until no nextPageToken is returned; failing to paginate will silently miss
+            changes.
+        max_results:
+          type: integer
+          maximum: 500
+          minimum: 1
+          description: Maximum number of history records to return. Default is 100; max is 500.
+        history_types:
+          type: array
+          items:
+            enum:
+            - messageAdded
+            - messageDeleted
+            - labelAdded
+            - labelRemoved
+            type: string
+          description: 'Filter by specific history types. Allowed values: messageAdded, messageDeleted, labelAdded,
+            labelRemoved.'
+        start_history_id:
+          type: string
+          description: Required. Returns history records after this ID. If the ID is invalid or too old, the API returns
+            404. Perform a full sync in that case. Should be a numeric string. On 404 (historyIdTooOld) or 400 (invalidArgument),
+            recover by fetching a fresh historyId via GMAIL_GET_PROFILE, then perform a one-time full sync via GMAIL_FETCH_EMAILS
+            before resuming incremental calls.
+      additionalProperties: false
+  - id: list_gmail_labels
+    slug: GMAIL_LIST_LABELS
+    version: '20261015_00'
+    action_class: read
+    capability: mail.read
+    description: Retrieves all system and user-created labels for a Gmail account in a single unpaginated response.
+    input_schema:
+      type: object
+      properties:
+        user_id:
+          type: string
+          description: Identifies the Gmail account (owner's email or 'me' for authenticated user) for which labels
+            will be listed.
+        include_details:
+          type: boolean
+          description: If true, fetches detailed info for each label including message/thread counts (messagesTotal,
+            messagesUnread, threadsTotal, threadsUnread). This requires additional API calls and may be slower for
+            accounts with many labels. If false (default), returns basic label info (id, name, type) which is faster.
+            Counts are eventually consistent and may lag real-time mailbox state by a few seconds.
+      additionalProperties: false
+  - id: list_send_as_aliases
+    slug: GMAIL_LIST_SEND_AS
+    version: '20261015_00'
+    action_class: read
+    capability: mail.read
+    description: Lists the send-as aliases for a Gmail account, including the primary address and custom 'from' aliases.
+      Use when you need to retrieve available sending addresses for composing emails.
+    input_schema:
+      type: object
+      properties:
+        user_id:
+          type: string
+          description: The user's email address or the special value 'me' to indicate the authenticated user whose
+            send-as aliases will be retrieved.
+      additionalProperties: false
+  - id: list_threads_2
+    slug: GMAIL_LIST_THREADS
+    version: '20261015_00'
+    action_class: read
+    capability: mail.read
+    description: Retrieves a list of email threads from a Gmail account, identified by `user_id` (email address or
+      'me'), supporting filtering and pagination.
+    input_schema:
+      type: object
+      properties:
+        query:
+          type: string
+          description: Filter for threads, using Gmail search query syntax (e.g., 'from:user@example.com is:unread').
+            Supported operators include `from:`, `to:`, `subject:`, `label:`, `is:unread`, `has:attachment`, `after:`,
+            `before:`. Dates must use `YYYY/MM/DD` format; date operators are UTC-based. Exact subject phrases require
+            quotes (e.g., `subject:'meeting notes'`).
+        user_id:
+          type: string
+          description: The user's email address or 'me' to specify the authenticated Gmail account.
+        verbose:
+          type: boolean
+          description: If false, returns threads with basic fields (id, snippet, historyId). If true, returns threads
+            with complete message details including headers, body, attachments, and metadata for each message in the
+            thread. Combining `verbose=true` with large `max_results` produces very large responses; keep `max_results`
+            modest when verbose is enabled.
+        page_token:
+          type: string
+          description: Token from a previous response to retrieve a specific page of results; omit for the first page.
+        max_results:
+          type: integer
+          maximum: 500
+          minimum: 1
+          description: Maximum number of threads to return. Hard cap is ~500 per call. For full mailbox coverage,
+            loop using `nextPageToken` via `page_token` until absent.
+      additionalProperties: false
+  - id: modify_thread_labels
+    slug: GMAIL_MODIFY_THREAD_LABELS
+    version: '20261015_00'
+    action_class: write
+    capability: mail.write
+    description: Adds or removes specified existing label IDs from a Gmail thread, affecting all its messages; ensure
+      the thread ID is valid. To modify a single message only, use a message-level tool instead.
+    input_schema:
+      type: object
+      required:
+      - thread_id
+      properties:
+        user_id:
+          type: string
+          description: User's email address or 'me' for the authenticated user.
+        thread_id:
+          type: string
+          description: Immutable ID of the thread to modify.
+        add_label_ids:
+          type: array
+          items:
+            type: string
+            pattern: ^(?!(?:[Tt][Rr][Aa][Ss][Hh]|[Ss][Pp][Aa][Mm])$).+$
+          description: 'List of label IDs to add to the thread. Must be valid label IDs that exist in the user''s
+            account. System labels use uppercase names (e.g., ''INBOX'', ''STARRED'', ''IMPORTANT'', ''UNREAD'', ''SPAM'',
+            ''TRASH'', ''SENT'', ''DRAFT'', ''CATEGORY_PERSONAL'', ''CATEGORY_SOCIAL'', ''CATEGORY_PROMOTIONS'', ''CATEGORY_UPDATES'',
+            ''CATEGORY_FORUMS''). Custom labels use the format ''Label_N'' (e.g., ''Label_1'', ''Label_42''). Use
+            GMAIL_LIST_LABELS to discover available label IDs. Accepts either a list or a JSON-encoded string. Note:
+            If a label appears in both add_label_ids and remove_label_ids, the add operation takes priority. Use GMAIL_CREATE_LABEL
+            first if the label does not yet exist, then supply its returned ID here.'
+        remove_label_ids:
+          type: array
+          items:
+            type: string
+          description: 'List of label IDs to remove from the thread. Must be valid label IDs that exist in the user''s
+            account. System labels use uppercase names (e.g., ''INBOX'', ''STARRED'', ''IMPORTANT'', ''UNREAD'', ''SPAM'',
+            ''TRASH'', ''SENT'', ''DRAFT'', ''CATEGORY_PERSONAL'', ''CATEGORY_SOCIAL'', ''CATEGORY_PROMOTIONS'', ''CATEGORY_UPDATES'',
+            ''CATEGORY_FORUMS''). Custom labels use the format ''Label_N'' (e.g., ''Label_1'', ''Label_42''). Use
+            GMAIL_LIST_LABELS to discover available label IDs. Accepts either a list or a JSON-encoded string. Note:
+            Labels that appear in both add_label_ids and remove_label_ids will be automatically removed from this
+            list (add takes priority).'
+      additionalProperties: false
+  - id: patch_label
+    slug: GMAIL_PATCH_LABEL
+    version: '20261015_00'
+    action_class: write
+    capability: mail.write
+    description: Patches the specified user-created label. System labels (e.g., INBOX, SENT, SPAM) cannot be modified
+      and will be rejected.
+    input_schema:
+      type: object
+      required:
+      - userId
+      - id
+      properties:
+        id:
+          type: string
+          description: The ID of the label to update.
+        name:
+          type: string
+          description: The display name of the label. At least one of 'name', 'messageListVisibility', 'labelListVisibility',
+            or 'color' must be provided. Must be non-empty, unique among user labels, and must not contain `,`, `/`,
+            or `.`.
+        color:
+          type: object
+          properties:
+            textColor:
+              type: string
+              description: 'The text color of the label, represented as a hex string. Must be one of Gmail''s predefined
+                colors from the color palette. See: https://developers.google.com/workspace/gmail/api/guides/labels#color_palette'
+            backgroundColor:
+              type: string
+              description: 'The background color of the label, represented as a hex string. Must be one of Gmail''s
+                predefined colors from the color palette. See: https://developers.google.com/workspace/gmail/api/guides/labels#color_palette'
+          description: The color to assign to the label. Color is only available for labels that have their `type`
+            set to `user`. At least one of 'name', 'messageListVisibility', 'labelListVisibility', or 'color' must
+            be provided. Must include both `backgroundColor` and `textColor` subfields; both values must come from
+            Gmail's predefined color palette — arbitrary hex values or omitting either field causes a 400 error.
+          additionalProperties: false
+        userId:
+          type: string
+          description: The user's email address. The special value `me` can be used to indicate the authenticated
+            user.
+        labelListVisibility:
+          enum:
+          - labelShow
+          - labelShowIfUnread
+          - labelHide
+          type: string
+          description: The visibility of the label in the label list in the Gmail web interface. At least one of 'name',
+            'messageListVisibility', 'labelListVisibility', or 'color' must be provided.
+        messageListVisibility:
+          enum:
+          - show
+          - hide
+          type: string
+          description: The visibility of messages with this label in the message list in the Gmail web interface.
+            At least one of 'name', 'messageListVisibility', 'labelListVisibility', or 'color' must be provided.
+      additionalProperties: false
+  - id: reply_to_email_thread
+    slug: GMAIL_REPLY_TO_THREAD
+    version: '20261015_00'
+    action_class: write
+    capability: mail.send
+    description: Sends a reply within a specific Gmail thread using the original thread's subject; do not provide
+      a custom subject as it will start a new conversation instead of replying in-thread.
+    input_schema:
+      type: object
+      required:
+      - thread_id
+      properties:
+        cc:
+          type: array
+          items:
+            type: string
+          description: Carbon Copy (CC) recipients' email addresses in format 'user@domain.com'. Each address must
+            include both username and domain separated by '@'. At least one of cc, bcc, or recipient_email must be
+            provided.
+        bcc:
+          type: array
+          items:
+            type: string
+          description: Blind Carbon Copy (BCC) recipients' email addresses in format 'user@domain.com'. Each address
+            must include both username and domain separated by '@'. At least one of cc, bcc, or recipient_email must
+            be provided.
+        is_html:
+          type: boolean
+          description: Indicates if `message_body` is HTML; if True, body must be valid HTML, if False, body should
+            not contain HTML tags. Mismatch causes recipients to see raw HTML tags as plain text.
+        user_id:
+          type: string
+          description: Identifier for the user sending the reply; 'me' refers to the authenticated user.
+        thread_id:
+          type: string
+          description: 'Identifier of the Gmail thread for the reply. Must be a valid hexadecimal string, typically
+            15-16 characters long (e.g., ''169eefc8138e68ca''). Prefixes like ''msg-f:'' or ''thread-f:'' are automatically
+            stripped. Note: Format validation only checks the ID structure; the thread must also exist and be accessible
+            in your Gmail account. Use GMAIL_LIST_THREADS or GMAIL_FETCH_EMAILS to retrieve valid thread IDs. Must
+            be a threadId, not a messageId; passing a messageId can cause the reply to fail or start an unintended
+            new thread.'
+        attachment:
+          anyOf:
+          - type: object
+            required:
+            - name
+            - mimetype
+            - s3key
+            properties:
+              name:
+                type: string
+                description: The filename that will be used when uploading the file to the destination service
+              s3key:
+                type: string
+                description: The S3 key of a publicly accessible file, typically returned from a previous download
+                  action that stored the file in S3. This key references an existing file that can be uploaded to
+                  another service.
+              mimetype:
+                type: string
+                description: The MIME type of the file
+            additionalProperties: false
+          - type: array
+            items:
+              type: object
+              required:
+              - name
+              - mimetype
+              - s3key
+              properties:
+                name:
+                  type: string
+                  description: The filename that will be used when uploading the file to the destination service
+                s3key:
+                  type: string
+                  description: The S3 key of a publicly accessible file, typically returned from a previous download
+                    action that stored the file in S3. This key references an existing file that can be uploaded to
+                    another service.
+                mimetype:
+                  type: string
+                  description: The MIME type of the file
+              additionalProperties: false
+          description: File(s) to attach to the reply. Accepts a single file or a list of files. Total message size
+            including attachments must stay under 25 MB (400 badRequest if exceeded); use Drive links for large files.
+        message_body:
+          type: string
+          description: Content of the reply message, either plain text or HTML.
+        recipient_email:
+          type: string
+          description: Primary recipient's email address in format 'user@domain.com'. Must include both username and
+            domain separated by '@'. Required if cc and bcc is not provided, else can be optional. Use extra_recipients
+            if you want to send to multiple recipients.
+        extra_recipients:
+          type: array
+          items:
+            type: string
+          description: Additional 'To' recipients' email addresses in format 'user@domain.com' (not Cc or Bcc). Each
+            address must include both username and domain separated by '@'. Should only be used if recipient_email
+            is also provided.
+      additionalProperties: false
+  - id: search_people
+    slug: GMAIL_SEARCH_PEOPLE
+    version: '20261015_00'
+    action_class: read
+    capability: mail.read
+    description: Searches contacts by matching the query against names, nicknames, emails, phone numbers, and organizations,
+      optionally including 'Other Contacts'.
+    input_schema:
+      type: object
+      required:
+      - query
+      properties:
+        query:
+          type: string
+          description: Matches contact names, nicknames, email addresses, phone numbers, and organization fields.
+        page_size:
+          type: integer
+          maximum: 30
+          minimum: 0
+          description: Maximum results to return; values >30 are capped to 30 by the API.
+        person_fields:
+          type: string
+          description: Comma-separated fields to return (e.g., 'names,emailAddresses'). When 'other_contacts' is true,
+            only 'emailAddresses', 'metadata', 'names', 'phoneNumbers' are allowed. For full field access including
+            'organizations', set 'other_contacts' to false.
+        other_contacts:
+          type: boolean
+          description: 'When True, searches both saved contacts and ''Other Contacts'' (people you''ve interacted
+            with but not explicitly saved). Note: This restricts person_fields to only ''emailAddresses'', ''metadata'',
+            ''names'', ''phoneNumbers''. When False, searches only saved contacts but allows all person_fields including
+            ''organizations'', ''addresses'', etc.'
+      additionalProperties: false
+  - id: send_draft
+    slug: GMAIL_SEND_DRAFT
+    version: '20261015_00'
+    action_class: write
+    capability: mail.send
+    description: 'Sends an existing draft email AS-IS to recipients already defined within the draft. IMPORTANT: This
+      action does NOT accept recipient parameters (to, cc, bcc).'
+    input_schema:
+      type: object
+      required:
+      - draft_id
+      properties:
+        user_id:
+          type: string
+          description: The user's email address. The special value `me` can be used to indicate the authenticated
+            user.
+        draft_id:
+          type: string
+          description: 'The ID of the draft to send. Draft IDs are typically alphanumeric strings (e.g., ''r99885592323229922'').
+            Important: Do not confuse draft_id with message_id - they are different identifiers. Use GMAIL_LIST_DRAFTS
+            to retrieve valid draft IDs, or GMAIL_CREATE_EMAIL_DRAFT to create a new draft and get its ID. IMPORTANT:
+            The draft MUST already have recipients (To, Cc, or Bcc) set - this action cannot add or override recipients.
+            If the draft has no recipients, first create a new draft with recipients using GMAIL_CREATE_EMAIL_DRAFT,
+            or use GMAIL_SEND_EMAIL to send a new email directly.'
+      additionalProperties: false
+  - id: get_imap_settings
+    slug: GMAIL_SETTINGS_GET_IMAP
+    version: '20261015_00'
+    action_class: read
+    capability: mail.read
+    description: Retrieves the IMAP settings for a Gmail user account, including whether IMAP is enabled, auto-expunge
+      behavior, expunge behavior, and maximum folder size.
+    input_schema:
+      type: object
+      properties:
+        user_id:
+          type: string
+          description: The user's email address or the special value 'me' to indicate the authenticated user.
+      additionalProperties: false
+  - id: get_pop_settings
+    slug: GMAIL_SETTINGS_GET_POP
+    version: '20261015_00'
+    action_class: read
+    capability: mail.read
+    description: Tool to retrieve POP settings for a Gmail account. Use when you need to check the current POP configuration
+      including access window and message disposition.
+    input_schema:
+      type: object
+      properties:
+        user_id:
+          type: string
+          description: The user's email address. The special value 'me' can be used to indicate the authenticated
+            user.
+      additionalProperties: false
+  - id: get_send_as_alias
+    slug: GMAIL_SETTINGS_SEND_AS_GET
+    version: '20261015_00'
+    action_class: read
+    capability: mail.read
+    description: Tool to retrieve a specific send-as alias configuration for a Gmail user. Use when you need to get
+      details about a send-as email address including display name, signature, SMTP settings, and verification status.
+    input_schema:
+      type: object
+      required:
+      - send_as_email
+      properties:
+        user_id:
+          type: string
+          description: The email address of the Gmail user whose send-as alias to retrieve, or the special value 'me'
+            to indicate the authenticated user.
+        send_as_email:
+          type: string
+          description: The send-as alias email address to retrieve. This is the email address that appears in the
+            'From:' header.
+      additionalProperties: false
+  - id: untrash_message
+    slug: GMAIL_UNTRASH_MESSAGE
+    version: '20261015_00'
+    action_class: write
+    capability: mail.write
+    description: Tool to remove a message from trash in Gmail. Use when you need to restore a previously trashed email
+      message.
+    input_schema:
+      type: object
+      required:
+      - message_id
+      properties:
+        user_id:
+          type: string
+          description: User's email address or 'me' for the authenticated user.
+        message_id:
+          type: string
+          pattern: ^[0-9a-fA-F]+$
+          description: Required. The unique identifier of the email message to remove from trash. This is a hexadecimal
+            string that can be obtained from listing or fetching emails.
+      additionalProperties: false
+  - id: untrash_thread
+    slug: GMAIL_UNTRASH_THREAD
+    version: '20261015_00'
+    action_class: write
+    capability: mail.write
+    description: Tool to remove a thread from trash in Gmail. Use when you need to restore a deleted thread and its
+      messages.
+    input_schema:
+      type: object
+      required:
+      - thread_id
+      properties:
+        user_id:
+          type: string
+          description: The user's email address. The special value 'me' can be used to indicate the authenticated
+            user.
+        thread_id:
+          type: string
+          description: The ID of the thread to remove from trash.
+      additionalProperties: false
+  - id: update_google_contact
+    slug: GMAIL_UPDATE_CONTACT
+    version: '20261015_00'
+    action_class: write
+    capability: mail.write
+    description: Replace selected fields on an existing saved Google contact.
+    input_schema:
+      type: object
+      required:
+      - resource_name
+      - update_person_fields
+      - person
+      properties:
+        person:
+          type: object
+          description: Google Person resource containing metadata.sources and replacement values. metadata.sources
+            must include a CONTACT source; include that source's etag for concurrency protection.
+          additionalProperties: true
+        sources:
+          type: array
+          items:
+            enum:
+            - READ_SOURCE_TYPE_UNSPECIFIED
+            - READ_SOURCE_TYPE_PROFILE
+            - READ_SOURCE_TYPE_CONTACT
+            - READ_SOURCE_TYPE_DOMAIN_CONTACT
+            - READ_SOURCE_TYPE_OTHER_CONTACT
+            type: string
+          minItems: 1
+          description: Source types to include in the returned Person resource.
+        person_fields:
+          type: string
+          description: 'Comma-separated field mask of Person fields to return after the update. Valid values: addresses,
+            ageRanges, biographies, birthdays, calendarUrls, clientData, coverPhotos, emailAddresses, events, externalIds,
+            genders, imClients, interests, locales, locations, memberships, metadata, miscKeywords, names, nicknames,
+            occupations, organizations, phoneNumbers, photos, relations, sipAddresses, skills, urls, userDefined.'
+        resource_name:
+          type: string
+          pattern: ^people/[^/]+$
+          description: Saved contact resource name in people/{person_id} form.
+        update_person_fields:
+          type: string
+          description: 'Comma-separated field mask of Person fields to replace. Valid values: addresses, biographies,
+            birthdays, calendarUrls, clientData, emailAddresses, events, externalIds, genders, imClients, interests,
+            locales, locations, memberships, miscKeywords, names, nicknames, occupations, organizations, phoneNumbers,
+            relations, sipAddresses, urls, userDefined.'
+      additionalProperties: false
+  - id: update_draft
+    slug: GMAIL_UPDATE_DRAFT
+    version: '20261015_00'
+    action_class: write
+    capability: mail.write
+    description: Updates (replaces) an existing Gmail draft's content in-place by draft ID. This action replaces the
+      entire draft content with the new message - it does not patch individual fields. All fields are optional;
+    input_schema:
+      type: object
+      required:
+      - draft_id
+      properties:
+        cc:
+          type: array
+          items:
+            type: string
+          description: Carbon Copy (CC) recipients' email addresses. Each must be a valid email address or display
+            name format.
+        bcc:
+          type: array
+          items:
+            type: string
+          description: Blind Carbon Copy (BCC) recipients' email addresses. Each must be a valid email address or
+            display name format.
+        body:
+          type: string
+          description: Email body content (plain text or HTML); is_html must be True if HTML. If not provided, previous
+            body is preserved. Can also be provided as 'message_body'.
+        is_html:
+          type: boolean
+          description: Set to True if body is already formatted HTML. When False, plain text newlines are auto-converted
+            to <br/> tags.
+        subject:
+          type: string
+          description: Email subject line. If not provided, previous subject is preserved.
+        user_id:
+          type: string
+          description: User's email address or 'me' for the authenticated user.
+        draft_id:
+          type: string
+          description: The ID of the draft to update. Must be a valid draft ID from GMAIL_LIST_DRAFTS or GMAIL_CREATE_EMAIL_DRAFT.
+        thread_id:
+          type: string
+          description: ID of an existing Gmail thread. If provided, the draft will be part of this thread.
+        attachment:
+          anyOf:
+          - type: object
+            required:
+            - name
+            - mimetype
+            - s3key
+            properties:
+              name:
+                type: string
+                description: The filename that will be used when uploading the file to the destination service
+              s3key:
+                type: string
+                description: The S3 key of a publicly accessible file, typically returned from a previous download
+                  action that stored the file in S3. This key references an existing file that can be uploaded to
+                  another service.
+              mimetype:
+                type: string
+                description: The MIME type of the file
+            additionalProperties: false
+          - type: array
+            items:
+              type: object
+              required:
+              - name
+              - mimetype
+              - s3key
+              properties:
+                name:
+                  type: string
+                  description: The filename that will be used when uploading the file to the destination service
+                s3key:
+                  type: string
+                  description: The S3 key of a publicly accessible file, typically returned from a previous download
+                    action that stored the file in S3. This key references an existing file that can be uploaded to
+                    another service.
+                mimetype:
+                  type: string
+                  description: The MIME type of the file
+              additionalProperties: false
+          description: File(s) to attach to the draft. Accepts a single file or a list of files. Replaces any existing
+            attachments.
+        recipient_email:
+          type: string
+          description: Primary recipient's email address. Must be a valid email address (e.g., 'user@example.com')
+            or display name format (e.g., 'John Doe <user@example.com>'). Optional - if not provided, previous recipients
+            are preserved.
+        extra_recipients:
+          type: array
+          items:
+            type: string
+          description: Additional 'To' recipients' email addresses. Each must be a valid email address or display
+            name format. Should only be used if recipient_email is also provided.
+      additionalProperties: false
+  - id: update_label
+    slug: GMAIL_UPDATE_LABEL
+    version: '20261015_00'
+    action_class: write
+    capability: mail.write
+    description: Tool to update the properties of an existing Gmail label. Use when you need to modify label name,
+      visibility settings, or color.
+    input_schema:
+      type: object
+      required:
+      - id
+      properties:
+        id:
+          type: string
+          description: The ID of the label to update.
+        name:
+          type: string
+          description: The display name of the label.
+        color:
+          type: object
+          properties:
+            textColor:
+              type: string
+              description: 'The text color of the label, represented as hex string. This field is required in order
+                to set the color of a label. Only predefined Gmail color values are allowed. See: https://developers.google.com/workspace/gmail/api/guides/labels#color_palette'
+            backgroundColor:
+              type: string
+              description: 'The background color represented as hex string #RRGGBB (ex #000000). This field is required
+                in order to set the color of a label. Only predefined Gmail color values are allowed. See: https://developers.google.com/workspace/gmail/api/guides/labels#color_palette'
+          description: Color settings for the label. Both backgroundColor and textColor must be provided together.
+          additionalProperties: false
+        userId:
+          type: string
+          description: The user's email address. The special value `me` can be used to indicate the authenticated
+            user.
+        labelListVisibility:
+          enum:
+          - labelShow
+          - labelShowIfUnread
+          - labelHide
+          type: string
+          description: Visibility of the label in the label list (Gmail sidebar).
+        messageListVisibility:
+          enum:
+          - show
+          - hide
+          type: string
+          description: Visibility of messages with this label in the message list.
+      additionalProperties: false
+
 defaults: {read: permit, write: require_approval, delete: deny, money: deny}

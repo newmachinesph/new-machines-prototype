@@ -1,0 +1,88 @@
+{
+  "input_parameters": {
+    "properties": {
+      "dataFilters": {
+        "items": {
+          "properties": {
+            "a1Range": {
+              "type": "string"
+            },
+            "developerMetadataLookup": {
+              "additionalProperties": false,
+              "properties": {
+                "locationMatchingStrategy": {
+                  "type": "string"
+                },
+                "locationType": {
+                  "type": "string"
+                },
+                "metadataId": {
+                  "type": "integer"
+                },
+                "metadataKey": {
+                  "type": "string"
+                },
+                "metadataLocation": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "dimensionRange": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "dimension": {
+                          "type": "string"
+                        },
+                        "endIndex": {
+                          "type": "integer"
+                        },
+                        "sheetId": {
+                          "type": "integer"
+                        },
+                        "startIndex": {
+                          "type": "integer"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "locationType": {
+                      "type": "string"
+                    },
+                    "sheetId": {
+                      "type": "integer"
+                    },
+                    "spreadsheet": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                },
+                "metadataValue": {
+                  "type": "string"
+                },
+                "visibility": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "gridRange": {
+              "additionalProperties": true,
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "type": "array"
+      },
+      "spreadsheetId": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "spreadsheetId",
+      "dataFilters"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLESHEETS_SEARCH_DEVELOPER_METADATA",
+  "version": "20261001_00"
+}

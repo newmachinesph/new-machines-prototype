@@ -1,0 +1,68 @@
+{
+  "input_parameters": {
+    "properties": {
+      "documentId": {
+        "type": "string"
+      },
+      "tableRange": {
+        "additionalProperties": false,
+        "properties": {
+          "columnSpan": {
+            "type": "integer"
+          },
+          "rowSpan": {
+            "type": "integer"
+          },
+          "tableCellLocation": {
+            "additionalProperties": false,
+            "properties": {
+              "columnIndex": {
+                "type": "integer"
+              },
+              "rowIndex": {
+                "type": "integer"
+              },
+              "tableStartLocation": {
+                "additionalProperties": false,
+                "properties": {
+                  "index": {
+                    "type": "integer"
+                  },
+                  "segmentId": {
+                    "type": "string"
+                  },
+                  "tabId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "index"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "tableStartLocation",
+              "rowIndex",
+              "columnIndex"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "tableCellLocation",
+          "rowSpan",
+          "columnSpan"
+        ],
+        "type": "object"
+      }
+    },
+    "required": [
+      "documentId",
+      "tableRange"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLEDOCS_UNMERGE_TABLE_CELLS",
+  "version": "20261008_00"
+}

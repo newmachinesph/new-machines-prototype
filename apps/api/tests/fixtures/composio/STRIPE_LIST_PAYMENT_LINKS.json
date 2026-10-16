@@ -1,0 +1,21 @@
+{
+  "input_parameters": {
+    "properties": {
+      "active": {
+        "type": "boolean"
+      },
+      "ending_before": {
+        "type": "string"
+      },
+      "limit": {
+        "type": "integer"
+      },
+      "starting_after": {
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "slug": "STRIPE_LIST_PAYMENT_LINKS",
+  "version": "20261014_00"
+}

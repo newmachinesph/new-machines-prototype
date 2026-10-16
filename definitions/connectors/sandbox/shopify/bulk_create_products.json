@@ -1,0 +1,16 @@
+{
+  "job_id": "sample",
+  "status": "sample",
+  "results": [
+    {
+      "success": true,
+      "product_gid": "sample",
+      "user_errors": [
+        {}
+      ]
+    }
+  ],
+  "summary": "sample",
+  "result_url": "sample",
+  "object_count": "sample"
+}

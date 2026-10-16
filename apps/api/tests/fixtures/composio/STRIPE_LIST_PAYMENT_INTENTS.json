@@ -1,0 +1,30 @@
+{
+  "input_parameters": {
+    "properties": {
+      "created": {
+        "additionalProperties": {
+          "type": "integer"
+        },
+        "type": "object"
+      },
+      "customer": {
+        "type": "string"
+      },
+      "customer_account": {
+        "type": "string"
+      },
+      "ending_before": {
+        "type": "string"
+      },
+      "limit": {
+        "type": "integer"
+      },
+      "starting_after": {
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "slug": "STRIPE_LIST_PAYMENT_INTENTS",
+  "version": "20261014_00"
+}

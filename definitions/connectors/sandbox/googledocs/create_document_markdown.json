@@ -1,0 +1,117 @@
+{
+  "title": "sample",
+  "tab_ids": [
+    "sample"
+  ],
+  "documentId": "sample",
+  "revisionId": "sample",
+  "display_url": "sample",
+  "request_data": [
+    {
+      "insertText": {
+        "text": "sample",
+        "location": {
+          "index": null,
+          "segmentId": null
+        },
+        "endOfSegmentLocation": {}
+      },
+      "insertTable": {
+        "rows": 1,
+        "columns": 1,
+        "location": {
+          "index": null,
+          "segmentId": null
+        },
+        "endOfSegmentLocation": {}
+      },
+      "updateTextStyle": {
+        "range": {
+          "endIndex": null,
+          "segmentId": null,
+          "startIndex": null
+        },
+        "fields": "sample",
+        "textStyle": {
+          "bold": null,
+          "link": null,
+          "italic": null,
+          "fontSize": null,
+          "smallCaps": null,
+          "underline": null,
+          "strikethrough": null,
+          "baselineOffset": null,
+          "backgroundColor": null,
+          "foregroundColor": null,
+          "weightedFontFamily": null
+        }
+      },
+      "insertInlineImage": {
+        "uri": "sample",
+        "location": {
+          "index": null,
+          "segmentId": null
+        },
+        "objectSize": {
+          "width": null,
+          "height": null
+        },
+        "endOfSegmentLocation": {}
+      },
+      "deleteContentRange": {
+        "range": {
+          "endIndex": null,
+          "segmentId": null,
+          "startIndex": null
+        }
+      },
+      "updateParagraphStyle": {
+        "range": {
+          "endIndex": null,
+          "segmentId": null,
+          "startIndex": null
+        },
+        "fields": "sample",
+        "paragraphStyle": {
+          "shading": null,
+          "alignment": null,
+          "borderTop": null,
+          "direction": null,
+          "indentEnd": null,
+          "borderLeft": null,
+          "spaceAbove": null,
+          "spaceBelow": null,
+          "borderRight": null,
+          "indentStart": null,
+          "lineSpacing": null,
+          "spacingMode": null,
+          "borderBottom": null,
+          "keepWithNext": null,
+          "borderBetween": null,
+          "namedStyleType": null,
+          "indentFirstLine": null,
+          "pageBreakBefore": null,
+          "keepLinesTogether": null,
+          "avoidWidowAndOrphan": null
+        }
+      },
+      "createParagraphBullets": {
+        "range": {
+          "endIndex": null,
+          "segmentId": null,
+          "startIndex": null
+        },
+        "bulletPreset": "sample"
+      },
+      "deleteParagraphBullets": {
+        "range": {
+          "endIndex": null,
+          "segmentId": null,
+          "startIndex": null
+        }
+      }
+    }
+  ],
+  "default_tab_id": "sample",
+  "suggestionsViewMode": "DEFAULT_FOR_CURRENT_ACCESS"
+}

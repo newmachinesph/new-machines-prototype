@@ -1,0 +1,50 @@
+{
+  "sheets": [
+    {
+      "properties": {
+        "index": 1,
+        "title": "sample",
+        "hidden": true,
+        "sheetId": 1,
+        "sheetType": "sample",
+        "rightToLeft": true,
+        "gridProperties": {
+          "rowCount": null,
+          "columnCount": null,
+          "hideGridlines": null,
+          "frozenRowCount": null,
+          "frozenColumnCount": null,
+          "rowGroupControlAfter": null,
+          "columnGroupControlAfter": null
+        }
+      }
+    }
+  ],
+  "folder_id": "sample",
+  "properties": {},
+  "dataSources": [
+    {}
+  ],
+  "display_url": "sample",
+  "folder_name": "sample",
+  "namedRanges": [
+    {}
+  ],
+  "spreadsheetId": "sample",
+  "spreadsheetUrl": "sample",
+  "matching_folders": [
+    {
+      "id": "sample",
+      "name": "sample",
+      "path": "sample"
+    }
+  ],
+  "developerMetadata": [
+    {}
+  ],
+  "dataSourceSchedules": [
+    {}
+  ],
+  "requires_user_selection": true,
+  "composio_execution_message": "sample"
+}

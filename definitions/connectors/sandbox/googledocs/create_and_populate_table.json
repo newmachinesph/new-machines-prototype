@@ -1,0 +1,35 @@
+{
+  "replies": [
+    {
+      "createFooter": {
+        "footerId": "sample"
+      },
+      "createHeader": {
+        "headerId": "sample"
+      },
+      "createFootnote": {
+        "footnoteId": "sample"
+      },
+      "replaceAllText": {
+        "occurrencesChanged": 1
+      },
+      "createNamedRange": {
+        "namedRangeId": "sample"
+      },
+      "insertInlineImage": {
+        "objectId": "sample"
+      },
+      "insertInlineSheetsChart": {
+        "objectId": "sample"
+      }
+    }
+  ],
+  "displayUrl": "sample",
+  "documentId": "sample",
+  "writeControl": {
+    "targetRevisionId": "sample",
+    "requiredRevisionId": "sample"
+  },
+  "cellsPopulated": 1,
+  "tableStartIndex": 1
+}

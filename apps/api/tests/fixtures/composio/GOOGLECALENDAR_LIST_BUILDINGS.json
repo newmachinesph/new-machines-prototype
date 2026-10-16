@@ -1,0 +1,19 @@
+{
+  "input_parameters": {
+    "properties": {
+      "customer": {
+        "type": "string"
+      },
+      "maxResults": {
+        "minimum": 1,
+        "type": "integer"
+      },
+      "pageToken": {
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "slug": "GOOGLECALENDAR_LIST_BUILDINGS",
+  "version": "20261010_00"
+}

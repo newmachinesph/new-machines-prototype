@@ -1,0 +1,39 @@
+{
+  "input_parameters": {
+    "properties": {
+      "include_spreadsheet_in_response": {
+        "type": "boolean"
+      },
+      "inherit_from_before": {
+        "type": "boolean"
+      },
+      "insert_index": {
+        "type": "integer"
+      },
+      "response_include_grid_data": {
+        "type": "boolean"
+      },
+      "response_ranges": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "sheet_id": {
+        "type": "integer"
+      },
+      "sheet_name": {
+        "type": "string"
+      },
+      "spreadsheet_id": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "spreadsheet_id"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLESHEETS_CREATE_SPREADSHEET_COLUMN",
+  "version": "20261001_00"
+}

@@ -1,0 +1,92 @@
+{
+  "object": "sample",
+  "issuing": {
+    "available": [
+      {
+        "amount": 1,
+        "currency": "sample",
+        "source_types": {
+          "fpx": null,
+          "card": null,
+          "bank_account": null
+        }
+      }
+    ]
+  },
+  "pending": [
+    {
+      "amount": 1,
+      "currency": "sample",
+      "source_types": {
+        "fpx": 1,
+        "card": 1,
+        "bank_account": 1
+      }
+    }
+  ],
+  "livemode": true,
+  "available": [
+    {
+      "amount": 1,
+      "currency": "sample",
+      "source_types": {
+        "fpx": 1,
+        "card": 1,
+        "bank_account": 1
+      }
+    }
+  ],
+  "connect_reserved": [
+    {
+      "amount": 1,
+      "currency": "sample",
+      "source_types": {
+        "fpx": 1,
+        "card": 1,
+        "bank_account": 1
+      }
+    }
+  ],
+  "instant_available": [
+    {
+      "amount": 1,
+      "currency": "sample",
+      "source_types": {
+        "fpx": 1,
+        "card": 1,
+        "bank_account": 1
+      },
+      "net_available": [
+        {
+          "amount": 1,
+          "destination": "sample",
+          "source_types": null
+        }
+      ]
+    }
+  ],
+  "refund_and_dispute_prefunding": {
+    "pending": [
+      {
+        "amount": 1,
+        "currency": "sample",
+        "source_types": {
+          "fpx": null,
+          "card": null,
+          "bank_account": null
+        }
+      }
+    ],
+    "available": [
+      {
+        "amount": 1,
+        "currency": "sample",
+        "source_types": {
+          "fpx": null,
+          "card": null,
+          "bank_account": null
+        }
+      }
+    ]
+  }
+}

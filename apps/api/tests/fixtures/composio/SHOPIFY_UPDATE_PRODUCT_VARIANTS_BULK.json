@@ -1,0 +1,59 @@
+{
+  "input_parameters": {
+    "properties": {
+      "max_poll_attempts": {
+        "maximum": 300,
+        "minimum": 1,
+        "type": "integer"
+      },
+      "poll_interval_seconds": {
+        "maximum": 30,
+        "minimum": 1,
+        "type": "integer"
+      },
+      "variants": {
+        "items": {
+          "additionalProperties": false,
+          "properties": {
+            "barcode": {
+              "type": "string"
+            },
+            "compare_at_price": {
+              "type": "string"
+            },
+            "id": {
+              "type": "string"
+            },
+            "inventory_policy": {
+              "type": "string"
+            },
+            "media_id": {
+              "type": "string"
+            },
+            "price": {
+              "type": "string"
+            },
+            "tax_code": {
+              "type": "string"
+            },
+            "taxable": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "type": "object"
+        },
+        "minItems": 1,
+        "type": "array"
+      }
+    },
+    "required": [
+      "variants"
+    ],
+    "type": "object"
+  },
+  "slug": "SHOPIFY_UPDATE_PRODUCT_VARIANTS_BULK",
+  "version": "20261014_00"
+}

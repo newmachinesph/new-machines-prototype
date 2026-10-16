@@ -1,0 +1,21 @@
+{
+  "input_parameters": {
+    "properties": {
+      "expand": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "payment_link_id": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "payment_link_id"
+    ],
+    "type": "object"
+  },
+  "slug": "STRIPE_GET_PAYMENT_LINK",
+  "version": "20261014_00"
+}

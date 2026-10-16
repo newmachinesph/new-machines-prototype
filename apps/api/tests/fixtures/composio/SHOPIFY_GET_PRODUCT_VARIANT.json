@@ -1,0 +1,18 @@
+{
+  "input_parameters": {
+    "properties": {
+      "fields": {
+        "type": "string"
+      },
+      "variant_id": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "variant_id"
+    ],
+    "type": "object"
+  },
+  "slug": "SHOPIFY_GET_PRODUCT_VARIANT",
+  "version": "20261014_00"
+}

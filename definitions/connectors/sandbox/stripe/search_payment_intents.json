@@ -1,0 +1,103 @@
+{
+  "url": "sample",
+  "data": [
+    {
+      "id": "sample",
+      "hooks": {},
+      "amount": 1,
+      "object": "sample",
+      "review": "sample",
+      "source": "sample",
+      "status": "sample",
+      "created": 1,
+      "currency": "sample",
+      "customer": "sample",
+      "livemode": true,
+      "metadata": {},
+      "shipping": {
+        "name": "sample",
+        "phone": "sample",
+        "address": {
+          "city": null,
+          "line1": null,
+          "line2": null,
+          "state": null,
+          "country": null,
+          "postal_code": null
+        },
+        "carrier": "sample",
+        "tracking_number": "sample"
+      },
+      "processing": {
+        "card": {}
+      },
+      "application": "sample",
+      "canceled_at": 1,
+      "description": "sample",
+      "next_action": {
+        "type": "sample",
+        "use_stripe_sdk": {},
+        "redirect_to_url": {}
+      },
+      "on_behalf_of": "sample",
+      "client_secret": "sample",
+      "latest_charge": "sample",
+      "receipt_email": "sample",
+      "transfer_data": {
+        "amount": 1,
+        "destination": "sample"
+      },
+      "amount_details": {
+        "tax": {},
+        "tip": {},
+        "shipping": {},
+        "line_items": {},
+        "discount_amount": 1
+      },
+      "capture_method": "sample",
+      "payment_method": "sample",
+      "transfer_group": "sample",
+      "amount_received": 1,
+      "amount_capturable": 1,
+      "last_payment_error": {
+        "code": "sample",
+        "type": "sample",
+        "param": "sample",
+        "charge": "sample",
+        "source": {},
+        "doc_url": "sample",
+        "message": "sample",
+        "advice_code": "sample",
+        "decline_code": "sample",
+        "payment_method": {},
+        "network_advice_code": "sample",
+        "payment_method_type": "sample",
+        "network_decline_code": "sample"
+      },
+      "setup_future_usage": "sample",
+      "cancellation_reason": "sample",
+      "confirmation_method": "sample",
+      "payment_method_types": [
+        "sample"
+      ],
+      "statement_descriptor": "sample",
+      "application_fee_amount": 1,
+      "payment_method_options": {
+        "card": {},
+        "link": {}
+      },
+      "automatic_payment_methods": {
+        "enabled": true,
+        "allow_redirects": "sample"
+      },
+      "statement_descriptor_suffix": "sample",
+      "excluded_payment_method_types": [
+        "sample"
+      ],
+      "payment_method_configuration_details": {}
+    }
+  ],
+  "object": "sample",
+  "has_more": true,
+  "next_page": "sample"
+}

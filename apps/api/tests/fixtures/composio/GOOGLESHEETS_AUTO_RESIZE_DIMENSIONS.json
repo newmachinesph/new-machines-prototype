@@ -1,0 +1,39 @@
+{
+  "input_parameters": {
+    "properties": {
+      "dimension": {
+        "enum": [
+          "ROWS",
+          "COLUMNS"
+        ],
+        "type": "string"
+      },
+      "end_index": {
+        "minimum": 1,
+        "type": "integer"
+      },
+      "sheet_id": {
+        "type": "integer"
+      },
+      "sheet_name": {
+        "type": "string"
+      },
+      "spreadsheet_id": {
+        "type": "string"
+      },
+      "start_index": {
+        "minimum": 0,
+        "type": "integer"
+      }
+    },
+    "required": [
+      "spreadsheet_id",
+      "dimension",
+      "start_index",
+      "end_index"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLESHEETS_AUTO_RESIZE_DIMENSIONS",
+  "version": "20261001_00"
+}

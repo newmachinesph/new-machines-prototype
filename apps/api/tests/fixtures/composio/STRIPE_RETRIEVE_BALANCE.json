@@ -1,0 +1,8 @@
+{
+  "input_parameters": {
+    "properties": {},
+    "type": "object"
+  },
+  "slug": "STRIPE_RETRIEVE_BALANCE",
+  "version": "20261014_00"
+}

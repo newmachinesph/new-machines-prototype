@@ -1,0 +1,55 @@
+{
+  "input_parameters": {
+    "properties": {
+      "automatic_tax": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "collection_method": {
+        "type": "string"
+      },
+      "created": {
+        "additionalProperties": {
+          "type": "integer"
+        },
+        "type": "object"
+      },
+      "current_period_end": {
+        "additionalProperties": {
+          "type": "integer"
+        },
+        "type": "object"
+      },
+      "current_period_start": {
+        "additionalProperties": {
+          "type": "integer"
+        },
+        "type": "object"
+      },
+      "customer": {
+        "type": "string"
+      },
+      "ending_before": {
+        "type": "string"
+      },
+      "limit": {
+        "type": "integer"
+      },
+      "price": {
+        "type": "string"
+      },
+      "starting_after": {
+        "type": "string"
+      },
+      "status": {
+        "type": "string"
+      },
+      "test_clock": {
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "slug": "STRIPE_LIST_SUBSCRIPTIONS",
+  "version": "20261014_00"
+}

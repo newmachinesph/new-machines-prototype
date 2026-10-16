@@ -1,0 +1,20 @@
+{
+  "input_parameters": {
+    "properties": {
+      "fields": {
+        "type": "string"
+      },
+      "limit": {
+        "maximum": 250,
+        "minimum": 1,
+        "type": "integer"
+      },
+      "page_info": {
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "slug": "SHOPIFY_GET_PRODUCTS_PAGINATED",
+  "version": "20261014_00"
+}

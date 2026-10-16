@@ -1,0 +1,149 @@
+{
+  "totalItems": 1,
+  "connections": [
+    {
+      "etag": "sample",
+      "urls": [
+        {
+          "type": "sample",
+          "value": "sample",
+          "metadata": null,
+          "formattedType": "sample"
+        }
+      ],
+      "names": [
+        {
+          "metadata": null,
+          "givenName": "sample",
+          "familyName": "sample",
+          "displayName": "sample",
+          "unstructuredName": "sample",
+          "displayNameLastFirst": "sample"
+        }
+      ],
+      "events": [
+        {
+          "date": {},
+          "type": "sample",
+          "metadata": null,
+          "formattedType": "sample"
+        }
+      ],
+      "photos": [
+        {}
+      ],
+      "skills": [
+        {}
+      ],
+      "genders": [
+        {
+          "value": "sample",
+          "metadata": null,
+          "formattedValue": "sample"
+        }
+      ],
+      "locales": [
+        {}
+      ],
+      "metadata": {},
+      "addresses": [
+        {
+          "city": "sample",
+          "type": "sample",
+          "region": "sample",
+          "country": "sample",
+          "metadata": null,
+          "postalCode": "sample",
+          "countryCode": "sample",
+          "formattedType": "sample",
+          "streetAddress": "sample",
+          "formattedValue": "sample"
+        }
+      ],
+      "ageRanges": [
+        {}
+      ],
+      "birthdays": [
+        {
+          "date": {},
+          "text": "sample",
+          "metadata": null
+        }
+      ],
+      "imClients": [
+        {}
+      ],
+      "interests": [
+        {}
+      ],
+      "nicknames": [
+        {}
+      ],
+      "relations": [
+        {
+          "type": "sample",
+          "person": "sample",
+          "metadata": null,
+          "formattedType": "sample"
+        }
+      ],
+      "residences": [
+        {}
+      ],
+      "biographies": [
+        {
+          "value": "sample",
+          "metadata": null,
+          "contentType": "sample"
+        }
+      ],
+      "coverPhotos": [
+        {}
+      ],
+      "memberships": [
+        {}
+      ],
+      "occupations": [
+        {}
+      ],
+      "userDefined": [
+        {}
+      ],
+      "phoneNumbers": [
+        {
+          "type": "sample",
+          "value": "sample",
+          "metadata": null,
+          "formattedType": "sample"
+        }
+      ],
+      "resourceName": "sample",
+      "sipAddresses": [
+        {}
+      ],
+      "contactSource": "sample",
+      "organizations": [
+        {
+          "name": "sample",
+          "type": "sample",
+          "title": "sample",
+          "metadata": null,
+          "department": "sample",
+          "formattedType": "sample"
+        }
+      ],
+      "emailAddresses": [
+        {
+          "value": "sample",
+          "metadata": null
+        }
+      ]
+    }
+  ],
+  "display_url": "sample",
+  "totalPeople": 1,
+  "nextPageToken": "sample",
+  "otherContactsCount": 1,
+  "regularContactsCount": 1,
+  "composio_execution_message": "sample"
+}

@@ -1,0 +1,17 @@
+{
+  "display_url": "sample",
+  "response_data": {
+    "id": "sample",
+    "etag": "sample",
+    "kind": "sample",
+    "summary": "sample",
+    "location": "sample",
+    "timeZone": "sample",
+    "description": "sample",
+    "conferenceProperties": {
+      "allowedConferenceSolutionTypes": [
+        "eventHangout"
+      ]
+    }
+  }
+}

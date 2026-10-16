@@ -1,0 +1,24 @@
+{
+  "input_parameters": {
+    "properties": {
+      "exclude_tables_in_banded_ranges": {
+        "type": "boolean"
+      },
+      "sheet_id": {
+        "type": "integer"
+      },
+      "sheet_title": {
+        "type": "string"
+      },
+      "spreadsheet_id": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "spreadsheet_id"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLESHEETS_GET_CONDITIONAL_FORMAT_RULES",
+  "version": "20261001_00"
+}

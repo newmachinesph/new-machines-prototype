@@ -1,0 +1,18 @@
+{
+  "input_parameters": {
+    "properties": {
+      "exclude_hidden": {
+        "type": "boolean"
+      },
+      "spreadsheet_id": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "spreadsheet_id"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLESHEETS_GET_SHEET_NAMES",
+  "version": "20261001_00"
+}

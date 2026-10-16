@@ -1,0 +1,26 @@
+{
+  "input_parameters": {
+    "properties": {
+      "fields": {
+        "type": "string"
+      },
+      "limit": {
+        "maximum": 250,
+        "minimum": 1,
+        "type": "integer"
+      },
+      "order": {
+        "type": "string"
+      },
+      "query": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "query"
+    ],
+    "type": "object"
+  },
+  "slug": "SHOPIFY_GET_CUSTOMERS_SEARCH",
+  "version": "20261014_00"
+}

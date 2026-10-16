@@ -1,0 +1,107 @@
+{
+  "input_parameters": {
+    "properties": {
+      "condition_values": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "end_column_index": {
+        "type": "integer"
+      },
+      "end_row_index": {
+        "type": "integer"
+      },
+      "filtered_rows_included": {
+        "type": "boolean"
+      },
+      "formula": {
+        "type": "string"
+      },
+      "input_message": {
+        "type": "string"
+      },
+      "mode": {
+        "enum": [
+          "SET",
+          "CLEAR"
+        ],
+        "type": "string"
+      },
+      "sheet_id": {
+        "type": "integer"
+      },
+      "show_custom_ui": {
+        "type": "boolean"
+      },
+      "source_range_a1": {
+        "type": "string"
+      },
+      "spreadsheet_id": {
+        "type": "string"
+      },
+      "start_column_index": {
+        "type": "integer"
+      },
+      "start_row_index": {
+        "type": "integer"
+      },
+      "strict": {
+        "type": "boolean"
+      },
+      "validation_type": {
+        "enum": [
+          "ONE_OF_LIST",
+          "ONE_OF_RANGE",
+          "CUSTOM_FORMULA",
+          "NUMBER_GREATER",
+          "NUMBER_GREATER_THAN_EQ",
+          "NUMBER_LESS",
+          "NUMBER_LESS_THAN_EQ",
+          "NUMBER_EQ",
+          "NUMBER_NOT_EQ",
+          "NUMBER_BETWEEN",
+          "NUMBER_NOT_BETWEEN",
+          "TEXT_CONTAINS",
+          "TEXT_NOT_CONTAINS",
+          "TEXT_EQ",
+          "TEXT_NOT_EQ",
+          "TEXT_IS_EMAIL",
+          "TEXT_IS_URL",
+          "DATE_EQ",
+          "DATE_BEFORE",
+          "DATE_AFTER",
+          "DATE_ON_OR_BEFORE",
+          "DATE_ON_OR_AFTER",
+          "DATE_BETWEEN",
+          "DATE_NOT_BETWEEN",
+          "DATE_NOT_EQ",
+          "DATE_IS_VALID",
+          "BLANK",
+          "NOT_BLANK",
+          "BOOLEAN"
+        ],
+        "type": "string"
+      },
+      "values": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "spreadsheet_id",
+      "sheet_id",
+      "mode",
+      "start_row_index",
+      "end_row_index",
+      "start_column_index",
+      "end_column_index"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLESHEETS_SET_DATA_VALIDATION_RULE",
+  "version": "20261001_00"
+}

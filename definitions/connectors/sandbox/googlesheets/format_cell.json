@@ -1,0 +1,205 @@
+{
+  "replies": [
+    {
+      "addChart": {
+        "chart": {
+          "spec": null,
+          "border": null,
+          "chartId": null,
+          "position": null
+        }
+      },
+      "addSheet": {
+        "properties": {
+          "index": null,
+          "title": null,
+          "hidden": null,
+          "sheetId": null,
+          "sheetType": null,
+          "rightToLeft": null,
+          "tabColorStyle": null,
+          "gridProperties": null,
+          "dataSourceSheetProperties": null
+        }
+      },
+      "addTable": {
+        "table": {
+          "columns": null,
+          "tableId": null,
+          "rowCount": null,
+          "tableRange": null,
+          "borderColor": null,
+          "columnCount": null,
+          "dataSourceTableRange": null
+        }
+      },
+      "addSlicer": {
+        "slicer": {
+          "spec": null,
+          "position": null,
+          "slicerId": null
+        }
+      },
+      "addBanding": {
+        "bandedRange": {
+          "range": null,
+          "bandedRangeId": null,
+          "rowProperties": null,
+          "columnProperties": null
+        }
+      },
+      "findReplace": {
+        "rowsChanged": 1,
+        "sheetsChanged": 1,
+        "valuesChanged": 1,
+        "formulasChanged": 1,
+        "occurrencesChanged": 1
+      },
+      "addDataSource": {
+        "dataSource": {
+          "spec": null,
+          "sheetId": null,
+          "dataSourceId": null,
+          "calculatedColumns": null
+        },
+        "dataExecutionStatus": {
+          "state": null,
+          "errorCode": null,
+          "errorMessage": null,
+          "lastExecutionTime": null
+        }
+      },
+      "addFilterView": {
+        "filter": {
+          "range": null,
+          "title": null,
+          "criteria": null,
+          "sortSpecs": null,
+          "filterSpecs": null,
+          "filterViewId": null,
+          "namedRangeId": null
+        }
+      },
+      "addNamedRange": {
+        "namedRange": {
+          "name": null,
+          "range": null,
+          "namedRangeId": null
+        }
+      },
+      "duplicateSheet": {
+        "properties": {
+          "index": null,
+          "title": null,
+          "hidden": null,
+          "sheetId": null,
+          "sheetType": null,
+          "rightToLeft": null,
+          "tabColorStyle": null,
+          "gridProperties": null,
+          "dataSourceSheetProperties": null
+        }
+      },
+      "trimWhitespace": {
+        "cellsChangedCount": 1
+      },
+      "deleteDuplicates": {
+        "duplicatesRemovedCount": 1
+      },
+      "updateDataSource": {
+        "dataSource": {
+          "spec": null,
+          "sheetId": null,
+          "dataSourceId": null,
+          "calculatedColumns": null
+        },
+        "dataExecutionStatus": {
+          "state": null,
+          "errorCode": null,
+          "errorMessage": null,
+          "lastExecutionTime": null
+        }
+      },
+      "addDimensionGroup": {
+        "dimensionGroups": []
+      },
+      "addProtectedRange": {
+        "protectedRange": {
+          "range": null,
+          "editors": null,
+          "description": null,
+          "warningOnly": null,
+          "namedRangeId": null,
+          "protectedRangeId": null,
+          "unprotectedRanges": null,
+          "requestingUserCanEdit": null
+        }
+      },
+      "refreshDataSource": {
+        "statuses": []
+      },
+      "duplicateFilterView": {
+        "filter": {
+          "range": null,
+          "title": null,
+          "criteria": null,
+          "sortSpecs": null,
+          "filterSpecs": null,
+          "filterViewId": null,
+          "namedRangeId": null
+        }
+      },
+      "deleteDimensionGroup": {
+        "dimensionGroups": []
+      },
+      "cancelDataSourceRefresh": {
+        "statuses": []
+      },
+      "createDeveloperMetadata": {
+        "developerMetadata": {
+          "location": null,
+          "metadataId": null,
+          "visibility": null,
+          "metadataKey": null,
+          "metadataValue": null
+        }
+      },
+      "deleteDeveloperMetadata": {
+        "deletedDeveloperMetadata": []
+      },
+      "updateDeveloperMetadata": {
+        "developerMetadata": []
+      },
+      "deleteConditionalFormatRule": {
+        "rule": {
+          "ranges": null,
+          "booleanRule": null,
+          "gradientRule": null
+        }
+      },
+      "updateConditionalFormatRule": {
+        "newRule": {
+          "ranges": null,
+          "booleanRule": null,
+          "gradientRule": null
+        },
+        "oldRule": {
+          "ranges": null,
+          "booleanRule": null,
+          "gradientRule": null
+        },
+        "newIndex": 1,
+        "oldIndex": 1
+      },
+      "updateEmbeddedObjectPosition": {
+        "position": {
+          "sheetId": null,
+          "newSheet": null,
+          "overlayPosition": null
+        }
+      }
+    }
+  ],
+  "display_url": "sample",
+  "spreadsheetId": "sample"
+}

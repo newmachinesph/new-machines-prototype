@@ -1,0 +1,15 @@
+{
+  "input_parameters": {
+    "properties": {
+      "setting": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "setting"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLECALENDAR_SETTINGS_GET",
+  "version": "20261010_00"
+}

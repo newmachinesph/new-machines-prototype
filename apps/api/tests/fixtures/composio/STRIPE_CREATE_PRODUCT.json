@@ -1,0 +1,176 @@
+{
+  "input_parameters": {
+    "properties": {
+      "active": {
+        "type": "boolean"
+      },
+      "custom_fields": {
+        "items": {
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "value": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "name",
+            "value"
+          ],
+          "type": "object"
+        },
+        "type": "array"
+      },
+      "default_price_data": {
+        "additionalProperties": false,
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "currency_options": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "custom_unit_amount": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "recurring": {
+            "additionalProperties": false,
+            "properties": {
+              "interval": {
+                "type": "string"
+              },
+              "interval_count": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "interval"
+            ],
+            "type": "object"
+          },
+          "tax_behavior": {
+            "type": "string"
+          },
+          "unit_amount": {
+            "type": "integer"
+          },
+          "unit_amount_decimal": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "currency"
+        ],
+        "type": "object"
+      },
+      "description": {
+        "type": "string"
+      },
+      "id": {
+        "type": "string"
+      },
+      "images": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "marketing_features": {
+        "items": {
+          "properties": {
+            "name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "type": "object"
+        },
+        "type": "array"
+      },
+      "metadata": {
+        "additionalProperties": {
+          "type": "string"
+        },
+        "type": "object"
+      },
+      "name": {
+        "type": "string"
+      },
+      "package_dimensions": {
+        "additionalProperties": false,
+        "properties": {
+          "height": {
+            "minimum": 0,
+            "type": "number"
+          },
+          "length": {
+            "minimum": 0,
+            "type": "number"
+          },
+          "weight": {
+            "minimum": 0,
+            "type": "number"
+          },
+          "width": {
+            "minimum": 0,
+            "type": "number"
+          }
+        },
+        "required": [
+          "height",
+          "length",
+          "width",
+          "weight"
+        ],
+        "type": "object"
+      },
+      "shippable": {
+        "type": "boolean"
+      },
+      "shipping_cost": {
+        "additionalProperties": false,
+        "properties": {
+          "shipping_rate": {
+            "type": "string"
+          },
+          "shipping_rate_data": {
+            "additionalProperties": false,
+            "properties": {
+              "display_name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "display_name"
+            ],
+            "type": "object"
+          }
+        },
+        "type": "object"
+      },
+      "statement_descriptor": {
+        "type": "string"
+      },
+      "tax_code": {
+        "type": "string"
+      },
+      "unit_label": {
+        "type": "string"
+      },
+      "url": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "name"
+    ],
+    "type": "object"
+  },
+  "slug": "STRIPE_CREATE_PRODUCT",
+  "version": "20261014_00"
+}

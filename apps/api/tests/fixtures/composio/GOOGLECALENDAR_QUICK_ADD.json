@@ -1,0 +1,27 @@
+{
+  "input_parameters": {
+    "properties": {
+      "calendar_id": {
+        "type": "string"
+      },
+      "send_updates": {
+        "enum": [
+          "all",
+          "externalOnly",
+          "none"
+        ],
+        "type": "string"
+      },
+      "text": {
+        "minLength": 1,
+        "type": "string"
+      }
+    },
+    "required": [
+      "text"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLECALENDAR_QUICK_ADD",
+  "version": "20261010_00"
+}

@@ -1,0 +1,78 @@
+{
+  "input_parameters": {
+    "properties": {
+      "backgroundColor": {
+        "type": "string"
+      },
+      "colorId": {
+        "type": "string"
+      },
+      "color_rgb_format": {
+        "type": "boolean"
+      },
+      "defaultReminders": {
+        "items": {
+          "properties": {
+            "method": {
+              "type": "string"
+            },
+            "minutes": {
+              "type": "integer"
+            }
+          },
+          "required": [
+            "method",
+            "minutes"
+          ],
+          "type": "object"
+        },
+        "type": "array"
+      },
+      "foregroundColor": {
+        "type": "string"
+      },
+      "hidden": {
+        "type": "boolean"
+      },
+      "id": {
+        "type": "string"
+      },
+      "notificationSettings": {
+        "additionalProperties": false,
+        "properties": {
+          "notifications": {
+            "items": {
+              "properties": {
+                "method": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "type",
+                "method"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "selected": {
+        "type": "boolean"
+      },
+      "summaryOverride": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "id"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLECALENDAR_CALENDAR_LIST_INSERT",
+  "version": "20261010_00"
+}

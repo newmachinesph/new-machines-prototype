@@ -1,0 +1,340 @@
+{
+  "input_parameters": {
+    "properties": {
+      "anyone_can_add_self": {
+        "type": "boolean"
+      },
+      "attachments": {
+        "items": {
+          "properties": {
+            "fileUrl": {
+              "type": "string"
+            },
+            "mimeType": {
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "fileUrl"
+          ],
+          "type": "object"
+        },
+        "maxItems": 25,
+        "type": "array"
+      },
+      "attendees": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "attendees_omitted": {
+        "type": "boolean"
+      },
+      "calendar_id": {
+        "type": "string"
+      },
+      "color_id": {
+        "pattern": "^([1-9]|1[0-1])$",
+        "type": "string"
+      },
+      "conference_data": {
+        "additionalProperties": false,
+        "properties": {
+          "createRequest": {
+            "additionalProperties": false,
+            "properties": {
+              "conferenceSolutionKey": {
+                "additionalProperties": false,
+                "properties": {
+                  "type": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "type": "object"
+              },
+              "requestId": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "requestId",
+              "conferenceSolutionKey"
+            ],
+            "type": "object"
+          }
+        },
+        "type": "object"
+      },
+      "conference_data_version": {
+        "maximum": 1,
+        "minimum": 0,
+        "type": "integer"
+      },
+      "description": {
+        "type": "string"
+      },
+      "end_time": {
+        "type": "string"
+      },
+      "event_id": {
+        "type": "string"
+      },
+      "extended_properties": {
+        "additionalProperties": false,
+        "properties": {
+          "private": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "shared": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      },
+      "focus_time_properties": {
+        "additionalProperties": false,
+        "properties": {
+          "autoDeclineMode": {
+            "enum": [
+              "declineNone",
+              "declineAllConflictingInvitations",
+              "declineOnlyNewConflictingInvitations"
+            ],
+            "type": "string"
+          },
+          "chatStatus": {
+            "enum": [
+              "available",
+              "doNotDisturb"
+            ],
+            "type": "string"
+          },
+          "declineMessage": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "guests_can_invite_others": {
+        "type": "boolean"
+      },
+      "guests_can_modify": {
+        "type": "boolean"
+      },
+      "guests_can_see_other_guests": {
+        "type": "boolean"
+      },
+      "location": {
+        "type": "string"
+      },
+      "max_attendees": {
+        "exclusiveMinimum": 0,
+        "type": "integer"
+      },
+      "out_of_office_properties": {
+        "additionalProperties": false,
+        "properties": {
+          "autoDeclineMode": {
+            "enum": [
+              "declineNone",
+              "declineAllConflictingInvitations",
+              "declineOnlyNewConflictingInvitations"
+            ],
+            "type": "string"
+          },
+          "declineMessage": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "recurrence": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "reminders": {
+        "additionalProperties": false,
+        "properties": {
+          "overrides": {
+            "items": {
+              "properties": {
+                "method": {
+                  "enum": [
+                    "email",
+                    "popup"
+                  ],
+                  "type": "string"
+                },
+                "minutes": {
+                  "minimum": 0,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "method",
+                "minutes"
+              ],
+              "type": "object"
+            },
+            "maxItems": 5,
+            "type": "array"
+          },
+          "useDefault": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "useDefault"
+        ],
+        "type": "object"
+      },
+      "rsvp_response": {
+        "enum": [
+          "needsAction",
+          "declined",
+          "tentative",
+          "accepted"
+        ],
+        "type": "string"
+      },
+      "send_updates": {
+        "enum": [
+          "all",
+          "externalOnly",
+          "none"
+        ],
+        "type": "string"
+      },
+      "sequence": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "source": {
+        "additionalProperties": false,
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "start_time": {
+        "type": "string"
+      },
+      "status": {
+        "enum": [
+          "confirmed",
+          "tentative",
+          "cancelled"
+        ],
+        "type": "string"
+      },
+      "summary": {
+        "type": "string"
+      },
+      "supports_attachments": {
+        "type": "boolean"
+      },
+      "timezone": {
+        "type": "string"
+      },
+      "transparency": {
+        "enum": [
+          "opaque",
+          "transparent"
+        ],
+        "type": "string"
+      },
+      "visibility": {
+        "enum": [
+          "default",
+          "public",
+          "private",
+          "confidential"
+        ],
+        "type": "string"
+      },
+      "working_location_properties": {
+        "additionalProperties": false,
+        "properties": {
+          "customLocation": {
+            "additionalProperties": false,
+            "properties": {
+              "label": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "homeOffice": {
+            "additionalProperties": false,
+            "properties": {
+              "label": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "officeLocation": {
+            "additionalProperties": false,
+            "properties": {
+              "buildingId": {
+                "type": "string"
+              },
+              "deskId": {
+                "type": "string"
+              },
+              "floorId": {
+                "type": "string"
+              },
+              "floorSectionId": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "type": {
+            "enum": [
+              "homeOffice",
+              "officeLocation",
+              "customLocation"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "type": "object"
+      }
+    },
+    "required": [
+      "calendar_id",
+      "event_id"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLECALENDAR_PATCH_EVENT",
+  "version": "20261010_00"
+}

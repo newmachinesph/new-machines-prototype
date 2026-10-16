@@ -1,0 +1,26 @@
+{
+  "error": "sample",
+  "success": true,
+  "response": {
+    "id": "sample",
+    "messages": [
+      {
+        "id": "sample",
+        "raw": "sample",
+        "payload": {},
+        "snippet": "sample",
+        "labelIds": [
+          "sample"
+        ],
+        "threadId": "sample",
+        "historyId": "sample",
+        "display_url": "sample",
+        "internalDate": "sample",
+        "sizeEstimate": 1
+      }
+    ],
+    "historyId": "sample"
+  },
+  "display_url": "sample",
+  "composio_execution_message": "sample"
+}

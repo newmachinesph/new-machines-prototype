@@ -1,0 +1,32 @@
+{
+  "input_parameters": {
+    "properties": {
+      "charge": {
+        "type": "string"
+      },
+      "ending_before": {
+        "type": "string"
+      },
+      "expand": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "limit": {
+        "maximum": 100,
+        "minimum": 1,
+        "type": "integer"
+      },
+      "starting_after": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "charge"
+    ],
+    "type": "object"
+  },
+  "slug": "STRIPE_LIST_CHARGE_REFUNDS",
+  "version": "20261014_00"
+}

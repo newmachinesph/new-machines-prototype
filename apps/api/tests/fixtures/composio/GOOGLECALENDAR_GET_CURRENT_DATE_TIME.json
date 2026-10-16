@@ -1,0 +1,19 @@
+{
+  "input_parameters": {
+    "properties": {
+      "timezone": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      }
+    },
+    "type": "object"
+  },
+  "slug": "GOOGLECALENDAR_GET_CURRENT_DATE_TIME",
+  "version": "20261010_00"
+}

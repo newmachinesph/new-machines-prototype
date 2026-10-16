@@ -1,0 +1,101 @@
+{
+  "refunds": [
+    {
+      "id": 1,
+      "note": "sample",
+      "duties": [
+        {
+          "duty_id": 1,
+          "amount_set": null
+        }
+      ],
+      "return": {},
+      "restock": true,
+      "user_id": 1,
+      "order_id": 1,
+      "created_at": "sample",
+      "processed_at": "sample",
+      "transactions": [
+        {
+          "id": 1,
+          "kind": "sample",
+          "test": true,
+          "amount": "sample",
+          "status": "sample",
+          "gateway": "sample",
+          "message": "sample",
+          "receipt": {},
+          "user_id": 1,
+          "currency": "sample",
+          "order_id": 1,
+          "parent_id": 1,
+          "created_at": "sample",
+          "error_code": "sample",
+          "source_name": "sample",
+          "authorization": "sample"
+        }
+      ],
+      "additional_fees": [
+        {}
+      ],
+      "total_duties_set": {
+        "shop_money": {
+          "amount": null,
+          "currency_code": null
+        },
+        "presentment_money": {
+          "amount": null,
+          "currency_code": null
+        }
+      },
+      "order_adjustments": [
+        {
+          "id": 1,
+          "kind": "sample",
+          "amount": "sample",
+          "reason": "sample",
+          "order_id": 1,
+          "refund_id": 1,
+          "amount_set": null,
+          "tax_amount": "sample",
+          "tax_amount_set": null
+        }
+      ],
+      "refund_line_items": [
+        {
+          "id": 1,
+          "quantity": 1,
+          "subtotal": "sample",
+          "line_item": {},
+          "total_tax": "sample",
+          "location_id": 1,
+          "line_item_id": 1,
+          "restock_type": "sample",
+          "subtotal_set": null,
+          "total_tax_set": null
+        }
+      ],
+      "admin_graphql_api_id": "sample",
+      "refund_shipping_lines": [
+        {
+          "id": 1,
+          "subtotal": "sample",
+          "total_tax": "sample",
+          "subtotal_set": null,
+          "total_tax_set": null,
+          "order_shipping_line_id": 1
+        }
+      ],
+      "total_additional_fees_set": {
+        "shop_money": {
+          "amount": null,
+          "currency_code": null
+        },
+        "presentment_money": {
+          "amount": null,
+          "currency_code": null
+        }
+      }
+    }
+  ]
+}

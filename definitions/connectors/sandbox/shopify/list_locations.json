@@ -1,0 +1,25 @@
+{
+  "locations": [
+    {
+      "id": "24826418",
+      "zip": "sample",
+      "city": "sample",
+      "name": "sample",
+      "phone": "sample",
+      "active": true,
+      "legacy": true,
+      "country": "sample",
+      "address1": "sample",
+      "address2": "sample",
+      "province": "sample",
+      "created_at": "sample",
+      "updated_at": "sample",
+      "country_code": "sample",
+      "country_name": "sample",
+      "province_code": "sample",
+      "admin_graphql_api_id": "sample",
+      "localized_country_name": "sample",
+      "localized_province_name": "sample"
+    }
+  ]
+}

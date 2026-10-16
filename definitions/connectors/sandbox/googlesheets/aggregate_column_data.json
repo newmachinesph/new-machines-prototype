@@ -1,0 +1,17 @@
+{
+  "result": 1,
+  "operation": "sample",
+  "display_url": "sample",
+  "search_details": {
+    "search_value": "sample",
+    "search_column": "sample",
+    "target_column": "sample",
+    "case_sensitive": true,
+    "aggregated_all_rows": true
+  },
+  "values_processed": [
+    1
+  ],
+  "matching_rows_count": 1,
+  "processed_values_count": 1
+}

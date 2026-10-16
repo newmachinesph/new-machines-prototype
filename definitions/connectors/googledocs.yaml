@@ -1,0 +1,1512 @@
+kind: connector
+key: googledocs
+app: Google Docs
+toolkit: googledocs
+
+tools:
+
+  # Imported from Composio by scripts/import_connector.py googledocs; reviewed choices are in
+  # scripts/connector_imports/googledocs.yaml.
+  - id: copy_document
+    slug: GOOGLEDOCS_COPY_DOCUMENT
+    version: '20261008_00'
+    action_class: write
+    capability: docs.write
+    description: Tool to create a copy of an existing Google Document. Use this to duplicate a document, for example,
+      when using an existing document as a template.
+    input_schema:
+      type: object
+      required:
+      - document_id
+      properties:
+        title:
+          type: string
+          description: The title for the new copied document. If not provided, the title will be 'Copy of [original
+            document's title]'.
+        document_id:
+          type: string
+          description: The ID of the Google Document to be copied.
+        include_shared_drives:
+          type: boolean
+          description: Whether to support copying documents from shared drives. Defaults to True.
+      additionalProperties: false
+  - id: create_and_populate_table
+    slug: GOOGLEDOCS_CREATE_AND_POPULATE_TABLE
+    version: '20261008_00'
+    action_class: write
+    capability: docs.write
+    description: Creates a new table in a Google Document and populates its cells with provided text data in a single
+      operation. Use this action when you need to insert a structured table with predefined content into a document.
+    input_schema:
+      type: object
+      required:
+      - documentId
+      - rows
+      - columns
+      - cellData
+      properties:
+        rows:
+          type: integer
+          maximum: 20
+          minimum: 1
+          description: The number of rows in the table. Must be between 1 and 20.
+        index:
+          type: integer
+          description: The zero-based index where the table will be inserted, in UTF-16 code units. The index must
+            be strictly less than the segment's end index. To insert at the end of a segment, omit this parameter
+            and set 'insertAtEndOfSegment' to true instead.
+        tabId:
+          type: string
+          description: The tab that the location is in. When omitted, the request is applied to the first tab.
+        columns:
+          type: integer
+          maximum: 20
+          minimum: 1
+          description: The number of columns in the table. Must be between 1 and 20.
+        cellData:
+          type: array
+          items:
+            type: array
+            items:
+              type: string
+          description: A 2D array (list of lists) containing the text content for each cell. The outer list represents
+            rows, and each inner list represents columns. Must match the dimensions specified by 'rows' and 'columns'.
+            Empty strings are allowed for empty cells.
+        segmentId:
+          type: string
+          description: The ID of the header, footer or footnote the location is in. An empty segment ID signifies
+            the document's body.
+        documentId:
+          type: string
+          description: The ID of the document to update.
+        insertAtEndOfSegment:
+          type: boolean
+          description: If true, inserts the table at the end of the segment (document body, header, or footer specified
+            by segment_id). If false or omitted, and 'index' is not provided, it defaults to inserting at the end
+            of the document body.
+      additionalProperties: false
+  - id: create_document
+    slug: GOOGLEDOCS_CREATE_DOCUMENT
+    version: '20261008_00'
+    action_class: write
+    capability: docs.write
+    description: Creates a new Google Docs document using the provided title as filename and inserts the initial text
+      at the beginning if non-empty, returning the document's ID and metadata (excluding body content).
+    input_schema:
+      type: object
+      required:
+      - title
+      properties:
+        text:
+          type: string
+          description: Optional initial text content to insert at the beginning of the new document. If not provided,
+            an empty document will be created. For very large text (over 50,000 characters), the text will be inserted
+            in chunks to avoid API limits.
+        title:
+          type: string
+          description: Title for the new document, used as its filename in Google Drive.
+      additionalProperties: false
+  - id: create_document_markdown
+    slug: GOOGLEDOCS_CREATE_DOCUMENT_MARKDOWN
+    version: '20261008_00'
+    action_class: write
+    capability: docs.write
+    description: Creates a new Google Docs document, optionally initializing it with a title and content provided
+      as Markdown text.
+    input_schema:
+      type: object
+      required:
+      - title
+      properties:
+        title:
+          type: string
+          description: The title for the new Google Docs document.
+        markdown_text:
+          type: string
+          description: 'The initial content for the document, formatted as Markdown. Also accepts ''content'' as an
+            alias. Supports headings, real Google Docs lists including nested lists, multiple Markdown tables, task-list
+            markers, images via publicly accessible URLs or matching image_assets uploads (max 2KB URL length after
+            resolution; formats: JPEG, PNG, GIF; SVG not supported), blockquotes, code blocks, hyperlinks (e.g., [text](url)),
+            and text formatting (bold, italic, etc.). If empty or omitted, creates document with title only.'
+      additionalProperties: false
+  - id: create_footer
+    slug: GOOGLEDOCS_CREATE_FOOTER
+    version: '20261008_00'
+    action_class: write
+    capability: docs.write
+    description: Tool to create a new footer in a Google Document. Use when you need to add a footer, optionally specifying
+      its type and the section it applies to.
+    input_schema:
+      type: object
+      required:
+      - document_id
+      - type
+      properties:
+        type:
+          enum:
+          - DEFAULT
+          type: string
+          description: The type of footer to create.
+        document_id:
+          type: string
+          description: The ID of the document to create the footer in.
+        section_break_location:
+          type: object
+          properties:
+            index:
+              type: integer
+              description: The zero-based index, in UTF-16 code units, relative to the beginning of the segment.
+            tabId:
+              type: string
+              description: The tab that the location is in. When omitted, the request is applied to the first tab.
+            segmentId:
+              type: string
+              description: The ID of the header, footer or footnote the location is in. An empty segment ID signifies
+                the document's body.
+          description: The location of the SectionBreak immediately preceding the section whose SectionStyle this
+            footer should belong to. If this is unset or refers to the first section break in the document, the footer
+            applies to the document style.
+          additionalProperties: false
+      additionalProperties: false
+  - id: create_footnote
+    slug: GOOGLEDOCS_CREATE_FOOTNOTE
+    version: '20261008_00'
+    action_class: write
+    capability: docs.write
+    description: Tool to create a new footnote in a Google Document. Use this when you need to add a footnote at a
+      specific location or at the end of the document body.
+    input_schema:
+      type: object
+      required:
+      - documentId
+      properties:
+        location:
+          type: object
+          properties:
+            index:
+              type: integer
+              description: The zero-based index, in UTF-16 code units. The index is relative to the beginning of the
+                segment specified by segment_id.
+            tabId:
+              type: string
+              description: The tab that the location is in. When omitted, the request is applied to the first tab.
+            segmentId:
+              type: string
+              description: The ID of the header, footer or footnote the location is in. An empty segment ID signifies
+                the document's body.
+          description: Inserts the footnote reference at a specific index in the document. The segmentId within this
+            Location object must be empty as footnotes can only be inserted in the document body.
+          additionalProperties: false
+        documentId:
+          type: string
+          description: The ID of the document to create the footnote in.
+        endOfSegmentLocation:
+          type: object
+          properties:
+            tabId:
+              type: string
+              description: The tab that the location is in. When omitted, the request is applied to the first tab.
+            segmentId:
+              type: string
+              description: The ID of the header, footer or footnote the location is in. An empty segment ID signifies
+                the document's body.
+          description: Inserts the footnote reference at the end of the document body. The segmentId within this EndOfSegmentLocation
+            object must be empty.
+          additionalProperties: false
+      additionalProperties: false
+  - id: create_header
+    slug: GOOGLEDOCS_CREATE_HEADER
+    version: '20261008_00'
+    action_class: write
+    capability: docs.write
+    description: Tool to create a new header in a Google Document, optionally with text content. Use this tool when
+      you need to add a header to a document.
+    input_schema:
+      type: object
+      required:
+      - documentId
+      properties:
+        text:
+          type: string
+          description: Optional text content to add to the header after creation. If provided, the text will be inserted
+            into the header at index 0.
+        type:
+          enum:
+          - HEADER_FOOTER_TYPE_UNSPECIFIED
+          - DEFAULT
+          type: string
+          description: The type of header to create. Use 'DEFAULT' for the standard document header. Only one DEFAULT
+            header can exist per document; if one already exists, the existing header ID will be returned.
+        documentId:
+          type: string
+          description: The ID of the document to create the header in.
+        sectionBreakLocation:
+          type: object
+          properties:
+            index:
+              type: integer
+              description: The zero-based index, in UTF-16 code units.
+            tabId:
+              type: string
+              description: The tab that the location is in. When omitted, the request is applied to the first tab.
+            segmentId:
+              type: string
+              description: The ID of the header, footer or footnote the location is in. An empty segment ID signifies
+                the document's body.
+          description: The location of the SectionBreak which begins the section this header should belong to. Only
+            needed for section-specific headers.
+          additionalProperties: false
+      additionalProperties: false
+  - id: create_named_range
+    slug: GOOGLEDOCS_CREATE_NAMED_RANGE
+    version: '20261008_00'
+    action_class: write
+    capability: docs.write
+    description: Tool to create a new named range in a Google Document. Use this to assign a name to a specific part
+      of the document for easier reference or programmatic manipulation.
+    input_schema:
+      type: object
+      required:
+      - documentId
+      - name
+      - rangeStartIndex
+      - rangeEndIndex
+      properties:
+        name:
+          type: string
+          maxLength: 256
+          minLength: 1
+          description: The name for the new named range. Must be 1-256 characters.
+        tabId:
+          type: string
+          description: Optional. The ID of the document tab containing this range. When omitted, Google Docs applies
+            the request to the first tab.
+        documentId:
+          type: string
+          description: The ID of the document where the named range will be created.
+        rangeEndIndex:
+          type: integer
+          minimum: 0
+          description: The zero-based end index of the range.
+        rangeSegmentId:
+          type: string
+          description: Optional. The ID of the header, footer, or footnote. Empty for document body.
+        rangeStartIndex:
+          type: integer
+          minimum: 0
+          description: The zero-based start index of the range.
+      additionalProperties: false
+  - id: create_paragraph_bullets
+    slug: GOOGLEDOCS_CREATE_PARAGRAPH_BULLETS
+    version: '20261008_00'
+    action_class: write
+    capability: docs.write
+    description: Tool to add bullets to paragraphs within a specified range in a Google Document. Use when you need
+      to format a list or a set of paragraphs as bullet points.
+    input_schema:
+      type: object
+      required:
+      - document_id
+      - createParagraphBullets
+      properties:
+        tabId:
+          type: string
+          description: Optional tab ID to apply to createParagraphBullets.range.tabId. When omitted, Google Docs applies
+            the request to the first tab.
+        document_id:
+          type: string
+          description: The ID of the document to update.
+        createParagraphBullets:
+          type: object
+          required:
+          - range
+          - bulletPreset
+          properties:
+            range:
+              type: object
+              required:
+              - startIndex
+              - endIndex
+              properties:
+                tabId:
+                  type: string
+                  description: The ID of the tab that contains this range. When omitted, Google Docs applies the request
+                    to the first tab.
+                endIndex:
+                  type: integer
+                  description: The zero-based end index of the range, exclusive.
+                segmentId:
+                  type: string
+                  description: The ID of the header, footer, or footnote that this range is contained in. An empty
+                    segment ID signifies the document's body.
+                startIndex:
+                  type: integer
+                  description: The zero-based start index of the range, inclusive.
+              description: The range to apply the bullet preset to.
+              additionalProperties: false
+            bulletPreset:
+              enum:
+              - BULLET_GLYPH_PRESET_UNSPECIFIED
+              - BULLET_DISC_CIRCLE_SQUARE
+              - BULLET_DIAMONDX_ARROW3D_SQUARE
+              - BULLET_CHECKBOX
+              - BULLET_ARROW_DIAMOND_DISC
+              - BULLET_STAR_CIRCLE_SQUARE
+              - BULLET_ARROW3D_CIRCLE_SQUARE
+              - BULLET_LEFTTRIANGLE_DIAMOND_DISC
+              - BULLET_DIAMONDX_HOLLOWDIAMOND_SQUARE
+              - BULLET_DIAMOND_CIRCLE_SQUARE
+              - NUMBERED_DECIMAL_ALPHA_ROMAN
+              - NUMBERED_DECIMAL_ALPHA_ROMAN_PARENS
+              - NUMBERED_DECIMAL_NESTED
+              - NUMBERED_UPPERALPHA_ALPHA_ROMAN
+              - NUMBERED_UPPERROMAN_UPPERALPHA_DECIMAL
+              - NUMBERED_ZERODECIMAL_ALPHA_ROMAN
+              type: string
+              description: The kinds of bullet glyphs to be used.
+          description: The request body for creating paragraph bullets in the document.
+          additionalProperties: false
+      additionalProperties: false
+  - id: create_document_tab
+    slug: GOOGLEDOCS_CREATE_TAB
+    version: '20261008_00'
+    action_class: write
+    capability: docs.write
+    description: Creates a new tab in a Google Docs document. Tabs allow you to organize document content into separate
+      sections within a single document. Use this action when you need to add a new organizational tab to a document.
+    input_schema:
+      type: object
+      required:
+      - document_id
+      properties:
+        document_id:
+          type: string
+          description: The unique identifier of the Google Docs document where the tab will be created. This ID can
+            be found in the document's URL.
+        tab_properties:
+          type: object
+          properties:
+            index:
+              type: integer
+              description: The zero-based position where the tab should be inserted within its parent tab group. If
+                not specified, the tab is added at the end. When a tab is added at a given index, all subsequent tabs'
+                indexes are incremented.
+            title:
+              type: string
+              description: The user-visible title/name of the tab. If not specified, Google Docs will generate a default
+                title.
+            parentTabId:
+              type: string
+              description: The ID of the parent tab under which this tab should be created. Leave empty or omit to
+                create a root-level tab. Must be a valid tab ID from the document.
+          description: Properties of a tab to be created.
+          additionalProperties: false
+      additionalProperties: false
+  - id: export_pdf
+    slug: GOOGLEDOCS_EXPORT_DOCUMENT_AS_PDF
+    version: '20261008_00'
+    action_class: read
+    capability: docs.read
+    description: 'Tool to export a Google Docs file as PDF using the Google Drive API. Use when you need to generate
+      a PDF version of a Google Docs document for download or distribution. Note: Google Drive enforces a 10MB limit
+      on export content.'
+    input_schema:
+      type: object
+      required:
+      - file_id
+      properties:
+        file_id:
+          type: string
+          minLength: 1
+          description: 'The ID of the Google Docs file to export as PDF. This is the same as the document ID for Google
+            Docs files - typically a 44-character alphanumeric string. Extract it from a Google Docs URL: https://docs.google.com/document/d/{FILE_ID}/edit'
+        filename:
+          type: string
+          description: Optional suggested filename for the exported PDF (e.g., 'report.pdf'). If not provided, a default
+            filename will be generated.
+      additionalProperties: false
+  - id: get_document_by_id
+    slug: GOOGLEDOCS_GET_DOCUMENT_BY_ID
+    version: '20261008_00'
+    action_class: read
+    capability: docs.read
+    description: Retrieves an existing Google Document by its ID; will error if the document is not found.
+    input_schema:
+      type: object
+      required:
+      - id
+      properties:
+        id:
+          type: string
+          description: 'The unique identifier for a native Google Docs document (typically a 44-character alphanumeric
+            string). Accepts either a document ID or a full Google Docs URL (e.g., https://docs.google.com/document/d/{DOCUMENT_ID}/edit).
+            When a URL is provided, the document ID will be automatically extracted. IMPORTANT: This tool only works
+            with native Google Docs documents (mimeType application/vnd.google-apps.document), not uploaded Office
+            files (DOCX, XLSX, etc.) stored in Google Drive. Use GOOGLEDOCS_SEARCH_DOCUMENTS to find available documents.'
+        includeTabsContent:
+          type: boolean
+          description: When true, request includeTabsContent=true so the response includes document.tabs with content
+            for all tabs. When false, Google Docs returns the legacy first-tab content fields.
+      additionalProperties: false
+  - id: get_document_end_index
+    slug: GOOGLEDOCS_GET_DOCUMENT_END_INDEX
+    version: '20261008_00'
+    action_class: read
+    capability: docs.read
+    description: Retrieves the end index and paragraph structure of a Google Document or specific segment. Use this
+      action when you need to determine valid insertion points for text operations, especially before using insertText
+      requests.
+    input_schema:
+      type: object
+      required:
+      - document_id
+      properties:
+        tab_id:
+          type: string
+          description: The ID of the document tab to get the end index from. When omitted, the request is applied
+            to the first tab.
+        segment_id:
+          type: string
+          description: The ID of the header, footer, or footnote segment to get the end index for. Leave empty or
+            omit to get the end index of the document body.
+        document_id:
+          type: string
+          description: The ID of the document to retrieve the end index from.
+      additionalProperties: false
+  - id: get_document_text
+    slug: GOOGLEDOCS_GET_DOCUMENT_PLAINTEXT
+    version: '20261008_00'
+    action_class: read
+    capability: docs.read
+    description: Retrieve a Google Doc by ID and return a best-effort plain-text rendering. Converts document structure
+      into plain text including paragraphs, lists, and tables without requiring clients to traverse complex Docs API
+      JSON.
+    input_schema:
+      type: object
+      required:
+      - document_id
+      properties:
+        tab_ids:
+          type: array
+          items:
+            type: string
+          description: Optional tab IDs to include when include_tabs_content=true. Nested child tabs are searched
+            recursively.
+        document_id:
+          type: string
+          minLength: 1
+          description: 'The unique identifier for the Google Document. Accepts either a document ID (typically a 44-character
+            alphanumeric string) or a full Google Docs URL. When a URL is provided, the document ID will be automatically
+            extracted. Note: This parameter also accepts ''id'' as an alias for consistency with other GOOGLEDOCS
+            tools.'
+        include_tables:
+          type: boolean
+          description: Whether to include table content in the plain text output. Tables are rendered with configurable
+            cell and row delimiters.
+        include_footers:
+          type: boolean
+          description: Whether to include footer text in the plain text output. Footers are appended with a clear
+            section separator.
+        include_headers:
+          type: boolean
+          description: Whether to include header text in the plain text output. Headers are appended with a clear
+            section separator.
+        include_footnotes:
+          type: boolean
+          description: Whether to include footnote text in the plain text output. Footnotes are appended with a clear
+            section separator.
+        table_row_delimiter:
+          type: string
+          description: 'The delimiter to use between table rows (default: newline character).'
+        include_tabs_content:
+          type: boolean
+          description: When true, fetch the document using includeTabsContent=true query parameter to render all tabs.
+            When false, only the main body content is rendered.
+        table_cell_delimiter:
+          type: string
+          description: 'The delimiter to use between table cells (default: tab character).'
+      additionalProperties: false
+  - id: insert_image_in_table_cell
+    slug: GOOGLEDOCS_INSERT_IMAGE_IN_TABLE_CELL
+    version: '20261008_00'
+    action_class: write
+    capability: docs.write
+    description: Inserts an image from a given URI into a specific table cell in a Google Document. Use this action
+      when you need to add an image to a particular cell within a table.
+    input_schema:
+      type: object
+      required:
+      - document_id
+      - uri
+      - table_cell_location
+      properties:
+        uri:
+          type: string
+          description: The URI of the image to insert. Must be a publicly accessible direct image URL (no redirects
+            or viewer links). Images must be less than 50MB, not exceed 25 megapixels, and be in PNG, JPEG, or GIF
+            format (SVG not supported). The URI can be at most 2 kB in length.
+        document_id:
+          type: string
+          description: The ID of the document containing the table.
+        object_size:
+          type: object
+          properties:
+            width:
+              type: object
+              properties:
+                unit:
+                  enum:
+                  - PT
+                  type: string
+                  description: The units for magnitude. Only PT (points) is supported by the Google Docs API for inline
+                    images.
+                magnitude:
+                  type: number
+                  description: The magnitude of the size.
+              description: The width of the image.
+              additionalProperties: false
+            height:
+              type: object
+              properties:
+                unit:
+                  enum:
+                  - PT
+                  type: string
+                  description: The units for magnitude. Only PT (points) is supported by the Google Docs API for inline
+                    images.
+                magnitude:
+                  type: number
+                  description: The magnitude of the size.
+              description: The height of the image.
+              additionalProperties: false
+          description: The size of the image. If not specified, the image is rendered at its intrinsic size.
+          additionalProperties: false
+        cell_content_index:
+          type: integer
+          minimum: 0
+          description: The zero-based offset within the table cell's content where the image should be inserted. Each
+            table cell contains a paragraph, and this index specifies the position within that paragraph. Use 0 to
+            insert at the beginning of the cell, or a higher value to insert after existing content. If omitted, the
+            image is inserted at the beginning of the cell (index 0).
+        table_cell_location:
+          type: object
+          required:
+          - table_start_index
+          - row_index
+          - column_index
+          properties:
+            tab_id:
+              type: string
+              description: The ID of the document tab where the table is located. When omitted, the request is applied
+                to the first tab.
+            row_index:
+              type: integer
+              minimum: 0
+              description: The zero-based row index of the target cell (0 for first row, 1 for second row, etc.).
+            segment_id:
+              type: string
+              description: The ID of the header, footer, or footnote the table is in. Leave empty or omit for tables
+                in the document body.
+            column_index:
+              type: integer
+              minimum: 0
+              description: The zero-based column index of the target cell (0 for first column, 1 for second column,
+                etc.).
+            table_start_index:
+              type: integer
+              description: The zero-based index where the table starts in the document, in UTF-16 code units. Use
+                GOOGLEDOCS_GET_DOCUMENT_BY_ID to find the table's startIndex in the document structure.
+          description: The location of the table cell where the image should be inserted. Specify the table's start
+            index, row index, and column index to identify the target cell.
+          additionalProperties: false
+      additionalProperties: false
+  - id: insert_inline_image
+    slug: GOOGLEDOCS_INSERT_INLINE_IMAGE
+    version: '20261008_00'
+    action_class: write
+    capability: docs.write
+    description: Tool to insert an image from a given URI at a specified location in a Google Document as an inline
+      image. Use when you need to add an image to a document programmatically.
+    input_schema:
+      type: object
+      required:
+      - documentId
+      - uri
+      - location
+      properties:
+        uri:
+          type: string
+          description: The URI of the image. Must be a publicly accessible direct image URL (no redirects or viewer
+            links like Google Drive preview pages). Images must be less than 50MB, not exceed 25 megapixels, and be
+            in PNG, JPEG, or GIF format (SVG not supported). The URI can be at most 2 kB in length.
+        location:
+          type: object
+          required:
+          - index
+          properties:
+            index:
+              type: integer
+              description: The zero-based index within the segment where the image will be inserted (required). Must
+                be less than the current segment's end index. Use 1 to insert at the beginning of the document body.
+                To insert at the end of a document, first retrieve the document to find its length, then use an index
+                less than that length (e.g., if the document ends at index 720, use 719 or less).
+            segmentId:
+              type: string
+              description: The ID of the segment where the image will be inserted. If not provided, the image is inserted
+                in the document body.
+          description: The location in the document to insert the image. The index field is required to specify the
+            insertion point.
+          additionalProperties: false
+        documentId:
+          type: string
+          description: The ID of the document to update.
+        objectSize:
+          type: object
+          properties:
+            width:
+              type: object
+              properties:
+                unit:
+                  enum:
+                  - EMU
+                  - PT
+                  type: string
+                  description: 'The units for magnitude. Supported units: EMU, PT (PX is not supported by the API).'
+                magnitude:
+                  type: number
+                  description: The magnitude of the size.
+              description: The width of the image.
+              additionalProperties: false
+            height:
+              type: object
+              properties:
+                unit:
+                  enum:
+                  - EMU
+                  - PT
+                  type: string
+                  description: 'The units for magnitude. Supported units: EMU, PT (PX is not supported by the API).'
+                magnitude:
+                  type: number
+                  description: The magnitude of the size.
+              description: The height of the image.
+              additionalProperties: false
+          description: The size of the image. If not specified, the image is rendered at its intrinsic size.
+          additionalProperties: false
+      additionalProperties: false
+  - id: insert_page_break
+    slug: GOOGLEDOCS_INSERT_PAGE_BREAK
+    version: '20261008_00'
+    action_class: write
+    capability: docs.write
+    description: Tool to insert a page break into a Google Document. Use when you need to start new content on a fresh
+      page, such as at the end of a chapter or section.
+    input_schema:
+      type: object
+      required:
+      - documentId
+      - insertPageBreak
+      properties:
+        documentId:
+          type: string
+          description: The ID of the document to update.
+        insertPageBreak:
+          anyOf:
+          - type: object
+            required:
+            - location
+            properties:
+              location:
+                type: object
+                required:
+                - index
+                properties:
+                  index:
+                    type: integer
+                    description: The zero-based index, in UTF-16 code units. The page break is inserted before this
+                      index.
+                description: Specifies the location to insert the page break using a zero-based index. Use this or
+                  end_of_segment_location.
+                additionalProperties: false
+            additionalProperties: false
+          - type: object
+            required:
+            - endOfSegmentLocation
+            properties:
+              endOfSegmentLocation:
+                type: object
+                properties: {}
+                description: Specifies that the page break should be inserted at the end of a segment (document body).
+                  Use this or location.
+                additionalProperties: false
+            additionalProperties: false
+          description: The details for the insertPageBreak request.
+      additionalProperties: false
+  - id: insert_table
+    slug: GOOGLEDOCS_INSERT_TABLE_ACTION
+    version: '20261008_00'
+    action_class: write
+    capability: docs.write
+    description: Tool to insert a table into a Google Document. Use when you need to add a new table at a specific
+      location or at the end of a segment (like document body, header, or footer) in a document.
+    input_schema:
+      type: object
+      required:
+      - documentId
+      - rows
+      - columns
+      properties:
+        rows:
+          type: integer
+          minimum: 1
+          description: The number of rows in the table.
+        index:
+          type: integer
+          description: 'The zero-based index where the table will be inserted, in UTF-16 code units. IMPORTANT: The
+            index must be strictly less than the segment''s end index (you cannot insert at the exact end position
+            using an index). To insert at the end of a segment, omit this parameter and set ''insertAtEndOfSegment''
+            to true instead. If provided, ''location'' will be used. If omitted and ''insertAtEndOfSegment'' is false
+            or omitted, ''endOfSegmentLocation'' will be used for the document body.'
+        tabId:
+          type: string
+          description: The tab that the location is in. When omitted, the request is applied to the first tab.
+        columns:
+          type: integer
+          minimum: 1
+          description: The number of columns in the table.
+        segmentId:
+          type: string
+          description: The ID of the header, footer or footnote the location is in. An empty segment ID signifies
+            the document's body.
+        documentId:
+          type: string
+          description: The ID of the document to update.
+        insertAtEndOfSegment:
+          type: boolean
+          description: If true, inserts the table at the end of the segment (document body, header, or footer specified
+            by segment_id). This is the recommended way to append content to the end of a segment, as using an index
+            equal to the segment's end position will fail. If false or omitted, and 'index' is not provided, it defaults
+            to inserting at the end of the document body. If 'index' is provided, this field is ignored.
+      additionalProperties: false
+  - id: insert_table_column
+    slug: GOOGLEDOCS_INSERT_TABLE_COLUMN
+    version: '20261008_00'
+    action_class: write
+    capability: docs.write
+    description: Tool to insert a new column into a table in a Google Document. Use this tool when you need to add
+      a column to an existing table at a specific location.
+    input_schema:
+      type: object
+      required:
+      - document_id
+      - requests
+      properties:
+        requests:
+          type: array
+          items:
+            type: object
+            required:
+            - insertTableColumn
+            properties:
+              insertTableColumn:
+                type: object
+                required:
+                - tableCellLocation
+                properties:
+                  insertRight:
+                    type: boolean
+                    description: 'Whether to insert new column to the right of the reference cell location. True:
+                      insert to the right. False: insert to the left.'
+                  tableCellLocation:
+                    type: object
+                    required:
+                    - tableStartLocation
+                    - rowIndex
+                    - columnIndex
+                    properties:
+                      rowIndex:
+                        type: integer
+                        description: The zero-based row index of the reference cell.
+                      columnIndex:
+                        type: integer
+                        description: The zero-based column index of the reference cell.
+                      tableStartLocation:
+                        type: object
+                        required:
+                        - index
+                        properties:
+                          index:
+                            type: integer
+                            description: The zero-based index where the table starts in the document, in UTF-16 code
+                              units. This is required to identify which table to modify. You can find this value by
+                              using GOOGLEDOCS_GET_DOCUMENT_BY_ID and locating the 'startIndex' of the table element.
+                          tabId:
+                            type: string
+                            description: The tab that the location is in. When omitted, the request is applied to
+                              the first tab.
+                          segmentId:
+                            type: string
+                            description: The ID of the header, footer or footnote the location is in. An empty segment
+                              ID signifies the document's body.
+                        description: The location where the table starts in the document. This is required and must
+                          include the index of where the table begins.
+                        additionalProperties: false
+                    description: The reference table cell location from which columns will be inserted.
+                    additionalProperties: false
+                description: The request to insert a table column in the document.
+                additionalProperties: false
+            additionalProperties: false
+          description: A list of insert table column requests. Multiple requests can be sent in a single call to insert
+            columns at different locations in the document.
+        document_id:
+          type: string
+          description: The ID of the document to update.
+      additionalProperties: false
+  - id: insert_table_row
+    slug: GOOGLEDOCS_INSERT_TABLE_ROW
+    version: '20261008_00'
+    action_class: write
+    capability: docs.write
+    description: Inserts a new row into a table in a Google Document at a specified location. Use this action when
+      you need to add a row to an existing table, either above or below a reference cell location.
+    input_schema:
+      type: object
+      required:
+      - document_id
+      - requests
+      properties:
+        requests:
+          type: array
+          items:
+            type: object
+            required:
+            - insertTableRow
+            properties:
+              insertTableRow:
+                type: object
+                required:
+                - tableCellLocation
+                properties:
+                  insertBelow:
+                    type: boolean
+                    description: 'Whether to insert new row below the reference cell location. True: insert below.
+                      False: insert above.'
+                  tableCellLocation:
+                    type: object
+                    required:
+                    - tableStartLocation
+                    - rowIndex
+                    - columnIndex
+                    properties:
+                      rowIndex:
+                        type: integer
+                        description: The zero-based row index of the reference cell.
+                      columnIndex:
+                        type: integer
+                        description: The zero-based column index of the reference cell.
+                      tableStartLocation:
+                        type: object
+                        required:
+                        - index
+                        properties:
+                          index:
+                            type: integer
+                            description: The zero-based index where the table starts in the document, in UTF-16 code
+                              units. This is required to identify which table to modify. You can find this value by
+                              using GOOGLEDOCS_GET_DOCUMENT_BY_ID and locating the 'startIndex' of the table element.
+                          tabId:
+                            type: string
+                            description: The tab that the location is in. When omitted, the request is applied to
+                              the first tab.
+                          segmentId:
+                            type: string
+                            description: The ID of the header, footer or footnote the location is in. An empty segment
+                              ID signifies the document's body.
+                        description: The location where the table starts in the document. This is required and must
+                          include the index of where the table begins.
+                        additionalProperties: false
+                    description: The reference table cell location from which rows will be inserted.
+                    additionalProperties: false
+                description: The request to insert a table row in the document.
+                additionalProperties: false
+            additionalProperties: false
+          description: A list of insert table row requests. Multiple requests can be sent in a single call to insert
+            rows at different locations in the document.
+        document_id:
+          type: string
+          description: The ID of the document to update.
+      additionalProperties: false
+  - id: insert_text
+    slug: GOOGLEDOCS_INSERT_TEXT_ACTION
+    version: '20261008_00'
+    action_class: write
+    capability: docs.write
+    description: 'Tool to insert a string of text at a specified location within a Google Document. Use when you need
+      to add new text content to an existing document. IMPORTANT: Two ways to specify insertion location: 1.'
+    input_schema:
+      type: object
+      required:
+      - document_id
+      - text_to_insert
+      properties:
+        tab_id:
+          type: string
+          description: The ID of the document tab to insert text into. When omitted, Google Docs applies the request
+            to the first tab.
+        segment_id:
+          type: string
+          description: The ID of the header, footer or footnote to insert text into. Leave empty or omit to insert
+            into the document body. Works with both append_to_end and insertion_index modes.
+        document_id:
+          type: string
+          description: The ID of the document to insert text into.
+        append_to_end:
+          type: boolean
+          description: Set to true to append text to the end of the document body. When true, the 'insertion_index'
+            parameter is ignored. This is the recommended way to add text at the end of a document as it avoids index
+            boundary issues.
+        text_to_insert:
+          type: string
+          minLength: 1
+          description: The string of text to insert. Alternatively, you can provide this as 'text'.
+        insertion_index:
+          type: integer
+          description: 'The zero-based UTF-16 code unit index where text will be inserted. Alternatively, you can
+            provide this as ''index''. CRITICAL CONSTRAINTS: (1) The index MUST fall within the bounds of an EXISTING
+            paragraph - you cannot insert at arbitrary indices or at structural boundaries like table starts. (2)
+            The index MUST be strictly less than the document''s end index. Index 1 is the minimum valid index and
+            is safe for inserting at the document start. To determine valid indices, first retrieve the document structure
+            using GOOGLEDOCS_GET_DOCUMENT_BY_ID to identify paragraph boundaries. For safely adding text without index
+            concerns, set ''append_to_end'' to true instead. Either ''insertion_index'' or ''append_to_end'' must
+            be provided.'
+      additionalProperties: false
+  - id: insert_text_in_table_cell
+    slug: GOOGLEDOCS_INSERT_TEXT_IN_TABLE_CELL
+    version: '20261008_00'
+    action_class: write
+    capability: docs.write
+    description: Inserts text into a specific cell of a table in a Google Document by row and column position. Use
+      this action when you need to add or update text content in a table cell at a known row and column index.
+    input_schema:
+      type: object
+      required:
+      - document_id
+      - text
+      - table_start_index
+      - row_index
+      - column_index
+      properties:
+        text:
+          type: string
+          minLength: 1
+          description: The text to insert into the table cell.
+        tabId:
+          type: string
+          description: The ID of the document tab containing the table. When omitted, the request is applied to the
+            first tab.
+        row_index:
+          type: integer
+          minimum: 0
+          description: The zero-based row index of the target cell (0 for first row, 1 for second row, etc.).
+        document_id:
+          type: string
+          description: The ID of the document containing the table.
+        column_index:
+          type: integer
+          minimum: 0
+          description: The zero-based column index of the target cell (0 for first column, 1 for second column, etc.).
+        table_start_index:
+          type: integer
+          description: The zero-based index where the target table starts in the document, in UTF-16 code units. To
+            find this index, use GOOGLEDOCS_GET_DOCUMENT_BY_ID to retrieve the document structure and locate the table's
+            startIndex.
+      additionalProperties: false
+  - id: replace_all_text_in_document
+    slug: GOOGLEDOCS_REPLACE_ALL_TEXT
+    version: '20261008_00'
+    action_class: write
+    capability: docs.write
+    description: Tool to replace all occurrences of a specified text string with another text string throughout a
+      Google Document. Use when you need to perform a global find and replace operation within a document.
+    input_schema:
+      type: object
+      required:
+      - document_id
+      - find_text
+      - replace_text
+      properties:
+        tab_ids:
+          type: array
+          items:
+            type: string
+          description: Optional. A list of specific tab IDs to perform the replacement on. If not provided, replacement
+            occurs on all tabs.
+        find_text:
+          type: string
+          minLength: 1
+          description: The text to search for in the document. Cannot be empty.
+        match_case:
+          type: boolean
+          description: Indicates whether the search should be case sensitive. Defaults to False (case insensitive).
+        document_id:
+          type: string
+          description: The ID of the document to update.
+        replace_text:
+          type: string
+          description: The text that will replace the matched text.
+          minLength: 1
+      additionalProperties: false
+  - id: replace_image
+    slug: GOOGLEDOCS_REPLACE_IMAGE
+    version: '20261008_00'
+    action_class: write
+    capability: docs.write
+    description: Tool to replace a specific image in a document with a new image from a URI. Use when you need to
+      update an existing image within a Google Doc.
+    input_schema:
+      type: object
+      required:
+      - document_id
+      - replace_image
+      properties:
+        document_id:
+          type: string
+          description: The ID of the document containing the image to replace.
+        replace_image:
+          type: object
+          required:
+          - image_object_id
+          - uri
+          properties:
+            uri:
+              type: string
+              description: The URI of the new image. The image is fetched once at insertion time and a copy is stored
+                for display inside the document. Images must be less than 50MB in size, cannot exceed 25 megapixels,
+                and must be in one of PNG, JPEG, or GIF format. The provided URI must be publicly accessible and at
+                most 2 kB in length. The URI itself is saved with the image, and exposed via the ImageProperties.content_uri
+                field.
+            tab_id:
+              type: string
+              description: The tab that the image to be replaced is in. When omitted, the request is applied to the
+                first tab.
+            image_object_id:
+              type: string
+              description: The ID of the existing image that will be replaced. The ID can be retrieved from the response
+                of a get request.
+            image_replace_method:
+              enum:
+              - CENTER_CROP
+              - IMAGE_REPLACE_METHOD_UNSPECIFIED
+              type: string
+              description: The replacement method. Defaults to CENTER_CROP if not specified.
+          description: The details of the image replacement request.
+          additionalProperties: false
+      additionalProperties: false
+  - id: search_documents
+    slug: GOOGLEDOCS_SEARCH_DOCUMENTS
+    version: '20261008_00'
+    action_class: read
+    capability: docs.read
+    description: Search for Google Documents using various filters including name, content, date ranges, and more.
+    input_schema:
+      type: object
+      properties:
+        query:
+          type: string
+          description: 'Search query to filter documents. Provide either: (1) Plain text to search in document content
+            (e.g., ''quarterly report''), which will search fullText, or (2) Drive API query syntax with operators
+            like ''name contains'', ''fullText contains'', combined with ''and'', ''or'', ''not''. Leave empty to
+            get all documents.'
+        order_by:
+          type: string
+          description: 'Order results by field. Common options: ''modifiedTime desc'', ''modifiedTime asc'', ''name'',
+            ''createdTime desc'''
+        page_token:
+          type: string
+          description: Token for continuing a previous search request on the next page. Use the next_page_token from
+            the previous response to retrieve additional results.
+        max_results:
+          type: integer
+          maximum: 100
+          minimum: 1
+          description: Maximum number of documents to return per page (1-100). Defaults to 10. Use page_token for
+            pagination when more results are available.
+        starred_only:
+          type: boolean
+          description: Whether to return only starred documents. Defaults to False.
+        created_after:
+          type: string
+          description: Return documents created after this date. Use RFC 3339 format like '2024-01-01T00:00:00Z'.
+        modified_after:
+          type: string
+          description: Return documents modified after this date. Use RFC 3339 format like '2024-01-01T00:00:00Z'.
+        shared_with_me:
+          type: boolean
+          description: Whether to return only documents shared with the current user. Defaults to False.
+        include_trashed:
+          type: boolean
+          description: Whether to include documents in trash. Defaults to False.
+        response_detail:
+          enum:
+          - minimal
+          - full
+          type: string
+          description: Level of detail in the response. 'minimal' returns only essential fields (id, name, modifiedTime,
+            webViewLink) for efficient token usage. 'full' returns comprehensive metadata including permissions, owners,
+            timestamps, and other detailed information.
+        include_shared_drives:
+          type: boolean
+          description: Whether to include documents from shared drives you have access to. Defaults to True.
+      additionalProperties: false
+  - id: unmerge_table_cells
+    slug: GOOGLEDOCS_UNMERGE_TABLE_CELLS
+    version: '20261008_00'
+    action_class: write
+    capability: docs.write
+    description: Tool to unmerge previously merged cells in a table. Use this when you need to revert merged cells
+      in a Google Document table back to their individual cell states.
+    input_schema:
+      type: object
+      required:
+      - documentId
+      - tableRange
+      properties:
+        documentId:
+          type: string
+          description: The ID of the document to unmerge table cells in.
+        tableRange:
+          type: object
+          required:
+          - tableCellLocation
+          - rowSpan
+          - columnSpan
+          properties:
+            rowSpan:
+              type: integer
+              description: The row span of the table range.
+            columnSpan:
+              type: integer
+              description: The column span of the table range.
+            tableCellLocation:
+              type: object
+              required:
+              - tableStartLocation
+              - rowIndex
+              - columnIndex
+              properties:
+                rowIndex:
+                  type: integer
+                  description: The zero-based row index. For example, the second row in the table has a row index
+                    of 1.
+                columnIndex:
+                  type: integer
+                  description: The zero-based column index. For example, the second column in the table has a column
+                    index of 1.
+                tableStartLocation:
+                  type: object
+                  required:
+                  - index
+                  properties:
+                    index:
+                      type: integer
+                      description: The zero-based index, in UTF-16 code units.
+                    tabId:
+                      type: string
+                      description: The tab that the location is in. When omitted, the request is applied to the first
+                        tab.
+                    segmentId:
+                      type: string
+                      description: The ID of the header, footer or footnote the table is in. An empty segment ID signifies
+                        the document's body.
+                  description: The location where the table starts in the document. Required to identify which table
+                    contains the cells to unmerge.
+                  additionalProperties: false
+              description: The cell location where the table range starts.
+              additionalProperties: false
+          description: The table range specifying which cells of the table to unmerge.
+          additionalProperties: false
+      additionalProperties: false
+  - id: update_document_section_markdown
+    slug: GOOGLEDOCS_UPDATE_DOCUMENT_SECTION_MARKDOWN
+    version: '20261008_00'
+    action_class: write
+    capability: docs.write
+    description: Tool to insert or replace a section of a Google Docs document with Markdown content. Use when you
+      need to update only a section of a document by specifying start and optional end indices. Supports full Markdown
+      formatting.
+    input_schema:
+      type: object
+      required:
+      - document_id
+      - markdown_text
+      properties:
+        tab_id:
+          type: string
+          description: Optional tab ID to update with the rendered Markdown. When omitted, the first tab is updated.
+        end_index:
+          type: integer
+          minimum: 1
+          description: 'Optional one-based end index of the content to replace (exclusive); must be greater than or
+            equal to start_index. If end_index is not provided, the content is inserted at the start_index without
+            replacing existing content. Requires start_index to be provided - if start_index is omitted (append mode),
+            end_index is ignored. Important: Use the exact indices from GOOGLEDOCS_GET_DOCUMENT_BY_ID without modification.
+            The Google Docs API does not allow deleting the last newline character of a document segment (body, header,
+            footer, etc.), so ensure end_index does not include the final segment newline.'
+        document_id:
+          type: string
+          minLength: 10
+          description: 'The unique ID of the Google Docs document to update. This is the alphanumeric string found
+            in the document URL: https://docs.google.com/document/d/{DOCUMENT_ID}/edit. Valid IDs are typically 44
+            characters long and contain only letters, numbers, hyphens, and underscores (e.g., ''1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms'').
+            To get a document ID: create a new document using GOOGLEDOCS_CREATE_DOCUMENT, or extract it from an existing
+            document''s URL. Also accepts parameter aliases: ''id'', ''doc_id'', ''documentId'', or ''docId''.'
+        start_index:
+          type: integer
+          minimum: 1
+          description: One-based UTF-16 code unit index where to insert or start replacement. If not provided, content
+            will be appended to the end of the document. Use 1 to insert at the very beginning of the document. To
+            insert at a specific position, first use GOOGLEDOCS_GET_DOCUMENT_BY_ID to retrieve the document structure
+            and find the desired index from the body.content elements' start_index/end_index values. If the provided
+            index equals or exceeds the document segment's end index, it will be automatically adjusted to the last
+            valid position (end_index - 1) and a message will be included in the response.
+        markdown_text:
+          type: string
+          description: Markdown content to insert or replace in the document section. Large content is automatically
+            split into smaller batches to avoid API limits. Also accepts 'markdown', 'content', 'text', 'body', 'markdownText',
+            or 'markdown_content'.
+          minLength: 1
+      additionalProperties: false
+  - id: update_document_style
+    slug: GOOGLEDOCS_UPDATE_DOCUMENT_STYLE
+    version: '20261008_00'
+    action_class: write
+    capability: docs.write
+    description: Tool to update the overall document style, such as page size, margins, and default text direction.
+      Use when you need to modify the global style settings of a Google Document.
+    input_schema:
+      type: object
+      required:
+      - document_id
+      - document_style
+      properties:
+        fields:
+          type: string
+          description: 'A comma-separated list of fields to update (using camelCase API names like ''marginTop'',
+            ''pageSize''). Use ''*'' to automatically update only fields that have values set in document_style. For
+            example: "pageSize,marginTop,marginBottom". When ''*'' is specified, the action automatically computes
+            the field mask from the provided document_style fields.'
+        tab_id:
+          type: string
+          description: The ID of the tab to update the style for. If not provided, the first tab is used.
+        document_id:
+          type: string
+          description: The ID of the document to update.
+        document_style:
+          type: object
+          properties:
+            pageSize:
+              type: object
+              description: The size of a page in the document.
+              additionalProperties: true
+            marginTop:
+              type: object
+              description: The top margin of the page.
+              additionalProperties: true
+            background:
+              type: object
+              description: 'The background of the document. Documents cannot have a transparent background color.
+                Structure: {''color'': {''color'': {''rgbColor'': {''red'': float, ''green'': float, ''blue'': float}}}}.
+                RGB values should be between 0.0 and 1.0.'
+              additionalProperties: true
+            marginLeft:
+              type: object
+              description: The left margin of the page.
+              additionalProperties: true
+            marginRight:
+              type: object
+              description: The right margin of the page.
+              additionalProperties: true
+            marginBottom:
+              type: object
+              description: The bottom margin of the page.
+              additionalProperties: true
+            marginFooter:
+              type: object
+              description: The footer margin of the page (distance from bottom of page to footer content).
+              additionalProperties: true
+            marginHeader:
+              type: object
+              description: The header margin of the page (distance from top of page to header content).
+              additionalProperties: true
+            documentFormat:
+              type: object
+              properties:
+                documentMode:
+                  enum:
+                  - PAGES
+                  - PAGELESS
+                  type: string
+                  description: Document mode enum for Google Docs API.
+              description: Document-level format settings.
+              additionalProperties: false
+            defaultFooterId:
+              type: string
+              description: The ID of the default footer. If unset, the document inherits the default footer from the
+                parent document. This property is read-only.
+            defaultHeaderId:
+              type: string
+              description: The ID of the default header. If unset, the document inherits the default header from the
+                parent document. This property is read-only.
+            oddPageFooterId:
+              type: string
+              description: The ID of the footer for odd pages. If unset, the document inherits the odd page footer
+                from the parent document. This property is read-only.
+            oddPageHeaderId:
+              type: string
+              description: The ID of the header for odd pages. If unset, the document inherits the odd page header
+                from the parent document. This property is read-only.
+            pageNumberStart:
+              type: integer
+              description: The page number from which to start counting the number of pages.
+            evenPageFooterId:
+              type: string
+              description: The ID of the footer for even pages. If unset, the document inherits the even page footer
+                from the parent document. This property is read-only.
+            evenPageHeaderId:
+              type: string
+              description: The ID of the header for even pages. If unset, the document inherits the even page header
+                from the parent document. This property is read-only.
+            useEvenPageHeaderFooter:
+              type: boolean
+              description: Indicates whether to use the even page header / footer, used in conjunction with use_first_page_header_footer.
+            useFirstPageHeaderFooter:
+              type: boolean
+              description: Indicates whether to use the first page header / footer.
+          description: The DocumentStyle object with the new style settings.
+          additionalProperties: true
+      additionalProperties: false
+  - id: update_table_row_style
+    slug: GOOGLEDOCS_UPDATE_TABLE_ROW_STYLE
+    version: '20261008_00'
+    action_class: write
+    capability: docs.write
+    description: Tool to update the style of a table row in a Google Document. Use when you need to modify the appearance
+      of specific rows within a table, such as setting minimum row height or marking rows as headers.
+    input_schema:
+      type: object
+      required:
+      - documentId
+      - updateTableRowStyle
+      properties:
+        documentId:
+          type: string
+          description: The ID of the document to update.
+        updateTableRowStyle:
+          type: object
+          required:
+          - tableStartLocation
+          - tableRowStyle
+          - fields
+          properties:
+            fields:
+              type: string
+              description: The fields that should be updated. At least one field must be specified. The root tableRowStyle
+                is implied and should not be specified. A single "*" can be used as short-hand for listing every field.
+                For example to update the minimum row height, set fields to "minRowHeight".
+            rowIndices:
+              type: array
+              items:
+                type: integer
+              description: The list of zero-based row indices whose style should be updated. If no indices are specified,
+                all rows will be updated.
+            tableRowStyle:
+              type: object
+              properties:
+                minRowHeight:
+                  type: object
+                  properties:
+                    unit:
+                      enum:
+                      - PT
+                      - UNIT_UNSPECIFIED
+                      type: string
+                      description: The units for magnitude.
+                    magnitude:
+                      type: number
+                      description: The magnitude.
+                  description: The minimum height of the row. The row will be rendered in the Docs editor at a height
+                    equal to or greater than this value in order to show all the content in the row's cells.
+                  additionalProperties: false
+                preventOverflow:
+                  type: boolean
+                  description: Whether the row cannot overflow across page or column boundaries.
+              description: The styles to be set on the rows.
+              additionalProperties: false
+            tableStartLocation:
+              type: object
+              properties:
+                index:
+                  type: integer
+                  description: The zero-based index, in UTF-16 code units.
+                tabId:
+                  type: string
+                  description: The tab that the location is in. When omitted, the request is applied to the first
+                    tab.
+                segmentId:
+                  type: string
+                  description: The ID of the header, footer or footnote the location is in. An empty segment ID signifies
+                    the document's body.
+              description: The location where the table starts in the document.
+              additionalProperties: false
+          description: The request body for updating the table row style.
+          additionalProperties: false
+      additionalProperties: false
+  - id: update_tab_properties
+    slug: GOOGLEDOCS_UPDATE_TAB_PROPERTIES
+    version: '20261008_00'
+    action_class: write
+    capability: docs.write
+    description: Updates properties of a document tab such as title, parent tab, index, and icon emoji. Use this action
+      when you need to rename a tab, change its emoji icon, move it within the tab hierarchy, or reorganize tab structure.
+    input_schema:
+      type: object
+      required:
+      - document_id
+      - tab_id
+      - tab_properties
+      properties:
+        fields:
+          type: string
+          description: 'A comma-separated list of fields to update (using camelCase API names like ''title'', ''parentTabId'',
+            ''index'', ''iconEmoji''). Use ''*'' to automatically update only fields that have values set in tab_properties.
+            For example: ''title,iconEmoji''. When ''*'' is specified, the action automatically computes the field
+            mask from the provided tab_properties fields.'
+        tab_id:
+          type: string
+          description: The ID of the tab to update. Get valid tab IDs from GOOGLEDOCS_GET_DOCUMENT_BY_ID at tabs[].tabProperties.tabId.
+        document_id:
+          type: string
+          description: The ID of the document containing the tab to update.
+        tab_properties:
+          type: object
+          properties:
+            index:
+              type: integer
+              description: The zero-based index of the tab within the parent.
+            title:
+              type: string
+              description: The user-visible name of the tab.
+            iconEmoji:
+              type: string
+              description: The emoji icon displayed with the tab. A valid emoji icon is represented by a non-empty
+                Unicode string. An invalid emoji results in a 400 bad request error. An unset or empty value displays
+                the default tab icon.
+            parentTabId:
+              type: string
+              description: The ID of the parent tab. Empty when the current tab is a root-level tab, which means it
+                doesn't have any parents.
+          description: The tab properties to update. Only the fields specified in the 'fields' parameter will be updated.
+          additionalProperties: false
+      additionalProperties: false
+
+defaults: {read: permit, write: require_approval, delete: deny, money: deny}

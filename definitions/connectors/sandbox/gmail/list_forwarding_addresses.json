@@ -1,0 +1,9 @@
+{
+  "display_url": "sample",
+  "forwardingAddresses": [
+    {
+      "forwardingEmail": "sample",
+      "verificationStatus": "sample"
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "input_parameters": {
+    "properties": {
+      "created_after": {
+        "type": "string"
+      },
+      "include_shared_drives": {
+        "type": "boolean"
+      },
+      "include_trashed": {
+        "type": "boolean"
+      },
+      "max_results": {
+        "maximum": 100,
+        "minimum": 1,
+        "type": "integer"
+      },
+      "modified_after": {
+        "type": "string"
+      },
+      "order_by": {
+        "type": "string"
+      },
+      "page_token": {
+        "type": "string"
+      },
+      "query": {
+        "type": "string"
+      },
+      "response_detail": {
+        "enum": [
+          "minimal",
+          "full"
+        ],
+        "type": "string"
+      },
+      "shared_with_me": {
+        "type": "boolean"
+      },
+      "starred_only": {
+        "type": "boolean"
+      }
+    },
+    "type": "object"
+  },
+  "slug": "GOOGLEDOCS_SEARCH_DOCUMENTS",
+  "version": "20261008_00"
+}

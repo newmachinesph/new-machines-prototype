@@ -1,0 +1,17 @@
+{
+  "smtpMsa": {
+    "host": "sample",
+    "port": 1,
+    "password": "sample",
+    "username": "sample",
+    "securityMode": "securityModeUnspecified"
+  },
+  "isDefault": true,
+  "isPrimary": true,
+  "signature": "sample",
+  "displayName": "sample",
+  "sendAsEmail": "sample",
+  "treatAsAlias": true,
+  "replyToAddress": "sample",
+  "verificationStatus": "verificationStatusUnspecified"
+}

@@ -1,0 +1,58 @@
+{
+  "input_parameters": {
+    "properties": {
+      "dimension": {
+        "enum": [
+          "ROWS",
+          "COLUMNS"
+        ],
+        "type": "string"
+      },
+      "end_index": {
+        "exclusiveMinimum": 0,
+        "type": "integer"
+      },
+      "hidden_by_user": {
+        "type": "boolean"
+      },
+      "include_spreadsheet_in_response": {
+        "type": "boolean"
+      },
+      "pixel_size": {
+        "exclusiveMinimum": 0,
+        "type": "integer"
+      },
+      "response_include_grid_data": {
+        "type": "boolean"
+      },
+      "response_ranges": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "sheet_id": {
+        "type": "integer"
+      },
+      "sheet_name": {
+        "type": "string"
+      },
+      "spreadsheet_id": {
+        "type": "string"
+      },
+      "start_index": {
+        "minimum": 0,
+        "type": "integer"
+      }
+    },
+    "required": [
+      "spreadsheet_id",
+      "dimension",
+      "start_index",
+      "end_index"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLESHEETS_UPDATE_DIMENSION_PROPERTIES",
+  "version": "20261001_00"
+}

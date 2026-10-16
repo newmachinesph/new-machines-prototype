@@ -1,0 +1,30 @@
+{
+  "input_parameters": {
+    "properties": {
+      "customer": {
+        "type": "string"
+      },
+      "customer_account": {
+        "type": "string"
+      },
+      "ending_before": {
+        "type": "string"
+      },
+      "limit": {
+        "type": "integer"
+      },
+      "starting_after": {
+        "type": "string"
+      },
+      "status": {
+        "type": "string"
+      },
+      "test_clock": {
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "slug": "STRIPE_LIST_QUOTES",
+  "version": "20261014_00"
+}

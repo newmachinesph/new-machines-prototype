@@ -1,0 +1,18 @@
+{
+  "input_parameters": {
+    "properties": {
+      "ending_before": {
+        "type": "string"
+      },
+      "limit": {
+        "type": "integer"
+      },
+      "starting_after": {
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "slug": "STRIPE_LIST_INVOICE_RENDERING_TEMPLATES",
+  "version": "20261014_00"
+}

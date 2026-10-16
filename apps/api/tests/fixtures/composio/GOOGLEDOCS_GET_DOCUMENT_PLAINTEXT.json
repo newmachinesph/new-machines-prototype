@@ -1,0 +1,43 @@
+{
+  "input_parameters": {
+    "properties": {
+      "document_id": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "include_footers": {
+        "type": "boolean"
+      },
+      "include_footnotes": {
+        "type": "boolean"
+      },
+      "include_headers": {
+        "type": "boolean"
+      },
+      "include_tables": {
+        "type": "boolean"
+      },
+      "include_tabs_content": {
+        "type": "boolean"
+      },
+      "tab_ids": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "table_cell_delimiter": {
+        "type": "string"
+      },
+      "table_row_delimiter": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "document_id"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLEDOCS_GET_DOCUMENT_PLAINTEXT",
+  "version": "20261008_00"
+}

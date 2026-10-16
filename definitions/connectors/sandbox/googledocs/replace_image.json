@@ -1,0 +1,43 @@
+{
+  "replies": [
+    {
+      "createFooter": {
+        "footerId": "sample"
+      },
+      "createHeader": {
+        "headerId": "sample"
+      },
+      "addDocumentTab": {
+        "tabProperties": {
+          "index": null,
+          "tabId": null,
+          "title": null,
+          "iconEmoji": null,
+          "parentTabId": null,
+          "nestingLevel": null
+        }
+      },
+      "createFootnote": {
+        "footnoteId": "sample"
+      },
+      "replaceAllText": {
+        "occurrencesChanged": 1
+      },
+      "createNamedRange": {
+        "namedRangeId": "sample"
+      },
+      "insertInlineImage": {
+        "objectId": "sample"
+      },
+      "insertInlineSheetsChart": {
+        "objectId": "sample"
+      }
+    }
+  ],
+  "display_url": "sample",
+  "document_id": "sample",
+  "write_control": {
+    "targetRevisionId": "sample",
+    "requiredRevisionId": "sample"
+  }
+}

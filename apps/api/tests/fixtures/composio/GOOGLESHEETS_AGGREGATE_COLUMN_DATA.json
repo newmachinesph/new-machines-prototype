@@ -1,0 +1,68 @@
+{
+  "input_parameters": {
+    "properties": {
+      "additional_filters": {
+        "items": {
+          "properties": {
+            "column": {
+              "type": "string"
+            },
+            "value": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "column",
+            "value"
+          ],
+          "type": "object"
+        },
+        "type": "array"
+      },
+      "case_sensitive": {
+        "type": "boolean"
+      },
+      "has_header_row": {
+        "type": "boolean"
+      },
+      "operation": {
+        "enum": [
+          "sum",
+          "average",
+          "count",
+          "min",
+          "max",
+          "percentage"
+        ],
+        "type": "string"
+      },
+      "percentage_total": {
+        "type": "number"
+      },
+      "search_column": {
+        "type": "string"
+      },
+      "search_value": {
+        "type": "string"
+      },
+      "sheet_name": {
+        "type": "string"
+      },
+      "spreadsheet_id": {
+        "type": "string"
+      },
+      "target_column": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "spreadsheet_id",
+      "sheet_name",
+      "target_column",
+      "operation"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLESHEETS_AGGREGATE_COLUMN_DATA",
+  "version": "20261001_00"
+}

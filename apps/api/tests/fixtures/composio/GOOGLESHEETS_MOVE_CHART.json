@@ -1,0 +1,51 @@
+{
+  "input_parameters": {
+    "properties": {
+      "anchor_column_index": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "anchor_row_index": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "anchor_sheet_id": {
+        "type": "integer"
+      },
+      "chart_id": {
+        "exclusiveMinimum": 0,
+        "type": "integer"
+      },
+      "height_pixels": {
+        "exclusiveMinimum": 0,
+        "type": "integer"
+      },
+      "new_sheet": {
+        "type": "boolean"
+      },
+      "offset_x_pixels": {
+        "type": "integer"
+      },
+      "offset_y_pixels": {
+        "type": "integer"
+      },
+      "spreadsheet_id": {
+        "type": "string"
+      },
+      "target_sheet_id": {
+        "type": "integer"
+      },
+      "width_pixels": {
+        "exclusiveMinimum": 0,
+        "type": "integer"
+      }
+    },
+    "required": [
+      "spreadsheet_id",
+      "chart_id"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLESHEETS_MOVE_CHART",
+  "version": "20261001_00"
+}

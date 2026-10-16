@@ -1,0 +1,18 @@
+{
+  "input_parameters": {
+    "properties": {
+      "fields": {
+        "type": "string"
+      },
+      "order_id": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "order_id"
+    ],
+    "type": "object"
+  },
+  "slug": "SHOPIFY_GET_ORDER",
+  "version": "20261014_00"
+}

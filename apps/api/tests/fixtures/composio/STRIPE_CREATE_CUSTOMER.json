@@ -1,0 +1,27 @@
+{
+  "input_parameters": {
+    "properties": {
+      "address": {
+        "additionalProperties": {
+          "type": "string"
+        },
+        "type": "object"
+      },
+      "description": {
+        "type": "string"
+      },
+      "email": {
+        "type": "string"
+      },
+      "name": {
+        "type": "string"
+      },
+      "phone": {
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "slug": "STRIPE_CREATE_CUSTOMER",
+  "version": "20261014_00"
+}

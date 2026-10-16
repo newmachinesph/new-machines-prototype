@@ -1,0 +1,30 @@
+{
+  "input_parameters": {
+    "properties": {
+      "document_id": {
+        "type": "string"
+      },
+      "tab_properties": {
+        "additionalProperties": false,
+        "properties": {
+          "index": {
+            "type": "integer"
+          },
+          "parentTabId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      }
+    },
+    "required": [
+      "document_id"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLEDOCS_CREATE_TAB",
+  "version": "20261008_00"
+}

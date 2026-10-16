@@ -1,0 +1,90 @@
+{
+  "input_parameters": {
+    "properties": {
+      "attachment": {
+        "anyOf": [
+          {
+            "properties": {
+              "mimetype": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "s3key": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "mimetype",
+              "s3key"
+            ],
+            "type": "object"
+          },
+          {
+            "items": {
+              "properties": {
+                "mimetype": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "s3key": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name",
+                "mimetype",
+                "s3key"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          }
+        ]
+      },
+      "bcc": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "cc": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "extra_recipients": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "is_html": {
+        "type": "boolean"
+      },
+      "message_body": {
+        "type": "string"
+      },
+      "recipient_email": {
+        "type": "string"
+      },
+      "thread_id": {
+        "type": "string"
+      },
+      "user_id": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "thread_id"
+    ],
+    "type": "object"
+  },
+  "slug": "GMAIL_REPLY_TO_THREAD",
+  "version": "20261015_00"
+}

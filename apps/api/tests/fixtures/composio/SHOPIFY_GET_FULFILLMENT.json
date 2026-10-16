@@ -1,0 +1,16 @@
+{
+  "input_parameters": {
+    "properties": {
+      "fulfillment_order_id": {
+        "minLength": 1,
+        "type": "string"
+      }
+    },
+    "required": [
+      "fulfillment_order_id"
+    ],
+    "type": "object"
+  },
+  "slug": "SHOPIFY_GET_FULFILLMENT",
+  "version": "20261014_00"
+}

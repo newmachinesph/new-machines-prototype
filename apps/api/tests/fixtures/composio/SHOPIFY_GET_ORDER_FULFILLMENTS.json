@@ -1,0 +1,36 @@
+{
+  "input_parameters": {
+    "properties": {
+      "created_at_max": {
+        "type": "string"
+      },
+      "created_at_min": {
+        "type": "string"
+      },
+      "fields": {
+        "type": "string"
+      },
+      "limit": {
+        "type": "integer"
+      },
+      "order_id": {
+        "type": "string"
+      },
+      "since_id": {
+        "type": "integer"
+      },
+      "updated_at_max": {
+        "type": "string"
+      },
+      "updated_at_min": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "order_id"
+    ],
+    "type": "object"
+  },
+  "slug": "SHOPIFY_GET_ORDER_FULFILLMENTS",
+  "version": "20261014_00"
+}

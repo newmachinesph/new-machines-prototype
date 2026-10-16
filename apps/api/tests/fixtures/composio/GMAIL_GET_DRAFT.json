@@ -1,0 +1,21 @@
+{
+  "input_parameters": {
+    "properties": {
+      "draft_id": {
+        "type": "string"
+      },
+      "format": {
+        "type": "string"
+      },
+      "user_id": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "draft_id"
+    ],
+    "type": "object"
+  },
+  "slug": "GMAIL_GET_DRAFT",
+  "version": "20261015_00"
+}

@@ -1,0 +1,156 @@
+{
+  "url": "sample",
+  "data": [
+    {
+      "id": "sample",
+      "plan": {},
+      "items": {
+        "url": "sample",
+        "data": [],
+        "object": "sample",
+        "hasMore": true,
+        "totalCount": 1
+      },
+      "object": "sample",
+      "status": "sample",
+      "created": 1,
+      "endedAt": 1,
+      "cancelAt": 1,
+      "currency": "sample",
+      "customer": "sample",
+      "livemode": true,
+      "metadata": {},
+      "quantity": 1,
+      "schedule": "sample",
+      "trialEnd": 1,
+      "discounts": [
+        "sample"
+      ],
+      "startDate": 1,
+      "testClock": "sample",
+      "canceledAt": 1,
+      "onBehalfOf": "sample",
+      "trialStart": 1,
+      "application": "sample",
+      "billingMode": {
+        "type": "sample",
+        "flexible": {
+          "prorationDiscounts": null
+        },
+        "updatedAt": 1
+      },
+      "description": "sample",
+      "automaticTax": {
+        "enabled": true,
+        "liability": {
+          "type": null,
+          "account": null
+        },
+        "disabledReason": "sample"
+      },
+      "daysUntilDue": 1,
+      "transferData": {
+        "destination": "sample",
+        "amountPercent": 1
+      },
+      "defaultSource": "sample",
+      "latestInvoice": "sample",
+      "pendingUpdate": {
+        "trialEnd": 1,
+        "expiresAt": 1,
+        "trialFromPlan": true,
+        "subscriptionItems": [
+          {}
+        ],
+        "billingCycleAnchor": 1
+      },
+      "trialSettings": {
+        "endBehavior": {
+          "missingPaymentMethod": null
+        }
+      },
+      "customerAccount": "sample",
+      "defaultTaxRates": [
+        {
+          "id": "sample",
+          "state": "sample",
+          "active": true,
+          "object": "sample",
+          "country": "sample",
+          "created": 1,
+          "taxType": "sample",
+          "livemode": true,
+          "metadata": {},
+          "rateType": "sample",
+          "inclusive": true,
+          "flatAmount": null,
+          "percentage": 1,
+          "description": "sample",
+          "displayName": "sample",
+          "jurisdiction": "sample",
+          "jurisdictionLevel": "sample",
+          "effectivePercentage": 1
+        }
+      ],
+      "invoiceSettings": {
+        "issuer": {
+          "type": null,
+          "account": null
+        },
+        "accountTaxIds": [
+          "sample"
+        ]
+      },
+      "pauseCollection": {
+        "behavior": "sample",
+        "resumesAt": 1
+      },
+      "paymentSettings": {
+        "paymentMethodTypes": [
+          "sample"
+        ],
+        "paymentMethodOptions": {
+          "card": null,
+          "payto": null,
+          "konbini": null,
+          "acssDebit": null,
+          "sepaDebit": null,
+          "bancontact": null,
+          "usBankAccount": null,
+          "customerBalance": null
+        },
+        "saveDefaultPaymentMethod": "sample"
+      },
+      "collectionMethod": "sample",
+      "billingThresholds": {
+        "amountGte": 1,
+        "resetBillingCycleAnchor": true
+      },
+      "cancelAtPeriodEnd": true,
+      "billingCycleAnchor": 1,
+      "pendingSetupIntent": "sample",
+      "presentmentDetails": {},
+      "cancellationDetails": {
+        "reason": "sample",
+        "comment": "sample",
+        "feedback": "sample"
+      },
+      "defaultPaymentMethod": "sample",
+      "applicationFeePercent": 1,
+      "billingCycleAnchorConfig": {
+        "hour": 1,
+        "month": 1,
+        "minute": 1,
+        "second": 1,
+        "dayOfMonth": 1
+      },
+      "pendingInvoiceItemInterval": {
+        "interval": "sample",
+        "intervalCount": 1
+      },
+      "nextPendingInvoiceItemInvoice": 1
+    }
+  ],
+  "object": "sample",
+  "hasMore": true
+}

@@ -1,0 +1,21 @@
+{
+  "input_parameters": {
+    "properties": {
+      "expand": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "invoice": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "invoice"
+    ],
+    "type": "object"
+  },
+  "slug": "STRIPE_GET_INVOICES_INVOICE",
+  "version": "20261014_00"
+}

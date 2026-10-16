@@ -1,0 +1,58 @@
+{
+  "input_parameters": {
+    "properties": {
+      "active": {
+        "type": "boolean"
+      },
+      "created": {
+        "additionalProperties": {
+          "type": "integer"
+        },
+        "type": "object"
+      },
+      "currency": {
+        "type": "string"
+      },
+      "ending_before": {
+        "type": "string"
+      },
+      "expand": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "limit": {
+        "type": "integer"
+      },
+      "lookup_keys": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "product": {
+        "type": "string"
+      },
+      "recurring": {
+        "additionalProperties": {
+          "type": "string"
+        },
+        "type": "object"
+      },
+      "starting_after": {
+        "type": "string"
+      },
+      "type": {
+        "enum": [
+          "one_time",
+          "recurring"
+        ],
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "slug": "STRIPE_LIST_PRICES",
+  "version": "20261014_00"
+}

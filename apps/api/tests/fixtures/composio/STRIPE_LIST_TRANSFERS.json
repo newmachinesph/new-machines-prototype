@@ -1,0 +1,30 @@
+{
+  "input_parameters": {
+    "properties": {
+      "created": {
+        "additionalProperties": {
+          "type": "integer"
+        },
+        "type": "object"
+      },
+      "destination": {
+        "type": "string"
+      },
+      "ending_before": {
+        "type": "string"
+      },
+      "limit": {
+        "type": "integer"
+      },
+      "starting_after": {
+        "type": "string"
+      },
+      "transfer_group": {
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "slug": "STRIPE_LIST_TRANSFERS",
+  "version": "20261014_00"
+}

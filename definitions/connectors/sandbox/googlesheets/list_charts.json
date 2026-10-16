@@ -1,0 +1,18 @@
+{
+  "charts": [
+    {
+      "spec": {},
+      "title": "sample",
+      "chartId": 1,
+      "position": {},
+      "sheet_id": 1,
+      "subtitle": "sample",
+      "chart_type": "sample",
+      "sheet_title": "sample"
+    }
+  ],
+  "display_url": "https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit",
+  "total_count": 1,
+  "spreadsheetId": "sample",
+  "spreadsheet_title": "sample"
+}

@@ -1,0 +1,15 @@
+{
+  "input_parameters": {
+    "properties": {
+      "inventory_item_id": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "inventory_item_id"
+    ],
+    "type": "object"
+  },
+  "slug": "SHOPIFY_GET_INVENTORY_ITEM",
+  "version": "20261014_00"
+}

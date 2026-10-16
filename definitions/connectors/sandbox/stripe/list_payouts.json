@@ -1,0 +1,39 @@
+{
+  "url": "sample",
+  "data": [
+    {
+      "id": "sample",
+      "type": "sample",
+      "amount": 1,
+      "method": "sample",
+      "object": "sample",
+      "status": "sample",
+      "created": 1,
+      "currency": "sample",
+      "livemode": true,
+      "metadata": {},
+      "trace_id": {
+        "value": "sample",
+        "status": "sample"
+      },
+      "automatic": true,
+      "description": "sample",
+      "destination": "sample",
+      "reversed_by": "sample",
+      "source_type": "sample",
+      "arrival_date": 1,
+      "failure_code": "sample",
+      "payout_method": "sample",
+      "application_fee": "sample",
+      "failure_message": "sample",
+      "original_payout": "sample",
+      "balance_transaction": "sample",
+      "statement_descriptor": "sample",
+      "reconciliation_status": "sample",
+      "application_fee_amount": 1,
+      "failure_balance_transaction": "sample"
+    }
+  ],
+  "object": "sample",
+  "has_more": true
+}

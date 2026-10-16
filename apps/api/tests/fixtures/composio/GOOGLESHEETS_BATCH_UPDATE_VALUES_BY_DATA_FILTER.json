@@ -1,0 +1,167 @@
+{
+  "input_parameters": {
+    "properties": {
+      "data": {
+        "items": {
+          "properties": {
+            "dataFilter": {
+              "additionalProperties": false,
+              "properties": {
+                "a1Range": {
+                  "type": "string"
+                },
+                "developerMetadataLookup": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "locationMatchingStrategy": {
+                      "enum": [
+                        "EXACT",
+                        "INTERSECTING"
+                      ],
+                      "type": "string"
+                    },
+                    "locationType": {
+                      "enum": [
+                        "ROW",
+                        "COLUMN",
+                        "SHEET"
+                      ],
+                      "type": "string"
+                    },
+                    "metadataId": {
+                      "type": "integer"
+                    },
+                    "metadataKey": {
+                      "type": "string"
+                    },
+                    "metadataLocation": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "dimensionRange": {
+                          "additionalProperties": true,
+                          "type": "object"
+                        },
+                        "locationType": {
+                          "type": "string"
+                        },
+                        "sheetId": {
+                          "type": "integer"
+                        },
+                        "spreadsheet": {
+                          "type": "boolean"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "metadataValue": {
+                      "type": "string"
+                    },
+                    "visibility": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "gridRange": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "endColumnIndex": {
+                      "type": "integer"
+                    },
+                    "endRowIndex": {
+                      "type": "integer"
+                    },
+                    "sheetId": {
+                      "type": "integer"
+                    },
+                    "startColumnIndex": {
+                      "type": "integer"
+                    },
+                    "startRowIndex": {
+                      "type": "integer"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "majorDimension": {
+              "enum": [
+                "ROWS",
+                "COLUMNS",
+                "DIMENSION_UNSPECIFIED"
+              ],
+              "type": "string"
+            },
+            "values": {
+              "items": {
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "boolean"
+                    }
+                  ]
+                },
+                "type": "array"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "dataFilter",
+            "values"
+          ],
+          "type": "object"
+        },
+        "type": "array"
+      },
+      "includeValuesInResponse": {
+        "type": "boolean"
+      },
+      "responseDateTimeRenderOption": {
+        "enum": [
+          "SERIAL_NUMBER",
+          "FORMATTED_STRING"
+        ],
+        "type": "string"
+      },
+      "responseValueRenderOption": {
+        "enum": [
+          "FORMATTED_VALUE",
+          "UNFORMATTED_VALUE",
+          "FORMULA"
+        ],
+        "type": "string"
+      },
+      "spreadsheetId": {
+        "type": "string"
+      },
+      "valueInputOption": {
+        "enum": [
+          "INPUT_VALUE_OPTION_UNSPECIFIED",
+          "RAW",
+          "USER_ENTERED"
+        ],
+        "type": "string"
+      }
+    },
+    "required": [
+      "spreadsheetId",
+      "data",
+      "valueInputOption"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLESHEETS_BATCH_UPDATE_VALUES_BY_DATA_FILTER",
+  "version": "20261001_00"
+}

@@ -1,0 +1,140 @@
+{
+  "url": "sample",
+  "data": [
+    {
+      "id": "sample",
+      "eps": {
+        "bank": "sample"
+      },
+      "fpx": {
+        "bank": "sample"
+      },
+      "pix": {},
+      "card": {
+        "brand": "sample",
+        "last4": "sample",
+        "checks": {
+          "cvc_check": null,
+          "address_line1_check": null,
+          "address_postal_code_check": null
+        },
+        "wallet": {},
+        "country": "sample",
+        "funding": "sample",
+        "exp_year": 1,
+        "networks": {
+          "available": null,
+          "preferred": null
+        },
+        "exp_month": 1,
+        "fingerprint": "sample",
+        "display_brand": "sample",
+        "generated_from": {},
+        "three_d_secure_usage": {
+          "supported": null
+        }
+      },
+      "link": {
+        "email": "sample"
+      },
+      "type": "sample",
+      "ideal": {
+        "bic": "sample",
+        "bank": "sample"
+      },
+      "affirm": {},
+      "alipay": {},
+      "boleto": {
+        "tax_id": "sample"
+      },
+      "klarna": {
+        "dob": {
+          "day": null,
+          "year": null,
+          "month": null
+        }
+      },
+      "object": "sample",
+      "paynow": {},
+      "paypal": {
+        "payer_id": "sample",
+        "payer_email": "sample"
+      },
+      "sofort": {
+        "country": "sample"
+      },
+      "cashapp": {
+        "cashtag": "sample",
+        "buyer_id": "sample"
+      },
+      "created": 1,
+      "giropay": {},
+      "grabpay": {},
+      "customer": "sample",
+      "livemode": true,
+      "metadata": {},
+      "promptpay": {},
+      "acss_debit": {
+        "last4": "sample",
+        "bank_name": "sample",
+        "fingerprint": "sample",
+        "transit_number": "sample",
+        "institution_number": "sample"
+      },
+      "bacs_debit": {
+        "last4": "sample",
+        "sort_code": "sample",
+        "fingerprint": "sample"
+      },
+      "bancontact": {},
+      "sepa_debit": {
+        "last4": "sample",
+        "country": "sample",
+        "bank_code": "sample",
+        "branch_code": "sample",
+        "fingerprint": "sample",
+        "generated_from": {}
+      },
+      "wechat_pay": {},
+      "au_becs_debit": {
+        "last4": "sample",
+        "bsb_number": "sample",
+        "fingerprint": "sample"
+      },
+      "radar_options": {
+        "session": "sample"
+      },
+      "allow_redisplay": "sample",
+      "billing_details": {
+        "name": "sample",
+        "email": "sample",
+        "phone": "sample",
+        "address": {
+          "city": null,
+          "line1": null,
+          "line2": null,
+          "state": null,
+          "country": null,
+          "postal_code": null
+        }
+      },
+      "us_bank_account": {
+        "last4": "sample",
+        "networks": {
+          "preferred": null,
+          "supported": null
+        },
+        "bank_name": "sample",
+        "fingerprint": "sample",
+        "account_type": "sample",
+        "routing_number": "sample",
+        "status_details": {},
+        "account_holder_type": "sample"
+      },
+      "customer_balance": {},
+      "afterpay_clearpay": {}
+    }
+  ],
+  "object": "sample",
+  "has_more": true
+}

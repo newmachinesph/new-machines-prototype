@@ -1,0 +1,30 @@
+{
+  "url": "sample",
+  "data": [
+    {
+      "id": "sample",
+      "state": "sample",
+      "active": true,
+      "object": "sample",
+      "country": "sample",
+      "created": 1,
+      "livemode": true,
+      "metadata": {},
+      "tax_type": "sample",
+      "inclusive": true,
+      "rate_type": "sample",
+      "percentage": 1,
+      "description": "sample",
+      "flat_amount": {
+        "amount": 1,
+        "currency": "sample"
+      },
+      "display_name": "sample",
+      "jurisdiction": "sample",
+      "jurisdiction_level": "sample",
+      "effective_percentage": 1
+    }
+  ],
+  "object": "sample",
+  "has_more": true
+}

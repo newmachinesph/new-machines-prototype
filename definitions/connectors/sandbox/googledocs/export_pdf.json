@@ -1,0 +1,11 @@
+{
+  "file_id": "sample",
+  "mime_type": "sample",
+  "size_bytes": 1,
+  "display_url": "sample",
+  "download_url": {
+    "name": "sample",
+    "s3url": "sample",
+    "mimetype": "sample"
+  }
+}

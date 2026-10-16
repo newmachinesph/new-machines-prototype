@@ -1,0 +1,93 @@
+{
+  "product": {
+    "id": "sample",
+    "tags": "sample",
+    "image": {
+      "id": "sample",
+      "alt": "sample",
+      "src": "sample",
+      "width": 1,
+      "height": 1,
+      "position": 1,
+      "created_at": "sample",
+      "product_id": 1,
+      "updated_at": "sample",
+      "variant_ids": [
+        1
+      ],
+      "admin_graphql_api_id": "sample"
+    },
+    "title": "sample",
+    "handle": "sample",
+    "images": [
+      {
+        "id": "sample",
+        "alt": "sample",
+        "src": "sample",
+        "width": 1,
+        "height": 1,
+        "position": 1,
+        "created_at": "sample",
+        "product_id": 1,
+        "updated_at": "sample",
+        "variant_ids": [
+          1
+        ],
+        "admin_graphql_api_id": "sample"
+      }
+    ],
+    "status": "sample",
+    "vendor": "sample",
+    "options": [
+      {
+        "id": "sample",
+        "name": "sample",
+        "values": [
+          "sample"
+        ],
+        "position": 1,
+        "product_id": "sample"
+      }
+    ],
+    "variants": [
+      {
+        "id": "sample",
+        "sku": "sample",
+        "grams": 1,
+        "price": "sample",
+        "title": "sample",
+        "weight": 1,
+        "barcode": "sample",
+        "option1": "sample",
+        "option2": "sample",
+        "option3": "sample",
+        "taxable": true,
+        "image_id": 1,
+        "position": 1,
+        "tax_code": "sample",
+        "created_at": "sample",
+        "product_id": "sample",
+        "updated_at": "sample",
+        "weight_unit": "sample",
+        "compare_at_price": "sample",
+        "inventory_policy": "sample",
+        "inventory_item_id": 1,
+        "requires_shipping": true,
+        "inventory_quantity": 1,
+        "presentment_prices": [],
+        "fulfillment_service": "sample",
+        "admin_graphql_api_id": "sample",
+        "inventory_management": "sample",
+        "old_inventory_quantity": 1
+      }
+    ],
+    "body_html": "sample",
+    "created_at": "sample",
+    "updated_at": "sample",
+    "product_type": "sample",
+    "published_at": "sample",
+    "published_scope": "sample",
+    "template_suffix": "sample",
+    "admin_graphql_api_id": "sample"
+  }
+}

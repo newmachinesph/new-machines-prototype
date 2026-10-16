@@ -1,0 +1,37 @@
+{
+  "input_parameters": {
+    "properties": {
+      "columns": {
+        "minimum": 1,
+        "type": "integer"
+      },
+      "documentId": {
+        "type": "string"
+      },
+      "index": {
+        "type": "integer"
+      },
+      "insertAtEndOfSegment": {
+        "type": "boolean"
+      },
+      "rows": {
+        "minimum": 1,
+        "type": "integer"
+      },
+      "segmentId": {
+        "type": "string"
+      },
+      "tabId": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "documentId",
+      "rows",
+      "columns"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLEDOCS_INSERT_TABLE_ACTION",
+  "version": "20261008_00"
+}

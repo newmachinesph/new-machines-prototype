@@ -1,0 +1,25 @@
+{
+  "input_parameters": {
+    "properties": {
+      "charge": {
+        "type": "string"
+      },
+      "expand": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "refund": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "charge",
+      "refund"
+    ],
+    "type": "object"
+  },
+  "slug": "STRIPE_GET_CHARGES_CHARGE_REFUNDS_REFUND",
+  "version": "20261014_00"
+}

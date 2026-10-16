@@ -1,0 +1,152 @@
+{
+  "input_parameters": {
+    "properties": {
+      "includeSpreadsheetInResponse": {
+        "type": "boolean"
+      },
+      "range": {
+        "additionalProperties": false,
+        "properties": {
+          "end_column_index": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "end_row_index": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "sheet_id": {
+            "type": "integer"
+          },
+          "start_column_index": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "start_row_index": {
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "sheet_id"
+        ],
+        "type": "object"
+      },
+      "responseIncludeGridData": {
+        "type": "boolean"
+      },
+      "responseRanges": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "sortSpecs": {
+        "items": {
+          "properties": {
+            "backgroundColorStyle": {
+              "additionalProperties": false,
+              "properties": {
+                "rgbColor": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "alpha": {
+                      "maximum": 1,
+                      "minimum": 0,
+                      "type": "number"
+                    },
+                    "blue": {
+                      "maximum": 1,
+                      "minimum": 0,
+                      "type": "number"
+                    },
+                    "green": {
+                      "maximum": 1,
+                      "minimum": 0,
+                      "type": "number"
+                    },
+                    "red": {
+                      "maximum": 1,
+                      "minimum": 0,
+                      "type": "number"
+                    }
+                  },
+                  "type": "object"
+                },
+                "themeColor": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "dataSourceColumnReference": {
+              "additionalProperties": false,
+              "properties": {
+                "name": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "dimensionIndex": {
+              "minimum": 0,
+              "type": "integer"
+            },
+            "foregroundColorStyle": {
+              "additionalProperties": false,
+              "properties": {
+                "rgbColor": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "alpha": {
+                      "maximum": 1,
+                      "minimum": 0,
+                      "type": "number"
+                    },
+                    "blue": {
+                      "maximum": 1,
+                      "minimum": 0,
+                      "type": "number"
+                    },
+                    "green": {
+                      "maximum": 1,
+                      "minimum": 0,
+                      "type": "number"
+                    },
+                    "red": {
+                      "maximum": 1,
+                      "minimum": 0,
+                      "type": "number"
+                    }
+                  },
+                  "type": "object"
+                },
+                "themeColor": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "sortOrder": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "minItems": 1,
+        "type": "array"
+      },
+      "spreadsheet_id": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "spreadsheet_id",
+      "range",
+      "sortSpecs"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLESHEETS_SORT_RANGE",
+  "version": "20261001_00"
+}

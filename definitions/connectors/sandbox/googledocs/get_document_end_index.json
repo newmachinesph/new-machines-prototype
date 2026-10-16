@@ -1,0 +1,13 @@
+{
+  "tab_id": "sample",
+  "end_index": 1,
+  "segment_id": "sample",
+  "display_url": "sample",
+  "document_id": "sample",
+  "paragraph_ranges": [
+    {
+      "end_index": 1,
+      "start_index": 1
+    }
+  ]
+}

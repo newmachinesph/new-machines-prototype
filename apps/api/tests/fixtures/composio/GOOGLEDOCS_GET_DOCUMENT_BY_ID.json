@@ -1,0 +1,18 @@
+{
+  "input_parameters": {
+    "properties": {
+      "id": {
+        "type": "string"
+      },
+      "includeTabsContent": {
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "id"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLEDOCS_GET_DOCUMENT_BY_ID",
+  "version": "20261008_00"
+}

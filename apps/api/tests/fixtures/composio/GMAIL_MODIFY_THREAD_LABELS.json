@@ -1,0 +1,30 @@
+{
+  "input_parameters": {
+    "properties": {
+      "add_label_ids": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "remove_label_ids": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "thread_id": {
+        "type": "string"
+      },
+      "user_id": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "thread_id"
+    ],
+    "type": "object"
+  },
+  "slug": "GMAIL_MODIFY_THREAD_LABELS",
+  "version": "20261015_00"
+}

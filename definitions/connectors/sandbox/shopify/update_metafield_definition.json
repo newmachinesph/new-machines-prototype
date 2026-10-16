@@ -1,0 +1,41 @@
+{
+  "user_errors": [
+    {
+      "code": "sample",
+      "field": [
+        "sample"
+      ],
+      "message": "sample"
+    }
+  ],
+  "updatedDefinition": {
+    "id": "sample",
+    "key": "sample",
+    "name": "sample",
+    "type": {
+      "name": "sample",
+      "category": "sample"
+    },
+    "access": {
+      "admin": "sample",
+      "storefront": "sample",
+      "customer_account": "sample"
+    },
+    "namespace": "sample",
+    "owner_type": "sample",
+    "description": "sample",
+    "validations": [
+      {
+        "name": "sample",
+        "value": "sample"
+      }
+    ],
+    "capabilities": {
+      "unique_values": true,
+      "admin_filterable": true,
+      "smart_collection_condition": true
+    },
+    "pinned_position": 1,
+    "metafields_count": 1
+  }
+}

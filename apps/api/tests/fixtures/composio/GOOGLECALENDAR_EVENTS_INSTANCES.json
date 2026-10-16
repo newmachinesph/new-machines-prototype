@@ -1,0 +1,45 @@
+{
+  "input_parameters": {
+    "properties": {
+      "calendarId": {
+        "type": "string"
+      },
+      "eventId": {
+        "type": "string"
+      },
+      "maxAttendees": {
+        "type": "integer"
+      },
+      "maxResults": {
+        "maximum": 2500,
+        "minimum": 1,
+        "type": "integer"
+      },
+      "originalStart": {
+        "type": "string"
+      },
+      "pageToken": {
+        "type": "string"
+      },
+      "showDeleted": {
+        "type": "boolean"
+      },
+      "timeMax": {
+        "type": "string"
+      },
+      "timeMin": {
+        "type": "string"
+      },
+      "timeZone": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "calendarId",
+      "eventId"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLECALENDAR_EVENTS_INSTANCES",
+  "version": "20261010_00"
+}

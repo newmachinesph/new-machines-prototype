@@ -1,0 +1,19 @@
+{
+  "input_parameters": {
+    "properties": {
+      "message_id": {
+        "pattern": "^[0-9a-fA-F]+$",
+        "type": "string"
+      },
+      "user_id": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "message_id"
+    ],
+    "type": "object"
+  },
+  "slug": "GMAIL_UNTRASH_MESSAGE",
+  "version": "20261015_00"
+}

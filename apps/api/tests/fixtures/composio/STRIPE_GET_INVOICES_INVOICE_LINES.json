@@ -1,0 +1,24 @@
+{
+  "input_parameters": {
+    "properties": {
+      "ending_before": {
+        "type": "string"
+      },
+      "invoice": {
+        "type": "string"
+      },
+      "limit": {
+        "type": "integer"
+      },
+      "starting_after": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "invoice"
+    ],
+    "type": "object"
+  },
+  "slug": "STRIPE_GET_INVOICES_INVOICE_LINES",
+  "version": "20261014_00"
+}

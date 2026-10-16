@@ -1,0 +1,15 @@
+{
+  "id": "sample",
+  "snippet": "sample",
+  "messages": [
+    {
+      "id": "sample",
+      "labelIds": [
+        "sample"
+      ],
+      "threadId": "sample"
+    }
+  ],
+  "historyId": "sample",
+  "display_url": "sample"
+}

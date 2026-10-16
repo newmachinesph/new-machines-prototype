@@ -1,0 +1,43 @@
+{
+  "input_parameters": {
+    "properties": {
+      "calendarExpansionMax": {
+        "type": "integer"
+      },
+      "groupExpansionMax": {
+        "type": "integer"
+      },
+      "items": {
+        "items": {
+          "properties": {
+            "id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "type": "object"
+        },
+        "type": "array"
+      },
+      "timeMax": {
+        "type": "string"
+      },
+      "timeMin": {
+        "type": "string"
+      },
+      "timeZone": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "timeMin",
+      "timeMax",
+      "items"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLECALENDAR_FREE_BUSY_QUERY",
+  "version": "20261010_00"
+}

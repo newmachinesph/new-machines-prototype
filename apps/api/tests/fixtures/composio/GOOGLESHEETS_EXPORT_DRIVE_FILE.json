@@ -1,0 +1,28 @@
+{
+  "input_parameters": {
+    "properties": {
+      "file_id": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "mime_type": {
+        "enum": [
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          "application/vnd.oasis.opendocument.spreadsheet",
+          "application/pdf",
+          "application/zip",
+          "text/csv",
+          "text/tab-separated-values"
+        ],
+        "type": "string"
+      }
+    },
+    "required": [
+      "file_id",
+      "mime_type"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLESHEETS_EXPORT_DRIVE_FILE",
+  "version": "20261001_00"
+}

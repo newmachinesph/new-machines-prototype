@@ -1,0 +1,100 @@
+{
+  "input_parameters": {
+    "properties": {
+      "document_id": {
+        "type": "string"
+      },
+      "document_style": {
+        "additionalProperties": true,
+        "properties": {
+          "background": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "defaultFooterId": {
+            "type": "string"
+          },
+          "defaultHeaderId": {
+            "type": "string"
+          },
+          "documentFormat": {
+            "additionalProperties": false,
+            "properties": {
+              "documentMode": {
+                "enum": [
+                  "PAGES",
+                  "PAGELESS"
+                ],
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "evenPageFooterId": {
+            "type": "string"
+          },
+          "evenPageHeaderId": {
+            "type": "string"
+          },
+          "marginBottom": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "marginFooter": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "marginHeader": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "marginLeft": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "marginRight": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "marginTop": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "oddPageFooterId": {
+            "type": "string"
+          },
+          "oddPageHeaderId": {
+            "type": "string"
+          },
+          "pageNumberStart": {
+            "type": "integer"
+          },
+          "pageSize": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "useEvenPageHeaderFooter": {
+            "type": "boolean"
+          },
+          "useFirstPageHeaderFooter": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "fields": {
+        "type": "string"
+      },
+      "tab_id": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "document_id",
+      "document_style"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLEDOCS_UPDATE_DOCUMENT_STYLE",
+  "version": "20261008_00"
+}

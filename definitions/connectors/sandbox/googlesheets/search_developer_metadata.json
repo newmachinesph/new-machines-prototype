@@ -1,0 +1,26 @@
+{
+  "display_url": "sample",
+  "matchedDeveloperMetadata": [
+    {
+      "dataFilters": [
+        {
+          "a1Range": "sample",
+          "gridRange": {},
+          "developerMetadataLookup": null
+        }
+      ],
+      "developerMetadata": {
+        "location": {
+          "sheetId": null,
+          "spreadsheet": null,
+          "locationType": null,
+          "dimensionRange": null
+        },
+        "metadataId": 1,
+        "visibility": "sample",
+        "metadataKey": "sample",
+        "metadataValue": "sample"
+      }
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "input_parameters": {
+    "properties": {
+      "date_time_render_option": {
+        "enum": [
+          "SERIAL_NUMBER",
+          "FORMATTED_STRING"
+        ],
+        "type": "string"
+      },
+      "end_row": {
+        "type": "integer"
+      },
+      "major_dimension": {
+        "enum": [
+          "DIMENSION_UNSPECIFIED",
+          "ROWS",
+          "COLUMNS"
+        ],
+        "type": "string"
+      },
+      "range": {
+        "type": "string"
+      },
+      "spreadsheet_id": {
+        "type": "string"
+      },
+      "start_row": {
+        "type": "integer"
+      },
+      "value_render_option": {
+        "enum": [
+          "FORMATTED_VALUE",
+          "UNFORMATTED_VALUE",
+          "FORMULA"
+        ],
+        "type": "string"
+      }
+    },
+    "required": [
+      "spreadsheet_id",
+      "range"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLESHEETS_VALUES_GET",
+  "version": "20261001_00"
+}

@@ -1,0 +1,295 @@
+{
+  "sheets": [
+    {
+      "data": [
+        {
+          "rowData": [],
+          "startRow": 1,
+          "rowMetadata": [],
+          "startColumn": 1,
+          "columnMetadata": []
+        }
+      ],
+      "charts": [
+        {
+          "spec": {},
+          "border": {},
+          "chartId": 1,
+          "position": null
+        }
+      ],
+      "merges": [
+        {
+          "sheetId": 1,
+          "endRowIndex": 1,
+          "startRowIndex": 1,
+          "endColumnIndex": 1,
+          "startColumnIndex": 1
+        }
+      ],
+      "tables": [
+        {
+          "tableId": "sample",
+          "tableRange": null,
+          "columnCount": 1,
+          "dataSourceId": "sample"
+        }
+      ],
+      "slicers": [
+        {
+          "spec": {},
+          "position": null,
+          "slicerId": 1
+        }
+      ],
+      "rowGroups": [
+        {
+          "depth": 1,
+          "range": null,
+          "collapsed": true
+        }
+      ],
+      "properties": {
+        "index": 1,
+        "title": "sample",
+        "hidden": true,
+        "sheetId": 1,
+        "tabColor": {
+          "red": null,
+          "blue": null,
+          "alpha": null,
+          "green": null
+        },
+        "sheetType": "GRID",
+        "rightToLeft": true,
+        "tabColorStyle": {
+          "rgbColor": null,
+          "themeColor": null
+        },
+        "gridProperties": {
+          "rowCount": null,
+          "columnCount": null,
+          "hideGridlines": null,
+          "frozenRowCount": null,
+          "frozenColumnCount": null,
+          "rowGroupControlAfter": null,
+          "columnGroupControlAfter": null
+        },
+        "dataSourceSheetProperties": {
+          "columns": null,
+          "dataSourceId": null,
+          "dataExecutionStatus": null
+        }
+      },
+      "basicFilter": {
+        "range": {
+          "sheetId": null,
+          "endRowIndex": null,
+          "startRowIndex": null,
+          "endColumnIndex": null,
+          "startColumnIndex": null
+        },
+        "tableId": "sample",
+        "sortSpecs": [],
+        "filterSpecs": []
+      },
+      "filterViews": [
+        {
+          "range": null,
+          "title": "sample",
+          "tableId": "sample",
+          "sortSpecs": [],
+          "filterSpecs": [],
+          "filterViewId": 1,
+          "namedRangeId": "sample"
+        }
+      ],
+      "bandedRanges": [
+        {
+          "range": null,
+          "bandedRangeId": 1,
+          "rowProperties": null,
+          "columnProperties": null
+        }
+      ],
+      "columnGroups": [
+        {
+          "depth": 1,
+          "range": null,
+          "collapsed": true
+        }
+      ],
+      "protectedRanges": [
+        {
+          "range": null,
+          "editors": null,
+          "tableId": "sample",
+          "description": "sample",
+          "warningOnly": true,
+          "namedRangeId": "sample",
+          "protectedRangeId": 1,
+          "unprotectedRanges": [],
+          "requestingUserCanEdit": true
+        }
+      ],
+      "developerMetadata": [
+        {
+          "location": null,
+          "metadataId": 1,
+          "visibility": null,
+          "metadataKey": "sample",
+          "metadataValue": "sample"
+        }
+      ],
+      "conditionalFormats": [
+        {
+          "ranges": [],
+          "booleanRule": null,
+          "gradientRule": null
+        }
+      ]
+    }
+  ],
+  "properties": {
+    "title": "sample",
+    "locale": "sample",
+    "timeZone": "sample",
+    "autoRecalc": "ON_CHANGE",
+    "defaultFormat": {
+      "borders": {
+        "top": null,
+        "left": null,
+        "right": null,
+        "bottom": null
+      },
+      "padding": {
+        "top": 1,
+        "left": 1,
+        "right": 1,
+        "bottom": 1
+      },
+      "textFormat": {
+        "bold": true,
+        "link": null,
+        "italic": true,
+        "fontSize": 1,
+        "underline": true,
+        "fontFamily": "sample",
+        "strikethrough": true,
+        "foregroundColor": null,
+        "foregroundColorStyle": null
+      },
+      "numberFormat": {
+        "type": "sample",
+        "pattern": "sample"
+      },
+      "textRotation": {
+        "angle": 1,
+        "vertical": true
+      },
+      "wrapStrategy": "sample",
+      "textDirection": "sample",
+      "backgroundColor": {
+        "red": 1,
+        "blue": 1,
+        "alpha": 1,
+        "green": 1
+      },
+      "verticalAlignment": "sample",
+      "horizontalAlignment": "sample",
+      "backgroundColorStyle": {
+        "rgbColor": null,
+        "themeColor": "sample"
+      },
+      "hyperlinkDisplayType": "sample"
+    },
+    "spreadsheetTheme": {
+      "themeColors": [
+        {
+          "color": null,
+          "colorType": null
+        }
+      ],
+      "primaryFontFamily": "sample"
+    },
+    "iterativeCalculationSettings": {
+      "maxIterations": 1,
+      "convergenceThreshold": 1
+    },
+    "importFunctionsExternalUrlAccessAllowed": true
+  },
+  "dataSources": [
+    {
+      "spec": {
+        "looker": {
+          "modelName": null,
+          "exploreUri": null,
+          "exploreName": null,
+          "instanceUri": null
+        },
+        "bigQuery": {
+          "projectId": null,
+          "querySpec": null,
+          "tableSpec": null
+        },
+        "parameters": []
+      },
+      "sheetId": 1,
+      "dataSourceId": "sample",
+      "calculatedColumns": [
+        {
+          "formula": "sample",
+          "reference": {}
+        }
+      ]
+    }
+  ],
+  "display_url": "sample",
+  "namedRanges": [
+    {
+      "name": "sample",
+      "range": {
+        "sheetId": 1,
+        "endRowIndex": 1,
+        "startRowIndex": 1,
+        "endColumnIndex": 1,
+        "startColumnIndex": 1
+      },
+      "namedRangeId": "sample"
+    }
+  ],
+  "spreadsheetId": "sample",
+  "spreadsheetUrl": "sample",
+  "developerMetadata": [
+    {
+      "location": {
+        "sheetId": 1,
+        "spreadsheet": true,
+        "locationType": "ROW",
+        "dimensionRange": {
+          "sheetId": null,
+          "endIndex": null,
+          "dimension": null,
+          "startIndex": null
+        }
+      },
+      "metadataId": 1,
+      "visibility": "DOCUMENT",
+      "metadataKey": "sample",
+      "metadataValue": "sample"
+    }
+  ],
+  "dataSourceSchedules": [
+    {
+      "enabled": true,
+      "nextRun": {
+        "endTime": "sample",
+        "startTime": "sample"
+      },
+      "refreshScope": "ALL_DATA_SOURCES",
+      "dailySchedule": {},
+      "weeklySchedule": {},
+      "monthlySchedule": {}
+    }
+  ]
+}

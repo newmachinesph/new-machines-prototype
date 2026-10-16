@@ -1,0 +1,84 @@
+# Reviewed choices for `scripts/import_connector.py shopify`. They win over the importer's guesses.
+# Only Composio's "important" actions plus the reads below; reads that hand out secrets are never listed.
+# Store writes can move stock, prices or orders even when their name does not say so, so every write is blocked
+# as money unless it is listed below as a reviewed write. Actions that run free-form GraphQL are left out: a
+# query document can carry a mutation, so its class cannot be known.
+capability_prefix: store
+only_tagged: important
+ids_from: slug
+writes_are_money: true
+include:
+  - SHOPIFY_COUNT_PRODUCTS
+  - SHOPIFY_GET_CUSTOMER_ORDERS
+  - SHOPIFY_GET_DRAFT_ORDER
+  - SHOPIFY_GET_FULFILLMENT
+  - SHOPIFY_GET_FULFILLMENT_ORDERS_FOR_ORDER
+  - SHOPIFY_GET_INVENTORY_ITEM
+  - SHOPIFY_GET_INVENTORY_LEVELS
+  - SHOPIFY_GET_ORDER_FULFILLMENTS
+  - SHOPIFY_GET_ORDER_REFUNDS
+  - SHOPIFY_GET_PRODUCT
+  - SHOPIFY_GET_PRODUCTS_PAGINATED
+  - SHOPIFY_GET_PRODUCT_VARIANT
+  - SHOPIFY_GET_TRANSACTION
+  - SHOPIFY_LIST_DRAFT_ORDERS
+  - SHOPIFY_LIST_LOCATIONS
+  - SHOPIFY_LIST_PRODUCT_VARIANTS
+  - SHOPIFY_LIST_TRANSACTIONS
+
+tools:
+  SHOPIFY_CREATE_ORDER:
+    action_class: money
+    why: A created order can be marked paid, send receipts and move stock.
+  SHOPIFY_CREATE_CUSTOMER:
+    action_class: write
+    why: Adds a customer record; charges nothing.
+    drop: [password, password_confirmation, send_email_invite]
+    description: >-
+      Create a new customer in Shopify with contact details and addresses. Requires at least one of: email,
+      phone, or both first_name and last_name.
+  SHOPIFY_UPDATE_CUSTOMER:
+    action_class: write
+    why: Edits a customer's name, phone, note, tags or addresses; charges nothing.
+    # Email and sign-in, tax status and recorded marketing consent stay with a person in Shopify.
+    drop: [email, multipass_identifier, send_email_invite, tax_exempt, tax_exemptions, email_marketing_consent,
+      sms_marketing_consent]
+    description: >-
+      Update an existing customer in Shopify: name, phone, note, tags or addresses. Email, tax status and
+      marketing consent cannot be changed here.
+  SHOPIFY_CREATE_CUSTOM_COLLECTION:
+    action_class: write
+    why: Groups products into a collection; charges nothing.
+  SHOPIFY_UPDATE_METAFIELD_DEFINITION:
+    action_class: write
+    why: Changes a custom field's definition; charges nothing.
+    drop: [access]  # storefront access would publish the field's values, customer and order data included
+    description: >-
+      Update a Shopify metafield definition's name, description, validation rules and capabilities. Who can
+      see its values cannot be changed here.
+  SHOPIFY_UPDATE_PRODUCT_VARIANTS_BULK:
+    action_class: write
+    why: Edits variants, prices included; asks first and charges nobody.
+  SHOPIFY_BULK_CREATE_PRODUCTS:
+    action_class: write
+    why: Adds catalogue products; charges nothing.
+  SHOPIFY_GRAPH_QL_CUSTOMERS:
+    skip: Takes a free-form GraphQL document, which can carry a mutation.
+  SHOPIFY_GRAPH_QL_DISCOUNTS:
+    skip: Takes a free-form GraphQL document, which can carry a mutation.
+  SHOPIFY_GRAPH_QL_INVENTORY:
+    skip: Takes a free-form GraphQL document, which can carry a mutation.
+  SHOPIFY_GRAPH_QL_ORDERS:
+    skip: Takes a free-form GraphQL document, which can carry a mutation.
+  SHOPIFY_BULK_QUERY_OPERATION:
+    skip: Takes a free-form GraphQL document, which can carry a mutation.
+  SHOPIFY_RUN_BULK_OPERATION_QUERY:
+    skip: Takes a free-form GraphQL document, which can carry a mutation.
+  SHOPIFY_GRAPH_QL_ADMIN_EXECUTE:
+    skip: Runs any GraphQL query, deletes and refunds included, so it cannot be sorted.
+  SHOPIFY_GRAPH_QL_WRITE_OPERATIONS:
+    skip: Runs any GraphQL mutation, deletes and refunds included, so it cannot be sorted.
+  SHOPIFY_CREATE_RESOURCE_FEEDBACK:
+    skip: Posts app feedback to Shopify; no pack needs it.
+  SHOPIFY_QUERY_CURRENT_APP_INSTALLATION:
+    skip: Describes the connection itself, not the store.

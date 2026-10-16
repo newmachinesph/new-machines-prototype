@@ -1,0 +1,29 @@
+{
+  "input_parameters": {
+    "properties": {
+      "attachment_id": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "file_name": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "message_id": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "user_id": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "message_id",
+      "attachment_id",
+      "file_name"
+    ],
+    "type": "object"
+  },
+  "slug": "GMAIL_GET_ATTACHMENT",
+  "version": "20261015_00"
+}

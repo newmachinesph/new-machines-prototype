@@ -1,0 +1,22 @@
+{
+  "display_url": "sample",
+  "valueRanges": [
+    {
+      "valueRange": {
+        "range": "sample",
+        "values": [
+          []
+        ],
+        "majorDimension": "ROWS"
+      },
+      "dataFilters": [
+        {
+          "a1Range": "sample",
+          "gridRange": null
+        }
+      ]
+    }
+  ],
+  "spreadsheetId": "sample",
+  "composio_execution_message": "sample"
+}

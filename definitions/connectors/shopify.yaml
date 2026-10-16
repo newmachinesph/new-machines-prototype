@@ -31,4 +31,1124 @@ tools:
           description: Orders per page.
 
 # What an action class does when Ops has not overridden it.
+
+  # Imported from Composio by scripts/import_connector.py shopify; reviewed choices are in
+  # scripts/connector_imports/shopify.yaml.
+  - id: bulk_create_products
+    slug: SHOPIFY_BULK_CREATE_PRODUCTS
+    version: '20261014_00'
+    action_class: write
+    capability: store.write
+    description: Creates many products (20-50+) in one asynchronous Shopify bulk mutation job. Uses stagedUploadsCreate
+      for JSONL upload, then bulkOperationRunMutation with productCreate, polling until completion and returning per-row
+      success/errors.
+    input_schema:
+      type: object
+      required:
+      - products
+      properties:
+        products:
+          type: array
+          items:
+            type: object
+            required:
+            - title
+            properties:
+              tags:
+                type: array
+                items:
+                  type: string
+                description: List of product tags for organization and search.
+              title:
+                type: string
+                description: The product title (required).
+              status:
+                type: string
+                description: 'Product status: ACTIVE, DRAFT, or ARCHIVED. Defaults to ACTIVE.'
+              vendor:
+                type: string
+                description: The product vendor or manufacturer.
+              productType:
+                type: string
+                description: Product category or type.
+              descriptionHtml:
+                type: string
+                description: HTML-formatted product description.
+            description: Input for a single product to be created in the bulk operation.
+            additionalProperties: false
+          minItems: 1
+          description: Array of product inputs to create. Recommended 20-50+ items for optimal bulk operation efficiency.
+        max_poll_attempts:
+          type: integer
+          maximum: 300
+          minimum: 1
+          description: Maximum polling attempts before timeout. Default 60 (5 minutes with 5s interval).
+        poll_interval_seconds:
+          type: integer
+          maximum: 30
+          minimum: 1
+          description: Seconds to wait between status polls. Default 5.
+      additionalProperties: false
+  - id: count_products
+    slug: SHOPIFY_COUNT_PRODUCTS
+    version: '20261014_00'
+    action_class: read
+    capability: store.read
+    description: Retrieve a count of products in the Shopify store. Use when you need to get the total number of products,
+      optionally filtered by collection, vendor, product type, status, or date ranges.
+    input_schema:
+      type: object
+      properties:
+        status:
+          type: string
+          description: Filter by product status (e.g., 'active', 'draft', 'archived').
+        vendor:
+          type: string
+          description: Filter by vendor name (the supplier or manufacturer of the products).
+        product_type:
+          type: string
+          description: Filter by product type (e.g., 'Apparel', 'Electronics', 'Footwear').
+        collection_id:
+          type: string
+          description: Filter products by collection ID to count only products within a specific collection.
+        created_at_max:
+          type: string
+          description: 'Return products created before this date. Format: ISO 8601.'
+        created_at_min:
+          type: string
+          description: 'Return products created after this date. Format: ISO 8601 (e.g., 2014-04-25T16:15:47-04:00).'
+        updated_at_max:
+          type: string
+          description: 'Return products last updated before this date. Format: ISO 8601.'
+        updated_at_min:
+          type: string
+          description: 'Return products last updated after this date. Format: ISO 8601.'
+        published_at_max:
+          type: string
+          description: 'Return products published before this date. Format: ISO 8601.'
+        published_at_min:
+          type: string
+          description: 'Return products published after this date. Format: ISO 8601.'
+        published_status:
+          type: string
+          description: Filter by published status (e.g., 'published', 'unpublished', 'any').
+      additionalProperties: false
+  - id: count_product_images
+    slug: SHOPIFY_COUNT_PRODUCT_IMAGES
+    version: '20261014_00'
+    action_class: read
+    capability: store.read
+    description: Retrieves the total count of images for a specific Shopify product. Use when you need to know how
+      many images are associated with a product.
+    input_schema:
+      type: object
+      required:
+      - product_id
+      properties:
+        product_id:
+          type: string
+          description: The unique identifier for the Shopify product whose images are to be counted.
+      additionalProperties: false
+  - id: create_customer
+    slug: SHOPIFY_CREATE_CUSTOMER
+    version: '20261014_00'
+    action_class: write
+    capability: store.write
+    description: 'Create a new customer in Shopify with contact details and addresses. Requires at least one of: email,
+      phone, or both first_name and last_name.'
+    input_schema:
+      type: object
+      properties:
+        note:
+          type: string
+          description: An optional note about the customer.
+        tags:
+          type: string
+          description: A comma-separated string of tags to associate with the customer.
+        email:
+          type: string
+          format: email
+          description: The customer's unique email address. Must be unique across all customers in the store. At least
+            one of email, phone, or (first_name and last_name) must be provided.
+        phone:
+          type: string
+          description: The customer's phone number in E.164 format (e.g., +16135551212) or other dialable formats
+            (6135551212, (613)555-1212). At least one of email, phone, or (first_name and last_name) must be provided.
+        addresses:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                description: A unique identifier for the address.
+              zip:
+                type: string
+                description: The postal or zip code.
+              city:
+                type: string
+                description: The city.
+              name:
+                type: string
+                description: The customer's full name.
+              phone:
+                type: string
+                description: The phone number for this address.
+              company:
+                type: string
+                description: The company for this address.
+              country:
+                type: string
+                description: The country.
+              default:
+                type: boolean
+                description: Whether this is the default address.
+              address1:
+                type: string
+                description: The street address.
+              address2:
+                type: string
+                description: An optional additional field for the street address.
+              province:
+                type: string
+                description: The province or state.
+              last_name:
+                type: string
+                description: The last name for this address.
+              first_name:
+                type: string
+                description: The first name for this address.
+              customer_id:
+                type: integer
+                description: The customer ID associated with this address.
+              country_code:
+                type: string
+                description: The two-letter country code corresponding to the country.
+              country_name:
+                type: string
+                description: The full name of the country.
+              province_code:
+                type: string
+                description: The two-letter code for the region.
+            additionalProperties: false
+          description: A list of addresses for the customer.
+        last_name:
+          type: string
+          description: The customer's last name. At least one of email, phone, or (first_name and last_name) must
+            be provided.
+        first_name:
+          type: string
+          description: The customer's first name. At least one of email, phone, or (first_name and last_name) must
+            be provided.
+        verified_email:
+          type: boolean
+          description: 'Whether the customer has verified their email address. Note: This is a read-only field and
+            may be ignored by the API.'
+        send_email_welcome:
+          type: boolean
+          description: Whether to send the customer a welcome email. When false, suppresses the welcome email. If
+            send_email_invite is true, this can be set to false to avoid sending duplicate emails.
+      additionalProperties: false
+  - id: create_custom_collection
+    slug: SHOPIFY_CREATE_CUSTOM_COLLECTION
+    version: '20261014_00'
+    action_class: write
+    capability: store.write
+    description: Create a new custom (manually curated) collection in Shopify. Does not support smart collections.
+      Use when you need to manually curate and group products for easier store browsing.
+    input_schema:
+      type: object
+      required:
+      - title
+      properties:
+        image:
+          type: object
+          properties:
+            alt:
+              type: string
+              description: Alternative text describing the image.
+            src:
+              type: string
+              description: Image URL location. Provide either src or attachment, not both.
+            attachment:
+              type: string
+              description: Base64-encoded binary image data. Provide either src or attachment, not both.
+          description: Image object for custom collection.
+          additionalProperties: false
+        title:
+          type: string
+          description: 'Name of the custom collection (limit: 255 characters). This is the only required field.'
+        handle:
+          type: string
+          description: 'Human-friendly unique identifier (limit: 255 characters). Auto-generated from title if not
+            provided. Use the returned `collection_id` for subsequent operations instead of relying on the handle.'
+        collects:
+          type: array
+          items:
+            type: object
+            required:
+            - product_id
+            properties:
+              product_id:
+                type: string
+                description: The unique identifier for the product to add to the collection.
+            description: Product association object.
+            additionalProperties: false
+          description: Product associations to add to the collection during creation.
+        body_html:
+          type: string
+          description: HTML description displayed on collection pages.
+        published:
+          type: boolean
+          description: Whether visible on Online Store channel. Defaults to true if not specified.
+        metafields:
+          type: array
+          items:
+            type: object
+            required:
+            - key
+            - value
+            - type
+            - namespace
+            properties:
+              key:
+                type: string
+                description: The key name of the metafield.
+              type:
+                type: string
+                description: The type of the metafield (e.g., 'string', 'integer', 'json').
+              value:
+                type: string
+                description: The value of the metafield.
+              namespace:
+                type: string
+                description: The namespace for the metafield to group related fields.
+            description: Metafield object for custom metadata.
+            additionalProperties: false
+          description: Custom metadata fields with key, value, type, and namespace.
+        sort_order:
+          enum:
+          - manual
+          - alpha-asc
+          - alpha-desc
+          - best-selling
+          - created
+          - created-desc
+          - price-asc
+          - price-desc
+          type: string
+          description: Product ordering method within the collection.
+        published_scope:
+          enum:
+          - web
+          - global
+          type: string
+          description: 'Publication scope: ''web'' (Online Store only) or ''global'' (Online Store and Point of Sale).'
+        template_suffix:
+          type: string
+          description: Liquid template variant suffix for custom collection page templates.
+      additionalProperties: false
+  - id: get_customer
+    slug: SHOPIFY_GET_CUSTOMER
+    version: '20261014_00'
+    action_class: read
+    capability: store.read
+    description: Retrieve a single customer by their unique identifier. Use when you need to fetch detailed information
+      about a specific customer.
+    input_schema:
+      type: object
+      required:
+      - customer_id
+      properties:
+        fields:
+          type: string
+          description: Comma-separated list of fields to include in the response. Allows optimization by limiting
+            the response payload to only necessary fields.
+        customer_id:
+          type: string
+          description: The unique identifier for the customer.
+      additionalProperties: false
+  - id: get_customers_search
+    slug: SHOPIFY_GET_CUSTOMERS_SEARCH
+    version: '20261014_00'
+    action_class: read
+    capability: store.read
+    description: Search for customers matching a supplied query. Use when you need to find customers based on specific
+      criteria like email, name, location, order count, or spending.
+    input_schema:
+      type: object
+      required:
+      - query
+      properties:
+        limit:
+          type: integer
+          maximum: 250
+          minimum: 1
+          description: Maximum number of results to return per page. Must be between 1 and 250. Defaults to 50.
+        order:
+          type: string
+          description: 'Sort order for results. Supported fields: ''last_order_date'', ''orders_count'', ''updated_at'',
+            ''name'', ''location'', ''id''. Format: ''field_name ASC'' or ''field_name DESC''. Note: Many other fields
+            including ''created_at'' are not supported for sorting. If not specified or if an unsupported field is
+            used, results are returned in default order.'
+        query:
+          type: string
+          description: 'Search query using Shopify search syntax to filter customers. Supports fields like email,
+            first_name, last_name, orders_count, total_spent, city, country, customer_tag, and more. Use wildcards
+            (*) for broad matches, logical operators (AND, OR), and comparisons (>, <, >=, <=). Example: ''email:customer@example.com'',
+            ''first_name:John AND country:US'', ''orders_count:>5''.'
+        fields:
+          type: string
+          description: 'Comma-separated list of fields to include in response. If not specified, all fields are returned.
+            Example: ''id,email,first_name,last_name,orders_count''.'
+      additionalProperties: false
+  - id: get_customer_orders
+    slug: SHOPIFY_GET_CUSTOMER_ORDERS
+    version: '20261014_00'
+    action_class: read
+    capability: store.read
+    description: Retrieves all orders for a specific, existing customer in Shopify using their unique customer ID.
+    input_schema:
+      type: object
+      required:
+      - customer_id
+      properties:
+        limit:
+          type: integer
+          maximum: 250
+          minimum: 1
+          description: Maximum number of orders to return. Accepted values are 1 to 250. Default is 50.
+        status:
+          type: string
+          description: 'Filter orders by status. Valid values: open, closed, cancelled, any. Default is open.'
+        since_id:
+          type: integer
+          description: Return only orders after the specified ID. Use for cursor-based pagination through large result
+            sets.
+        page_info:
+          type: string
+          description: A cursor value for cursor-based pagination. Use the page_info value from the Link header of
+            a previous response to fetch the next page of results.
+        customer_id:
+          type: string
+          description: Unique identifier for the customer whose orders are to be retrieved.
+      additionalProperties: false
+  - id: get_draft_order
+    slug: SHOPIFY_GET_DRAFT_ORDER
+    version: '20261014_00'
+    action_class: read
+    capability: store.read
+    description: Retrieve detailed information for a specific draft order from a Shopify store. Use when you need
+      to access a draft order's status, customer details, line items, pricing, or shipping information.
+    input_schema:
+      type: object
+      required:
+      - draft_order_id
+      properties:
+        fields:
+          type: string
+          description: Comma-separated list of fields to include in the response (e.g., 'id,name,status').
+        draft_order_id:
+          type: string
+          description: The unique identifier for the draft order to retrieve.
+      additionalProperties: false
+  - id: get_fulfillment
+    slug: SHOPIFY_GET_FULFILLMENT
+    version: '20261014_00'
+    action_class: read
+    capability: store.read
+    description: Retrieves all fulfillments (shipments) associated with a specific fulfillment order. A fulfillment
+      order represents a group of line items that are to be fulfilled from a specific location.
+    input_schema:
+      type: object
+      required:
+      - fulfillment_order_id
+      properties:
+        fulfillment_order_id:
+          type: string
+          minLength: 1
+          description: The unique identifier of the fulfillment order. To obtain this ID, first use the 'Get fulfillment
+            orders for order' action with an order_id.
+      additionalProperties: false
+  - id: get_fulfillment_orders_for_order
+    slug: SHOPIFY_GET_FULFILLMENT_ORDERS_FOR_ORDER
+    version: '20261014_00'
+    action_class: read
+    capability: store.read
+    description: Retrieves a list of fulfillment orders for a specific order. Use when you need to get fulfillment
+      order details including line items, delivery method, assigned location, and fulfillment status for a given order.
+    input_schema:
+      type: object
+      required:
+      - order_id
+      properties:
+        order_id:
+          type: string
+          description: The ID of the order for which to retrieve fulfillment orders.
+        include_financial_summaries:
+          type: boolean
+          description: Include financial summary data for each line item if available. Defaults to false if not specified.
+        include_order_reference_fields:
+          type: boolean
+          description: Return order reference fields in the result. Defaults to false if not specified.
+      additionalProperties: false
+  - id: get_inventory_item
+    slug: SHOPIFY_GET_INVENTORY_ITEM
+    version: '20261014_00'
+    action_class: read
+    capability: store.read
+    description: Retrieves a single inventory item by ID. Use when you need to get detailed information about an inventory
+      item including SKU, cost, tracking status, and shipping requirements.
+    input_schema:
+      type: object
+      required:
+      - inventory_item_id
+      properties:
+        inventory_item_id:
+          type: string
+          description: The unique identifier of the inventory item to retrieve.
+      additionalProperties: false
+  - id: get_inventory_levels
+    slug: SHOPIFY_GET_INVENTORY_LEVELS
+    version: '20261014_00'
+    action_class: read
+    capability: store.read
+    description: Retrieves a list of inventory levels for specified items and locations. Use when you need to check
+      inventory quantities at specific locations. At least one of inventory_item_ids or location_ids must be provided
+      as a filter parameter.
+    input_schema:
+      type: object
+      properties:
+        limit:
+          type: integer
+          maximum: 250
+          minimum: 1
+          description: 'Maximum number of results to return per page. Range: 1-250, Default: 50.'
+        location_ids:
+          type: string
+          description: Comma-separated list of location IDs to filter by. Maximum 50 IDs per request. At least one
+            of inventory_item_ids or location_ids must be provided.
+        updated_at_min:
+          type: string
+          description: Show inventory levels updated at or after this date. ISO 8601 datetime format.
+        inventory_item_ids:
+          type: string
+          description: Comma-separated list of inventory item IDs to filter by. Maximum 50 IDs per request. At least
+            one of inventory_item_ids or location_ids must be provided.
+      additionalProperties: false
+  - id: get_order
+    slug: SHOPIFY_GET_ORDER
+    version: '20261014_00'
+    action_class: read
+    capability: store.read
+    description: Retrieve a specific order using its unique identifier. Returns detailed order information including
+      line items, customer data, addresses, financial status, fulfillment status, and more.
+    input_schema:
+      type: object
+      required:
+      - order_id
+      properties:
+        fields:
+          type: string
+          description: Comma-separated list of specific fields to return (e.g., 'id,line_items,name,total_price').
+            When omitted, all order fields are returned.
+        order_id:
+          type: string
+          description: The unique identifier of the order to retrieve.
+      additionalProperties: false
+  - id: get_order_fulfillments
+    slug: SHOPIFY_GET_ORDER_FULFILLMENTS
+    version: '20261014_00'
+    action_class: read
+    capability: store.read
+    description: Retrieve fulfillments associated with a Shopify order. Use when you need to get delivery tracking
+      information, shipment status, or fulfillment details for a specific order.
+    input_schema:
+      type: object
+      required:
+      - order_id
+      properties:
+        limit:
+          type: integer
+          description: 'Limit the amount of results (default: 50, max: 250).'
+        fields:
+          type: string
+          description: Comma-separated list of fields to include in the response.
+        order_id:
+          type: string
+          description: The unique numeric identifier for the order.
+        since_id:
+          type: integer
+          description: Restrict results to after the specified fulfillment ID.
+        created_at_max:
+          type: string
+          description: Show fulfillments created before this date (ISO 8601 format).
+        created_at_min:
+          type: string
+          description: 'Show fulfillments created after this date (ISO 8601 format: 2014-04-25T16:15:47-04:00).'
+        updated_at_max:
+          type: string
+          description: Show fulfillments last updated before this date (ISO 8601 format).
+        updated_at_min:
+          type: string
+          description: 'Show fulfillments last updated after this date (ISO 8601 format: 2014-04-25T16:15:47-04:00).'
+      additionalProperties: false
+  - id: get_order_refunds
+    slug: SHOPIFY_GET_ORDER_REFUNDS
+    version: '20261014_00'
+    action_class: read
+    capability: store.read
+    description: Retrieves a list of all refunds for a specific order.
+    input_schema:
+      type: object
+      required:
+      - order_id
+      properties:
+        limit:
+          type: integer
+          maximum: 250
+          minimum: 1
+          description: Maximum number of results to retrieve per page (default 50, maximum 250).
+        fields:
+          type: string
+          description: Comma-separated list of specific field names to return in the refund objects.
+        order_id:
+          type: string
+          description: The unique identifier of the order to retrieve refunds for.
+        in_shop_currency:
+          type: boolean
+          description: When set to true, displays amounts in the shop currency for the underlying transactions.
+      additionalProperties: false
+  - id: get_product
+    slug: SHOPIFY_GET_PRODUCT
+    version: '20261014_00'
+    action_class: read
+    capability: store.read
+    description: Retrieves details for an existing Shopify product using its unique product ID.
+    input_schema:
+      type: object
+      required:
+      - product_id
+      properties:
+        product_id:
+          type: string
+          description: 'The unique numeric identifier of the Shopify product to be retrieved (e.g., ''8301757563074'').
+            Note: Use the numeric ID, not the GraphQL GID format.'
+      additionalProperties: false
+  - id: get_products_paginated
+    slug: SHOPIFY_GET_PRODUCTS_PAGINATED
+    version: '20261014_00'
+    action_class: read
+    capability: store.read
+    description: List products with Shopify cursor-based pagination. Iterate until `next_page_info` is null; stopping
+      early silently truncates the product list. Products are at `data.response_data.products`; the next cursor is
+      at `data.next_page_info`.
+    input_schema:
+      type: object
+      properties:
+        limit:
+          type: integer
+          maximum: 250
+          minimum: 1
+          description: Number of products per page. Defaults to 50; maximum 250.
+        fields:
+          type: string
+          description: Comma-separated list of product fields to include in the response.
+        page_info:
+          type: string
+          description: Cursor token for next or previous page. Use the token value from the Link header. The cursor
+            is exposed at `data.next_page_info` in the response. Pass the value exactly as returned — any truncation
+            or modification triggers a 400 error.
+      additionalProperties: false
+  - id: get_product_variant
+    slug: SHOPIFY_GET_PRODUCT_VARIANT
+    version: '20261014_00'
+    action_class: read
+    capability: store.read
+    description: Retrieves detailed information about a single product variant by its ID from Shopify. A product variant
+      represents a specific version of a product (e.g., different sizes, colors, or materials).
+    input_schema:
+      type: object
+      required:
+      - variant_id
+      properties:
+        fields:
+          type: string
+          description: A comma-separated list of fields to include in the response. Use this to retrieve only specific
+            fields and reduce response size.
+        variant_id:
+          type: string
+          description: The unique numeric identifier for the product variant to retrieve.
+      additionalProperties: false
+  - id: get_transaction
+    slug: SHOPIFY_GET_TRANSACTION
+    version: '20261014_00'
+    action_class: read
+    capability: store.read
+    description: Retrieve a specific transaction for an order. Use when you need to get detailed information about
+      a payment transaction. Transactions in multi-currency orders are in presentment currency by default;
+    input_schema:
+      type: object
+      required:
+      - order_id
+      - transaction_id
+      properties:
+        fields:
+          type: string
+          description: Comma-separated list of fields to include in the response (e.g., 'id,kind,status').
+        order_id:
+          type: string
+          description: The unique identifier of the order that the transaction belongs to.
+        transaction_id:
+          type: string
+          description: The unique identifier of the specific transaction to retrieve.
+        in_shop_currency:
+          type: boolean
+          description: Display amounts in shop currency instead of presentment currency. Defaults to false.
+      additionalProperties: false
+  - id: list_customers
+    slug: SHOPIFY_LIST_CUSTOMERS
+    version: '20261014_00'
+    action_class: read
+    capability: store.read
+    description: Retrieve a list of customers from a Shopify store. Use when you need to fetch customer data with
+      optional filtering by IDs, creation dates, update dates, or account status.
+    input_schema:
+      type: object
+      properties:
+        ids:
+          type: string
+          description: 'Comma-separated list of customer IDs to retrieve specific customers. Example: ''207119551,562393516'''
+        limit:
+          type: integer
+          description: 'Number of results to return per page. Default: 50, Maximum: 250'
+        fields:
+          type: string
+          description: 'Comma-separated list of fields to include in the response. Example: ''id,email,first_name,last_name'''
+        status:
+          type: string
+          description: 'Filter customers by account status. Valid values: enabled, disabled, invited, declined'
+        since_id:
+          type: string
+          description: Restrict results to customers after the specified ID. Used for pagination.
+        page_info:
+          type: string
+          description: Pagination cursor for navigating through results. Use the value from the Link header in previous
+            response.
+        created_at_max:
+          type: string
+          description: 'Show customers created before this date (ISO 8601 format). Example: ''2024-12-31T23:59:59Z'''
+        created_at_min:
+          type: string
+          description: 'Show customers created after this date (ISO 8601 format). Example: ''2024-04-25T16:15:47-04:00'''
+        updated_at_max:
+          type: string
+          description: Show customers last updated before this date (ISO 8601 format).
+        updated_at_min:
+          type: string
+          description: Show customers last updated after this date (ISO 8601 format).
+      additionalProperties: false
+  - id: list_draft_orders
+    slug: SHOPIFY_LIST_DRAFT_ORDERS
+    version: '20261014_00'
+    action_class: read
+    capability: store.read
+    description: Retrieve a list of draft orders from Shopify. Use when you need to fetch draft orders with optional
+      filtering by status, IDs, or update dates. Supports pagination via since_id and limit parameters.
+    input_schema:
+      type: object
+      properties:
+        ids:
+          type: string
+          description: Filter results by comma-separated list of draft order IDs (e.g., '1,2,3').
+        limit:
+          type: integer
+          description: 'Maximum number of results to return (default: 50, maximum: 250).'
+        fields:
+          type: string
+          description: Comma-separated list of specific properties to include in the response (e.g., 'id,name,status,total_price').
+        status:
+          type: string
+          description: 'Filter by order status. Valid values: ''open'', ''invoice_sent'', ''completed''.'
+        since_id:
+          type: string
+          description: Restrict results to draft orders after the specified ID. Used for pagination.
+        updated_at_max:
+          type: string
+          description: Show draft orders updated before this date in ISO 8601 format (e.g., '2024-12-31T23:59:59Z').
+        updated_at_min:
+          type: string
+          description: Show draft orders updated after this date in ISO 8601 format (e.g., '2024-01-01T00:00:00Z').
+      additionalProperties: false
+  - id: list_locations
+    slug: SHOPIFY_LIST_LOCATIONS
+    version: '20261014_00'
+    action_class: read
+    capability: store.read
+    description: Retrieve a list of locations for a Shopify store. Use when you need to get physical or virtual places
+      where inventory is stocked and orders are fulfilled.
+    input_schema:
+      type: object
+      properties:
+        limit:
+          type: integer
+          description: The maximum number of locations to retrieve. Defaults to 50, with a maximum value of 250.
+      additionalProperties: false
+  - id: list_product_variants
+    slug: SHOPIFY_LIST_PRODUCT_VARIANTS
+    version: '20261014_00'
+    action_class: read
+    capability: store.read
+    description: 'Retrieve all variants for a specified product. Use when you need to list product variants with optional
+      filtering by fields or pagination. Note: As of API version 2019-10, pagination is implemented via Link headers
+      in the response.'
+    input_schema:
+      type: object
+      required:
+      - product_id
+      properties:
+        limit:
+          type: integer
+          maximum: 250
+          minimum: 1
+          description: 'Maximum number of results per page. Default: 50, Maximum: 250.'
+        fields:
+          type: string
+          description: A comma-separated list of fields to include in the response. Use this to retrieve only specific
+            fields you need.
+        since_id:
+          type: integer
+          description: Restrict results to after the specified variant ID. Used for pagination to retrieve variants
+            created after a specific ID.
+        product_id:
+          type: string
+          description: The unique numeric identifier for the product whose variants you want to retrieve.
+        presentment_currencies:
+          type: string
+          description: Return presentment prices in only certain currencies, specified by a comma-separated list of
+            ISO 4217 currency codes.
+      additionalProperties: false
+  - id: list_transactions
+    slug: SHOPIFY_LIST_TRANSACTIONS
+    version: '20261014_00'
+    action_class: read
+    capability: store.read
+    description: Retrieves all transactions for a specific order. Use when you need to view payment exchanges for
+      an order. Transactions include authorization, sale, capture, void, and refund types.
+    input_schema:
+      type: object
+      required:
+      - order_id
+      properties:
+        fields:
+          type: string
+          description: Comma-separated list of field names to show only certain fields in the response (e.g., 'id,kind,status').
+        order_id:
+          type: string
+          description: The unique identifier of the order whose transactions you want to retrieve.
+        since_id:
+          type: integer
+          description: Retrieve only transactions after the specified transaction ID.
+        in_shop_currency:
+          type: boolean
+          description: Set to true to retrieve transactions in the shop currency. Default is false, which returns
+            presentment currency for multi-currency orders.
+      additionalProperties: false
+  - id: query_shop
+    slug: SHOPIFY_QUERY_SHOP
+    version: '20261014_00'
+    action_class: read
+    capability: store.read
+    description: Retrieve shop information using the Shopify GraphQL Admin API. Use when you need shop-level configuration
+      such as name, email, domain, currency settings, enabled features, and policies.
+    input_schema:
+      type: object
+      properties:
+        fields:
+          type: string
+          description: 'Optional GraphQL field selection string to customize which shop fields to retrieve. If not
+            provided, a default set of commonly used fields will be returned. Example: ''name email myshopifyDomain
+            currencyCode'''
+      additionalProperties: false
+  - id: update_customer
+    slug: SHOPIFY_UPDATE_CUSTOMER
+    version: '20261014_00'
+    action_class: write
+    capability: store.write
+    description: 'Update an existing customer in Shopify: name, phone, note, tags or addresses. Email, tax status
+      and marketing consent cannot be changed here.'
+    input_schema:
+      type: object
+      required:
+      - customer_id
+      properties:
+        note:
+          type: string
+          description: Store owner's notes about the customer.
+        tags:
+          type: string
+          description: A comma-separated string of tags to associate with the customer.
+        phone:
+          type: string
+          description: The customer's phone number in E.164 format. Must be unique across all customers.
+        addresses:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                description: Unique identifier for the address.
+              zip:
+                type: string
+                description: The postal or zip code.
+              city:
+                type: string
+                description: The city.
+              name:
+                type: string
+                description: The customer's full name.
+              phone:
+                type: string
+                description: The phone number for this address.
+              company:
+                type: string
+                description: The company for this address.
+              country:
+                type: string
+                description: The country.
+              default:
+                type: boolean
+                description: Whether this is the default address.
+              address1:
+                type: string
+                description: The street address.
+              address2:
+                type: string
+                description: An optional additional field for the street address.
+              province:
+                type: string
+                description: The province or state.
+              last_name:
+                type: string
+                description: The last name for this address.
+              first_name:
+                type: string
+                description: The first name for this address.
+              customer_id:
+                type: integer
+                description: The customer ID associated with this address.
+              country_code:
+                type: string
+                description: The two-letter country code corresponding to the country.
+              country_name:
+                type: string
+                description: The full name of the country.
+              province_code:
+                type: string
+                description: The two-letter code for the region.
+            description: Address information for customer.
+            additionalProperties: false
+          description: A list of addresses for the customer (up to 10).
+        last_name:
+          type: string
+          description: The customer's last name.
+        first_name:
+          type: string
+          description: The customer's first name.
+        customer_id:
+          type: string
+          description: The unique identifier of the customer to update.
+        verified_email:
+          type: boolean
+          description: Whether the customer has verified their email address.
+        send_email_welcome:
+          type: boolean
+          description: Whether to send a welcome email to the customer.
+      additionalProperties: false
+  - id: update_metafield_definition
+    slug: SHOPIFY_UPDATE_METAFIELD_DEFINITION
+    version: '20261014_00'
+    action_class: write
+    capability: store.write
+    description: Update a Shopify metafield definition's name, description, validation rules and capabilities. Who
+      can see its values cannot be changed here.
+    input_schema:
+      type: object
+      required:
+      - namespace
+      - key
+      - ownerType
+      properties:
+        key:
+          type: string
+          description: The unique key identifier within the namespace. Along with namespace and ownerType, this identifies
+            the definition to update. Cannot be changed after creation.
+        pin:
+          type: boolean
+          description: Whether to pin this metafield definition at the top of the list in the Shopify admin interface
+            for easy access.
+        name:
+          type: string
+          description: The human-readable display name for the metafield definition. This is shown in the Shopify
+            admin interface.
+        namespace:
+          type: string
+          description: The namespace identifier for the metafield definition. Along with key and ownerType, this identifies
+            the definition to update. Cannot be changed after creation.
+        ownerType:
+          enum:
+          - API_PERMISSION
+          - ARTICLE
+          - BLOG
+          - CARTTRANSFORM
+          - COLLECTION
+          - COMPANY
+          - COMPANY_LOCATION
+          - CUSTOMER
+          - DELIVERY_CUSTOMIZATION
+          - DISCOUNT
+          - DRAFTORDER
+          - FULFILLMENT_CONSTRAINT_RULE
+          - GIFT_CARD_TRANSACTION
+          - LOCATION
+          - MARKET
+          - ORDER
+          - ORDER_ROUTING_LOCATION_RULE
+          - PAGE
+          - PAYMENT_CUSTOMIZATION
+          - PRODUCT
+          - PRODUCTVARIANT
+          - SELLING_PLAN
+          - SHOP
+          - VALIDATION
+          type: string
+          description: The resource type this metafield definition is attached to. Along with namespace and key, this
+            identifies the definition to update. Cannot be changed after creation.
+        description:
+          type: string
+          description: A description explaining the purpose and usage of this metafield definition. Helps other users
+            understand what data should be stored.
+        validations:
+          type: array
+          items:
+            type: object
+            required:
+            - name
+            - value
+            properties:
+              name:
+                type: string
+                description: 'The name of the validation rule. Common examples: ''min'', ''max'', ''choices'', ''regex_pattern'',
+                  ''format''.'
+              value:
+                type: string
+                description: The value or configuration for the validation rule, formatted as a string (e.g., '0'
+                  for min, '100' for max, '["option1", "option2"]' for choices).
+            description: Validation rule for metafield values.
+            additionalProperties: false
+          description: List of validation rules to enforce on metafield values. Common validations include min/max
+            for numbers, regex patterns for strings, and allowed choices for enums.
+        capabilities:
+          type: object
+          properties:
+            uniqueValues:
+              type: object
+              required:
+              - enabled
+              properties:
+                enabled:
+                  type: boolean
+                  description: Whether metafield values must be unique across all instances. Useful for SKUs, serial
+                    numbers, or other identifiers.
+              description: Enable/disable unique value constraint capability.
+              additionalProperties: false
+            adminFilterable:
+              type: object
+              required:
+              - enabled
+              properties:
+                enabled:
+                  type: boolean
+                  description: Whether metafields can be used for filtering in the Shopify admin interface.
+              description: Enable/disable admin filtering capability.
+              additionalProperties: false
+            smartCollectionCondition:
+              type: object
+              required:
+              - enabled
+              properties:
+                enabled:
+                  type: boolean
+                  description: Whether metafields can be used as conditions in smart collections.
+              description: Enable/disable smart collection condition capability.
+              additionalProperties: false
+          description: Capabilities that can be enabled for metafield definitions.
+          additionalProperties: false
+        useAsCollectionCondition:
+          type: boolean
+          description: Deprecated field that determines if the metafield can be used as a collection condition. Use
+            capabilities.smartCollectionCondition instead.
+      additionalProperties: false
+  - id: update_product_variants_bulk
+    slug: SHOPIFY_UPDATE_PRODUCT_VARIANTS_BULK
+    version: '20261014_00'
+    action_class: write
+    capability: store.write
+    description: Updates many product variants (20-50+) in one asynchronous Shopify bulk mutation job.
+    input_schema:
+      type: object
+      required:
+      - variants
+      properties:
+        variants:
+          type: array
+          items:
+            type: object
+            required:
+            - id
+            properties:
+              id:
+                type: string
+                description: The global ID (GID) of the variant to update (e.g., gid://shopify/ProductVariant/12345678).
+              price:
+                type: string
+                description: The selling price of the variant (Money scalar - string with decimal like '29.99').
+              barcode:
+                type: string
+                description: Barcode, UPC, or ISBN number.
+              taxable:
+                type: boolean
+                description: Whether tax is charged when the variant is sold.
+              media_id:
+                type: string
+                description: Global ID of the product media to associate with this variant (e.g., gid://shopify/ProductMedia/12345).
+              tax_code:
+                type: string
+                description: Tax code for the variant.
+              compare_at_price:
+                type: string
+                description: The original price before adjustment or sale (Money scalar). Set to null to remove.
+              inventory_policy:
+                type: string
+                description: 'Whether customers can order when out of stock. Valid values: ''DENY'' (cannot order),
+                  ''CONTINUE'' (can order).'
+            description: 'Input for a single product variant to be updated in the bulk operation. Note: This mutation
+              uses Shopify''s productVariantsBulkUpdate which has limited field support. Unsupported REST-only fields
+              such as SKU, weight, and requires_shipping are rejected instead of silently ignored.'
+            additionalProperties: false
+          minItems: 1
+          description: Array of variant update inputs. Recommended 20-50+ items for optimal bulk operation efficiency.
+        max_poll_attempts:
+          type: integer
+          maximum: 300
+          minimum: 1
+          description: Maximum polling attempts before timeout. Default 60 (5 minutes with 5s interval).
+        poll_interval_seconds:
+          type: integer
+          maximum: 30
+          minimum: 1
+          description: Seconds to wait between status polls. Default 5.
+      additionalProperties: false
+
 defaults: {read: permit, write: require_approval, delete: deny, money: deny}

@@ -1,0 +1,15 @@
+{
+  "input_parameters": {
+    "properties": {
+      "product_id": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "product_id"
+    ],
+    "type": "object"
+  },
+  "slug": "SHOPIFY_COUNT_PRODUCT_IMAGES",
+  "version": "20261014_00"
+}

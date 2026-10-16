@@ -1,0 +1,42 @@
+{
+  "input_parameters": {
+    "properties": {
+      "documentId": {
+        "type": "string"
+      },
+      "endOfSegmentLocation": {
+        "additionalProperties": false,
+        "properties": {
+          "segmentId": {
+            "type": "string"
+          },
+          "tabId": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "location": {
+        "additionalProperties": false,
+        "properties": {
+          "index": {
+            "type": "integer"
+          },
+          "segmentId": {
+            "type": "string"
+          },
+          "tabId": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      }
+    },
+    "required": [
+      "documentId"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLEDOCS_CREATE_FOOTNOTE",
+  "version": "20261008_00"
+}

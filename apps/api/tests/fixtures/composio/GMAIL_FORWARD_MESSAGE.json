@@ -1,0 +1,42 @@
+{
+  "input_parameters": {
+    "properties": {
+      "additional_text": {
+        "type": "string"
+      },
+      "bcc": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "cc": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "message_id": {
+        "pattern": "^[0-9a-fA-F]+$",
+        "type": "string"
+      },
+      "recipients": {
+        "items": {
+          "type": "string"
+        },
+        "minItems": 1,
+        "type": "array"
+      },
+      "user_id": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "message_id",
+      "recipients"
+    ],
+    "type": "object"
+  },
+  "slug": "GMAIL_FORWARD_MESSAGE",
+  "version": "20261015_00"
+}

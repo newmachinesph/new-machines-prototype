@@ -1,0 +1,11 @@
+{
+  "object": "sample",
+  "customer": "sample",
+  "livemode": true,
+  "settings": {
+    "reconciliation_mode": "sample",
+    "using_merchant_default": true
+  },
+  "available": {},
+  "customer_account": "sample"
+}

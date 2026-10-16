@@ -1,0 +1,49 @@
+{
+  "transactions": [
+    {
+      "id": 1,
+      "kind": "sample",
+      "test": true,
+      "amount": "sample",
+      "status": "sample",
+      "gateway": "sample",
+      "message": "sample",
+      "receipt": {},
+      "user_id": 1,
+      "currency": "sample",
+      "order_id": 1,
+      "device_id": 1,
+      "parent_id": 1,
+      "created_at": "sample",
+      "error_code": "sample",
+      "payment_id": "sample",
+      "location_id": 1,
+      "source_name": "sample",
+      "processed_at": "sample",
+      "authorization": "sample",
+      "amount_rounding": "sample",
+      "payment_details": {
+        "avs_result_code": "sample",
+        "credit_card_bin": "sample",
+        "cvv_result_code": "sample",
+        "credit_card_number": "sample",
+        "credit_card_company": "sample"
+      },
+      "total_unsettled_set": {
+        "shop_money": {},
+        "presentment_money": {}
+      },
+      "admin_graphql_api_id": "sample",
+      "manual_payment_gateway": true,
+      "authorization_expires_at": "sample",
+      "currency_exchange_adjustment": {
+        "id": 1,
+        "currency": "sample",
+        "adjustment": "sample",
+        "final_amount": "sample",
+        "original_amount": "sample"
+      },
+      "extended_authorization_attributes": {}
+    }
+  ]
+}

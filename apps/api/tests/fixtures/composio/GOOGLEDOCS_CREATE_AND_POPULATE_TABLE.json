@@ -1,0 +1,49 @@
+{
+  "input_parameters": {
+    "properties": {
+      "cellData": {
+        "items": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "type": "array"
+      },
+      "columns": {
+        "maximum": 20,
+        "minimum": 1,
+        "type": "integer"
+      },
+      "documentId": {
+        "type": "string"
+      },
+      "index": {
+        "type": "integer"
+      },
+      "insertAtEndOfSegment": {
+        "type": "boolean"
+      },
+      "rows": {
+        "maximum": 20,
+        "minimum": 1,
+        "type": "integer"
+      },
+      "segmentId": {
+        "type": "string"
+      },
+      "tabId": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "documentId",
+      "rows",
+      "columns",
+      "cellData"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLEDOCS_CREATE_AND_POPULATE_TABLE",
+  "version": "20261008_00"
+}

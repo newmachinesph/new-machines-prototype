@@ -1,0 +1,91 @@
+{
+  "url": "sample",
+  "data": [
+    {
+      "id": "sample",
+      "amount": 1,
+      "charge": "sample",
+      "object": "sample",
+      "reason": "sample",
+      "status": "sample",
+      "created": 1,
+      "currency": "sample",
+      "evidence": {
+        "receipt": "sample",
+        "service_date": "sample",
+        "customer_name": "sample",
+        "refund_policy": "sample",
+        "shipping_date": "sample",
+        "billing_address": "sample",
+        "shipping_address": "sample",
+        "shipping_carrier": "sample",
+        "enhanced_evidence": {},
+        "customer_signature": "sample",
+        "uncategorized_file": "sample",
+        "uncategorized_text": "sample",
+        "access_activity_log": "sample",
+        "cancellation_policy": "sample",
+        "duplicate_charge_id": "sample",
+        "product_description": "sample",
+        "customer_purchase_ip": "sample",
+        "cancellation_rebuttal": "sample",
+        "service_documentation": "sample",
+        "customer_communication": "sample",
+        "customer_email_address": "sample",
+        "shipping_documentation": "sample",
+        "refund_policy_disclosure": "sample",
+        "shipping_tracking_number": "sample",
+        "refund_refusal_explanation": "sample",
+        "duplicate_charge_explanation": "sample",
+        "cancellation_policy_disclosure": "sample",
+        "duplicate_charge_documentation": "sample"
+      },
+      "livemode": true,
+      "metadata": {},
+      "payment_intent": "sample",
+      "evidence_details": {
+        "due_by": 1,
+        "past_due": true,
+        "has_evidence": true,
+        "submission_count": 1,
+        "enhanced_eligibility": {
+          "visa_compelling_evidence_3": null
+        }
+      },
+      "balance_transaction": "sample",
+      "balance_transactions": [
+        {
+          "id": "sample",
+          "fee": 1,
+          "net": 1,
+          "type": "sample",
+          "amount": 1,
+          "object": "sample",
+          "source": "sample",
+          "status": "sample",
+          "created": 1,
+          "currency": "sample",
+          "description": "sample",
+          "fee_details": [],
+          "available_on": 1,
+          "exchange_rate": 1,
+          "reporting_category": "sample"
+        }
+      ],
+      "is_charge_refundable": true,
+      "payment_method_details": {
+        "card": {
+          "brand": null,
+          "case_type": null,
+          "network_reason_code": null
+        },
+        "type": "sample"
+      },
+      "enhanced_eligibility_types": [
+        "sample"
+      ]
+    }
+  ],
+  "object": "sample",
+  "has_more": true
+}

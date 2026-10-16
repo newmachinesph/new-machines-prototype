@@ -1,0 +1,42 @@
+{
+  "calendars": [
+    {
+      "id": "sample",
+      "etag": "sample",
+      "kind": "sample",
+      "hidden": true,
+      "colorId": "sample",
+      "deleted": true,
+      "primary": true,
+      "summary": "sample",
+      "location": "sample",
+      "selected": true,
+      "timeZone": "sample",
+      "dataOwner": "sample",
+      "accessRole": "sample",
+      "description": "sample",
+      "display_url": "sample",
+      "backgroundColor": "sample",
+      "foregroundColor": "sample",
+      "summaryOverride": "sample",
+      "defaultReminders": [
+        {
+          "method": "sample",
+          "minutes": 1
+        }
+      ],
+      "conferenceProperties": {
+        "allowedConferenceSolutionTypes": [
+          "sample"
+        ]
+      },
+      "notificationSettings": {
+        "notifications": []
+      },
+      "autoAcceptInvitations": true
+    }
+  ],
+  "display_url": "sample",
+  "next_page_token": "sample",
+  "next_sync_token": "sample"
+}

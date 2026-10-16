@@ -1,0 +1,26 @@
+{
+  "input_parameters": {
+    "properties": {
+      "customer": {
+        "type": "string"
+      },
+      "maxResults": {
+        "maximum": 500,
+        "minimum": 1,
+        "type": "integer"
+      },
+      "orderBy": {
+        "type": "string"
+      },
+      "pageToken": {
+        "type": "string"
+      },
+      "query": {
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "slug": "GOOGLECALENDAR_LIST_CALENDAR_RESOURCES",
+  "version": "20261010_00"
+}

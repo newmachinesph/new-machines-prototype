@@ -1,0 +1,34 @@
+{
+  "input_parameters": {
+    "properties": {
+      "calendar_expansion_max": {
+        "maximum": 50,
+        "minimum": 1,
+        "type": "integer"
+      },
+      "group_expansion_max": {
+        "maximum": 100,
+        "minimum": 1,
+        "type": "integer"
+      },
+      "items": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "time_max": {
+        "type": "string"
+      },
+      "time_min": {
+        "type": "string"
+      },
+      "timezone": {
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "slug": "GOOGLECALENDAR_FIND_FREE_SLOTS",
+  "version": "20261010_00"
+}

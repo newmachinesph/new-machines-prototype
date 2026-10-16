@@ -1,0 +1,31 @@
+{
+  "input_parameters": {
+    "properties": {
+      "document_id": {
+        "minLength": 10,
+        "type": "string"
+      },
+      "end_index": {
+        "minimum": 1,
+        "type": "integer"
+      },
+      "markdown_text": {
+        "type": "string"
+      },
+      "start_index": {
+        "minimum": 1,
+        "type": "integer"
+      },
+      "tab_id": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "document_id",
+      "markdown_text"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLEDOCS_UPDATE_DOCUMENT_SECTION_MARKDOWN",
+  "version": "20261008_00"
+}

@@ -1,0 +1,19 @@
+{
+  "input_parameters": {
+    "properties": {
+      "file_id": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "filename": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "file_id"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLEDOCS_EXPORT_DOCUMENT_AS_PDF",
+  "version": "20261008_00"
+}

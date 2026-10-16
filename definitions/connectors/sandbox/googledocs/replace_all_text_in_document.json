@@ -1,0 +1,34 @@
+{
+  "replies": [
+    {
+      "create_footer": {
+        "footer_id": "sample"
+      },
+      "create_header": {
+        "header_id": "sample"
+      },
+      "create_footnote": {
+        "footnote_id": "sample"
+      },
+      "replace_all_text": {
+        "occurrences_changed": 1
+      },
+      "create_named_range": {
+        "named_range_id": "sample"
+      },
+      "insert_inline_image": {
+        "object_id": "sample"
+      },
+      "insert_inline_sheets_chart": {
+        "object_id": "sample"
+      }
+    }
+  ],
+  "display_url": "sample",
+  "document_id": "sample",
+  "document_url": "sample",
+  "write_control": {
+    "targetRevisionId": "sample",
+    "requiredRevisionId": "sample"
+  }
+}

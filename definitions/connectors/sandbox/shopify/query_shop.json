@@ -1,0 +1,116 @@
+{
+  "shop": {
+    "id": "sample",
+    "url": "sample",
+    "name": "sample",
+    "plan": {
+      "displayName": "sample",
+      "shopifyPlus": true,
+      "partnerDevelopment": true
+    },
+    "email": "sample",
+    "features": {
+      "captcha": true,
+      "reports": true,
+      "branding": "ROGERS",
+      "liveView": true,
+      "giftCards": true,
+      "storefront": true,
+      "showMetrics": true,
+      "avalaraAvatax": true,
+      "onboardingVisual": true,
+      "dynamicRemarketing": true,
+      "sellsSubscriptions": true,
+      "usingShopifyBalance": true,
+      "harmonizedSystemCode": true,
+      "internationalDomains": true,
+      "captchaExternalDomains": true,
+      "internationalPriceRules": true,
+      "internationalPriceOverrides": true,
+      "legacySubscriptionGatewayEnabled": true,
+      "paypalExpressSubscriptionGatewayStatus": "sample"
+    },
+    "createdAt": "sample",
+    "updatedAt": "sample",
+    "unitSystem": "sample",
+    "weightUnit": "sample",
+    "shopAddress": {
+      "zip": "sample",
+      "city": "sample",
+      "country": "sample",
+      "address1": "sample",
+      "address2": "sample",
+      "province": "sample",
+      "countryCode": "sample",
+      "provinceCode": "sample"
+    },
+    "taxShipping": true,
+    "contactEmail": "sample",
+    "currencyCode": "sample",
+    "ianaTimezone": "sample",
+    "primaryDomain": {
+      "id": "sample",
+      "url": "sample",
+      "host": "sample",
+      "sslEnabled": true,
+      "localization": {
+        "country": "sample",
+        "defaultLocale": "sample",
+        "alternateLocales": []
+      }
+    },
+    "setupRequired": true,
+    "shopOwnerName": "sample",
+    "taxesIncluded": true,
+    "timezoneOffset": "sample",
+    "currencyFormats": {
+      "moneyFormat": "sample",
+      "moneyInEmailsFormat": "sample",
+      "moneyWithCurrencyFormat": "sample",
+      "moneyWithCurrencyInEmailsFormat": "sample"
+    },
+    "myshopifyDomain": "sample",
+    "paymentSettings": {
+      "supportedDigitalWallets": [
+        "sample"
+      ]
+    },
+    "customerAccounts": "sample",
+    "checkoutApiSupported": true,
+    "timezoneAbbreviation": "sample",
+    "timezoneOffsetMinutes": 1,
+    "orderNumberFormatPrefix": "sample",
+    "orderNumberFormatSuffix": "sample",
+    "transactionalSmsDisabled": true,
+    "enabledPresentmentCurrencies": [
+      "sample"
+    ],
+    "marketingSmsConsentEnabledAtCheckout": true
+  },
+  "errors": [
+    {
+      "path": [
+        "sample"
+      ],
+      "message": "sample",
+      "locations": [
+        {
+          "line": 1,
+          "column": 1
+        }
+      ],
+      "extensions": {}
+    }
+  ],
+  "extensions": {
+    "cost": {
+      "throttleStatus": {
+        "restoreRate": 1,
+        "maximumAvailable": 1,
+        "currentlyAvailable": 1
+      },
+      "actualQueryCost": 1,
+      "requestedQueryCost": 1
+    }
+  }
+}

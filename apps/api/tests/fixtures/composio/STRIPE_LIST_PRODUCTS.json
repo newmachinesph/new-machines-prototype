@@ -1,0 +1,39 @@
+{
+  "input_parameters": {
+    "properties": {
+      "active": {
+        "type": "boolean"
+      },
+      "created": {
+        "additionalProperties": {
+          "type": "integer"
+        },
+        "type": "object"
+      },
+      "ending_before": {
+        "type": "string"
+      },
+      "ids": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "limit": {
+        "type": "integer"
+      },
+      "shippable": {
+        "type": "boolean"
+      },
+      "starting_after": {
+        "type": "string"
+      },
+      "url": {
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "slug": "STRIPE_LIST_PRODUCTS",
+  "version": "20261014_00"
+}

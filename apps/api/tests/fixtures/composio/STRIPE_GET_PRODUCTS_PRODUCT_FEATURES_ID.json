@@ -1,0 +1,19 @@
+{
+  "input_parameters": {
+    "properties": {
+      "id": {
+        "type": "string"
+      },
+      "product": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "product",
+      "id"
+    ],
+    "type": "object"
+  },
+  "slug": "STRIPE_GET_PRODUCTS_PRODUCT_FEATURES_ID",
+  "version": "20261014_00"
+}

@@ -1,0 +1,14 @@
+{
+  "id": "sample",
+  "end": 1,
+  "start": 1,
+  "coupon": "sample",
+  "object": "sample",
+  "invoice": "sample",
+  "customer": "sample",
+  "invoice_item": "sample",
+  "subscription": "sample",
+  "promotion_code": "sample",
+  "checkout_session": "sample",
+  "subscription_item": "sample"
+}

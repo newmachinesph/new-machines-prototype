@@ -1,0 +1,183 @@
+{
+  "id": "sample",
+  "paid": true,
+  "amount": 1,
+  "object": "sample",
+  "review": "sample",
+  "status": "sample",
+  "created": 1,
+  "outcome": {
+    "rule": "sample",
+    "type": "sample",
+    "reason": "sample",
+    "risk_level": "sample",
+    "risk_score": 1,
+    "network_status": "sample",
+    "seller_message": "sample"
+  },
+  "refunds": {
+    "url": "sample",
+    "data": [
+      {
+        "id": "sample",
+        "amount": 1,
+        "charge": "sample",
+        "object": "sample",
+        "reason": "sample",
+        "status": "sample",
+        "created": 1,
+        "currency": "sample",
+        "metadata": {},
+        "receipt_number": "sample",
+        "balance_transaction": "sample"
+      }
+    ],
+    "object": "sample",
+    "has_more": true
+  },
+  "captured": true,
+  "currency": "sample",
+  "customer": "sample",
+  "disputed": true,
+  "livemode": true,
+  "metadata": {},
+  "refunded": true,
+  "shipping": {
+    "name": "sample",
+    "phone": "sample",
+    "address": {
+      "city": "sample",
+      "line1": "sample",
+      "line2": "sample",
+      "state": "sample",
+      "country": "sample",
+      "postal_code": "sample"
+    },
+    "carrier": "sample",
+    "tracking_number": "sample"
+  },
+  "application": "sample",
+  "description": "sample",
+  "receipt_url": "sample",
+  "failure_code": "sample",
+  "on_behalf_of": "sample",
+  "fraud_details": {
+    "user_report": "sample",
+    "stripe_report": "sample"
+  },
+  "receipt_email": "sample",
+  "transfer_data": {
+    "amount": 1,
+    "destination": "sample"
+  },
+  "payment_intent": "sample",
+  "payment_method": "sample",
+  "receipt_number": "sample",
+  "transfer_group": "sample",
+  "amount_captured": 1,
+  "amount_refunded": 1,
+  "application_fee": "sample",
+  "billing_details": {
+    "name": "sample",
+    "email": "sample",
+    "phone": "sample",
+    "address": {
+      "city": "sample",
+      "line1": "sample",
+      "line2": "sample",
+      "state": "sample",
+      "country": "sample",
+      "postal_code": "sample"
+    }
+  },
+  "failure_message": "sample",
+  "source_transfer": "sample",
+  "balance_transaction": "sample",
+  "statement_descriptor": "sample",
+  "application_fee_amount": 1,
+  "payment_method_details": {
+    "card": {
+      "brand": "sample",
+      "last4": "sample",
+      "checks": {
+        "cvc_check": "sample",
+        "address_line1_check": "sample",
+        "address_postal_code_check": "sample"
+      },
+      "wallet": {
+        "type": "sample",
+        "dynamic_last4": "sample"
+      },
+      "country": "sample",
+      "funding": "sample",
+      "mandate": "sample",
+      "network": "sample",
+      "exp_year": 1,
+      "exp_month": 1,
+      "fingerprint": "sample",
+      "installments": {},
+      "three_d_secure": {
+        "result": "sample",
+        "version": "sample",
+        "result_reason": "sample",
+        "transaction_id": "sample",
+        "authentication_flow": "sample",
+        "electronic_commerce_indicator": "sample"
+      },
+      "amount_authorized": 1,
+      "network_transaction_id": "sample"
+    },
+    "type": "sample",
+    "ideal": {
+      "bic": "sample",
+      "bank": "sample",
+      "iban_last4": "sample",
+      "verified_name": "sample",
+      "generated_sepa_debit": "sample",
+      "generated_sepa_debit_mandate": "sample"
+    },
+    "klarna": {
+      "preferred_locale": "sample",
+      "payment_method_category": "sample"
+    },
+    "paypal": {
+      "payer_id": "sample",
+      "payer_name": "sample",
+      "payer_email": "sample",
+      "transaction_id": "sample",
+      "seller_protection": {
+        "status": "sample",
+        "dispute_categories": []
+      }
+    },
+    "ach_debit": {
+      "last4": "sample",
+      "country": "sample",
+      "bank_name": "sample",
+      "fingerprint": "sample",
+      "routing_number": "sample",
+      "account_holder_type": "sample"
+    },
+    "sepa_debit": {
+      "last4": "sample",
+      "country": "sample",
+      "mandate": "sample",
+      "bank_code": "sample",
+      "branch_code": "sample",
+      "fingerprint": "sample"
+    },
+    "us_bank_account": {
+      "last4": "sample",
+      "mandate": "sample",
+      "bank_name": "sample",
+      "fingerprint": "sample",
+      "account_type": "sample",
+      "routing_number": "sample",
+      "payment_reference": "sample",
+      "account_holder_type": "sample"
+    }
+  },
+  "failure_balance_transaction": "sample",
+  "statement_descriptor_suffix": "sample",
+  "calculated_statement_descriptor": "sample"
+}

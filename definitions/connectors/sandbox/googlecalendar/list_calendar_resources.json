@@ -1,0 +1,28 @@
+{
+  "etag": "sample",
+  "kind": "sample",
+  "items": [
+    {
+      "kind": "sample",
+      "etags": "sample",
+      "capacity": 1,
+      "floorName": "sample",
+      "buildingId": "sample",
+      "resourceId": "sample",
+      "floorSection": "sample",
+      "resourceName": "sample",
+      "resourceType": "sample",
+      "resourceEmail": "sample",
+      "featureInstances": [
+        {
+          "feature": null
+        }
+      ],
+      "resourceCategory": "sample",
+      "resourceDescription": "sample",
+      "generatedResourceName": "sample",
+      "userVisibleDescription": "sample"
+    }
+  ],
+  "nextPageToken": "sample"
+}

@@ -1,0 +1,35 @@
+{
+  "input_parameters": {
+    "properties": {
+      "addLabelIds": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "messageIds": {
+        "items": {
+          "type": "string"
+        },
+        "maxItems": 1000,
+        "minItems": 1,
+        "type": "array"
+      },
+      "removeLabelIds": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "userId": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "messageIds"
+    ],
+    "type": "object"
+  },
+  "slug": "GMAIL_BATCH_MODIFY_MESSAGES",
+  "version": "20261015_00"
+}

@@ -1,0 +1,20 @@
+# Reviewed choices for `scripts/import_connector.py googlesheets`. They win over the importer's guesses.
+# Under `tools`, keys are Composio slugs: set `action_class` (read, write, delete, money) with `why`,
+# `skip` with a reason, or `id` to name the tool in Studio.
+# Writing an empty value clears a cell; that stays a write (it asks first), like editing any cell by hand.
+capability_prefix: sheets
+
+tools:
+  GOOGLESHEETS_VALUES_UPDATE:
+    id: update_cells
+  GOOGLESHEETS_ADD_SHEET:
+    id: add_sheet
+  GOOGLESHEETS_CREATE_GOOGLE_SHEET1:
+    drop: [folder_id, folder_name]  # a shared folder would share the new sheet; it is made in My Drive
+    description: >-
+      Creates a new Google Spreadsheet in the connected account's Drive, named by title (Google names it
+      'Untitled spreadsheet' without one).
+  GOOGLESHEETS_MOVE_SPREADSHEET_TO_FOLDER:
+    skip: Moves the file to another Drive folder, which can share it with that folder's members.
+  GOOGLESHEETS_SPREADSHEETS_SHEETS_COPY_TO:
+    skip: Copies a tab into any other spreadsheet, including one outside the business.

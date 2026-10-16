@@ -1,0 +1,24 @@
+{
+  "responses": [
+    {
+      "updatedData": {
+        "range": "sample",
+        "values": [
+          []
+        ],
+        "majorDimension": "ROWS"
+      },
+      "updatedRows": 1,
+      "updatedCells": 1,
+      "updatedRange": "sample",
+      "spreadsheetId": "sample",
+      "updatedColumns": 1
+    }
+  ],
+  "display_url": "sample",
+  "spreadsheetId": "sample",
+  "totalUpdatedRows": 1,
+  "totalUpdatedCells": 1,
+  "totalUpdatedSheets": 1,
+  "totalUpdatedColumns": 1
+}

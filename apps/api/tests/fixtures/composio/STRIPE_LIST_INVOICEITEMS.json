@@ -1,0 +1,36 @@
+{
+  "input_parameters": {
+    "properties": {
+      "created": {
+        "additionalProperties": {
+          "type": "integer"
+        },
+        "type": "object"
+      },
+      "customer": {
+        "type": "string"
+      },
+      "customer_account": {
+        "type": "string"
+      },
+      "ending_before": {
+        "type": "string"
+      },
+      "invoice": {
+        "type": "string"
+      },
+      "limit": {
+        "type": "integer"
+      },
+      "pending": {
+        "type": "boolean"
+      },
+      "starting_after": {
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "slug": "STRIPE_LIST_INVOICEITEMS",
+  "version": "20261014_00"
+}

@@ -1,0 +1,30 @@
+{
+  "input_parameters": {
+    "properties": {
+      "includeEmpty": {
+        "type": "boolean"
+      },
+      "ranges": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "sheetId": {
+        "type": "integer"
+      },
+      "sheetTitle": {
+        "type": "string"
+      },
+      "spreadsheetId": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "spreadsheetId"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLESHEETS_GET_DATA_VALIDATION_RULES",
+  "version": "20261001_00"
+}

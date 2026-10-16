@@ -1,0 +1,18 @@
+{
+  "input_parameters": {
+    "properties": {
+      "text": {
+        "type": "string"
+      },
+      "title": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "title"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLEDOCS_CREATE_DOCUMENT",
+  "version": "20261008_00"
+}

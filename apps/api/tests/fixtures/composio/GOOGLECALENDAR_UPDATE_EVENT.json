@@ -1,0 +1,239 @@
+{
+  "input_parameters": {
+    "properties": {
+      "attendees": {
+        "items": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "additionalProperties": true,
+              "type": "object"
+            }
+          ]
+        },
+        "type": "array"
+      },
+      "birthdayProperties": {
+        "additionalProperties": false,
+        "properties": {
+          "contact": {
+            "type": "string"
+          },
+          "customTypeName": {
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "birthday",
+              "anniversary",
+              "other"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "calendar_id": {
+        "type": "string"
+      },
+      "create_meeting_room": {
+        "type": "boolean"
+      },
+      "description": {
+        "type": "string"
+      },
+      "end_datetime": {
+        "pattern": "^\\d{4}-\\d{2}-\\d{2}[T ]\\d{2}:\\d{2}(:\\d{2})?(\\.\\d+)?(Z|[+-]\\d{1,2}(:?\\d{2})?)?$",
+        "type": "string"
+      },
+      "eventType": {
+        "enum": [
+          "birthday",
+          "default",
+          "focusTime",
+          "outOfOffice",
+          "workingLocation"
+        ],
+        "type": "string"
+      },
+      "event_duration_hour": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "event_duration_minutes": {
+        "maximum": 59,
+        "minimum": 0,
+        "type": "integer"
+      },
+      "event_id": {
+        "type": "string"
+      },
+      "extended_properties": {
+        "additionalProperties": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "type": "object"
+      },
+      "focusTimeProperties": {
+        "additionalProperties": false,
+        "properties": {
+          "autoDeclineMode": {
+            "enum": [
+              "declineNone",
+              "declineAllConflictingInvitations",
+              "declineOnlyNewConflictingInvitations"
+            ],
+            "type": "string"
+          },
+          "chatStatus": {
+            "enum": [
+              "active",
+              "doNotDisturb"
+            ],
+            "type": "string"
+          },
+          "declineMessage": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "guestsCanInviteOthers": {
+        "type": "boolean"
+      },
+      "guestsCanModify": {
+        "type": "boolean"
+      },
+      "guestsCanSeeOtherGuests": {
+        "type": "boolean"
+      },
+      "location": {
+        "type": "string"
+      },
+      "outOfOfficeProperties": {
+        "additionalProperties": false,
+        "properties": {
+          "autoDeclineMode": {
+            "enum": [
+              "declineNone",
+              "declineAllConflictingInvitations",
+              "declineOnlyNewConflictingInvitations"
+            ],
+            "type": "string"
+          },
+          "declineMessage": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "recurrence": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "send_updates": {
+        "enum": [
+          "all",
+          "externalOnly",
+          "none"
+        ],
+        "type": "string"
+      },
+      "start_datetime": {
+        "pattern": "^\\d{4}-\\d{2}-\\d{2}[T ]\\d{2}:\\d{2}(:\\d{2})?(\\.\\d+)?(Z|[+-]\\d{1,2}(:?\\d{2})?)?$",
+        "type": "string"
+      },
+      "summary": {
+        "type": "string"
+      },
+      "timezone": {
+        "type": "string"
+      },
+      "transparency": {
+        "enum": [
+          "opaque",
+          "transparent"
+        ],
+        "type": "string"
+      },
+      "visibility": {
+        "enum": [
+          "default",
+          "public",
+          "private",
+          "confidential"
+        ],
+        "type": "string"
+      },
+      "workingLocationProperties": {
+        "additionalProperties": false,
+        "properties": {
+          "customLocation": {
+            "additionalProperties": false,
+            "properties": {
+              "label": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "label"
+            ],
+            "type": "object"
+          },
+          "homeOffice": {
+            "additionalProperties": false,
+            "properties": {},
+            "type": "object"
+          },
+          "officeLocation": {
+            "additionalProperties": false,
+            "properties": {
+              "buildingId": {
+                "type": "string"
+              },
+              "deskId": {
+                "type": "string"
+              },
+              "floorId": {
+                "type": "string"
+              },
+              "floorSectionId": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "type": {
+            "enum": [
+              "homeOffice",
+              "officeLocation",
+              "customLocation"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "type": "object"
+      }
+    },
+    "required": [
+      "start_datetime",
+      "event_id"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLECALENDAR_UPDATE_EVENT",
+  "version": "20261010_00"
+}

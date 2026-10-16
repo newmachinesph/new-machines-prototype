@@ -1,0 +1,41 @@
+# Reviewed choices for `scripts/import_connector.py googledocs`. They win over the importer's guesses.
+# Replacing a whole document is blocked like a delete; replacing a section or some text stays a write (it
+# asks first), like editing the document by hand, but never with nothing. Drive uploads and sharing details
+# are left out.
+capability_prefix: docs
+
+tools:
+  GOOGLEDOCS_CREATE_DRIVE_FILE:
+    skip: Creates any Drive file or shortcut, in any folder, which can share it with that folder's members.
+  GOOGLEDOCS_UPLOAD_DRIVE_FILE:
+    skip: Uploads any file to Drive, in any folder, which can share it with that folder's members.
+  GOOGLEDOCS_LIST_DRIVE_ITEM_PERMISSIONS:
+    skip: Lists who a file is shared with; no pack needs it.
+  GOOGLEDOCS_GET_DOCS_SPREADSHEET_VALUES:
+    skip: A Sheets action; the Google Sheets connector has it.
+  GOOGLEDOCS_LIST_SPREADSHEET_CHARTS:
+    skip: A Sheets action; the Google Sheets connector has it.
+  GOOGLEDOCS_CREATE_DOCUMENT_MARKDOWN:
+    drop: [image_assets]  # takes files uploaded to Composio first, which a run cannot do
+  GOOGLEDOCS_EXPORT_DOCUMENT_AS_PDF:
+    id: export_pdf
+  GOOGLEDOCS_COPY_DOCUMENT:
+    id: copy_document
+  GOOGLEDOCS_INSERT_TEXT_ACTION:
+    id: insert_text
+  GOOGLEDOCS_REPLACE_ALL_TEXT:
+    id: replace_all_text
+  GOOGLEDOCS_REPLACE_IMAGE:
+    id: replace_image
+  GOOGLEDOCS_GET_DOCUMENT_PLAINTEXT:
+    id: get_document_text
+  GOOGLEDOCS_UPDATE_DOCUMENT_MARKDOWN:
+    action_class: delete
+    why: Replaces the whole document, which loses everything in it, like update_existing_document.
+  GOOGLEDOCS_REPLACE_ALL_TEXT:
+    drop: [search_by_regex]  # a pattern can match far more than the agent means to change
+    restrict:
+      replace_text: {minLength: 1}  # replacing with nothing deletes text
+  GOOGLEDOCS_UPDATE_DOCUMENT_SECTION_MARKDOWN:
+    restrict:
+      markdown_text: {minLength: 1}

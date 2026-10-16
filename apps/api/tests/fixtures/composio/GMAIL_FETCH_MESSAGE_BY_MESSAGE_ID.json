@@ -1,0 +1,22 @@
+{
+  "input_parameters": {
+    "properties": {
+      "format": {
+        "type": "string"
+      },
+      "message_id": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "user_id": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "message_id"
+    ],
+    "type": "object"
+  },
+  "slug": "GMAIL_FETCH_MESSAGE_BY_MESSAGE_ID",
+  "version": "20261015_00"
+}

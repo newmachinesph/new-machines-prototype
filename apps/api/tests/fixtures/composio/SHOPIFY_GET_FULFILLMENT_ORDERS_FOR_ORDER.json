@@ -1,0 +1,21 @@
+{
+  "input_parameters": {
+    "properties": {
+      "include_financial_summaries": {
+        "type": "boolean"
+      },
+      "include_order_reference_fields": {
+        "type": "boolean"
+      },
+      "order_id": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "order_id"
+    ],
+    "type": "object"
+  },
+  "slug": "SHOPIFY_GET_FULFILLMENT_ORDERS_FOR_ORDER",
+  "version": "20261014_00"
+}

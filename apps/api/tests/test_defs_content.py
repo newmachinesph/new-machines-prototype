@@ -1,12 +1,15 @@
 """The real definitions bundle (demo-app/definitions) is valid and behaves as the product expects."""
 
+import importlib.util
 import json
 import re
+import sys
 from functools import cache
 from pathlib import Path
 
 import celpy
 import pytest
+import yaml
 from jsonschema import Draft202012Validator
 
 from app import settings
@@ -391,6 +394,7 @@ def test_connector_defaults_and_classes(bundle):
             ("send_email", "write", "mail.send", "GMAIL_SEND_EMAIL"),
         ],
         "googlecalendar": [("list_events", "read", "calendar.read", "GOOGLECALENDAR_EVENTS_LIST")],
+        "googledocs": [],  # every tool imported by scripts/import_connector.py
     }
     assert {c.key for c in bundle.of("connector")} == set(expected)
     for key, tools in expected.items():
@@ -402,8 +406,94 @@ def test_connector_defaults_and_classes(bundle):
             "money": "deny",
         }
         got = [(t["id"], t["action_class"], t["capability"], t["slug"]) for t in body["tools"]]
-        assert got == tools
+        # The hand-written tools come first, unchanged; scripts/import_connector.py adds the rest after them.
+        assert got[: len(tools)] == tools
         assert all(t["slug"].startswith(body["toolkit"].upper()) for t in body["tools"])
+
+
+SCRIPTS = Path(__file__).parents[1] / "scripts"
+
+
+def _importer():
+    """scripts/import_connector.py, whose word lists sort Composio actions; the checks below share them."""
+    if "import_connector" not in sys.modules:
+        spec = importlib.util.spec_from_file_location("import_connector", SCRIPTS / "import_connector.py")
+        module = importlib.util.module_from_spec(spec)
+        sys.modules["import_connector"] = module
+        spec.loader.exec_module(module)
+    return sys.modules["import_connector"]
+
+
+# Left out on purpose, beyond what the reviewed configs skip or block: each hands out a secret, runs a
+# free-form query or bills someone without its name saying so.
+ALSO_NEVER_IMPORTED = {
+    "SHOPIFY_GET_STOREFRONT_ACCESS_TOKENS",
+    "SHOPIFY_BULK_QUERY_OPERATION",  # its `query` is a GraphQL document
+    "SHOPIFY_RUN_BULK_OPERATION_QUERY",
+    "SHOPIFY_GRAPH_QL_QUERY",
+    "STRIPE_LIST_APPS_SECRETS",
+    "STRIPE_CREATE_SUBSCRIPTION",
+    "STRIPE_UPDATE_SUBSCRIPTION",
+    "STRIPE_CREATE_INVOICE",
+    "STRIPE_FINALIZE_INVOICE",
+    "STRIPE_ADD_INVOICE_LINES",
+    "STRIPE_CREATE_CUSTOMER_CARD",
+    "STRIPE_CREATE_CHECKOUT_SESSION",
+    "STRIPE_CREATE_PAYMENT_LINK",
+    "STRIPE_CREATE_BILLING_METER_EVENT",
+}
+# Arguments that take a free-form query language, so the tool's class cannot be known from its name.
+FREE_FORM = re.compile(r"graphql|mutation|_document$|^document$", re.IGNORECASE)
+
+
+def never_imported() -> set[str]:
+    """Every action a reviewed config (scripts/connector_imports) skips or blocks, plus the list above."""
+    found = set(ALSO_NEVER_IMPORTED)
+    for path in (SCRIPTS / "connector_imports").glob("*.yaml"):
+        for slug, choice in (yaml.safe_load(path.read_text(encoding="utf-8")).get("tools") or {}).items():
+            if (choice or {}).get("skip") or (choice or {}).get("action_class") in ("delete", "money"):
+                found.add(slug)
+    return found
+
+
+def test_no_connector_tool_deletes_or_moves_money(bundle):
+    ic = _importer()
+    blocked = never_imported()
+    assert {"SHOPIFY_GRAPH_QL_ADMIN_EXECUTE", "GMAIL_CREATE_FILTER", "GOOGLECALENDAR_ACL_INSERT"} <= blocked
+    for connector in bundle.of("connector"):
+        for tool in connector.body["tools"]:
+            slug, where = tool["slug"], f"{connector.key}.{tool['id']}"
+            assert tool["action_class"] in ("read", "write"), where
+            assert slug not in blocked, where
+            words = slug.split("_")[1:]
+            if set(words) & (ic.DELETE_WORDS | ic.MONEY_WORDS):
+                # Only a read named for reading may mention deleting or money (list_refunds, get_order).
+                assert tool["action_class"] == "read" and words[0] in ic.READ_VERBS, where
+
+
+def _property_names(schema) -> set[str]:
+    if isinstance(schema, list):
+        return set().union(*(_property_names(s) for s in schema))
+    if not isinstance(schema, dict):
+        return set()
+    own = set(schema.get("properties") or {})
+    return own.union(*(_property_names(v) for v in schema.values()))
+
+
+def test_no_connector_tool_takes_a_free_form_query(bundle):
+    for connector in bundle.of("connector"):
+        for tool in connector.body["tools"]:
+            names = {n for n in _property_names(tool["input_schema"]) if FREE_FORM.search(n)}
+            assert not names, f"{connector.key}.{tool['id']} takes {sorted(names)}"
+
+
+def test_a_tool_capability_matches_its_class(bundle):
+    for connector in bundle.of("connector"):
+        for tool in connector.body["tools"]:
+            action = tool["capability"].rsplit(".", 1)[-1]
+            allowed = {"read"} if tool["action_class"] == "read" else {"write", "send"}
+            where = f"{connector.key}.{tool['id']}"
+            assert action in allowed, f"{where} is {tool['action_class']}: {tool['capability']}"
 
 
 def test_every_connector_tool_has_a_shared_sandbox_response(bundle):

@@ -1,0 +1,21 @@
+{
+  "custom_collection": {
+    "id": "sample",
+    "image": {
+      "alt": "sample",
+      "src": "sample",
+      "width": 1,
+      "height": 1,
+      "created_at": "sample"
+    },
+    "title": "sample",
+    "handle": "sample",
+    "body_html": "sample",
+    "sort_order": "sample",
+    "updated_at": "sample",
+    "published_at": "sample",
+    "published_scope": "sample",
+    "template_suffix": "sample",
+    "admin_graphql_api_id": "sample"
+  }
+}

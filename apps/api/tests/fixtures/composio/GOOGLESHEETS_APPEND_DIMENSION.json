@@ -1,0 +1,43 @@
+{
+  "input_parameters": {
+    "properties": {
+      "dimension": {
+        "enum": [
+          "ROWS",
+          "COLUMNS"
+        ],
+        "type": "string"
+      },
+      "include_spreadsheet_in_response": {
+        "type": "boolean"
+      },
+      "length": {
+        "type": "integer"
+      },
+      "response_include_grid_data": {
+        "type": "boolean"
+      },
+      "response_ranges": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "sheet_id": {
+        "type": "integer"
+      },
+      "spreadsheet_id": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "spreadsheet_id",
+      "sheet_id",
+      "dimension",
+      "length"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLESHEETS_APPEND_DIMENSION",
+  "version": "20261001_00"
+}

@@ -1,0 +1,23 @@
+{
+  "input_parameters": {
+    "properties": {
+      "limit": {
+        "maximum": 100,
+        "minimum": 1,
+        "type": "integer"
+      },
+      "page": {
+        "type": "string"
+      },
+      "query": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "query"
+    ],
+    "type": "object"
+  },
+  "slug": "STRIPE_SEARCH_PAYMENT_INTENTS",
+  "version": "20261014_00"
+}

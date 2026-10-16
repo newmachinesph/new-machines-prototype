@@ -1,0 +1,72 @@
+{
+  "input_parameters": {
+    "properties": {
+      "createParagraphBullets": {
+        "additionalProperties": false,
+        "properties": {
+          "bulletPreset": {
+            "enum": [
+              "BULLET_GLYPH_PRESET_UNSPECIFIED",
+              "BULLET_DISC_CIRCLE_SQUARE",
+              "BULLET_DIAMONDX_ARROW3D_SQUARE",
+              "BULLET_CHECKBOX",
+              "BULLET_ARROW_DIAMOND_DISC",
+              "BULLET_STAR_CIRCLE_SQUARE",
+              "BULLET_ARROW3D_CIRCLE_SQUARE",
+              "BULLET_LEFTTRIANGLE_DIAMOND_DISC",
+              "BULLET_DIAMONDX_HOLLOWDIAMOND_SQUARE",
+              "BULLET_DIAMOND_CIRCLE_SQUARE",
+              "NUMBERED_DECIMAL_ALPHA_ROMAN",
+              "NUMBERED_DECIMAL_ALPHA_ROMAN_PARENS",
+              "NUMBERED_DECIMAL_NESTED",
+              "NUMBERED_UPPERALPHA_ALPHA_ROMAN",
+              "NUMBERED_UPPERROMAN_UPPERALPHA_DECIMAL",
+              "NUMBERED_ZERODECIMAL_ALPHA_ROMAN"
+            ],
+            "type": "string"
+          },
+          "range": {
+            "additionalProperties": false,
+            "properties": {
+              "endIndex": {
+                "type": "integer"
+              },
+              "segmentId": {
+                "type": "string"
+              },
+              "startIndex": {
+                "type": "integer"
+              },
+              "tabId": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "startIndex",
+              "endIndex"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "range",
+          "bulletPreset"
+        ],
+        "type": "object"
+      },
+      "document_id": {
+        "type": "string"
+      },
+      "tabId": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "document_id",
+      "createParagraphBullets"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLEDOCS_CREATE_PARAGRAPH_BULLETS",
+  "version": "20261008_00"
+}

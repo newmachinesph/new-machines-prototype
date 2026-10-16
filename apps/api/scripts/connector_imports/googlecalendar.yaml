@@ -1,0 +1,38 @@
+# Reviewed choices for `scripts/import_connector.py googlecalendar`. They win over the importer's guesses.
+# Sharing rules (ACL) and watch channels are left out: one shares calendars with anyone, the other sends
+# changes to an outside web address.
+capability_prefix: calendar
+
+tools:
+  GOOGLECALENDAR_ACL_INSERT:
+    skip: Shares a calendar with anyone.
+  GOOGLECALENDAR_ACL_PATCH:
+    skip: Changes who a calendar is shared with.
+  GOOGLECALENDAR_ACL_UPDATE:
+    skip: Changes who a calendar is shared with.
+  GOOGLECALENDAR_ACL_WATCH:
+    skip: Sends changes to an outside web address.
+  GOOGLECALENDAR_CALENDAR_LIST_WATCH:
+    skip: Sends changes to an outside web address.
+  GOOGLECALENDAR_EVENTS_WATCH:
+    skip: Sends changes to an outside web address.
+  GOOGLECALENDAR_DUPLICATE_CALENDAR:
+    skip: Same as create_calendar.
+  GOOGLECALENDAR_GET_CURRENT_USER:
+    skip: Describes the connection itself.
+  GOOGLECALENDAR_EVENTS_MOVE:
+    skip: Moves an event to another calendar, which can share it with that calendar's members.
+  GOOGLECALENDAR_PATCH_EVENT:
+    restrict:
+      status: {enum: [confirmed, tentative]}  # "cancelled" would delete the event
+  GOOGLECALENDAR_EVENTS_IMPORT:
+    restrict:
+      status: {enum: [confirmed, tentative]}
+  GOOGLECALENDAR_CREATE_CALENDAR:
+    id: create_calendar
+  GOOGLECALENDAR_UPDATE_EVENT:
+    id: update_event
+  GOOGLECALENDAR_GET_CALENDAR:
+    id: get_calendar
+  GOOGLECALENDAR_LIST_CALENDARS:
+    id: list_calendars

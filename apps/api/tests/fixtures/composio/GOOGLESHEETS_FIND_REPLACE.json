@@ -1,0 +1,62 @@
+{
+  "input_parameters": {
+    "properties": {
+      "allSheets": {
+        "type": "boolean"
+      },
+      "endColumnIndex": {
+        "type": "integer"
+      },
+      "endRowIndex": {
+        "type": "integer"
+      },
+      "find": {
+        "type": "string"
+      },
+      "includeFormulas": {
+        "type": "boolean"
+      },
+      "matchCase": {
+        "type": "boolean"
+      },
+      "matchEntireCell": {
+        "type": "boolean"
+      },
+      "range": {
+        "type": "string"
+      },
+      "rangeSheetId": {
+        "type": "integer"
+      },
+      "replace": {
+        "type": "string"
+      },
+      "searchByRegex": {
+        "type": "boolean"
+      },
+      "sheetId": {
+        "type": "integer"
+      },
+      "sheetName": {
+        "type": "string"
+      },
+      "spreadsheetId": {
+        "type": "string"
+      },
+      "startColumnIndex": {
+        "type": "integer"
+      },
+      "startRowIndex": {
+        "type": "integer"
+      }
+    },
+    "required": [
+      "spreadsheetId",
+      "find",
+      "replace"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLESHEETS_FIND_REPLACE",
+  "version": "20261001_00"
+}

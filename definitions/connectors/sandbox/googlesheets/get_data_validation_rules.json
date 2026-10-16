@@ -1,0 +1,22 @@
+{
+  "rules": [
+    {
+      "strict": true,
+      "values": [
+        {
+          "relativeDate": "sample",
+          "userEnteredValue": "sample"
+        }
+      ],
+      "rangeA1": "sample",
+      "sheetId": 1,
+      "ruleKind": "sample",
+      "sheetTitle": "sample",
+      "inputMessage": "sample",
+      "showCustomUi": true,
+      "conditionType": "sample"
+    }
+  ],
+  "displayUrl": "sample",
+  "spreadsheetId": "sample"
+}

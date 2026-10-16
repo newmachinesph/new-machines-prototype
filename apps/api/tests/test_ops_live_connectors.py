@@ -52,6 +52,7 @@ def test_each_definition_is_one_connector_with_its_settings_and_todays_usage(usa
     assert list(entries) == [
         "gmail",
         "googlecalendar",
+        "googledocs",
         "googlesheets",
         "shopify",
         "stripe",
@@ -69,12 +70,12 @@ def test_each_definition_is_one_connector_with_its_settings_and_todays_usage(usa
         "callsToday": 4,
         "errorRate": 0.25,
         "defaults": DEFAULTS,
-        "scopes": ["orders.read"],
+        "scopes": ["orders.read", "store.write", "store.read"],  # each capability once, in tool order
     }
     stripe = entries["stripe"]
     assert (stripe.status, stripe.defaults.model_dump(), stripe.tenants_connected) == ("disabled", STRICT, 1)
     assert (stripe.calls_today, stripe.error_rate, stripe.category) == (0, 0.0, "Payments")
-    assert stripe.scopes == ["payments.read", "invoices.read"]
+    assert stripe.scopes == ["payments.read", "invoices.read", "payments.write"]
     assert (entries["gmail"].category, entries["googlesheets"].category) == ("Communication", "Spreadsheets")
     assert all(e.last_health_check is None for e in entries.values())
 
@@ -128,6 +129,7 @@ def test_the_live_list_and_actions_return_the_real_entry(live_ops, defs):
     assert [c["id"] for c in listed.json()] == [
         "gmail",
         "googlecalendar",
+        "googledocs",
         "googlesheets",
         "shopify",
         "stripe",

@@ -1,0 +1,38 @@
+{
+  "history": [
+    {
+      "id": "sample",
+      "messages": [
+        {
+          "id": "sample",
+          "threadId": "sample"
+        }
+      ],
+      "labelsAdded": [
+        {
+          "message": null,
+          "labelIds": []
+        }
+      ],
+      "labelsRemoved": [
+        {
+          "message": null,
+          "labelIds": []
+        }
+      ],
+      "messagesAdded": [
+        {
+          "message": null
+        }
+      ],
+      "messagesDeleted": [
+        {
+          "message": null
+        }
+      ]
+    }
+  ],
+  "historyId": "sample",
+  "display_url": "sample",
+  "nextPageToken": "sample"
+}

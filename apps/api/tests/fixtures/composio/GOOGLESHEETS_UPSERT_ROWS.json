@@ -1,0 +1,74 @@
+{
+  "input_parameters": {
+    "properties": {
+      "headers": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "keyColumn": {
+        "type": "string"
+      },
+      "key_column_index": {
+        "anyOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "normalization_message": {
+        "type": "string"
+      },
+      "rows": {
+        "items": {
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "type": "array"
+        },
+        "minItems": 1,
+        "type": "array"
+      },
+      "sheetName": {
+        "type": "string"
+      },
+      "spreadsheetId": {
+        "type": "string"
+      },
+      "strictMode": {
+        "type": "boolean"
+      },
+      "tableStart": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "spreadsheetId",
+      "sheetName",
+      "rows"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLESHEETS_UPSERT_ROWS",
+  "version": "20261001_00"
+}

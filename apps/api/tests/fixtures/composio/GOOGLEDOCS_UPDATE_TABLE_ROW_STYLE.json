@@ -1,0 +1,76 @@
+{
+  "input_parameters": {
+    "properties": {
+      "documentId": {
+        "type": "string"
+      },
+      "updateTableRowStyle": {
+        "additionalProperties": false,
+        "properties": {
+          "fields": {
+            "type": "string"
+          },
+          "rowIndices": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "tableRowStyle": {
+            "additionalProperties": false,
+            "properties": {
+              "minRowHeight": {
+                "additionalProperties": false,
+                "properties": {
+                  "magnitude": {
+                    "type": "number"
+                  },
+                  "unit": {
+                    "enum": [
+                      "PT",
+                      "UNIT_UNSPECIFIED"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "preventOverflow": {
+                "type": "boolean"
+              }
+            },
+            "type": "object"
+          },
+          "tableStartLocation": {
+            "additionalProperties": false,
+            "properties": {
+              "index": {
+                "type": "integer"
+              },
+              "segmentId": {
+                "type": "string"
+              },
+              "tabId": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "required": [
+          "tableStartLocation",
+          "tableRowStyle",
+          "fields"
+        ],
+        "type": "object"
+      }
+    },
+    "required": [
+      "documentId",
+      "updateTableRowStyle"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLEDOCS_UPDATE_TABLE_ROW_STYLE",
+  "version": "20261008_00"
+}

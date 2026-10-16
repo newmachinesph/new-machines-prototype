@@ -1,0 +1,21 @@
+{
+  "input_parameters": {
+    "properties": {
+      "document_id": {
+        "type": "string"
+      },
+      "segment_id": {
+        "type": "string"
+      },
+      "tab_id": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "document_id"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLEDOCS_GET_DOCUMENT_END_INDEX",
+  "version": "20261008_00"
+}

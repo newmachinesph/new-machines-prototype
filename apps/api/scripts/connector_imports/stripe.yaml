@@ -1,0 +1,43 @@
+# Reviewed choices for `scripts/import_connector.py stripe`. They win over the importer's guesses.
+# Most Stripe writes bill someone even when their name does not say so (subscriptions, invoices, cards), so
+# every write is blocked as money unless it is listed below as a reviewed write.
+capability_prefix: payments
+only_tagged: important
+writes_are_money: true
+include:
+  - STRIPE_LIST_CREDIT_NOTES
+  - STRIPE_LIST_CUSTOMERS
+  - STRIPE_LIST_DISPUTES
+  - STRIPE_LIST_INVOICE_PAYMENTS
+  - STRIPE_LIST_PAYMENT_INTENTS
+  - STRIPE_LIST_PAYOUTS
+  - STRIPE_LIST_PRICES
+  - STRIPE_LIST_PRODUCTS
+  - STRIPE_LIST_QUOTES
+  - STRIPE_LIST_SUBSCRIPTIONS
+  - STRIPE_LIST_TRANSFERS
+  - STRIPE_RETRIEVE_BALANCE
+  - STRIPE_RETRIEVE_UPCOMING_INVOICE
+
+tools:
+  STRIPE_CREATE_CUSTOMER:
+    action_class: write
+    why: Adds a customer record; charges nothing.
+  STRIPE_CREATE_PRODUCT:
+    action_class: write
+    why: Adds a catalogue product; charges nothing.
+  STRIPE_CREATE_PRICE:
+    action_class: write
+    why: Adds a price to a product; charges nothing.
+    drop: [transfer_lookup_key]  # would move a live price's lookup key, and its checkouts, to the new price
+  STRIPE_CREATE_CUSTOMER_TAX_ID:
+    action_class: write
+    why: Adds a tax id to a customer; charges nothing.
+  STRIPE_WHO_AM_I:
+    skip: Describes the connection itself, not the business.
+  STRIPE_SEARCH_CUSTOMERS:
+    id: search_customers
+  STRIPE_GET_V1_CUSTOMERS_SEARCH_CUSTOMERS:
+    skip: Same search as search_customers.
+  STRIPE_POST_V1_CUSTOMERS_SEARCH_CUSTOMERS:
+    skip: Same search as search_customers.

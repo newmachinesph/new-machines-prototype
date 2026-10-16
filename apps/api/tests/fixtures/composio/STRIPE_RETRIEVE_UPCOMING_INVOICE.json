@@ -1,0 +1,203 @@
+{
+  "input_parameters": {
+    "properties": {
+      "automatic_tax": {
+        "additionalProperties": {
+          "type": "boolean"
+        },
+        "type": "object"
+      },
+      "coupon": {
+        "type": "string"
+      },
+      "currency": {
+        "type": "string"
+      },
+      "customer": {
+        "type": "string"
+      },
+      "customer_details": {
+        "additionalProperties": {
+          "type": "string"
+        },
+        "type": "object"
+      },
+      "discounts": {
+        "items": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "type": "array"
+      },
+      "invoice_items": {
+        "items": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "type": "object"
+        },
+        "type": "array"
+      },
+      "issuer": {
+        "additionalProperties": {
+          "type": "string"
+        },
+        "type": "object"
+      },
+      "on_behalf_of": {
+        "type": "string"
+      },
+      "preview_mode": {
+        "type": "string"
+      },
+      "schedule": {
+        "type": "string"
+      },
+      "schedule_details": {
+        "additionalProperties": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "additionalProperties": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "integer"
+                    }
+                  ]
+                },
+                "type": "object"
+              },
+              "type": "array"
+            }
+          ]
+        },
+        "type": "object"
+      },
+      "subscription": {
+        "type": "string"
+      },
+      "subscription_billing_cycle_anchor": {
+        "anyOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "string"
+          }
+        ]
+      },
+      "subscription_cancel_at": {
+        "type": "integer"
+      },
+      "subscription_cancel_at_period_end": {
+        "type": "boolean"
+      },
+      "subscription_cancel_now": {
+        "type": "boolean"
+      },
+      "subscription_default_tax_rates": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "subscription_details": {
+        "additionalProperties": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "items": {
+                "additionalProperties": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "integer"
+                    }
+                  ]
+                },
+                "type": "object"
+              },
+              "type": "array"
+            }
+          ]
+        },
+        "type": "object"
+      },
+      "subscription_items": {
+        "items": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "type": "object"
+        },
+        "type": "array"
+      },
+      "subscription_proration_behavior": {
+        "type": "string"
+      },
+      "subscription_proration_date": {
+        "type": "integer"
+      },
+      "subscription_resume_at": {
+        "type": "string"
+      },
+      "subscription_start_date": {
+        "type": "integer"
+      },
+      "subscription_trial_end": {
+        "anyOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "string"
+          }
+        ]
+      },
+      "subscription_trial_from_plan": {
+        "type": "boolean"
+      }
+    },
+    "type": "object"
+  },
+  "slug": "STRIPE_RETRIEVE_UPCOMING_INVOICE",
+  "version": "20261014_00"
+}

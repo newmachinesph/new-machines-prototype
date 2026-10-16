@@ -1,0 +1,146 @@
+{
+  "input_parameters": {
+    "properties": {
+      "addresses": {
+        "items": {
+          "properties": {
+            "address1": {
+              "type": "string"
+            },
+            "address2": {
+              "type": "string"
+            },
+            "city": {
+              "type": "string"
+            },
+            "company": {
+              "type": "string"
+            },
+            "country": {
+              "type": "string"
+            },
+            "country_code": {
+              "type": "string"
+            },
+            "country_name": {
+              "type": "string"
+            },
+            "customer_id": {
+              "type": "integer"
+            },
+            "default": {
+              "type": "boolean"
+            },
+            "first_name": {
+              "type": "string"
+            },
+            "id": {
+              "type": "integer"
+            },
+            "last_name": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "phone": {
+              "type": "string"
+            },
+            "province": {
+              "type": "string"
+            },
+            "province_code": {
+              "type": "string"
+            },
+            "zip": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "type": "array"
+      },
+      "customer_id": {
+        "type": "string"
+      },
+      "email": {
+        "type": "string"
+      },
+      "email_marketing_consent": {
+        "additionalProperties": false,
+        "properties": {
+          "consent_updated_at": {
+            "type": "string"
+          },
+          "opt_in_level": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "first_name": {
+        "type": "string"
+      },
+      "last_name": {
+        "type": "string"
+      },
+      "multipass_identifier": {
+        "type": "string"
+      },
+      "note": {
+        "type": "string"
+      },
+      "phone": {
+        "type": "string"
+      },
+      "send_email_invite": {
+        "type": "boolean"
+      },
+      "send_email_welcome": {
+        "type": "boolean"
+      },
+      "sms_marketing_consent": {
+        "additionalProperties": false,
+        "properties": {
+          "consent_collected_from": {
+            "type": "string"
+          },
+          "consent_updated_at": {
+            "type": "string"
+          },
+          "opt_in_level": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "tags": {
+        "type": "string"
+      },
+      "tax_exempt": {
+        "type": "boolean"
+      },
+      "tax_exemptions": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "verified_email": {
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "customer_id"
+    ],
+    "type": "object"
+  },
+  "slug": "SHOPIFY_UPDATE_CUSTOMER",
+  "version": "20261014_00"
+}

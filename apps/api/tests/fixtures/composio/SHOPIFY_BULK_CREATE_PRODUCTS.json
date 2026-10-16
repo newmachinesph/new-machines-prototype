@@ -1,0 +1,55 @@
+{
+  "input_parameters": {
+    "properties": {
+      "max_poll_attempts": {
+        "maximum": 300,
+        "minimum": 1,
+        "type": "integer"
+      },
+      "poll_interval_seconds": {
+        "maximum": 30,
+        "minimum": 1,
+        "type": "integer"
+      },
+      "products": {
+        "items": {
+          "properties": {
+            "descriptionHtml": {
+              "type": "string"
+            },
+            "productType": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "tags": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "title": {
+              "type": "string"
+            },
+            "vendor": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "title"
+          ],
+          "type": "object"
+        },
+        "minItems": 1,
+        "type": "array"
+      }
+    },
+    "required": [
+      "products"
+    ],
+    "type": "object"
+  },
+  "slug": "SHOPIFY_BULK_CREATE_PRODUCTS",
+  "version": "20261014_00"
+}

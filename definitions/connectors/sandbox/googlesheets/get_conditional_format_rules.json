@@ -1,0 +1,17 @@
+{
+  "sheets": [
+    {
+      "rules": [
+        {
+          "rule": null,
+          "index": 1,
+          "ranges": []
+        }
+      ],
+      "sheet_id": 1,
+      "sheet_title": "sample"
+    }
+  ],
+  "display_url": "sample",
+  "spreadsheet_id": "sample"
+}

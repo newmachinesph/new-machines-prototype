@@ -1,0 +1,163 @@
+{
+  "response_data": {
+    "id": "sample",
+    "end": {
+      "date": "sample",
+      "dateTime": "sample",
+      "timeZone": "sample"
+    },
+    "etag": "sample",
+    "kind": "sample",
+    "start": {
+      "date": "sample",
+      "dateTime": "sample",
+      "timeZone": "sample"
+    },
+    "gadget": {
+      "link": "sample",
+      "type": "sample",
+      "title": "sample",
+      "width": 1,
+      "height": 1,
+      "display": "sample",
+      "iconLink": "sample",
+      "preferences": {}
+    },
+    "locked": true,
+    "source": {
+      "url": "sample",
+      "title": "sample"
+    },
+    "status": "sample",
+    "colorId": "sample",
+    "created": "sample",
+    "creator": {
+      "id": "sample",
+      "self": true,
+      "email": "sample",
+      "displayName": "sample"
+    },
+    "iCalUID": "sample",
+    "summary": "sample",
+    "updated": "sample",
+    "htmlLink": "sample",
+    "location": "sample",
+    "sequence": 1,
+    "attendees": [
+      {
+        "id": "sample",
+        "self": true,
+        "email": "sample",
+        "comment": "sample",
+        "optional": true,
+        "resource": true,
+        "organizer": true,
+        "displayName": "sample",
+        "responseStatus": "sample",
+        "additionalGuests": 1
+      }
+    ],
+    "eventType": "sample",
+    "organizer": {
+      "id": "sample",
+      "self": true,
+      "email": "sample",
+      "displayName": "sample"
+    },
+    "reminders": {
+      "overrides": [
+        {
+          "method": null,
+          "minutes": null
+        }
+      ],
+      "useDefault": true
+    },
+    "recurrence": [
+      "sample"
+    ],
+    "visibility": "sample",
+    "attachments": [
+      {
+        "title": "sample",
+        "fileId": "sample",
+        "fileUrl": "sample",
+        "iconLink": "sample",
+        "mimeType": "sample"
+      }
+    ],
+    "description": "sample",
+    "display_url": "sample",
+    "hangoutLink": "sample",
+    "privateCopy": true,
+    "transparency": "sample",
+    "conferenceData": {
+      "notes": "sample",
+      "signature": "sample",
+      "entryPoints": [
+        {
+          "pin": null,
+          "uri": null,
+          "label": null,
+          "passcode": null,
+          "password": null,
+          "accessCode": null,
+          "regionCode": null,
+          "meetingCode": null,
+          "entryPointType": null,
+          "entryPointFeatures": null
+        }
+      ],
+      "conferenceId": "sample",
+      "createRequest": {
+        "status": null,
+        "requestId": "sample",
+        "conferenceSolutionKey": null
+      },
+      "conferenceSolution": {
+        "key": null,
+        "name": "sample",
+        "iconUri": "sample"
+      }
+    },
+    "guestsCanModify": true,
+    "anyoneCanAddSelf": true,
+    "attendeesOmitted": true,
+    "recurringEventId": "sample",
+    "originalStartTime": {
+      "date": "sample",
+      "dateTime": "sample",
+      "timeZone": "sample"
+    },
+    "endTimeUnspecified": true,
+    "extendedProperties": {
+      "shared": {},
+      "private": {}
+    },
+    "focusTimeProperties": {
+      "chatStatus": "sample",
+      "declineMessage": "sample",
+      "autoDeclineMode": "sample"
+    },
+    "guestsCanInviteOthers": true,
+    "outOfOfficeProperties": {
+      "declineMessage": "sample",
+      "autoDeclineMode": "sample"
+    },
+    "guestsCanSeeOtherGuests": true,
+    "workingLocationProperties": {
+      "type": "sample",
+      "homeOffice": null,
+      "customLocation": {
+        "label": "sample"
+      },
+      "officeLocation": {
+        "label": "sample",
+        "deskId": "sample",
+        "floorId": "sample",
+        "buildingId": "sample",
+        "floorSectionId": "sample"
+      }
+    }
+  }
+}

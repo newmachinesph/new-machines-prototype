@@ -1,0 +1,27 @@
+{
+  "id": "sample",
+  "etag": "sample",
+  "kind": "sample",
+  "summary": "sample",
+  "location": "sample",
+  "timeZone": "sample",
+  "dataOwner": "sample",
+  "description": "sample",
+  "display_url": "sample",
+  "labelProperties": {
+    "eventLabels": [
+      {
+        "id": "sample",
+        "name": "sample",
+        "backgroundColor": "sample"
+      }
+    ]
+  },
+  "conferenceProperties": {
+    "allowedConferenceSolutionTypes": [
+      "eventHangout"
+    ]
+  },
+  "autoAcceptInvitations": true,
+  "composio_execution_message": "sample"
+}

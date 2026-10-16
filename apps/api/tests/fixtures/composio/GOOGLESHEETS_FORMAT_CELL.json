@@ -1,0 +1,178 @@
+{
+  "input_parameters": {
+    "properties": {
+      "background_alpha": {
+        "maximum": 1,
+        "minimum": 0,
+        "type": "number"
+      },
+      "background_color": {
+        "type": "string"
+      },
+      "blue": {
+        "maximum": 1,
+        "minimum": 0,
+        "type": "number"
+      },
+      "bold": {
+        "type": "boolean"
+      },
+      "border_color": {
+        "type": "string"
+      },
+      "border_style": {
+        "enum": [
+          "DOTTED",
+          "DASHED",
+          "SOLID",
+          "SOLID_MEDIUM",
+          "SOLID_THICK",
+          "NONE",
+          "DOUBLE"
+        ],
+        "type": "string"
+      },
+      "end_column_index": {
+        "type": "integer"
+      },
+      "end_row_index": {
+        "type": "integer"
+      },
+      "fontSize": {
+        "minimum": 1,
+        "type": "integer"
+      },
+      "font_family": {
+        "type": "string"
+      },
+      "green": {
+        "maximum": 1,
+        "minimum": 0,
+        "type": "number"
+      },
+      "horizontal_alignment": {
+        "enum": [
+          "LEFT",
+          "CENTER",
+          "RIGHT"
+        ],
+        "type": "string"
+      },
+      "hyperlink_display_type": {
+        "enum": [
+          "LINKED",
+          "PLAIN_TEXT"
+        ],
+        "type": "string"
+      },
+      "italic": {
+        "type": "boolean"
+      },
+      "number_format_pattern": {
+        "type": "string"
+      },
+      "number_format_type": {
+        "enum": [
+          "TEXT",
+          "NUMBER",
+          "PERCENT",
+          "CURRENCY",
+          "DATE",
+          "TIME",
+          "DATE_TIME",
+          "SCIENTIFIC"
+        ],
+        "type": "string"
+      },
+      "padding_bottom": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "padding_left": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "padding_right": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "padding_top": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "range": {
+        "type": "string"
+      },
+      "red": {
+        "maximum": 1,
+        "minimum": 0,
+        "type": "number"
+      },
+      "sheet_name": {
+        "type": "string"
+      },
+      "spreadsheet_id": {
+        "type": "string"
+      },
+      "start_column_index": {
+        "type": "integer"
+      },
+      "start_row_index": {
+        "type": "integer"
+      },
+      "strikethrough": {
+        "type": "boolean"
+      },
+      "text_color": {
+        "type": "string"
+      },
+      "text_direction": {
+        "enum": [
+          "LEFT_TO_RIGHT",
+          "RIGHT_TO_LEFT"
+        ],
+        "type": "string"
+      },
+      "text_link": {
+        "type": "string"
+      },
+      "text_rotation_angle": {
+        "maximum": 90,
+        "minimum": -90,
+        "type": "integer"
+      },
+      "text_rotation_vertical": {
+        "type": "boolean"
+      },
+      "underline": {
+        "type": "boolean"
+      },
+      "vertical_alignment": {
+        "enum": [
+          "TOP",
+          "MIDDLE",
+          "BOTTOM"
+        ],
+        "type": "string"
+      },
+      "worksheet_id": {
+        "type": "integer"
+      },
+      "wrap_strategy": {
+        "enum": [
+          "OVERFLOW_CELL",
+          "LEGACY_WRAP",
+          "CLIP",
+          "WRAP"
+        ],
+        "type": "string"
+      }
+    },
+    "required": [
+      "spreadsheet_id"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLESHEETS_FORMAT_CELL",
+  "version": "20261001_00"
+}

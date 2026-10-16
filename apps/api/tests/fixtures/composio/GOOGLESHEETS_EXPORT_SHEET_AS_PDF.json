@@ -1,0 +1,72 @@
+{
+  "input_parameters": {
+    "additionalProperties": false,
+    "properties": {
+      "bottom_margin": {
+        "minimum": 0,
+        "type": "number"
+      },
+      "end_column_index": {
+        "minimum": 1,
+        "type": "integer"
+      },
+      "end_row_index": {
+        "minimum": 1,
+        "type": "integer"
+      },
+      "fit_to_width": {
+        "type": "boolean"
+      },
+      "left_margin": {
+        "minimum": 0,
+        "type": "number"
+      },
+      "portrait": {
+        "type": "boolean"
+      },
+      "print_titles": {
+        "type": "boolean"
+      },
+      "repeat_frozen_rows": {
+        "type": "boolean"
+      },
+      "right_margin": {
+        "minimum": 0,
+        "type": "number"
+      },
+      "sheet_id": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "show_gridlines": {
+        "type": "boolean"
+      },
+      "show_sheet_name": {
+        "type": "boolean"
+      },
+      "spreadsheet_id": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "start_column_index": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "start_row_index": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "top_margin": {
+        "minimum": 0,
+        "type": "number"
+      }
+    },
+    "required": [
+      "spreadsheet_id",
+      "sheet_id"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLESHEETS_EXPORT_SHEET_AS_PDF",
+  "version": "20261001_00"
+}

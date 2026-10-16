@@ -1,0 +1,80 @@
+{
+  "customer": {
+    "id": "sample",
+    "note": "sample",
+    "tags": "sample",
+    "email": "sample",
+    "phone": "sample",
+    "state": "disabled",
+    "currency": "sample",
+    "addresses": [
+      {
+        "id": 1,
+        "zip": "sample",
+        "city": "sample",
+        "name": "sample",
+        "phone": "sample",
+        "company": "sample",
+        "country": "sample",
+        "default": true,
+        "address1": "sample",
+        "address2": "sample",
+        "province": "sample",
+        "last_name": "sample",
+        "first_name": "sample",
+        "customer_id": 1,
+        "country_code": "sample",
+        "country_name": "sample",
+        "province_code": "sample"
+      }
+    ],
+    "last_name": "sample",
+    "created_at": "sample",
+    "first_name": "sample",
+    "tax_exempt": true,
+    "updated_at": "sample",
+    "total_spent": "sample",
+    "orders_count": 1,
+    "last_order_id": 1,
+    "tax_exemptions": [
+      "sample"
+    ],
+    "verified_email": true,
+    "default_address": {
+      "id": 1,
+      "zip": "sample",
+      "city": "sample",
+      "name": "sample",
+      "phone": "sample",
+      "company": "sample",
+      "country": "sample",
+      "default": true,
+      "address1": "sample",
+      "address2": "sample",
+      "province": "sample",
+      "last_name": "sample",
+      "first_name": "sample",
+      "customer_id": 1,
+      "country_code": "sample",
+      "country_name": "sample",
+      "province_code": "sample"
+    },
+    "last_order_name": "sample",
+    "accepts_marketing": true,
+    "admin_graphql_api_id": "sample",
+    "multipass_identifier": "sample",
+    "sms_marketing_consent": {
+      "state": "not_subscribed",
+      "opt_in_level": "single_opt_in",
+      "consent_updated_at": "sample",
+      "consent_collected_from": "SHOPIFY"
+    },
+    "marketing_opt_in_level": "sample",
+    "email_marketing_consent": {
+      "state": "not_subscribed",
+      "opt_in_level": "single_opt_in",
+      "consent_updated_at": "sample"
+    },
+    "accepts_marketing_updated_at": "sample"
+  }
+}

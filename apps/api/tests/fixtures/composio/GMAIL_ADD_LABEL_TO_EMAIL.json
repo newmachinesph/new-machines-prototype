@@ -1,0 +1,31 @@
+{
+  "input_parameters": {
+    "properties": {
+      "add_label_ids": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "message_id": {
+        "pattern": "^[0-9a-fA-F]+$",
+        "type": "string"
+      },
+      "remove_label_ids": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "user_id": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "message_id"
+    ],
+    "type": "object"
+  },
+  "slug": "GMAIL_ADD_LABEL_TO_EMAIL",
+  "version": "20261015_00"
+}

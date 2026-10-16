@@ -1,0 +1,30 @@
+{
+  "input_parameters": {
+    "properties": {
+      "created": {
+        "additionalProperties": {
+          "type": "integer"
+        },
+        "type": "object"
+      },
+      "ending_before": {
+        "type": "string"
+      },
+      "invoice": {
+        "type": "string"
+      },
+      "limit": {
+        "type": "integer"
+      },
+      "starting_after": {
+        "type": "string"
+      },
+      "status": {
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "slug": "STRIPE_LIST_INVOICE_PAYMENTS",
+  "version": "20261014_00"
+}

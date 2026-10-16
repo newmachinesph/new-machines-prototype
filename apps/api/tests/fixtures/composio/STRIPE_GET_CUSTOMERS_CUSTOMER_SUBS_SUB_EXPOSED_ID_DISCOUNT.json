@@ -1,0 +1,27 @@
+{
+  "input_parameters": {
+    "properties": {
+      "customer": {
+        "pattern": "^cus_[a-zA-Z0-9]+$",
+        "type": "string"
+      },
+      "expand": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "subscription_exposed_id": {
+        "pattern": "^sub_[a-zA-Z0-9]+$",
+        "type": "string"
+      }
+    },
+    "required": [
+      "customer",
+      "subscription_exposed_id"
+    ],
+    "type": "object"
+  },
+  "slug": "STRIPE_GET_CUSTOMERS_CUSTOMER_SUBS_SUB_EXPOSED_ID_DISCOUNT",
+  "version": "20261014_00"
+}

@@ -1,0 +1,42 @@
+{
+  "input_parameters": {
+    "properties": {
+      "document_id": {
+        "type": "string"
+      },
+      "replace_image": {
+        "additionalProperties": false,
+        "properties": {
+          "image_object_id": {
+            "type": "string"
+          },
+          "image_replace_method": {
+            "enum": [
+              "CENTER_CROP",
+              "IMAGE_REPLACE_METHOD_UNSPECIFIED"
+            ],
+            "type": "string"
+          },
+          "tab_id": {
+            "type": "string"
+          },
+          "uri": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "image_object_id",
+          "uri"
+        ],
+        "type": "object"
+      }
+    },
+    "required": [
+      "document_id",
+      "replace_image"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLEDOCS_REPLACE_IMAGE",
+  "version": "20261008_00"
+}

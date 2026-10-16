@@ -1,0 +1,16 @@
+{
+  "etag": "sample",
+  "kind": "sample",
+  "items": [
+    {
+      "id": "sample",
+      "etag": "sample",
+      "kind": "sample",
+      "value": "sample",
+      "display_url": null
+    }
+  ],
+  "display_url": "sample",
+  "nextPageToken": "sample",
+  "nextSyncToken": "sample"
+}

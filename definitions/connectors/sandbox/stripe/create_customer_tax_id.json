@@ -1,0 +1,23 @@
+{
+  "id": "sample",
+  "type": "sample",
+  "owner": {
+    "type": "sample",
+    "account": "sample",
+    "customer": "sample",
+    "application": "sample",
+    "customer_account": "sample"
+  },
+  "value": "sample",
+  "object": "sample",
+  "country": "sample",
+  "created": 1,
+  "customer": "sample",
+  "livemode": true,
+  "verification": {
+    "status": "sample",
+    "verified_name": "sample",
+    "verified_address": "sample"
+  },
+  "customer_account": "sample"
+}

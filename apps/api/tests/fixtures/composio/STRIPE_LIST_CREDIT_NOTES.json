@@ -1,0 +1,35 @@
+{
+  "input_parameters": {
+    "properties": {
+      "created": {
+        "additionalProperties": {
+          "type": "integer"
+        },
+        "type": "object"
+      },
+      "customer": {
+        "type": "string"
+      },
+      "customer_account": {
+        "type": "string"
+      },
+      "ending_before": {
+        "type": "string"
+      },
+      "invoice": {
+        "type": "string"
+      },
+      "limit": {
+        "maximum": 100,
+        "minimum": 1,
+        "type": "integer"
+      },
+      "starting_after": {
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "slug": "STRIPE_LIST_CREDIT_NOTES",
+  "version": "20261014_00"
+}

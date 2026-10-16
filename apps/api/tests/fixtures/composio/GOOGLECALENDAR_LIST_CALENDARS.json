@@ -1,0 +1,36 @@
+{
+  "input_parameters": {
+    "properties": {
+      "max_results": {
+        "maximum": 250,
+        "minimum": 1,
+        "type": "integer"
+      },
+      "min_access_role": {
+        "enum": [
+          "freeBusyReader",
+          "reader",
+          "writerWithoutPrivateAccess",
+          "writer",
+          "owner"
+        ],
+        "type": "string"
+      },
+      "page_token": {
+        "type": "string"
+      },
+      "show_deleted": {
+        "type": "boolean"
+      },
+      "show_hidden": {
+        "type": "boolean"
+      },
+      "sync_token": {
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "slug": "GOOGLECALENDAR_LIST_CALENDARS",
+  "version": "20261010_00"
+}

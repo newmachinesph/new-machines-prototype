@@ -1,0 +1,39 @@
+{
+  "input_parameters": {
+    "properties": {
+      "case_sensitive": {
+        "type": "boolean"
+      },
+      "date_time_render_option": {
+        "type": "string"
+      },
+      "normalize_whitespace": {
+        "type": "boolean"
+      },
+      "query": {
+        "type": "string"
+      },
+      "range": {
+        "type": "string"
+      },
+      "spreadsheet_id": {
+        "type": "string"
+      },
+      "value_render_option": {
+        "enum": [
+          "FORMATTED_VALUE",
+          "UNFORMATTED_VALUE",
+          "FORMULA"
+        ],
+        "type": "string"
+      }
+    },
+    "required": [
+      "spreadsheet_id",
+      "query"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLESHEETS_LOOKUP_SPREADSHEET_ROW",
+  "version": "20261001_00"
+}

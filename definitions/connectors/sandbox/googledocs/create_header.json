@@ -1,0 +1,17 @@
+{
+  "replies": [
+    {
+      "createHeader": {
+        "headerId": "sample"
+      }
+    }
+  ],
+  "documentId": "sample",
+  "display_url": "sample",
+  "writeControl": {
+    "targetRevisionId": "sample",
+    "requiredRevisionId": "sample"
+  },
+  "header_text_inserted": true,
+  "composio_execution_message": "sample"
+}

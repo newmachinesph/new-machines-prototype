@@ -1,0 +1,32 @@
+{
+  "input_parameters": {
+    "properties": {
+      "append_to_end": {
+        "type": "boolean"
+      },
+      "document_id": {
+        "type": "string"
+      },
+      "insertion_index": {
+        "type": "integer"
+      },
+      "segment_id": {
+        "type": "string"
+      },
+      "tab_id": {
+        "type": "string"
+      },
+      "text_to_insert": {
+        "minLength": 1,
+        "type": "string"
+      }
+    },
+    "required": [
+      "document_id",
+      "text_to_insert"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLEDOCS_INSERT_TEXT_ACTION",
+  "version": "20261008_00"
+}

@@ -1,0 +1,12 @@
+{
+  "input_parameters": {
+    "properties": {
+      "calendar_id": {
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "slug": "GOOGLECALENDAR_GET_CALENDAR",
+  "version": "20261010_00"
+}

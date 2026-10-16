@@ -1,0 +1,52 @@
+{
+  "input_parameters": {
+    "properties": {
+      "calendar_id": {
+        "type": "string"
+      },
+      "event_types": {
+        "items": {
+          "enum": [
+            "birthday",
+            "default",
+            "focusTime",
+            "outOfOffice",
+            "workingLocation"
+          ],
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "max_results": {
+        "type": "integer"
+      },
+      "order_by": {
+        "type": "string"
+      },
+      "page_token": {
+        "type": "string"
+      },
+      "query": {
+        "type": "string"
+      },
+      "show_deleted": {
+        "type": "boolean"
+      },
+      "single_events": {
+        "type": "boolean"
+      },
+      "time_max": {
+        "type": "string"
+      },
+      "time_min": {
+        "type": "string"
+      },
+      "updated_min": {
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "slug": "GOOGLECALENDAR_FIND_EVENT",
+  "version": "20261010_00"
+}

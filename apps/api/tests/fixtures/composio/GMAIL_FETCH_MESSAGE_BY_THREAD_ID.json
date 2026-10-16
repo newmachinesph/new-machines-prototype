@@ -1,0 +1,21 @@
+{
+  "input_parameters": {
+    "properties": {
+      "page_token": {
+        "type": "string"
+      },
+      "thread_id": {
+        "type": "string"
+      },
+      "user_id": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "thread_id"
+    ],
+    "type": "object"
+  },
+  "slug": "GMAIL_FETCH_MESSAGE_BY_THREAD_ID",
+  "version": "20261015_00"
+}

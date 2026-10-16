@@ -1,0 +1,21 @@
+{
+  "inventory_item": {
+    "id": "54137761136945",
+    "sku": "sample",
+    "cost": "sample",
+    "tracked": true,
+    "created_at": "sample",
+    "updated_at": "sample",
+    "requires_shipping": true,
+    "admin_graphql_api_id": "sample",
+    "country_code_of_origin": "sample",
+    "harmonized_system_code": "sample",
+    "province_code_of_origin": "sample",
+    "country_harmonized_system_codes": [
+      {
+        "country_code": "sample",
+        "harmonized_system_code": "sample"
+      }
+    ]
+  }
+}

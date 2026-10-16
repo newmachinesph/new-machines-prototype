@@ -1,0 +1,20 @@
+{
+  "sendAs": [
+    {
+      "smtpMsa": {
+        "host": "sample",
+        "port": 1,
+        "securityMode": "sample"
+      },
+      "isDefault": true,
+      "isPrimary": true,
+      "signature": "sample",
+      "displayName": "sample",
+      "sendAsEmail": "sample",
+      "treatAsAlias": true,
+      "replyToAddress": "sample",
+      "verificationStatus": "sample"
+    }
+  ],
+  "display_url": "sample"
+}

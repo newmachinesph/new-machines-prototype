@@ -1,0 +1,29 @@
+{
+  "input_parameters": {
+    "properties": {
+      "fields": {
+        "type": "string"
+      },
+      "limit": {
+        "maximum": 250,
+        "minimum": 1,
+        "type": "integer"
+      },
+      "presentment_currencies": {
+        "type": "string"
+      },
+      "product_id": {
+        "type": "string"
+      },
+      "since_id": {
+        "type": "integer"
+      }
+    },
+    "required": [
+      "product_id"
+    ],
+    "type": "object"
+  },
+  "slug": "SHOPIFY_LIST_PRODUCT_VARIANTS",
+  "version": "20261014_00"
+}

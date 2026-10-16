@@ -1,0 +1,21 @@
+{
+  "input_parameters": {
+    "properties": {
+      "expand": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "schedule": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "schedule"
+    ],
+    "type": "object"
+  },
+  "slug": "STRIPE_GET_SUBSCRIPTION_SCHEDULES_SCHEDULE",
+  "version": "20261014_00"
+}

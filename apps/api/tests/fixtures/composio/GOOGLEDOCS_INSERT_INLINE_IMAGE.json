@@ -1,0 +1,73 @@
+{
+  "input_parameters": {
+    "properties": {
+      "documentId": {
+        "type": "string"
+      },
+      "location": {
+        "additionalProperties": false,
+        "properties": {
+          "index": {
+            "type": "integer"
+          },
+          "segmentId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "index"
+        ],
+        "type": "object"
+      },
+      "objectSize": {
+        "additionalProperties": false,
+        "properties": {
+          "height": {
+            "additionalProperties": false,
+            "properties": {
+              "magnitude": {
+                "type": "number"
+              },
+              "unit": {
+                "enum": [
+                  "EMU",
+                  "PT"
+                ],
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "width": {
+            "additionalProperties": false,
+            "properties": {
+              "magnitude": {
+                "type": "number"
+              },
+              "unit": {
+                "enum": [
+                  "EMU",
+                  "PT"
+                ],
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      },
+      "uri": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "documentId",
+      "uri",
+      "location"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLEDOCS_INSERT_INLINE_IMAGE",
+  "version": "20261008_00"
+}

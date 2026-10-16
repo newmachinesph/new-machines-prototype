@@ -1,0 +1,128 @@
+{
+  "replies": [
+    {
+      "addChart": {},
+      "addSheet": {},
+      "addTable": {},
+      "addSlicer": {},
+      "addBanding": {},
+      "findReplace": {},
+      "addDataSource": {},
+      "addFilterView": {},
+      "addNamedRange": {},
+      "duplicateSheet": {},
+      "trimWhitespace": {},
+      "deleteDuplicates": {},
+      "updateDataSource": {},
+      "addDimensionGroup": {},
+      "addProtectedRange": {},
+      "refreshDataSource": {},
+      "duplicateFilterView": {},
+      "deleteDimensionGroup": {},
+      "cancelDataSourceRefresh": {},
+      "createDeveloperMetadata": {},
+      "deleteDeveloperMetadata": {},
+      "updateDeveloperMetadata": {},
+      "deleteConditionalFormatRule": {},
+      "updateConditionalFormatRule": {},
+      "updateEmbeddedObjectPosition": {}
+    }
+  ],
+  "display_url": "sample",
+  "spreadsheetId": "sample",
+  "updatedSpreadsheet": {
+    "sheets": [
+      {
+        "properties": {
+          "index": null,
+          "title": null,
+          "hidden": null,
+          "sheetId": null,
+          "sheetType": null,
+          "rightToLeft": null,
+          "gridProperties": null
+        }
+      }
+    ],
+    "properties": {
+      "title": "sample",
+      "locale": "sample",
+      "timeZone": "sample",
+      "autoRecalc": "sample",
+      "defaultFormat": {
+        "borders": {},
+        "padding": null,
+        "textFormat": null,
+        "numberFormat": {},
+        "textRotation": {},
+        "wrapStrategy": "sample",
+        "textDirection": "sample",
+        "backgroundColor": null,
+        "verticalAlignment": "sample",
+        "horizontalAlignment": "sample",
+        "backgroundColorStyle": null,
+        "hyperlinkDisplayType": "sample"
+      },
+      "spreadsheetTheme": {
+        "themeColors": [],
+        "primaryFontFamily": "sample"
+      },
+      "iterativeCalculationSettings": {
+        "maxIterations": 1,
+        "convergenceThreshold": 1
+      },
+      "importFunctionsExternalUrlAccessAllowed": true
+    },
+    "dataSources": [
+      {
+        "spec": {},
+        "sheetId": 1,
+        "dataSourceId": "sample",
+        "calculatedColumns": []
+      }
+    ],
+    "namedRanges": [
+      {
+        "name": "sample",
+        "range": {
+          "sheetId": null,
+          "endRowIndex": null,
+          "startRowIndex": null,
+          "endColumnIndex": null,
+          "startColumnIndex": null
+        },
+        "namedRangeId": "sample"
+      }
+    ],
+    "spreadsheetId": "sample",
+    "spreadsheetUrl": "sample",
+    "developerMetadata": [
+      {
+        "location": {
+          "sheetId": null,
+          "spreadsheet": null,
+          "locationType": null,
+          "dimensionRange": null
+        },
+        "metadataId": 1,
+        "visibility": "sample",
+        "metadataKey": "sample",
+        "metadataValue": "sample"
+      }
+    ],
+    "dataSourceSchedules": [
+      {
+        "enabled": true,
+        "nextRun": {
+          "endTime": null,
+          "startTime": null
+        },
+        "refreshScope": "sample",
+        "dailySchedule": {},
+        "weeklySchedule": {},
+        "monthlySchedule": {}
+      }
+    ]
+  },
+  "composio_execution_message": "sample"
+}

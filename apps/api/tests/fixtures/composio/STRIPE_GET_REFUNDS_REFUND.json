@@ -1,0 +1,15 @@
+{
+  "input_parameters": {
+    "properties": {
+      "refund": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "refund"
+    ],
+    "type": "object"
+  },
+  "slug": "STRIPE_GET_REFUNDS_REFUND",
+  "version": "20261014_00"
+}

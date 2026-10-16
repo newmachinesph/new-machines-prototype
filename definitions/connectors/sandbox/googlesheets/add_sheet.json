@@ -1,0 +1,36 @@
+{
+  "replies": [
+    {
+      "addChart": {},
+      "addSheet": {
+        "index": 1,
+        "title": "sample",
+        "hidden": true,
+        "sheetId": 1,
+        "tabColor": {
+          "red": null,
+          "blue": null,
+          "alpha": null,
+          "green": null
+        },
+        "sheetType": "GRID",
+        "rightToLeft": true,
+        "tabColorStyle": null,
+        "gridProperties": {
+          "rowCount": null,
+          "columnCount": null,
+          "hideGridlines": null,
+          "frozenRowCount": null,
+          "frozenColumnCount": null,
+          "rowGroupControlAfter": null,
+          "columnGroupControlAfter": null
+        },
+        "dataSourceSheetProperties": {}
+      },
+      "addDataSource": {}
+    }
+  ],
+  "display_url": "sample",
+  "spreadsheetId": "sample",
+  "composio_execution_message": "sample"
+}

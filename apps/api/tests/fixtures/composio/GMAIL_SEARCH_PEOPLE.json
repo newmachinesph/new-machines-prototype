@@ -1,0 +1,26 @@
+{
+  "input_parameters": {
+    "properties": {
+      "other_contacts": {
+        "type": "boolean"
+      },
+      "page_size": {
+        "maximum": 30,
+        "minimum": 0,
+        "type": "integer"
+      },
+      "person_fields": {
+        "type": "string"
+      },
+      "query": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "query"
+    ],
+    "type": "object"
+  },
+  "slug": "GMAIL_SEARCH_PEOPLE",
+  "version": "20261015_00"
+}

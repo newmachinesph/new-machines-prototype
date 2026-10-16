@@ -1,0 +1,12 @@
+{
+  "input_parameters": {
+    "properties": {
+      "fields": {
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "slug": "SHOPIFY_QUERY_SHOP",
+  "version": "20261014_00"
+}

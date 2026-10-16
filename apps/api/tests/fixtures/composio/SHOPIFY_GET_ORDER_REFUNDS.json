@@ -1,0 +1,26 @@
+{
+  "input_parameters": {
+    "properties": {
+      "fields": {
+        "type": "string"
+      },
+      "in_shop_currency": {
+        "type": "boolean"
+      },
+      "limit": {
+        "maximum": 250,
+        "minimum": 1,
+        "type": "integer"
+      },
+      "order_id": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "order_id"
+    ],
+    "type": "object"
+  },
+  "slug": "SHOPIFY_GET_ORDER_REFUNDS",
+  "version": "20261014_00"
+}

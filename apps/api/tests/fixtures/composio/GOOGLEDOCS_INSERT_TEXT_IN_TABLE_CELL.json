@@ -1,0 +1,37 @@
+{
+  "input_parameters": {
+    "properties": {
+      "column_index": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "document_id": {
+        "type": "string"
+      },
+      "row_index": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "tabId": {
+        "type": "string"
+      },
+      "table_start_index": {
+        "type": "integer"
+      },
+      "text": {
+        "minLength": 1,
+        "type": "string"
+      }
+    },
+    "required": [
+      "document_id",
+      "text",
+      "table_start_index",
+      "row_index",
+      "column_index"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLEDOCS_INSERT_TEXT_IN_TABLE_CELL",
+  "version": "20261008_00"
+}

@@ -1,0 +1,44 @@
+{
+  "input_parameters": {
+    "properties": {
+      "created": {
+        "additionalProperties": {
+          "type": "integer"
+        },
+        "type": "object"
+      },
+      "currency": {
+        "type": "string"
+      },
+      "ending_before": {
+        "type": "string"
+      },
+      "expand": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "limit": {
+        "maximum": 100,
+        "minimum": 1,
+        "type": "integer"
+      },
+      "payout": {
+        "type": "string"
+      },
+      "source": {
+        "type": "string"
+      },
+      "starting_after": {
+        "type": "string"
+      },
+      "type": {
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "slug": "STRIPE_LIST_BALANCE_TRANSACTIONS",
+  "version": "20261014_00"
+}

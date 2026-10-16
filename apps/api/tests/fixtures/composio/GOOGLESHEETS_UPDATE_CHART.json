@@ -1,0 +1,24 @@
+{
+  "input_parameters": {
+    "properties": {
+      "chart_id": {
+        "type": "integer"
+      },
+      "chart_spec": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "spreadsheet_id": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "spreadsheet_id",
+      "chart_id",
+      "chart_spec"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLESHEETS_UPDATE_CHART",
+  "version": "20261001_00"
+}

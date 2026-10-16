@@ -1,0 +1,62 @@
+{
+  "url": "sample",
+  "data": [
+    {
+      "id": "sample",
+      "date": 1,
+      "amount": 1,
+      "object": "sample",
+      "parent": {
+        "type": "sample",
+        "subscription_details": {
+          "subscription": null,
+          "subscription_item": null
+        }
+      },
+      "period": {
+        "end": 1,
+        "start": 1
+      },
+      "invoice": "sample",
+      "pricing": {
+        "type": "sample",
+        "price_details": {
+          "price": null,
+          "product": null
+        },
+        "unit_amount_decimal": "sample"
+      },
+      "currency": "sample",
+      "customer": "sample",
+      "livemode": true,
+      "metadata": {},
+      "quantity": 1,
+      "discounts": [
+        "sample"
+      ],
+      "proration": true,
+      "tax_rates": [
+        {
+          "id": "sample",
+          "active": true,
+          "object": "sample",
+          "country": "sample",
+          "inclusive": true,
+          "percentage": 1,
+          "display_name": "sample",
+          "jurisdiction": "sample"
+        }
+      ],
+      "net_amount": 1,
+      "test_clock": "sample",
+      "description": "sample",
+      "discountable": true,
+      "customer_account": "sample",
+      "proration_details": {
+        "discount_amounts": []
+      }
+    }
+  ],
+  "object": "sample",
+  "has_more": true
+}

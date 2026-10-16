@@ -1,0 +1,26 @@
+{
+  "input_parameters": {
+    "properties": {
+      "max_results": {
+        "maximum": 500,
+        "minimum": 1,
+        "type": "integer"
+      },
+      "page_token": {
+        "type": "string"
+      },
+      "query": {
+        "type": "string"
+      },
+      "user_id": {
+        "type": "string"
+      },
+      "verbose": {
+        "type": "boolean"
+      }
+    },
+    "type": "object"
+  },
+  "slug": "GMAIL_LIST_THREADS",
+  "version": "20261015_00"
+}

@@ -1,0 +1,7 @@
+{
+  "enabled": true,
+  "autoExpunge": true,
+  "display_url": "sample",
+  "maxFolderSize": 1,
+  "expungeBehavior": "expungeBehaviorUnspecified"
+}

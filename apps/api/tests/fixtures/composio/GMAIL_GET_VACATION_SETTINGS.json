@@ -1,0 +1,12 @@
+{
+  "input_parameters": {
+    "properties": {
+      "user_id": {
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "slug": "GMAIL_GET_VACATION_SETTINGS",
+  "version": "20261015_00"
+}

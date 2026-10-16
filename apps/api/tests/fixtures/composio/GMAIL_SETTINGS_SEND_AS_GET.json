@@ -1,0 +1,18 @@
+{
+  "input_parameters": {
+    "properties": {
+      "send_as_email": {
+        "type": "string"
+      },
+      "user_id": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "send_as_email"
+    ],
+    "type": "object"
+  },
+  "slug": "GMAIL_SETTINGS_SEND_AS_GET",
+  "version": "20261015_00"
+}

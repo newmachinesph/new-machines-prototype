@@ -1,0 +1,185 @@
+{
+  "body": {
+    "content": [
+      {
+        "table": null,
+        "end_index": 1,
+        "paragraph": {
+          "bullet": null,
+          "elements": null,
+          "paragraph_style": null,
+          "positioned_object_ids": null,
+          "suggested_bullet_changes": null,
+          "suggested_positioned_object_ids": null,
+          "suggested_paragraph_style_changes": null
+        },
+        "start_index": 1,
+        "section_break": {},
+        "table_of_contents": {}
+      }
+    ]
+  },
+  "tabs": [
+    {
+      "childTabs": [
+        {
+          "childTabs": [],
+          "documentTab": null,
+          "tabProperties": null
+        }
+      ],
+      "documentTab": {
+        "body": {
+          "content": null
+        },
+        "lists": {},
+        "footers": {},
+        "headers": {},
+        "footnotes": {},
+        "namedRanges": {},
+        "namedStyles": {
+          "styles": null
+        },
+        "documentStyle": {
+          "pageSize": null,
+          "marginTop": null,
+          "background": null,
+          "marginLeft": null,
+          "marginRight": null,
+          "marginBottom": null,
+          "marginFooter": null,
+          "marginHeader": null,
+          "defaultFooterId": null,
+          "defaultHeaderId": null,
+          "pageNumberStart": null,
+          "evenPageFooterId": null,
+          "evenPageHeaderId": null,
+          "firstPageFooterId": null,
+          "firstPageHeaderId": null,
+          "flipPageOrientation": null,
+          "useEvenPageHeaderFooter": null,
+          "useFirstPageHeaderFooter": null
+        },
+        "inlineObjects": {},
+        "positionedObjects": {}
+      },
+      "tabProperties": {
+        "index": 1,
+        "tabId": "sample",
+        "title": "sample",
+        "iconEmoji": "sample",
+        "parentTabId": "sample",
+        "nesting_level": 1
+      }
+    }
+  ],
+  "lists": {},
+  "title": "sample",
+  "footers": {},
+  "headers": {},
+  "footnotes": {},
+  "documentId": "sample",
+  "revisionId": "sample",
+  "display_url": "sample",
+  "namedRanges": {},
+  "namedStyles": {
+    "styles": [
+      {
+        "text_style": {
+          "bold": null,
+          "link": null,
+          "italic": null,
+          "font_size": null,
+          "underline": null,
+          "small_caps": null,
+          "strikethrough": null,
+          "baseline_offset": null,
+          "background_color": null,
+          "foreground_color": null,
+          "weighted_font_family": null
+        },
+        "paragraph_style": {
+          "shading": null,
+          "alignment": null,
+          "direction": null,
+          "tab_stops": null,
+          "border_top": null,
+          "indent_end": null,
+          "border_left": null,
+          "space_above": null,
+          "space_below": null,
+          "border_right": null,
+          "indent_start": null,
+          "line_spacing": null,
+          "spacing_mode": null,
+          "border_bottom": null,
+          "border_between": null,
+          "keep_with_next": null,
+          "named_style_type": null,
+          "indent_first_line": null,
+          "page_break_before": null,
+          "keep_lines_together": null,
+          "avoid_widow_and_orphan": null
+        },
+        "named_style_type": "NAMED_STYLE_TYPE_UNSPECIFIED"
+      }
+    ]
+  },
+  "document_url": "sample",
+  "documentStyle": {
+    "pageSize": {
+      "width": {
+        "unit": "sample",
+        "magnitude": 1
+      },
+      "height": {
+        "unit": "sample",
+        "magnitude": 1
+      }
+    },
+    "marginTop": {
+      "unit": "sample",
+      "magnitude": 1
+    },
+    "background": {
+      "color": {
+        "color": null
+      }
+    },
+    "marginLeft": {
+      "unit": "sample",
+      "magnitude": 1
+    },
+    "marginRight": {
+      "unit": "sample",
+      "magnitude": 1
+    },
+    "marginBottom": {
+      "unit": "sample",
+      "magnitude": 1
+    },
+    "marginFooter": {
+      "unit": "sample",
+      "magnitude": 1
+    },
+    "marginHeader": {
+      "unit": "sample",
+      "magnitude": 1
+    },
+    "defaultFooterId": "sample",
+    "defaultHeaderId": "sample",
+    "pageNumberStart": 1,
+    "evenPageFooterId": "sample",
+    "evenPageHeaderId": "sample",
+    "firstPageFooterId": "sample",
+    "firstPageHeaderId": "sample",
+    "flipPageOrientation": true,
+    "useEvenPageHeaderFooter": true,
+    "useFirstPageHeaderFooter": true
+  },
+  "inlineObjects": {},
+  "positionedObjects": {},
+  "suggestionsViewMode": "DEFAULT_FOR_CURRENT_ACCESS",
+  "suggestedNamedStylesChanges": {},
+  "suggestedDocumentStyleChanges": {}
+}

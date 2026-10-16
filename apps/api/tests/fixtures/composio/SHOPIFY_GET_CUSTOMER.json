@@ -1,0 +1,18 @@
+{
+  "input_parameters": {
+    "properties": {
+      "customer_id": {
+        "type": "string"
+      },
+      "fields": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "customer_id"
+    ],
+    "type": "object"
+  },
+  "slug": "SHOPIFY_GET_CUSTOMER",
+  "version": "20261014_00"
+}

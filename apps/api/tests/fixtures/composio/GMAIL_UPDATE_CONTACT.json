@@ -1,0 +1,42 @@
+{
+  "input_parameters": {
+    "properties": {
+      "person": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "person_fields": {
+        "type": "string"
+      },
+      "resource_name": {
+        "pattern": "^people/[^/]+$",
+        "type": "string"
+      },
+      "sources": {
+        "items": {
+          "enum": [
+            "READ_SOURCE_TYPE_UNSPECIFIED",
+            "READ_SOURCE_TYPE_PROFILE",
+            "READ_SOURCE_TYPE_CONTACT",
+            "READ_SOURCE_TYPE_DOMAIN_CONTACT",
+            "READ_SOURCE_TYPE_OTHER_CONTACT"
+          ],
+          "type": "string"
+        },
+        "minItems": 1,
+        "type": "array"
+      },
+      "update_person_fields": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "resource_name",
+      "update_person_fields",
+      "person"
+    ],
+    "type": "object"
+  },
+  "slug": "GMAIL_UPDATE_CONTACT",
+  "version": "20261015_00"
+}

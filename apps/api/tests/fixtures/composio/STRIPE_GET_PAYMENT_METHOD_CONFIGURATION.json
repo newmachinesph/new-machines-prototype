@@ -1,0 +1,15 @@
+{
+  "input_parameters": {
+    "properties": {
+      "id": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "id"
+    ],
+    "type": "object"
+  },
+  "slug": "STRIPE_GET_PAYMENT_METHOD_CONFIGURATION",
+  "version": "20261014_00"
+}

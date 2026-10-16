@@ -1,0 +1,21 @@
+{
+  "input_parameters": {
+    "properties": {
+      "include_other_contacts": {
+        "type": "boolean"
+      },
+      "page_token": {
+        "type": "string"
+      },
+      "person_fields": {
+        "type": "string"
+      },
+      "resource_name": {
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "slug": "GMAIL_GET_CONTACTS",
+  "version": "20261015_00"
+}

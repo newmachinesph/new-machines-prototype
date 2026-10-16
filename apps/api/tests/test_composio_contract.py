@@ -43,8 +43,35 @@ def _type_fits(have: set[str], want: set[str]) -> bool:
     return all(t in want or (t == "integer" and "number" in want) for t in have)
 
 
+def _joined(base: dict, branch, at: str) -> dict | list[str]:
+    """One schema both `base` and `branch` describe, or the problems that stop them being joined: a branch
+    that is not a schema, or a key (property included) the two set differently."""
+    if not isinstance(branch, dict):
+        return [f"{at} is not a schema"]
+    clashes = [k for k in base.keys() & branch.keys() - {"properties", "required"} if base[k] != branch[k]]
+    props = base.get("properties") or {}
+    more = branch.get("properties") or {}
+    clashes += [f"properties.{k}" for k in props.keys() & more.keys() if props[k] != more[k]]
+    if clashes:
+        return [f"{at} sets {k} differently from the schema around it" for k in sorted(clashes)]
+    out = {**base, **branch}
+    if props or more:
+        out["properties"] = {**props, **more}
+    if base.get("required") or branch.get("required"):
+        out["required"] = sorted({*(base.get("required") or []), *(branch.get("required") or [])})
+    return out
+
+
 def _problems(ours: dict, theirs: dict, at: str) -> list[str]:
     """Why a value valid for `ours` might be refused by `theirs` (empty when it fits)."""
+    if "anyOf" in ours:
+        # Our alternatives: a value meets the rest of ours and one branch, so each joined pair must fit.
+        base = {k: v for k, v in ours.items() if k != "anyOf"}
+        found = []
+        for i, branch in enumerate(ours["anyOf"] or [None]):
+            joined = _joined(base, branch, f"{at} anyOf[{i}]")
+            found += joined if isinstance(joined, list) else _problems(joined, theirs, at)
+        return found
     have, want = _types(ours), _types(theirs)
     found = (
         [f"{at} is {sorted(want)}, not {sorted(have)}"]
@@ -252,6 +279,32 @@ OBJ = {"type": "object", "additionalProperties": False}
         ({"type": "string", "pattern": "^[a-z]+$"}, {"type": "string", "pattern": "^[a-z]+$"}, None),
         ({"type": "string"}, {"type": "string", "pattern": "^[a-z]+$"}, "x has pattern '^[a-z]+$', not none"),
         ({"type": "string", "pattern": "^a"}, {"type": "string", "pattern": "^[a-z]+$"}, "x has pattern"),
+        # Our own alternatives are checked one by one.
+        (
+            {"anyOf": [{"type": "object", "required": ["c"], "properties": {"c": {}}}, {"type": "null"}]},
+            {"anyOf": [{"type": "object", "required": ["c"], "properties": {"c": {}}}, {"type": "null"}]},
+            None,
+        ),
+        (
+            {"anyOf": [{"type": "object", "properties": {"c": {}}}, {"type": "null"}]},
+            {"anyOf": [{"type": "object", "required": ["c"], "properties": {"c": {}}}, {"type": "null"}]},
+            "x requires ['c']",
+        ),
+        ({"anyOf": [{"type": "string"}, {"type": "integer"}]}, {"type": "string"}, "x is ['string']"),
+        # A branch adds to the schema around it rather than replacing it.
+        (
+            {
+                "type": "object",
+                "required": ["a"],
+                "properties": {"a": {}},
+                "anyOf": [{"required": ["b"], "properties": {"b": {}}}],
+            },
+            {"type": "object", "required": ["a", "b"], "properties": {"a": {}, "b": {}}},
+            None,
+        ),
+        ({"type": "string", "anyOf": [{"type": "integer"}]}, {"type": "string"}, "sets type differently"),
+        ({"anyOf": [True]}, {"type": "string"}, "x anyOf[0] is not a schema"),
+        ({"anyOf": []}, {"type": "string"}, "x anyOf[0] is not a schema"),
         # Enum values need not be hashable.
         ({"enum": [{"a": 1}, [1, 2]]}, {"enum": [[1, 2], {"a": 1}, None]}, None),
         ({"enum": [{"a": 2}]}, {"enum": [{"a": 1}]}, "x takes only"),

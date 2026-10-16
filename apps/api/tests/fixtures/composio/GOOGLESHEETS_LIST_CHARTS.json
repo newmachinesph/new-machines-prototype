@@ -1,0 +1,25 @@
+{
+  "input_parameters": {
+    "properties": {
+      "chart_id": {
+        "type": "integer"
+      },
+      "include_spec": {
+        "type": "boolean"
+      },
+      "sheet_id": {
+        "type": "integer"
+      },
+      "spreadsheet_id": {
+        "minLength": 1,
+        "type": "string"
+      }
+    },
+    "required": [
+      "spreadsheet_id"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLESHEETS_LIST_CHARTS",
+  "version": "20261001_00"
+}

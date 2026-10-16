@@ -1,0 +1,15 @@
+{
+  "input_parameters": {
+    "properties": {
+      "include_details": {
+        "type": "boolean"
+      },
+      "user_id": {
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "slug": "GMAIL_LIST_LABELS",
+  "version": "20261015_00"
+}

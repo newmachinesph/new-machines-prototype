@@ -1,0 +1,321 @@
+{
+  "input_parameters": {
+    "properties": {
+      "fields": {
+        "type": "string"
+      },
+      "includeSpreadsheetInResponse": {
+        "type": "boolean"
+      },
+      "properties": {
+        "additionalProperties": false,
+        "properties": {
+          "autoRecalc": {
+            "enum": [
+              "ON_CHANGE",
+              "MINUTE",
+              "HOUR"
+            ],
+            "type": "string"
+          },
+          "defaultFormat": {
+            "additionalProperties": false,
+            "properties": {
+              "backgroundColorStyle": {
+                "additionalProperties": false,
+                "properties": {
+                  "rgbColor": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "alpha": {
+                        "maximum": 1,
+                        "minimum": 0,
+                        "type": "number"
+                      },
+                      "blue": {
+                        "maximum": 1,
+                        "minimum": 0,
+                        "type": "number"
+                      },
+                      "green": {
+                        "maximum": 1,
+                        "minimum": 0,
+                        "type": "number"
+                      },
+                      "red": {
+                        "maximum": 1,
+                        "minimum": 0,
+                        "type": "number"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "themeColor": {
+                    "enum": [
+                      "THEME_COLOR_TYPE_UNSPECIFIED",
+                      "TEXT",
+                      "BACKGROUND",
+                      "ACCENT1",
+                      "ACCENT2",
+                      "ACCENT3",
+                      "ACCENT4",
+                      "ACCENT5",
+                      "ACCENT6",
+                      "LINK"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "horizontalAlignment": {
+                "type": "string"
+              },
+              "textFormat": {
+                "additionalProperties": false,
+                "properties": {
+                  "bold": {
+                    "type": "boolean"
+                  },
+                  "fontFamily": {
+                    "type": "string"
+                  },
+                  "fontSize": {
+                    "type": "integer"
+                  },
+                  "foregroundColor": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "alpha": {
+                        "maximum": 1,
+                        "minimum": 0,
+                        "type": "number"
+                      },
+                      "blue": {
+                        "maximum": 1,
+                        "minimum": 0,
+                        "type": "number"
+                      },
+                      "green": {
+                        "maximum": 1,
+                        "minimum": 0,
+                        "type": "number"
+                      },
+                      "red": {
+                        "maximum": 1,
+                        "minimum": 0,
+                        "type": "number"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "foregroundColorStyle": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "rgbColor": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "alpha": {
+                            "maximum": 1,
+                            "minimum": 0,
+                            "type": "number"
+                          },
+                          "blue": {
+                            "maximum": 1,
+                            "minimum": 0,
+                            "type": "number"
+                          },
+                          "green": {
+                            "maximum": 1,
+                            "minimum": 0,
+                            "type": "number"
+                          },
+                          "red": {
+                            "maximum": 1,
+                            "minimum": 0,
+                            "type": "number"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "themeColor": {
+                        "enum": [
+                          "THEME_COLOR_TYPE_UNSPECIFIED",
+                          "TEXT",
+                          "BACKGROUND",
+                          "ACCENT1",
+                          "ACCENT2",
+                          "ACCENT3",
+                          "ACCENT4",
+                          "ACCENT5",
+                          "ACCENT6",
+                          "LINK"
+                        ],
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "italic": {
+                    "type": "boolean"
+                  },
+                  "link": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "uri": {
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "strikethrough": {
+                    "type": "boolean"
+                  },
+                  "underline": {
+                    "type": "boolean"
+                  }
+                },
+                "type": "object"
+              },
+              "verticalAlignment": {
+                "type": "string"
+              },
+              "wrapStrategy": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "importFunctionsExternalUrlAccessAllowed": {
+            "type": "boolean"
+          },
+          "iterativeCalculationSettings": {
+            "additionalProperties": false,
+            "properties": {
+              "convergenceThreshold": {
+                "type": "number"
+              },
+              "maxIterations": {
+                "type": "integer"
+              }
+            },
+            "type": "object"
+          },
+          "locale": {
+            "type": "string"
+          },
+          "spreadsheetTheme": {
+            "additionalProperties": false,
+            "properties": {
+              "primaryFontFamily": {
+                "type": "string"
+              },
+              "themeColors": {
+                "items": {
+                  "properties": {
+                    "color": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "rgbColor": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "alpha": {
+                              "maximum": 1,
+                              "minimum": 0,
+                              "type": "number"
+                            },
+                            "blue": {
+                              "maximum": 1,
+                              "minimum": 0,
+                              "type": "number"
+                            },
+                            "green": {
+                              "maximum": 1,
+                              "minimum": 0,
+                              "type": "number"
+                            },
+                            "red": {
+                              "maximum": 1,
+                              "minimum": 0,
+                              "type": "number"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "themeColor": {
+                          "enum": [
+                            "THEME_COLOR_TYPE_UNSPECIFIED",
+                            "TEXT",
+                            "BACKGROUND",
+                            "ACCENT1",
+                            "ACCENT2",
+                            "ACCENT3",
+                            "ACCENT4",
+                            "ACCENT5",
+                            "ACCENT6",
+                            "LINK"
+                          ],
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "colorType": {
+                      "enum": [
+                        "THEME_COLOR_TYPE_UNSPECIFIED",
+                        "TEXT",
+                        "BACKGROUND",
+                        "ACCENT1",
+                        "ACCENT2",
+                        "ACCENT3",
+                        "ACCENT4",
+                        "ACCENT5",
+                        "ACCENT6",
+                        "LINK"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "colorType",
+                    "color"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              }
+            },
+            "type": "object"
+          },
+          "timeZone": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "responseIncludeGridData": {
+        "type": "boolean"
+      },
+      "responseRanges": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "spreadsheetId": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "spreadsheetId",
+      "properties",
+      "fields"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLESHEETS_UPDATE_SPREADSHEET_PROPERTIES",
+  "version": "20261001_00"
+}

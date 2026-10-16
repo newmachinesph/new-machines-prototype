@@ -1,0 +1,18 @@
+{
+  "input_parameters": {
+    "properties": {
+      "client_secret": {
+        "type": "string"
+      },
+      "payment_intent_id": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "payment_intent_id"
+    ],
+    "type": "object"
+  },
+  "slug": "STRIPE_RETRIEVE_PAYMENT_INTENT",
+  "version": "20261014_00"
+}

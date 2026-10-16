@@ -1,0 +1,33 @@
+{
+  "input_parameters": {
+    "properties": {
+      "customer": {
+        "pattern": "^cus_[a-zA-Z0-9]+$",
+        "type": "string"
+      },
+      "ending_before": {
+        "type": "string"
+      },
+      "expand": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "limit": {
+        "maximum": 100,
+        "minimum": 1,
+        "type": "integer"
+      },
+      "starting_after": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "customer"
+    ],
+    "type": "object"
+  },
+  "slug": "STRIPE_LIST_CUSTOMER_SUBSCRIPTIONS",
+  "version": "20261014_00"
+}

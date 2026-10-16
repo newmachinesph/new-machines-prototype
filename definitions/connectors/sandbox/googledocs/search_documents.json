@@ -1,0 +1,178 @@
+{
+  "kind": "sample",
+  "files": [
+    {
+      "id": "sample",
+      "kind": "sample",
+      "name": "sample",
+      "size": "sample",
+      "owners": [
+        {
+          "me": true,
+          "kind": "sample",
+          "photo_link": "sample",
+          "display_name": "sample",
+          "email_address": "sample",
+          "permission_id": "sample"
+        }
+      ],
+      "shared": true,
+      "spaces": [
+        "sample"
+      ],
+      "parents": [
+        "sample"
+      ],
+      "starred": true,
+      "trashed": true,
+      "version": "sample",
+      "drive_id": "sample",
+      "icon_link": "sample",
+      "mime_type": "sample",
+      "label_info": {
+        "labels": []
+      },
+      "properties": {},
+      "description": "sample",
+      "owned_by_me": true,
+      "permissions": [
+        {
+          "id": "sample",
+          "kind": "sample",
+          "role": "sample",
+          "type": "sample",
+          "view": "sample",
+          "domain": "sample",
+          "deleted": true,
+          "photo_link": "sample",
+          "display_name": "sample",
+          "email_address": "sample",
+          "pending_owner": true,
+          "expiration_time": "sample",
+          "permission_details": [],
+          "allow_file_discovery": true,
+          "team_drive_permission_details": [],
+          "inherited_permissions_disabled": true
+        }
+      ],
+      "capabilities": {},
+      "created_time": "sample",
+      "export_links": {},
+      "md5_checksum": "sample",
+      "resource_key": "sample",
+      "sharing_user": {
+        "me": true,
+        "kind": "sample",
+        "photo_link": "sample",
+        "display_name": "sample",
+        "email_address": "sample",
+        "permission_id": "sample"
+      },
+      "trashed_time": "sample",
+      "viewed_by_me": true,
+      "content_hints": {
+        "thumbnail": {
+          "image": null,
+          "mime_type": null
+        },
+        "indexable_text": "sample"
+      },
+      "has_thumbnail": true,
+      "modified_time": "sample",
+      "sha1_checksum": "sample",
+      "team_drive_id": "sample",
+      "trashing_user": {
+        "me": true,
+        "kind": "sample",
+        "photo_link": "sample",
+        "display_name": "sample",
+        "email_address": "sample",
+        "permission_id": "sample"
+      },
+      "web_view_link": "sample",
+      "app_properties": {},
+      "file_extension": "sample",
+      "modified_by_me": true,
+      "permission_ids": [
+        "sample"
+      ],
+      "thumbnail_link": "sample",
+      "sha256_checksum": "sample",
+      "folder_color_rgb": "sample",
+      "head_revision_id": "sample",
+      "quota_bytes_used": "sample",
+      "shortcut_details": {
+        "target_id": "sample",
+        "target_mime_type": "sample",
+        "target_resource_key": "sample"
+      },
+      "web_content_link": "sample",
+      "is_app_authorized": true,
+      "original_filename": "sample",
+      "thumbnail_version": "sample",
+      "viewed_by_me_time": "sample",
+      "writers_can_share": true,
+      "explicitly_trashed": true,
+      "full_file_extension": "sample",
+      "last_modifying_user": {
+        "me": true,
+        "kind": "sample",
+        "photo_link": "sample",
+        "display_name": "sample",
+        "email_address": "sample",
+        "permission_id": "sample"
+      },
+      "link_share_metadata": {
+        "security_update_enabled": true,
+        "security_update_eligible": true
+      },
+      "modified_by_me_time": "sample",
+      "shared_with_me_time": "sample",
+      "content_restrictions": [
+        {
+          "type": "sample",
+          "reason": "sample",
+          "read_only": true,
+          "owner_restricted": true,
+          "restricting_user": null,
+          "restriction_time": "sample",
+          "system_restricted": true
+        }
+      ],
+      "image_media_metadata": {
+        "lens": "sample",
+        "time": "sample",
+        "width": 1,
+        "height": 1,
+        "sensor": "sample",
+        "aperture": 1,
+        "location": {},
+        "rotation": 1,
+        "iso_speed": 1,
+        "flash_used": true,
+        "camera_make": "sample",
+        "color_space": "sample",
+        "camera_model": "sample",
+        "focal_length": 1,
+        "exposure_bias": 1,
+        "exposure_mode": "sample",
+        "exposure_time": 1,
+        "metering_mode": "sample",
+        "white_balance": "sample",
+        "subject_distance": 1,
+        "max_aperture_value": 1
+      },
+      "video_media_metadata": {
+        "width": 1,
+        "height": 1,
+        "duration_millis": "sample"
+      },
+      "has_augmented_permissions": true,
+      "inherited_permissions_disabled": true,
+      "copy_requires_writer_permission": true
+    }
+  ],
+  "next_page_token": "sample",
+  "incomplete_search": true,
+  "composio_execution_message": "sample"
+}

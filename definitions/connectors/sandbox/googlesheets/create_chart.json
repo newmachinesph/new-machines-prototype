@@ -1,0 +1,146 @@
+{
+  "chart": {
+    "spec": {
+      "title": "sample",
+      "altText": "sample",
+      "fontName": "sample",
+      "orgChart": {
+        "labels": null,
+        "nodeSize": "sample",
+        "tooltips": null,
+        "parentLabels": null,
+        "nodeColorStyle": null,
+        "selectedNodeColorStyle": null
+      },
+      "pieChart": {
+        "domain": null,
+        "series": null,
+        "pieHole": 1,
+        "legendPosition": "sample",
+        "threeDimensional": true
+      },
+      "subtitle": "sample",
+      "maximized": true,
+      "basicChart": {
+        "axis": [],
+        "series": [],
+        "domains": [],
+        "chartType": "sample",
+        "compareMode": "sample",
+        "headerCount": 1,
+        "stackedType": "sample",
+        "lineSmoothing": true,
+        "legendPosition": "sample",
+        "totalDataLabel": null,
+        "interpolateNulls": true,
+        "threeDimensional": true
+      },
+      "bubbleChart": {
+        "domain": null,
+        "series": null,
+        "groupIds": null,
+        "bubbleSizes": null,
+        "bubbleLabels": null,
+        "bubbleOpacity": 1,
+        "legendPosition": "sample",
+        "bubbleTextStyle": null,
+        "bubbleMaxRadiusSize": 1,
+        "bubbleMinRadiusSize": 1,
+        "bubbleBorderColorStyle": null
+      },
+      "treemapChart": {
+        "labels": null,
+        "levels": 1,
+        "maxValue": 1,
+        "minValue": 1,
+        "sizeData": null,
+        "colorData": null,
+        "colorScale": null,
+        "textFormat": null,
+        "hideTooltips": true,
+        "hintedLevels": 1,
+        "parentLabels": null,
+        "headerColorStyle": null
+      },
+      "histogramChart": {
+        "series": [],
+        "bucketSize": 1,
+        "legendPosition": "sample",
+        "showItemDividers": true,
+        "outlierPercentile": 1
+      },
+      "scorecardChart": {
+        "scaleFactor": 1,
+        "keyValueData": null,
+        "aggregateType": "sample",
+        "keyValueFormat": null,
+        "baselineValueData": null,
+        "numberFormatSource": "sample",
+        "baselineValueFormat": null,
+        "customFormatOptions": null
+      },
+      "waterfallChart": {
+        "domain": null,
+        "series": [],
+        "stackedType": "sample",
+        "totalDataLabel": null,
+        "firstValueIsTotal": true,
+        "connectorLineStyle": null,
+        "hideConnectorLines": true
+      },
+      "backgroundColor": {
+        "red": 1,
+        "blue": 1,
+        "alpha": 1,
+        "green": 1
+      },
+      "titleTextFormat": {
+        "bold": true,
+        "link": null,
+        "italic": true,
+        "fontSize": 1,
+        "underline": true,
+        "fontFamily": "sample",
+        "strikethrough": true,
+        "foregroundColor": null,
+        "foregroundColorStyle": null
+      },
+      "candlestickChart": {
+        "data": [],
+        "domain": null
+      },
+      "backgroundColorStyle": {
+        "rgbColor": null,
+        "themeColor": "sample"
+      },
+      "hiddenDimensionStrategy": "sample"
+    },
+    "border": {
+      "color": {
+        "red": 1,
+        "blue": 1,
+        "alpha": 1,
+        "green": 1
+      },
+      "colorStyle": {
+        "rgbColor": null,
+        "themeColor": "sample"
+      }
+    },
+    "chartId": 1,
+    "position": {
+      "sheetId": 1,
+      "newSheet": true,
+      "overlayPosition": {
+        "anchorCell": null,
+        "widthPixels": 1,
+        "heightPixels": 1,
+        "offsetXPixels": 1,
+        "offsetYPixels": 1
+      }
+    }
+  },
+  "chart_id": 707876808,
+  "display_url": "https://docs.google.com/spreadsheets/d/1m3dngJbpYYar2dwkj4GTS9Mmmi_zV8SXJ30yANi-7k8/edit",
+  "spreadsheet_id": "1m3dngJbpYYar2dwkj4GTS9Mmmi_zV8SXJ30yANi-7k8"
+}

@@ -1,0 +1,18 @@
+{
+  "input_parameters": {
+    "properties": {
+      "thread_id": {
+        "type": "string"
+      },
+      "user_id": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "thread_id"
+    ],
+    "type": "object"
+  },
+  "slug": "GMAIL_UNTRASH_THREAD",
+  "version": "20261015_00"
+}

@@ -49,4 +49,2015 @@ tools:
           maximum: 100
           description: Invoices per page.
 
+  # Imported from Composio by scripts/import_connector.py stripe; reviewed choices are in
+  # scripts/connector_imports/stripe.yaml.
+  - id: create_customer
+    slug: STRIPE_CREATE_CUSTOMER
+    version: '20261014_00'
+    action_class: write
+    capability: payments.write
+    description: Creates a new customer in Stripe, required for creating charges or subscriptions; an email is highly
+      recommended for customer communications.
+    input_schema:
+      type: object
+      properties:
+        name:
+          type: string
+          description: The customer's full name or the name of the business.
+        email:
+          type: string
+          description: The customer's primary email address, used by Stripe for sending invoices, receipts, and other
+            important communications.
+        phone:
+          type: string
+          description: The customer's primary phone number. Include the country code for international numbers (e.g.,
+            +1 for the USA).
+        address:
+          type: object
+          description: 'The customer''s billing address, provided as a dictionary where both keys and values are strings.
+            This address can be used for tax calculation, shipping, and fraud prevention. Common keys include: `line1`
+            (street address, P.O. box, or c/o), `line2` (apartment, suite, unit, or building), `city`, `state` (state,
+            province, or region), `postal_code` (ZIP or postal code), and `country` (a two-letter ISO country code,
+            e.g., ''US'', ''GB''). All keys are optional. Can be provided as either a dictionary or a JSON string.'
+          additionalProperties:
+            type: string
+        description:
+          type: string
+          description: An arbitrary string that you can attach to a customer object for your internal reference (e.g.,
+            notes about the customer). This is not visible to the customer.
+      additionalProperties: false
+  - id: create_customer_tax_id
+    slug: STRIPE_CREATE_CUSTOMER_TAX_ID
+    version: '20261014_00'
+    action_class: write
+    capability: payments.write
+    description: Creates a new tax ID for a customer, used for tax compliance and invoicing across 100+ supported
+      country-specific tax ID formats. Use when you need to add tax identification to a customer account.
+    input_schema:
+      type: object
+      required:
+      - customer
+      - type
+      - value
+      properties:
+        type:
+          type: string
+          description: 'Type of the tax ID. Supported values include over 100 country-specific formats such as: eu_vat
+            (European VAT number), us_ein (US Employer Identification Number), gb_vat (United Kingdom VAT number),
+            ca_bn (Canadian Business Number), br_cpf (Brazilian CPF number), in_gst (Indian GST number), jp_cn (Japanese
+            Corporate Number), ad_nrt, ae_trn, ar_cuit, au_abn, au_arn, bg_uic, bh_vat, bo_tin, br_cnpj, ch_vat, cl_tin,
+            cn_tin, co_nit, cr_tin, de_stn, do_rcn, ec_ruc, eg_tin, es_cif, eu_oss_vat, ge_vat, hk_br, hu_tin, id_npwp,
+            il_vat, is_vat, ke_pin, kr_brn, kz_bin, li_uid, mx_rfc, my_frp, my_itn, my_sst, ng_tin, no_vat, no_voec,
+            nz_gst, om_vat, pe_ruc, ph_tin, ro_tin, rs_pib, ru_inn, ru_kpp, sa_vat, sg_gst, sg_uen, si_tin, sv_nit,
+            th_vat, tr_tin, tw_vat, ua_vat, uy_ruc, ve_rif, vn_tin, za_vat and many more.'
+        value:
+          type: string
+          description: The value of the tax ID number.
+        customer:
+          type: string
+          description: The ID of the customer for whom to create the tax ID. Must start with 'cus_' followed by alphanumeric
+            characters.
+      additionalProperties: false
+  - id: create_price
+    slug: STRIPE_CREATE_PRICE
+    version: '20261014_00'
+    action_class: write
+    capability: payments.write
+    description: Creates a new Stripe Price for a product, defining its charges (one-time or recurring) and billing
+      scheme; requires either an existing `product` ID or `product_data`.
+    input_schema:
+      type: object
+      required:
+      - currency
+      properties:
+        tiers:
+          type: array
+          items:
+            type: object
+            required:
+            - up_to
+            properties:
+              up_to:
+                anyOf:
+                - type: integer
+                - type: string
+                description: Specifies the upper bound of this tier. Can be an integer or 'inf' for the last tier
+                  (fallback tier).
+              flat_amount:
+                type: integer
+                description: The flat billing amount for an entire tier (in the smallest currency unit), if any. Cannot
+                  be used with `unit_amount`.
+              unit_amount:
+                type: integer
+                description: The per-unit billing amount in the smallest currency unit for this tier. Cannot be used
+                  with `flat_amount`.
+              flat_amount_decimal:
+                type: string
+                description: Same as `flat_amount`, but accepts a decimal string with up to 12 decimal places. Suitable
+                  for higher precision.
+              unit_amount_decimal:
+                type: string
+                description: Same as `unit_amount`, but accepts a decimal string with up to 12 decimal places. Suitable
+                  for higher precision.
+            description: Represents a pricing tier for tiered billing (`billing_scheme = 'tiered'`).
+            additionalProperties: false
+          description: A list of pricing tiers. Required if `billing_scheme` is 'tiered'.
+        active:
+          type: boolean
+          description: Whether the price can be used for new purchases. Defaults to true.
+        product:
+          type: string
+          description: The ID of the product this price is for. Required if `product_data` is not provided.
+        currency:
+          type: string
+          description: Three-letter ISO currency code (e.g., 'usd', 'eur'). Must be a supported currency.
+        metadata:
+          type: object
+          description: A set of key-value pairs to store additional information about the price.
+          additionalProperties:
+            type: string
+        nickname:
+          type: string
+          description: A brief, internal-facing description of the price. Useful for distinguishing prices in listings.
+        recurring:
+          type: object
+          required:
+          - interval
+          properties:
+            meter:
+              type: string
+              description: The ID of the meter from which to read usage when `usage_type=metered`. Required if `usage_type='metered'`
+                and not using `product.meter`.
+            interval:
+              type: string
+              description: Specifies the billing frequency. Must be one of 'day', 'week', 'month', or 'year'.
+            usage_type:
+              type: string
+              description: Configures how usage is calculated. Set to 'metered' to bill based on usage, or 'licensed'
+                for a fixed quantity. Defaults to 'licensed'.
+            interval_count:
+              type: integer
+              description: The number of intervals between subscription billings. For example, `interval=month` and
+                `interval_count=3` bills every 3 months. Defaults to 1.
+            aggregate_usage:
+              type: string
+              description: For `usage_type=metered`, specifies how usage records are aggregated. Options include 'sum',
+                'last_during_period', 'last_ever', or 'max'. Defaults to 'sum'. This field is ignored if `usage_type`
+                is 'licensed'.
+          description: Specifies recurring components of a price, such as billing interval and usage type.
+          additionalProperties: false
+        lookup_key:
+          type: string
+          description: A unique, user-defined key to retrieve this price. Case-sensitive.
+        tiers_mode:
+          type: string
+          description: Defines how the quantity is applied to the tiers. Either 'graduated' (price is sum of costs
+            from applicable tiers) or 'volume' (price is determined by the tier corresponding to the total quantity).
+            Required if `billing_scheme` is 'tiered'.
+        unit_amount:
+          type: integer
+          description: The base charge amount in the smallest currency unit (e.g., cents for USD). Required if not
+            using `tiers`, `custom_unit_amount`, or `currency_options` with a unit amount for the primary currency.
+        product_data:
+          type: object
+          required:
+          - name
+          properties:
+            name:
+              type: string
+              description: The product’s name, meant to be displayable to the customer.
+            active:
+              type: boolean
+              description: Whether the product is currently available for purchase. Defaults to true.
+            metadata:
+              type: object
+              description: A set of key-value pairs to store additional information about the product.
+              additionalProperties:
+                type: string
+            tax_code:
+              type: string
+              description: A tax code ID that identifies the taxability of this product. Recommended for products
+                that are subject to tax.
+            unit_label:
+              type: string
+              description: A label that represents units of this product. For example, 'user' or 'GB'.
+            statement_descriptor:
+              type: string
+              description: An arbitrary string to be displayed on the customer's credit card statement. This field
+                is not available for all payment methods.
+          description: Fields for creating a new product if a `product` ID is not provided with the price.
+          additionalProperties: false
+        tax_behavior:
+          type: string
+          description: Specifies how tax is applied to the price. Options are 'inclusive' (tax is included), 'exclusive'
+            (tax is added), or 'unspecified'.
+        billing_scheme:
+          type: string
+          description: Describes how to compute the price per period. Either 'per_unit' (default, for fixed price
+            per unit) or 'tiered' (for volume-based or graduated tiers).
+        currency_options:
+          type: object
+          description: Prices defined in each supported currency. Useful for multi-currency pricing. The primary `currency`'s
+            pricing can also be defined here.
+          additionalProperties:
+            type: object
+            properties:
+              tiers:
+                anyOf:
+                - type: array
+                  items:
+                    type: object
+                    required:
+                    - up_to
+                    properties:
+                      up_to:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        description: Specifies the upper bound of this tier for the specific currency. Use 'inf' for
+                          the last tier.
+                      flat_amount:
+                        anyOf:
+                        - type: integer
+                        - type: 'null'
+                        description: The flat billing amount for this tier in the currency (smallest unit).
+                      unit_amount:
+                        anyOf:
+                        - type: integer
+                        - type: 'null'
+                        description: The per-unit billing amount for this tier in the currency (smallest unit).
+                      flat_amount_decimal:
+                        anyOf:
+                        - type: string
+                        - type: 'null'
+                        description: Decimal string representation of `flat_amount` for this tier in the currency.
+                      unit_amount_decimal:
+                        anyOf:
+                        - type: string
+                        - type: 'null'
+                        description: Decimal string representation of `unit_amount` for this tier in the currency.
+                    description: Defines pricing tiers for a specific currency within `currency_options`.
+                    additionalProperties: false
+                - type: 'null'
+                description: A list of pricing tiers for this currency, if `billing_scheme` is 'tiered'.
+              unit_amount:
+                anyOf:
+                - type: integer
+                - type: 'null'
+                description: The unit amount in the smallest currency unit for this currency. Required if not using
+                  `tiers` or `custom_unit_amount`.
+              tax_behavior:
+                anyOf:
+                - type: string
+                - type: 'null'
+                description: Specifies whether the price already includes tax ('inclusive'), tax is added on top ('exclusive'),
+                  or tax behavior is not specified ('unspecified').
+              custom_unit_amount:
+                anyOf:
+                - type: object
+                  required:
+                  - enabled
+                  properties:
+                    preset:
+                      anyOf:
+                      - type: integer
+                      - type: 'null'
+                      description: The starting unit amount (in the smallest currency unit) that can be updated by
+                        the customer. This is the initial value presented.
+                    enabled:
+                      type: boolean
+                      description: Pass `true` to enable `custom_unit_amount`, allowing the customer to set the price.
+                    maximum:
+                      anyOf:
+                      - type: integer
+                      - type: 'null'
+                      description: The maximum unit amount (in the smallest currency unit) the customer can specify.
+                    minimum:
+                      anyOf:
+                      - type: integer
+                      - type: 'null'
+                      description: The minimum unit amount (in the smallest currency unit) the customer can specify.
+                  description: Configuration for a price where the unit amount is set by the customer at checkout.
+                  additionalProperties: false
+                - type: 'null'
+                description: Configuration for a customer-defined unit amount for this currency.
+              unit_amount_decimal:
+                anyOf:
+                - type: string
+                - type: 'null'
+                description: Decimal string representation of `unit_amount` for this currency. Provides higher precision.
+            description: Defines pricing details for a specific currency, used in `currency_options`.
+            additionalProperties: false
+        custom_unit_amount:
+          type: object
+          required:
+          - enabled
+          properties:
+            preset:
+              type: integer
+              description: The starting unit amount (in the smallest currency unit) that can be updated by the customer.
+                This is the initial value presented.
+            enabled:
+              type: boolean
+              description: Pass `true` to enable `custom_unit_amount`, allowing the customer to set the price.
+            maximum:
+              type: integer
+              description: The maximum unit amount (in the smallest currency unit) the customer can specify.
+            minimum:
+              type: integer
+              description: The minimum unit amount (in the smallest currency unit) the customer can specify.
+          description: Configuration for a price where the unit amount is set by the customer at checkout.
+          additionalProperties: false
+        transform_quantity:
+          type: object
+          required:
+          - divide_by
+          - round
+          properties:
+            round:
+              type: string
+              description: After division, specifies how the result should be rounded. Must be one of 'up' or 'down'.
+            divide_by:
+              type: integer
+              description: Divide the reported usage quantity by this number.
+          description: Contains information about how the quantity should be transformed before calculating the price.
+          additionalProperties: false
+        unit_amount_decimal:
+          type: string
+          description: Same as `unit_amount`, but accepts a decimal string with up to 12 decimal places for higher
+            precision. Required if not using `tiers`, `custom_unit_amount`, or `currency_options` with a unit amount
+            for the primary currency and `unit_amount` is not provided.
+      additionalProperties: false
+  - id: create_product
+    slug: STRIPE_CREATE_PRODUCT
+    version: '20261014_00'
+    action_class: write
+    capability: payments.write
+    description: Creates a new product in Stripe, encoding the request as `application/x-www-form-urlencoded` by flattening
+      nested structures.
+    input_schema:
+      type: object
+      required:
+      - name
+      properties:
+        id:
+          type: string
+          description: Optional unique product identifier. Stripe generates one if omitted. Useful for idempotency
+            or migrating existing IDs.
+        url:
+          type: string
+          description: Publicly accessible URL for the product's webpage or landing page.
+        name:
+          type: string
+          description: Product's name, displayed to customers.
+        active:
+          type: boolean
+          description: Indicates if the product is available for purchase. Set to `false` to archive.
+        images:
+          type: array
+          items:
+            type: string
+          description: Up to 8 image URLs for display on product pages or checkout.
+        metadata:
+          type: object
+          description: Key-value pairs for storing additional structured information.
+          additionalProperties:
+            type: string
+        tax_code:
+          type: string
+          description: Stripe tax code ID for determining tax rates on sales.
+        shippable:
+          type: boolean
+          description: Indicates if the product is a physical good requiring shipping.
+        unit_label:
+          type: string
+          description: Label for product units to clarify quantity-based pricing.
+        description:
+          type: string
+          description: Product description, displayed to customers, providing more details.
+        custom_fields:
+          type: array
+          items:
+            type: object
+            required:
+            - name
+            - value
+            properties:
+              name:
+                type: string
+                description: Name of the custom field for invoices.
+              value:
+                type: string
+                description: Value of the custom field.
+            description: Represents a custom field to be displayed on invoices for sales of this product.
+            additionalProperties: false
+          description: Custom fields displayed on invoices for sales (e.g., PO numbers).
+        shipping_cost:
+          type: object
+          properties:
+            shipping_rate:
+              type: string
+              description: ID of an existing ShippingRate. If provided, `shipping_rate_data` must be omitted.
+            shipping_rate_data:
+              type: object
+              required:
+              - display_name
+              properties:
+                display_name:
+                  type: string
+                  description: Shipping rate name displayed to customer.
+              description: Parameters for creating a new ad-hoc shipping rate during product creation.
+              additionalProperties: false
+          description: Defines the shipping cost for the product, either by referencing an existing shipping rate
+            or creating a new one.
+          additionalProperties: false
+        default_price_data:
+          type: object
+          required:
+          - currency
+          properties:
+            currency:
+              type: string
+              description: Three-letter ISO currency code, lowercase. Must be a supported currency.
+            recurring:
+              type: object
+              required:
+              - interval
+              properties:
+                interval:
+                  type: string
+                  description: 'Frequency of subscription billing. Must be one of: `day`, `week`, `month`, or `year`.'
+                interval_count:
+                  type: integer
+                  description: Number of intervals between billings (e.g., `interval=month`, `interval_count=3` bills
+                    every 3 months). Defaults to 1 if not provided.
+              description: Specifies a recurring payment plan for a price.
+              additionalProperties: false
+            unit_amount:
+              type: integer
+              description: Price in smallest currency unit (e.g., cents for USD). Zero allowed for free price.
+            tax_behavior:
+              type: string
+              description: 'Tax treatment of the price. Must be one of: `inclusive`, `exclusive`, or `unspecified`
+                (inherited from customer/subscription).'
+            currency_options:
+              type: object
+              description: Per-currency pricing options. Keys are three-letter ISO currency codes. Values are dicts
+                with price properties (e.g., `unit_amount`, `tax_behavior`) for that currency.
+              additionalProperties: true
+            custom_unit_amount:
+              type: object
+              description: Configuration for customer-adjustable unit amount (Checkout/Payment Links). Requires `enabled=True`.
+                Can include `minimum`, `maximum`, `preset`.
+              additionalProperties: true
+            unit_amount_decimal:
+              type: string
+              description: Price as a decimal in smallest currency unit (max 12 decimal places). For fractions of
+                a cent.
+          description: Data used to create a new Price object as the default price for this product.
+          additionalProperties: false
+        marketing_features:
+          type: array
+          items:
+            type: object
+            required:
+            - name
+            properties:
+              name:
+                type: string
+                description: Name of the marketing feature (max 80 characters).
+            description: Represents a marketing feature to be displayed on the product page or pricing table.
+            additionalProperties: false
+          description: List of marketing features; short, benefit-oriented statements for pricing pages.
+        package_dimensions:
+          type: object
+          required:
+          - height
+          - length
+          - width
+          - weight
+          properties:
+            width:
+              type: number
+              minimum: 0
+              description: Package width in inches (max 2 decimal places).
+            height:
+              type: number
+              minimum: 0
+              description: Package height in inches (max 2 decimal places).
+            length:
+              type: number
+              minimum: 0
+              description: Package length in inches (max 2 decimal places).
+            weight:
+              type: number
+              minimum: 0
+              description: Package weight in ounces (max 2 decimal places).
+          description: The dimensions of the product for shipping purposes. Required if the product is shippable and
+            you use a shipping rate that calculates shipping costs based on dimensions.
+          additionalProperties: false
+        statement_descriptor:
+          type: string
+          description: String (max 22 chars) for customer credit card statements for charge recognition.
+      additionalProperties: false
+  - id: download_file_contents
+    slug: STRIPE_DOWNLOAD_FILE_CONTENTS
+    version: '20261014_00'
+    action_class: read
+    capability: payments.read
+    description: Download authenticated file contents when the file purpose permits it.
+    input_schema:
+      type: object
+      required:
+      - file_id
+      properties:
+        file_id:
+          type: string
+          description: The Stripe file ID to download. This ID typically starts with 'file_'.
+      additionalProperties: false
+  - id: download_quote_pdf
+    slug: STRIPE_DOWNLOAD_QUOTE_PDF
+    version: '20261014_00'
+    action_class: read
+    capability: payments.read
+    description: Tool to download the PDF for a finalized quote from Stripe. Use when you need to retrieve the PDF
+      document of a quote that has been finalized.
+    input_schema:
+      type: object
+      required:
+      - quote
+      properties:
+        quote:
+          type: string
+          description: The ID of the finalized quote to download as PDF. Must start with 'qt_'.
+      additionalProperties: false
+  - id: get_charge_refund_details
+    slug: STRIPE_GET_CHARGES_CHARGE_REFUNDS_REFUND
+    version: '20261014_00'
+    action_class: read
+    capability: payments.read
+    description: Tool to retrieve the details of an existing refund within a specific charge. Use when you need to
+      get refund information using both the charge ID and refund ID.
+    input_schema:
+      type: object
+      required:
+      - charge
+      - refund
+      properties:
+        charge:
+          type: string
+          description: The identifier of the charge that contains the refund. This ID typically starts with 'ch_'.
+        expand:
+          type: array
+          items:
+            type: string
+          description: 'Specifies which fields in the response should be expanded. Expandable fields include: balance_transaction,
+            charge, destination_details, failure_balance_transaction, next_action, payment_intent, presentment_details,
+            source_transfer_reversal, transfer_reversal.'
+        refund:
+          type: string
+          description: The identifier of the refund to retrieve. This ID typically starts with 're_'.
+      additionalProperties: false
+  - id: retrieve_customer_bank_account
+    slug: STRIPE_GET_CUSTOMERS_CUSTOMER_BANK_ACCOUNTS_ID
+    version: '20261014_00'
+    action_class: read
+    capability: payments.read
+    description: Retrieves details about a specific bank account stored on a Stripe customer. Use when you need to
+      view bank account information for a customer.
+    input_schema:
+      type: object
+      required:
+      - customer
+      - id
+      properties:
+        id:
+          type: string
+          description: The unique identifier for the bank account to retrieve. Must start with 'ba_' followed by alphanumeric
+            characters.
+        expand:
+          type: array
+          items:
+            type: string
+          description: Specifies which fields in the response should be expanded. Supports expansion of related objects
+            and nested fields up to 4 levels deep.
+        customer:
+          type: string
+          description: The unique identifier for the customer. Must start with 'cus_' followed by alphanumeric characters.
+      additionalProperties: false
+  - id: get_customer_cash_balance
+    slug: STRIPE_GET_CUSTOMERS_CUSTOMER_CASH_BALANCE
+    version: '20261014_00'
+    action_class: read
+    capability: payments.read
+    description: Tool to retrieve a customer's cash balance. Use when you need to check the current cash balance for
+      a specific Stripe customer, including available funds by currency.
+    input_schema:
+      type: object
+      required:
+      - customer
+      properties:
+        expand:
+          type: array
+          items:
+            type: string
+          description: Specifies which fields in the response should be expanded. Each string in the array can be
+            a field path to expand.
+        customer:
+          type: string
+          description: The unique identifier of the customer whose cash balance to retrieve (e.g., cus_TepEFWlTGw5ves).
+      additionalProperties: false
+  - id: list_customer_payment_methods
+    slug: STRIPE_GET_CUSTOMERS_CUSTOMER_PAYMENT_METHODS
+    version: '20261014_00'
+    action_class: read
+    capability: payments.read
+    description: Retrieves a list of payment methods for a given customer, supporting type filtering and pagination.
+    input_schema:
+      type: object
+      required:
+      - customer_id
+      properties:
+        type:
+          type: string
+          description: Filters the list by payment method type (e.g., 'card', 'sepa_debit').
+        limit:
+          type: integer
+          maximum: 100
+          minimum: 1
+          description: Limit on the number of payment methods returned. If not specified, Stripe's default limit (typically
+            10) applies.
+        customer_id:
+          type: string
+          description: The unique identifier of the customer whose payment methods are to be retrieved.
+        ending_before:
+          type: string
+          description: Pagination cursor; ID of the first object from a previous request to fetch the preceding page.
+        starting_after:
+          type: string
+          description: Pagination cursor; ID of the last object from a previous request to fetch the next page.
+        allow_redisplay:
+          enum:
+          - always
+          - limited
+          - unspecified
+          type: string
+          description: Filter results by the value of allow_redisplay on the payment methods.
+      additionalProperties: false
+  - id: get_customer_subscription_discount
+    slug: STRIPE_GET_CUSTOMERS_CUSTOMER_SUBS_SUB_EXPOSED_ID_DISCOUNT
+    version: '20261014_00'
+    action_class: read
+    capability: payments.read
+    description: Tool to retrieve the discount currently applied to a customer's subscription. Use when you need to
+      check if a subscription has an active discount and get details about the coupon or promotion code.
+    input_schema:
+      type: object
+      required:
+      - customer
+      - subscription_exposed_id
+      properties:
+        expand:
+          type: array
+          items:
+            type: string
+          description: Specifies which fields in the response should be expanded. For example, use 'coupon' to expand
+            the coupon details within the discount object.
+        customer:
+          type: string
+          pattern: ^cus_[a-zA-Z0-9]+$
+          description: The ID of the customer. Must start with 'cus_' followed by alphanumeric characters.
+        subscription_exposed_id:
+          type: string
+          pattern: ^sub_[a-zA-Z0-9]+$
+          description: The unique identifier of the subscription. This is the subscription ID starting with 'sub_'.
+      additionalProperties: false
+  - id: retrieve_invoice
+    slug: STRIPE_GET_INVOICES_INVOICE
+    version: '20261014_00'
+    action_class: read
+    capability: payments.read
+    description: Tool to retrieve a specific invoice by ID. Use when you need to get detailed information about an
+      existing invoice.
+    input_schema:
+      type: object
+      required:
+      - invoice
+      properties:
+        expand:
+          type: array
+          items:
+            type: string
+          description: Specifies which fields in the response should be expanded. Supports dot notation for nested
+            expansion up to 4 levels deep (e.g., 'customer', 'subscription.default_payment_method').
+        invoice:
+          type: string
+          description: The unique identifier of the invoice to retrieve. Typically starts with 'in_'.
+      additionalProperties: false
+  - id: get_invoice_line_items
+    slug: STRIPE_GET_INVOICES_INVOICE_LINES
+    version: '20261014_00'
+    action_class: read
+    capability: payments.read
+    description: Tool to retrieve a paginated list of line items for a specific invoice. Use when you need to see
+      the individual charges, products, or services included in an invoice.
+    input_schema:
+      type: object
+      required:
+      - invoice
+      properties:
+        limit:
+          type: integer
+          description: Maximum number of line items to return (1-100). Defaults to 10 if not specified.
+        invoice:
+          type: string
+          description: The unique identifier of the invoice whose line items to retrieve (e.g., in_1NpHok2eZvKYlo2CyeiBref0).
+        ending_before:
+          type: string
+          description: Cursor for backward pagination; a line item ID from a previous response that defines the end
+            of the current page, used to fetch the preceding page.
+        starting_after:
+          type: string
+          description: Cursor for forward pagination; a line item ID from a previous response that defines the end
+            of the current page, used to fetch the subsequent page.
+      additionalProperties: false
+  - id: retrieve_payment_link
+    slug: STRIPE_GET_PAYMENT_LINK
+    version: '20261014_00'
+    action_class: read
+    capability: payments.read
+    description: Tool to retrieve details of an existing Stripe payment link by ID. Use when you need to get information
+      about a specific payment link.
+    input_schema:
+      type: object
+      required:
+      - payment_link_id
+      properties:
+        expand:
+          type: array
+          items:
+            type: string
+          description: Specifies which fields in the response should be expanded. Supports nested expansion using
+            dot notation up to 4 levels deep.
+        payment_link_id:
+          type: string
+          description: The ID of the payment link to retrieve. Typically starts with 'plink_'.
+      additionalProperties: false
+  - id: retrieve_payment_method_configuration
+    slug: STRIPE_GET_PAYMENT_METHOD_CONFIGURATION
+    version: '20261014_00'
+    action_class: read
+    capability: payments.read
+    description: Tool to retrieve a specific payment method configuration by its unique identifier. Use when you need
+      to inspect the settings and availability of payment methods for a given configuration.
+    input_schema:
+      type: object
+      required:
+      - id
+      properties:
+        id:
+          type: string
+          description: The unique identifier of the payment method configuration to retrieve. This ID typically starts
+            with 'pmc_'.
+      additionalProperties: false
+  - id: retrieve_price
+    slug: STRIPE_GET_PRICES_PRICE
+    version: '20261014_00'
+    action_class: read
+    capability: payments.read
+    description: Retrieves detailed information for a specific Stripe price using its unique ID. Use when you need
+      to fetch price details.
+    input_schema:
+      type: object
+      required:
+      - price
+      properties:
+        price:
+          type: string
+          description: The unique identifier of the price to retrieve. This ID typically starts with 'price_'.
+      additionalProperties: false
+  - id: retrieve_product
+    slug: STRIPE_GET_PRODUCTS_ID
+    version: '20261014_00'
+    action_class: read
+    capability: payments.read
+    description: Retrieves detailed information for an existing Stripe product using its unique product ID. Use when
+      you need to fetch details about a specific product.
+    input_schema:
+      type: object
+      required:
+      - id
+      properties:
+        id:
+          type: string
+          description: The unique identifier of the product to retrieve. This ID typically starts with 'prod_'.
+        expand:
+          type: array
+          items:
+            type: string
+          description: Specifies which fields in the response should be expanded. Supports nested expansions using
+            dot notation (e.g., 'default_price'). Maximum depth of four levels.
+      additionalProperties: false
+  - id: retrieve_product_feature
+    slug: STRIPE_GET_PRODUCTS_PRODUCT_FEATURES_ID
+    version: '20261014_00'
+    action_class: read
+    capability: payments.read
+    description: Retrieves a specific product feature by its ID. Use when you need to get details about a particular
+      feature attached to a product.
+    input_schema:
+      type: object
+      required:
+      - product
+      - id
+      properties:
+        id:
+          type: string
+          description: The unique identifier for the product feature to retrieve (e.g., prodft_1ShVbUQvM72TjFrbPe5SHg0L).
+        product:
+          type: string
+          description: The unique identifier for the product (e.g., prod_NWjs8kKbJWmuuc).
+      additionalProperties: false
+  - id: retrieve_refund
+    slug: STRIPE_GET_REFUNDS_REFUND
+    version: '20261014_00'
+    action_class: read
+    capability: payments.read
+    description: Tool to retrieve details of a specific Stripe refund by ID. Use when you need to get information
+      about an existing refund.
+    input_schema:
+      type: object
+      required:
+      - refund
+      properties:
+        refund:
+          type: string
+          description: The unique identifier for the refund to retrieve. This ID typically starts with 're_'.
+      additionalProperties: false
+  - id: retrieve_subscription_schedule
+    slug: STRIPE_GET_SUBSCRIPTION_SCHEDULES_SCHEDULE
+    version: '20261014_00'
+    action_class: read
+    capability: payments.read
+    description: Retrieve a subscription schedule using its unique identifier. Use when you need to view details of
+      an existing schedule including phases, settings, and status.
+    input_schema:
+      type: object
+      required:
+      - schedule
+      properties:
+        expand:
+          type: array
+          items:
+            type: string
+          description: 'Specifies which fields to expand into full objects. Supports up to 4 levels of nesting. Expandable
+            fields include: application, customer, subscription, test_clock.'
+        schedule:
+          type: string
+          description: The unique identifier for the subscription schedule (e.g., sub_sched_1ShRYjQvM72TjFrbIeqKLj55)
+      additionalProperties: false
+  - id: list_payment_methods
+    slug: STRIPE_GET_V1_PAYMENT_METHODS_PAYMENT_METHODS2
+    version: '20261014_00'
+    action_class: read
+    capability: payments.read
+    description: Tool to retrieve a list of PaymentMethods with filtering and pagination support. Use when you need
+      to list payment methods, optionally filtering by customer, type, or redisplay settings.
+    input_schema:
+      type: object
+      properties:
+        type:
+          type: string
+          description: Filters results by payment method type (e.g., card, us_bank_account, sepa_debit). Excludes
+            'custom' type when unfiltered.
+        limit:
+          type: integer
+          maximum: 100
+          minimum: 1
+          description: A limit on the number of objects to be returned. Limit can range between 1 and 100. Default
+            is 10.
+        customer:
+          type: string
+          description: The ID of the customer whose PaymentMethods will be retrieved.
+        ending_before:
+          type: string
+          description: A cursor for reverse pagination, following similar mechanics to starting_after.
+        starting_after:
+          type: string
+          description: A cursor for pagination. If you receive 100 objects ending with obj_foo, your subsequent call
+            can include starting_after=obj_foo to fetch the next page.
+        allow_redisplay:
+          enum:
+          - always
+          - limited
+          - unspecified
+          type: string
+          description: 'Filters by whether payment method can display in checkout flows. Values: ''always'', ''limited'',
+            ''unspecified''.'
+        customer_account:
+          type: string
+          description: ID for retrieving Account-specific PaymentMethods.
+      additionalProperties: false
+  - id: list_balance_transactions
+    slug: STRIPE_LIST_BALANCE_TRANSACTIONS
+    version: '20261014_00'
+    action_class: read
+    capability: payments.read
+    description: Lists all balance transactions for the connected Stripe account. Use this action when you need to
+      retrieve the transaction history of funds moving through your Stripe account.
+    input_schema:
+      type: object
+      properties:
+        type:
+          type: string
+          description: 'Only returns transactions of the given type. One of: adjustment, advance, advance_funding,
+            anticipation_repayment, application_fee, application_fee_refund, charge, climate_order_purchase, climate_order_refund,
+            connect_collection_transfer, contribution, inbound_transfer, inbound_transfer_reversal, issuing_authorization_hold,
+            issuing_authorization_release, issuing_dispute, issuing_transaction, obligation_outbound, obligation_reversal_inbound,
+            payment, payment_failure_refund, payment_network_reserve_hold, payment_network_reserve_release, payment_refund,
+            payment_reversal, payment_unreconciled, payout, payout_cancel, payout_failure, payout_minimum_balance_hold,
+            payout_minimum_balance_release, refund, refund_failure, reserve_transaction, reserved_funds, reserve_hold,
+            reserve_release, stripe_fee, stripe_fx_fee, stripe_balance_payment_debit, stripe_balance_payment_debit_reversal,
+            tax_fee, topup, topup_reversal, transfer, transfer_cancel, transfer_failure, transfer_refund, or fee_credit_funding.'
+        limit:
+          type: integer
+          maximum: 100
+          minimum: 1
+          description: A limit on the number of objects to be returned. Limit can range between 1 and 100, and the
+            default is 10.
+        expand:
+          type: array
+          items:
+            type: string
+          description: Specifies which fields in the response should be expanded.
+        payout:
+          type: string
+          description: For automatic Stripe payouts only, only returns transactions that were paid out on the specified
+            payout ID.
+        source:
+          type: string
+          description: Only returns transactions associated with the given object.
+        created:
+          type: object
+          description: 'Only return transactions that were created during the given date interval. Use Unix timestamps
+            as keys: ''gt'', ''gte'', ''lt'', ''lte''.'
+          additionalProperties:
+            type: integer
+        currency:
+          type: string
+          description: Only return transactions in a certain currency. Three-letter ISO 4217 currency code, in lowercase.
+        ending_before:
+          type: string
+          description: A cursor for pagination. Returns only transactions created before this object ID.
+        starting_after:
+          type: string
+          description: A cursor for pagination. Returns only transactions created after this object ID.
+      additionalProperties: false
+  - id: list_charge_refunds
+    slug: STRIPE_LIST_CHARGE_REFUNDS
+    version: '20261014_00'
+    action_class: read
+    capability: payments.read
+    description: Lists all refunds for a specific charge in Stripe. Use this action when you need to retrieve all
+      refunds associated with a particular charge ID.
+    input_schema:
+      type: object
+      required:
+      - charge
+      properties:
+        limit:
+          type: integer
+          maximum: 100
+          minimum: 1
+          description: A limit on the number of objects to be returned. Limit can range between 1 and 100, and the
+            default is 10.
+        charge:
+          type: string
+          description: The ID of the charge to list refunds for. This ID typically starts with 'ch_'.
+        expand:
+          type: array
+          items:
+            type: string
+          description: Specifies which fields in the response should be expanded.
+        ending_before:
+          type: string
+          description: A cursor for use in pagination. `ending_before` is an object ID that defines your place in
+            the list. For instance, if you make a list request and receive 100 objects, starting with `obj_bar`, your
+            subsequent call can include `ending_before=obj_bar` in order to fetch the previous page of the list.
+        starting_after:
+          type: string
+          description: A cursor for use in pagination. `starting_after` is an object ID that defines your place in
+            the list. For instance, if you make a list request and receive 100 objects, ending with `obj_foo`, your
+            subsequent call can include `starting_after=obj_foo` in order to fetch the next page of the list.
+      additionalProperties: false
+  - id: list_credit_notes
+    slug: STRIPE_LIST_CREDIT_NOTES
+    version: '20261014_00'
+    action_class: read
+    capability: payments.read
+    description: Lists Stripe credit notes with optional filtering by customer, invoice, or customer account, and
+      pagination support.
+    input_schema:
+      type: object
+      properties:
+        limit:
+          type: integer
+          maximum: 100
+          minimum: 1
+          description: Maximum number of credit note objects to return (1-100). Defaults to 10 if not specified.
+        created:
+          type: object
+          description: Filter credit notes by their creation date. Use keys like 'gt' (greater than), 'gte' (greater
+            than or equal to), 'lt' (less than), 'lte' (less than or equal to) with Unix timestamp values to specify
+            a range.
+          additionalProperties:
+            type: integer
+        invoice:
+          type: string
+          description: Filters credit notes to those for the specified invoice ID.
+        customer:
+          type: string
+          description: Filters credit notes to those for the specified customer ID.
+        ending_before:
+          type: string
+          description: Cursor for backward pagination; returns only credit notes created before this object ID.
+        starting_after:
+          type: string
+          description: Cursor for forward pagination; returns only credit notes created after this object ID.
+        customer_account:
+          type: string
+          description: Filters credit notes to those for the specified customer account ID.
+      additionalProperties: false
+  - id: list_customers
+    slug: STRIPE_LIST_CUSTOMERS
+    version: '20261014_00'
+    action_class: read
+    capability: payments.read
+    description: Retrieves a list of Stripe customers, with options to filter by email, creation date, or test clock,
+      and support for pagination.
+    input_schema:
+      type: object
+      properties:
+        email:
+          type: string
+          description: Filters customers by a case-sensitive email address.
+        limit:
+          type: integer
+          description: Maximum number of customer objects to return (range 1-100). Defaults to 10 if unspecified.
+        created:
+          type: object
+          description: 'Filters by creation date. Use a dictionary with keys like ''gte'', ''lte'', ''gt'', ''lt''
+            and Unix timestamp values (e.g., {''gte'': 1609459200, ''lte'': 1640995200}).'
+          additionalProperties:
+            type: integer
+        test_clock:
+          type: string
+          description: Filters customers by the specified test clock ID. If omitted, returns only live mode customers.
+        ending_before:
+          type: string
+          description: Pagination cursor; retrieves objects created before the specified object ID to fetch the previous
+            page.
+        starting_after:
+          type: string
+          description: Pagination cursor; retrieves objects created after the specified object ID to fetch the next
+            page.
+      additionalProperties: false
+  - id: list_customer_subscriptions
+    slug: STRIPE_LIST_CUSTOMER_SUBSCRIPTIONS
+    version: '20261014_00'
+    action_class: read
+    capability: payments.read
+    description: Tool to list all active subscriptions for a customer in Stripe. Use when you need to retrieve all
+      subscriptions associated with a specific customer ID. Supports pagination via starting_after and ending_before
+      cursors.
+    input_schema:
+      type: object
+      required:
+      - customer
+      properties:
+        limit:
+          type: integer
+          maximum: 100
+          minimum: 1
+          description: A limit on the number of objects to be returned. Limit can range between 1 and 100, and the
+            default is 10.
+        expand:
+          type: array
+          items:
+            type: string
+          description: Specifies which fields in the response should be expanded. For example, expand=['latest_invoice']
+            will include the full invoice object in the response.
+        customer:
+          type: string
+          pattern: ^cus_[a-zA-Z0-9]+$
+          description: The ID of the customer whose subscriptions will be retrieved. Must start with 'cus_' followed
+            by alphanumeric characters.
+        ending_before:
+          type: string
+          description: A cursor for use in pagination. ending_before is an object ID that defines your place in the
+            list. For instance, if you make a list request and receive 100 objects, starting with obj_bar, your subsequent
+            call can include ending_before=obj_bar in order to fetch the previous page of the list.
+        starting_after:
+          type: string
+          description: A cursor for use in pagination. starting_after is an object ID that defines your place in the
+            list. For instance, if you make a list request and receive 100 objects, ending with obj_foo, your subsequent
+            call can include starting_after=obj_foo in order to fetch the next page of the list.
+      additionalProperties: false
+  - id: list_disputes
+    slug: STRIPE_LIST_DISPUTES
+    version: '20261014_00'
+    action_class: read
+    capability: payments.read
+    description: Tool to list all disputes from a Stripe account. Use when you need to retrieve disputes with optional
+      filtering by charge or payment intent.
+    input_schema:
+      type: object
+      properties:
+        limit:
+          type: integer
+          maximum: 100
+          minimum: 1
+          description: 'Number of objects to return (range: 1-100, default: 10).'
+        charge:
+          type: string
+          description: Filter results to disputes linked to a specific charge ID.
+        created:
+          type: object
+          description: Filter disputes by creation date range using timestamps with keys 'gt', 'gte', 'lt', 'lte'.
+          additionalProperties:
+            type: integer
+        ending_before:
+          type: string
+          description: A cursor for pagination; returns only disputes created before this object ID.
+        payment_intent:
+          type: string
+          description: Filter results to disputes associated with a specific PaymentIntent ID.
+        starting_after:
+          type: string
+          description: A cursor for pagination; returns only disputes created after this object ID.
+      additionalProperties: false
+  - id: list_invoice_items
+    slug: STRIPE_LIST_INVOICEITEMS
+    version: '20261014_00'
+    action_class: read
+    capability: payments.read
+    description: Retrieves a paginated list of Stripe invoice items. Use to filter by customer, invoice, creation
+      date, or attachment status with cursor-based pagination.
+    input_schema:
+      type: object
+      properties:
+        limit:
+          type: integer
+          description: Maximum number of invoice items to return (1-100). Defaults to 10 if not specified.
+        created:
+          type: object
+          description: Filter invoice items by creation date. Use keys like 'gt' (greater than), 'gte' (greater than
+            or equal to), 'lt' (less than), 'lte' (less than or equal to) with Unix timestamp values to specify a
+            range.
+          additionalProperties:
+            type: integer
+        invoice:
+          type: string
+          description: Filter by invoice ID. Only return invoice items belonging to the specified invoice.
+        pending:
+          type: boolean
+          description: Filter by attachment status. Set to true to return only unattached invoice items, false to
+            return only attached items, or omit to return all items.
+        customer:
+          type: string
+          description: Filter by customer ID. Only return invoice items for the specified customer.
+        ending_before:
+          type: string
+          description: Cursor for backward pagination. An invoice item ID that defines where to end fetching the previous
+            page.
+        starting_after:
+          type: string
+          description: Cursor for forward pagination. An invoice item ID that defines where to start fetching the
+            next page.
+        customer_account:
+          type: string
+          description: Filter by customer account ID. Only return invoice items for the specified customer account.
+      additionalProperties: false
+  - id: list_invoice_payments
+    slug: STRIPE_LIST_INVOICE_PAYMENTS
+    version: '20261014_00'
+    action_class: read
+    capability: payments.read
+    description: Tool to list all payments for invoices in Stripe. Use when you need to retrieve payment information
+      associated with invoices, including pagination and filtering by invoice ID, status, or creation date.
+    input_schema:
+      type: object
+      properties:
+        limit:
+          type: integer
+          description: Number of objects to return (1-100). Defaults to 10 if not specified.
+        status:
+          type: string
+          description: 'Filter by payment status. Possible values: ''paid'', ''open'', or ''canceled''.'
+        created:
+          type: object
+          description: Filter by creation timestamp. Use keys 'gt' (greater than), 'gte' (greater than or equal),
+            'lt' (less than), 'lte' (less than or equal) with Unix timestamp values.
+          additionalProperties:
+            type: integer
+        invoice:
+          type: string
+          description: The invoice identifier whose payments should be returned. If omitted, returns all invoice payments.
+        ending_before:
+          type: string
+          description: Cursor for pagination; fetch results before this invoice payment ID. Use an invoice payment
+            ID from a previous response to fetch the previous page.
+        starting_after:
+          type: string
+          description: Cursor for pagination; fetch results after this invoice payment ID. Use an invoice payment
+            ID from a previous response to fetch the next page.
+      additionalProperties: false
+  - id: list_invoice_rendering_templates
+    slug: STRIPE_LIST_INVOICE_RENDERING_TEMPLATES
+    version: '20261014_00'
+    action_class: read
+    capability: payments.read
+    description: Tool to list all invoice rendering templates ordered by creation date. Use when you need to retrieve
+      available invoice rendering templates.
+    input_schema:
+      type: object
+      properties:
+        limit:
+          type: integer
+          description: A limit on the number of objects to be returned. Limit can range between 1 and 100, and the
+            default is 10.
+        ending_before:
+          type: string
+          description: A cursor for use in pagination. ending_before is an object ID that defines your place in the
+            list. For instance, if you make a list request and receive 100 objects, starting with obj_bar, your subsequent
+            call can include ending_before=obj_bar in order to fetch the previous page of the list.
+        starting_after:
+          type: string
+          description: A cursor for use in pagination. starting_after is an object ID that defines your place in the
+            list. For instance, if you make a list request and receive 100 objects, ending with obj_foo, your subsequent
+            call can include starting_after=obj_foo in order to fetch the next page of the list.
+      additionalProperties: false
+  - id: list_payment_intents
+    slug: STRIPE_LIST_PAYMENT_INTENTS
+    version: '20261014_00'
+    action_class: read
+    capability: payments.read
+    description: Tool to list PaymentIntents from Stripe. Use when you need to retrieve a list of payment intents
+      with optional filtering by customer, creation date, or pagination parameters.
+    input_schema:
+      type: object
+      properties:
+        limit:
+          type: integer
+          description: A limit on the number of objects to be returned. Limit can range between 1 and 100, and the
+            default is 10.
+        created:
+          type: object
+          description: 'Filter by creation date using Unix timestamps. Supported keys: ''gt'' (greater than), ''gte''
+            (greater than or equal), ''lt'' (less than), ''lte'' (less than or equal).'
+          additionalProperties:
+            type: integer
+        customer:
+          type: string
+          description: Only return PaymentIntents for the customer specified by this customer ID.
+        ending_before:
+          type: string
+          description: A cursor for use in pagination. Object ID that defines your place in the list. For instance,
+            if you make a list request and receive 100 objects, ending with obj_foo, your subsequent call can include
+            ending_before=obj_foo in order to fetch the previous page of the list.
+        starting_after:
+          type: string
+          description: A cursor for use in pagination. Object ID that defines your place in the list. For instance,
+            if you make a list request and receive 100 objects, starting with obj_bar, your subsequent call can include
+            starting_after=obj_bar in order to fetch the next page of the list.
+        customer_account:
+          type: string
+          description: Only return PaymentIntents for the account representing the customer specified by this account
+            ID.
+      additionalProperties: false
+  - id: list_payment_links
+    slug: STRIPE_LIST_PAYMENT_LINKS
+    version: '20261014_00'
+    action_class: read
+    capability: payments.read
+    description: Retrieves a list of payment links from Stripe, sorted by creation date in descending order by default.
+    input_schema:
+      type: object
+      properties:
+        limit:
+          type: integer
+          description: Maximum number of items to return (1-100, inclusive). Stripe API defaults to 10 if omitted.
+        active:
+          type: boolean
+          description: Filter by active status. `true` for active, `false` for inactive.
+        ending_before:
+          type: string
+          description: Object ID for backward pagination; retrieves items created before this ID.
+        starting_after:
+          type: string
+          description: Object ID for forward pagination; retrieves items created after this ID.
+      additionalProperties: false
+  - id: list_payouts
+    slug: STRIPE_LIST_PAYOUTS
+    version: '20261014_00'
+    action_class: read
+    capability: payments.read
+    description: Lists Stripe payouts sent to external accounts or received from Stripe, sorted by creation date descending
+      (newest first), with optional filtering by arrival date, creation date, destination, and status.
+    input_schema:
+      type: object
+      properties:
+        limit:
+          type: integer
+          maximum: 100
+          minimum: 1
+          description: 'Limit on the number of payouts to be returned. Stripe API defaults to 10 if unspecified. Range:
+            1-100.'
+        status:
+          type: string
+          description: 'Filters payouts by status. Possible values: ''pending'', ''paid'', ''failed'', or ''canceled''.'
+        created:
+          type: object
+          description: Filters payouts by creation date range. Use a dictionary with keys like 'gt', 'gte', 'lt',
+            'lte' and Unix timestamp values.
+          additionalProperties:
+            type: integer
+        destination:
+          type: string
+          description: Filters payouts by the external account ID (bank account or debit card) to which funds are
+            being transferred.
+        arrival_date:
+          type: object
+          description: Filters payouts by expected arrival date range. Use a dictionary with keys like 'gt', 'gte',
+            'lt', 'lte' and Unix timestamp values.
+          additionalProperties:
+            type: integer
+        ending_before:
+          type: string
+          description: A cursor for pagination; returns only payouts created before this object ID.
+        starting_after:
+          type: string
+          description: A cursor for pagination; returns only payouts created after this object ID.
+      additionalProperties: false
+  - id: list_prices
+    slug: STRIPE_LIST_PRICES
+    version: '20261014_00'
+    action_class: read
+    capability: payments.read
+    description: Tool to list Stripe prices. Use when you need to retrieve and filter price objects before processing
+      write operations.
+    input_schema:
+      type: object
+      properties:
+        type:
+          enum:
+          - one_time
+          - recurring
+          type: string
+          description: 'Filter by price type: one_time or recurring.'
+        limit:
+          type: integer
+          description: Limit number of prices returned (1-100).
+        active:
+          type: boolean
+          description: Filter prices based on their active status. True returns active prices only.
+        expand:
+          type: array
+          items:
+            type: string
+          description: Fields to expand in each price object.
+        created:
+          type: object
+          description: Filter by creation timestamp using gt, gte, lt, or lte.
+          additionalProperties:
+            type: integer
+        product:
+          type: string
+          description: Filter prices for a specific product ID (e.g., 'prod_123').
+        currency:
+          type: string
+          description: Filter by three-letter ISO currency code (e.g., 'usd').
+        recurring:
+          type: object
+          description: 'Filter by recurring fields: interval, meter, or usage_type.'
+          additionalProperties:
+            type: string
+        lookup_keys:
+          type: array
+          items:
+            type: string
+          description: List of lookup keys to filter prices (max 10).
+        ending_before:
+          type: string
+          description: Cursor for pagination to fetch previous page by price ID.
+        starting_after:
+          type: string
+          description: Cursor for pagination to fetch next page by price ID.
+      additionalProperties: false
+  - id: list_products
+    slug: STRIPE_LIST_PRODUCTS
+    version: '20261014_00'
+    action_class: read
+    capability: payments.read
+    description: Retrieves a list of Stripe products, with optional filtering and pagination; `starting_after`/`ending_before`
+      cursors must be valid product IDs from a previous response.
+    input_schema:
+      type: object
+      properties:
+        ids:
+          type: array
+          items:
+            type: string
+          description: A list of product IDs to retrieve. If provided, only products with these specific IDs will
+            be returned.
+        url:
+          type: string
+          description: Filter products by a specific URL. Only products with this exact URL will be returned.
+        limit:
+          type: integer
+          description: A limit on the number of product objects to be returned. The value must be an integer between
+            1 and 100, inclusive. If not specified, the default is 10.
+        active:
+          type: boolean
+          description: Filter products based on their active status. Set to `True` to return only active products,
+            or `False` for inactive ones.
+        created:
+          type: object
+          description: 'Filters products by their creation date range. Provide a dictionary with keys like ''gt''
+            (greater than), ''gte'' (greater than or equal to), ''lt'' (less than), or ''lte'' (less than or equal
+            to) and Unix timestamp values (seconds since epoch). For instance, `{''gte'': 1609459200, ''lte'': 1640995200}`
+            filters for products created from January 1, 2021, to January 1, 2022.'
+          additionalProperties:
+            type: integer
+        shippable:
+          type: boolean
+          description: Filter products based on whether they are shippable. Set to `True` to return only shippable
+            products, or `False` for non-shippable ones.
+        ending_before:
+          type: string
+          description: A cursor for use in pagination to fetch the previous page of results. `ending_before` is an
+            object ID that defines your place in the list. For instance, if a list request returns objects ending
+            with `prod_XYZ`, your subsequent call can include `ending_before='prod_XYZ'` to fetch the previous page.
+        starting_after:
+          type: string
+          description: A cursor for use in pagination to fetch the next page of results. `starting_after` is an object
+            ID that defines your place in the list. For instance, if a list request returns objects and the last object's
+            ID is `prod_ABC`, your subsequent call can include `starting_after='prod_ABC'` to fetch the next page.
+      additionalProperties: false
+  - id: list_quotes
+    slug: STRIPE_LIST_QUOTES
+    version: '20261014_00'
+    action_class: read
+    capability: payments.read
+    description: Retrieves a list of Stripe quotes with pagination support. Use to fetch quotes by customer, status,
+      or creation date.
+    input_schema:
+      type: object
+      properties:
+        limit:
+          type: integer
+          description: Maximum number of quote objects to return (1-100). Defaults to 10 if not specified.
+        status:
+          type: string
+          description: 'Filter quotes by status: ''draft'', ''open'', ''accepted'', or ''canceled''; if omitted, returns
+            quotes with any status.'
+        customer:
+          type: string
+          description: ID of the customer whose quotes to retrieve; if omitted, quotes for all customers may be returned.
+        test_clock:
+          type: string
+          description: Provides a list of quotes associated with the specified test clock.
+        ending_before:
+          type: string
+          description: Cursor for backward pagination; a quote ID from a previous response that defines the end of
+            the current page, used to fetch the preceding page.
+        starting_after:
+          type: string
+          description: Cursor for forward pagination; a quote ID from a previous response that defines the end of
+            the current page, used to fetch the subsequent page.
+        customer_account:
+          type: string
+          description: ID of the account representing the customer whose quotes to retrieve.
+      additionalProperties: false
+  - id: list_refunds
+    slug: STRIPE_LIST_REFUNDS
+    version: '20261014_00'
+    action_class: read
+    capability: payments.read
+    description: Lists Stripe refunds, sorted by creation date descending (newest first), with optional filtering
+      by charge or payment_intent and pagination support.
+    input_schema:
+      type: object
+      properties:
+        limit:
+          type: integer
+          maximum: 100
+          minimum: 1
+          description: Limit on the number of refunds to be returned. Stripe API defaults to 10 if unspecified.
+        charge:
+          type: string
+          description: Filters refunds to those for the specified Charge ID.
+        ending_before:
+          type: string
+          description: A cursor for pagination; returns only refunds created before this object ID.
+        payment_intent:
+          type: string
+          description: Filters refunds to those for the specified PaymentIntent ID.
+        starting_after:
+          type: string
+          description: A cursor for pagination; returns only refunds created after this object ID.
+      additionalProperties: false
+  - id: list_subscriptions
+    slug: STRIPE_LIST_SUBSCRIPTIONS
+    version: '20261014_00'
+    action_class: read
+    capability: payments.read
+    description: Retrieves a list of Stripe subscriptions, optionally filtered by various criteria such as customer,
+      price, status, collection method, and date ranges, with support for pagination.
+    input_schema:
+      type: object
+      properties:
+        limit:
+          type: integer
+          description: Limit on the number of subscription objects to return (1-100). Default is 10.
+        price:
+          type: string
+          description: ID of the recurring price to filter subscriptions by.
+        status:
+          type: string
+          description: Filter subscriptions by status (e.g., 'active', 'all', 'canceled'). Defaults to non-canceled
+            statuses if unspecified.
+        created:
+          type: object
+          description: Filter subscriptions by creation date using comparison keys (e.g., 'gte', 'lt') and Unix timestamp
+            values.
+          additionalProperties:
+            type: integer
+        customer:
+          type: string
+          description: ID of the customer whose subscriptions will be retrieved.
+        test_clock:
+          type: string
+          description: Filter subscriptions by a specific test clock ID (only applicable in test mode).
+        automatic_tax:
+          type: object
+          description: 'Filter subscriptions by automatic tax settings, e.g., {''enabled'': True}.'
+          additionalProperties: true
+        ending_before:
+          type: string
+          description: Cursor for paginating backwards; provide the ID of the subscription that should end the list.
+        starting_after:
+          type: string
+          description: Cursor for paginating forwards; provide the ID of the subscription that should start the list.
+        collection_method:
+          type: string
+          description: 'Filter subscriptions by collection method: ''charge_automatically'' or ''send_invoice''.'
+        current_period_end:
+          type: object
+          description: Filter subscriptions by the end date of the current billing period, using comparison keys (e.g.,
+            'gt', 'gte') and Unix timestamp values.
+          additionalProperties:
+            type: integer
+        current_period_start:
+          type: object
+          description: Filter subscriptions by the start date of the current billing period, using comparison keys
+            (e.g., 'lt', 'lte') and Unix timestamp values.
+          additionalProperties:
+            type: integer
+      additionalProperties: false
+  - id: list_tax_rates
+    slug: STRIPE_LIST_TAX_RATES
+    version: '20261014_00'
+    action_class: read
+    capability: payments.read
+    description: Retrieves a list of tax rates, which are returned sorted by creation date in descending order.
+    input_schema:
+      type: object
+      properties:
+        limit:
+          type: integer
+          description: A limit on the number of tax rates to be returned. The value must be between 1 and 100, inclusive.
+            The default is 10.
+        active:
+          type: boolean
+          description: Filter tax rates by their active status. Set to `true` for active tax rates and `false` for
+            inactive (archived) tax rates.
+        created:
+          type: object
+          description: Filter tax rates by their creation date. Accepts a dictionary with keys like `gt` (greater
+            than), `gte` (greater than or equal to), `lt` (less than), or `lte` (less than or equal to), and Unix
+            timestamp values.
+          additionalProperties: true
+        inclusive:
+          type: boolean
+          description: Filter tax rates by whether they are inclusive. Set to `true` for inclusive tax rates and `false`
+            for exclusive tax rates.
+        ending_before:
+          type: string
+          description: A cursor for use in pagination. `ending_before` is an object ID that defines your place in
+            the list. For instance, if you make a list request and receive 100 objects, ending with `obj_foo`, your
+            subsequent call can include `ending_before=obj_foo` in order to fetch the previous page of objects.
+        starting_after:
+          type: string
+          description: A cursor for use in pagination. `starting_after` is an object ID that defines your place in
+            the list. For instance, if you make a list request and receive 100 objects, starting with `obj_bar`, your
+            subsequent call can include `starting_after=obj_bar` in order to fetch the next page of objects.
+      additionalProperties: false
+  - id: list_transfers
+    slug: STRIPE_LIST_TRANSFERS
+    version: '20261014_00'
+    action_class: read
+    capability: payments.read
+    description: List all transfers sent to connected accounts. Transfers are returned in reverse chronological order.
+      Use when you need to retrieve transfer history or monitor funds sent to connected accounts.
+    input_schema:
+      type: object
+      properties:
+        limit:
+          type: integer
+          description: A limit on the number of objects to be returned. Limit can range between 1 and 100, and the
+            default is 10.
+        created:
+          type: object
+          description: 'Filter transfers by their creation date range. Provide a dictionary with keys like ''gt''
+            (greater than), ''gte'' (greater than or equal to), ''lt'' (less than), or ''lte'' (less than or equal
+            to) and Unix timestamp values (seconds since epoch). For instance, `{''gte'': 1609459200, ''lte'': 1640995200}`
+            filters for transfers created from January 1, 2021, to January 1, 2022.'
+          additionalProperties:
+            type: integer
+        destination:
+          type: string
+          description: Only return transfers for the destination specified by this account ID.
+        ending_before:
+          type: string
+          description: A cursor for use in pagination to fetch the previous page of results. `ending_before` is an
+            object ID that defines your place in the list. For instance, if a list request returns objects starting
+            with `tr_XYZ`, your subsequent call can include `ending_before='tr_XYZ'` to fetch the previous page.
+        starting_after:
+          type: string
+          description: A cursor for use in pagination to fetch the next page of results. `starting_after` is an object
+            ID that defines your place in the list. For instance, if a list request returns objects and the last object's
+            ID is `tr_ABC`, your subsequent call can include `starting_after='tr_ABC'` to fetch the next page.
+        transfer_group:
+          type: string
+          description: Only return transfers with the specified transfer group.
+      additionalProperties: false
+  - id: retrieve_balance
+    slug: STRIPE_RETRIEVE_BALANCE
+    version: '20261014_00'
+    action_class: read
+    capability: payments.read
+    description: Retrieves the complete current balance details for the connected Stripe account.
+    input_schema:
+      type: object
+      properties: {}
+      additionalProperties: false
+  - id: retrieve_charge_details
+    slug: STRIPE_RETRIEVE_CHARGE
+    version: '20261014_00'
+    action_class: read
+    capability: payments.read
+    description: Retrieves full details for an existing Stripe charge using its unique ID.
+    input_schema:
+      type: object
+      required:
+      - charge_id
+      properties:
+        charge_id:
+          type: string
+          description: Identifier for the charge, typically starting with 'ch_'.
+      additionalProperties: false
+  - id: retrieve_customer
+    slug: STRIPE_RETRIEVE_CUSTOMER
+    version: '20261014_00'
+    action_class: read
+    capability: payments.read
+    description: Retrieves detailed information for an existing Stripe customer using their unique customer ID.
+    input_schema:
+      type: object
+      required:
+      - customer_id
+      properties:
+        customer_id:
+          type: string
+          description: The unique identifier of the Stripe customer to retrieve. This ID typically starts with 'cus_'.
+      additionalProperties: false
+  - id: retrieve_payment_intent
+    slug: STRIPE_RETRIEVE_PAYMENT_INTENT
+    version: '20261014_00'
+    action_class: read
+    capability: payments.read
+    description: Retrieves a PaymentIntent by its ID; `client_secret` is required if a publishable API key is used.
+    input_schema:
+      type: object
+      required:
+      - payment_intent_id
+      properties:
+        client_secret:
+          type: string
+          description: Client secret for the PaymentIntent. Required if using a publishable key for authentication.
+        payment_intent_id:
+          type: string
+          description: The unique identifier of the PaymentIntent to retrieve.
+      additionalProperties: false
+  - id: retrieve_upcoming_invoice
+    slug: STRIPE_RETRIEVE_UPCOMING_INVOICE
+    version: '20261014_00'
+    action_class: read
+    capability: payments.read
+    description: Tool to preview the upcoming invoice for a customer, showing all pending charges including subscription
+      renewals and invoice items.
+    input_schema:
+      type: object
+      properties:
+        coupon:
+          type: string
+          description: The code of the coupon to apply to the invoice preview. If multiple discounts needed, use the
+            discounts parameter instead.
+        issuer:
+          type: object
+          description: The connected account that issues the invoice. Can specify type ('self' or 'account') and account
+            ID.
+          additionalProperties:
+            type: string
+        currency:
+          type: string
+          description: The currency for the invoice preview. Three-letter ISO currency code. Defaults to customer's
+            currency.
+        customer:
+          type: string
+          description: The identifier of the customer whose upcoming invoice to retrieve. Required if subscription
+            is not specified.
+        schedule:
+          type: string
+          description: The identifier of the subscription schedule for which you'd like to retrieve the upcoming invoice.
+            Cannot be combined with subscription or subscription_details parameters.
+        discounts:
+          type: array
+          items:
+            type: object
+            additionalProperties:
+              type: string
+          description: List of discounts to apply. Each discount can have coupon, discount, or promotion_code.
+        on_behalf_of:
+          type: string
+          description: The account (if any) for which the funds of the invoice payment are intended. Used with Stripe
+            Connect.
+        preview_mode:
+          type: string
+          description: Determines the preview calculation type. 'next' (default) calculates the next invoice with
+            all items. 'recurring' estimates long-term recurring bill.
+        subscription:
+          type: string
+          description: The identifier of the subscription for which you'd like to retrieve the upcoming invoice. If
+            not specified, uses the customer's default subscription.
+        automatic_tax:
+          type: object
+          description: Settings for automatic tax calculation. Must include 'enabled' boolean field.
+          additionalProperties:
+            type: boolean
+        invoice_items:
+          type: array
+          items:
+            type: object
+            additionalProperties:
+              anyOf:
+              - type: string
+              - type: integer
+              - type: boolean
+          description: List of invoice items to add or update in the upcoming invoice preview. Maximum 250 items.
+        customer_details:
+          type: object
+          description: Details about the customer used for this invoice preview. Can include address, shipping, and
+            tax information.
+          additionalProperties:
+            type: string
+        schedule_details:
+          type: object
+          description: Details for schedule creation or modification to preview. Include phases, end_behavior, and
+            proration_behavior.
+          additionalProperties:
+            anyOf:
+            - type: string
+            - type: array
+              items:
+                type: object
+                additionalProperties:
+                  anyOf:
+                  - type: string
+                  - type: integer
+        subscription_items:
+          type: array
+          items:
+            type: object
+            additionalProperties:
+              anyOf:
+              - type: string
+              - type: integer
+              - type: boolean
+          description: List of subscription items for subscription updates. Each item can have id, deleted, price,
+            quantity, etc.
+        subscription_details:
+          type: object
+          description: Subscription creation or modification parameters to preview. Can include items, proration_behavior,
+            proration_date, billing_cycle_anchor, trial_end, etc.
+          additionalProperties:
+            anyOf:
+            - type: string
+            - type: integer
+            - type: boolean
+            - type: array
+              items:
+                type: object
+                additionalProperties:
+                  anyOf:
+                  - type: string
+                  - type: integer
+        subscription_cancel_at:
+          type: integer
+          description: Unix timestamp at which the subscription should be canceled. Used to preview the invoice that
+            will be generated if the subscription is canceled at this time.
+        subscription_resume_at:
+          type: string
+          description: For paused subscriptions, when to resume. Can be 'now'.
+        subscription_trial_end:
+          anyOf:
+          - type: integer
+          - type: string
+          description: Trial end for the subscription. Can be 'now' or a Unix timestamp.
+        subscription_cancel_now:
+          type: boolean
+          description: Boolean to simulate immediate cancellation of the subscription.
+        subscription_start_date:
+          type: integer
+          description: Unix timestamp for when the subscription should start.
+        subscription_proration_date:
+          type: integer
+          description: 'Unix timestamp to use for proration calculations. Important: Use this same value when doing
+            the actual subscription update to ensure matching prorations.'
+        subscription_trial_from_plan:
+          type: boolean
+          description: Boolean indicating if a default trial from the plan should be applied.
+        subscription_default_tax_rates:
+          type: array
+          items:
+            type: string
+          description: List of tax rate IDs to apply to the subscription items in this preview.
+        subscription_proration_behavior:
+          type: string
+          description: How to handle prorations when updating subscriptions. Can be 'create_prorations', 'none', or
+            'always_invoice'.
+        subscription_billing_cycle_anchor:
+          anyOf:
+          - type: integer
+          - type: string
+          description: For new subscriptions, billing cycle anchor. Can be 'now', 'unchanged', or a Unix timestamp.
+        subscription_cancel_at_period_end:
+          type: boolean
+          description: Boolean indicating whether the subscription should cancel at the end of the current period.
+      additionalProperties: false
+  - id: search_customers
+    slug: STRIPE_SEARCH_CUSTOMERS
+    version: '20261014_00'
+    action_class: read
+    capability: payments.read
+    description: Retrieves a list of Stripe customers matching a search query that adheres to Stripe's Search Query
+      Language.
+    input_schema:
+      type: object
+      required:
+      - query
+      properties:
+        page:
+          type: string
+          description: Cursor token for pagination. MUST be the exact `next_page` value from a previous search response
+            - NOT a numeric page number like '1' or '2'. Omit this parameter on the first request. Only provide this
+            when `has_more` is true in the previous response.
+        limit:
+          type: integer
+          maximum: 100
+          minimum: 1
+          description: Maximum number of results per page (default is 10).
+        query:
+          type: string
+          minLength: 1
+          description: 'The search query string using Stripe''s Search Query Language. IMPORTANT: Every query must
+            include at least one field:value condition - standalone wildcards like ''*'' are NOT supported and will
+            fail. Supported operators: '':'' for exact match (case-insensitive), ''~'' for substring match (minimum
+            3 characters), comparison operators (>, <, >=, <=) for numeric/date fields. Combine clauses with AND,
+            OR, or prefix with ''-'' for negation. To retrieve many/all customers, use ''created>0''. For partial
+            text matching, use the ~ operator (e.g., email~''example'').'
+      additionalProperties: false
+  - id: search_payment_intents
+    slug: STRIPE_SEARCH_PAYMENT_INTENTS
+    version: '20261014_00'
+    action_class: read
+    capability: payments.read
+    description: Searches for PaymentIntents using Stripe's Search Query Language. Use when you need to find payments
+      by status, amount, customer, or other criteria.
+    input_schema:
+      type: object
+      required:
+      - query
+      properties:
+        page:
+          type: string
+          description: Pagination cursor for a specific page; omit for the first page. Use `next_page` from a previous
+            response for subsequent pages.
+        limit:
+          type: integer
+          maximum: 100
+          minimum: 1
+          description: Maximum number of results per page (default is 10).
+        query:
+          type: string
+          description: The search query string, adhering to Stripe's Search Query Language. This language supports
+            features like exact matches, range queries, boolean operators, and searching by metadata. For detailed
+            syntax, refer to https://docs.stripe.com/search#search-query-language.
+      additionalProperties: false
+  - id: search_stripe_prices
+    slug: STRIPE_SEARCH_PRICES
+    version: '20261014_00'
+    action_class: read
+    capability: payments.read
+    description: Search for prices using Stripe's Search Query Language. Use when you need to find prices by status,
+      currency, product, or other criteria with flexible query syntax.
+    input_schema:
+      type: object
+      required:
+      - query
+      properties:
+        page:
+          type: string
+          description: Pagination cursor for a specific page; omit for the first page. Use `next_page` from a previous
+            response for subsequent pages.
+        limit:
+          type: integer
+          maximum: 100
+          minimum: 1
+          description: Maximum number of results per page (default is 10, maximum is 100).
+        query:
+          type: string
+          description: The search query string, adhering to Stripe's Search Query Language. This language supports
+            features like exact matches, range queries, boolean operators, and searching by metadata. For detailed
+            syntax, refer to https://docs.stripe.com/search#search-query-language.
+      additionalProperties: false
+  - id: search_stripe_products
+    slug: STRIPE_SEARCH_PRODUCTS
+    version: '20261014_00'
+    action_class: read
+    capability: payments.read
+    description: Tool to search for products using Stripe's Search Query Language. Use when you need to find products
+      based on specific criteria like active status, name, or metadata.
+    input_schema:
+      type: object
+      required:
+      - query
+      properties:
+        page:
+          type: string
+          description: A cursor for pagination across multiple pages of results. Don't include this parameter on the
+            first call. Use the next_page value returned in a previous response to request subsequent results.
+        limit:
+          type: integer
+          maximum: 100
+          minimum: 1
+          description: A limit on the number of objects to be returned. Limit can range between 1 and 100, and the
+            default is 10.
+        query:
+          type: string
+          description: 'The search query string using Stripe''s Search Query Language. CRITICAL: All string values
+            MUST be enclosed in double quotes ("), not single quotes (''). The substring match operator is ~ (tilde),
+            placed immediately after the field name with no colon, e.g., name~"value". Combine up to 10 clauses with
+            AND or OR operators. Minimum 3 characters for substring matches.'
+      additionalProperties: false
+  - id: search_subscriptions
+    slug: STRIPE_SEARCH_SUBSCRIPTIONS
+    version: '20261014_00'
+    action_class: read
+    capability: payments.read
+    description: Searches for subscriptions using Stripe's Search Query Language. Use when you need to find subscriptions
+      by status, metadata, created timestamp, or canceled_at timestamp.
+    input_schema:
+      type: object
+      required:
+      - query
+      properties:
+        page:
+          type: string
+          description: Pagination cursor for a specific page; omit for the first page. Use `next_page` from a previous
+            response for subsequent pages.
+        limit:
+          type: integer
+          maximum: 100
+          minimum: 1
+          description: Maximum number of results per page (default is 10, max is 100).
+        query:
+          type: string
+          description: 'The search query string using Stripe''s Search Query Language. Supported search fields for
+            subscriptions: status (e.g., ''active'', ''canceled''), metadata (custom key-value pairs), created (Unix
+            timestamp), canceled_at (Unix timestamp). Supports exact matches, range queries (>, <, >=, <=), and boolean
+            operators (AND, OR). For detailed syntax, refer to https://docs.stripe.com/search#search-query-language.'
+      additionalProperties: false
+
 defaults: {read: permit, write: require_approval, delete: deny, money: deny}

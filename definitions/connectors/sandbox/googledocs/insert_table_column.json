@@ -1,0 +1,11 @@
+{
+  "replies": [
+    {}
+  ],
+  "documentId": "sample",
+  "display_url": "sample",
+  "writeControl": {
+    "targetRevisionId": "sample",
+    "requiredRevisionId": "sample"
+  }
+}

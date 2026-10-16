@@ -1,0 +1,88 @@
+{
+  "input_parameters": {
+    "properties": {
+      "cell_content_index": {
+        "minimum": 0,
+        "type": "integer"
+      },
+      "document_id": {
+        "type": "string"
+      },
+      "object_size": {
+        "additionalProperties": false,
+        "properties": {
+          "height": {
+            "additionalProperties": false,
+            "properties": {
+              "magnitude": {
+                "type": "number"
+              },
+              "unit": {
+                "enum": [
+                  "PT"
+                ],
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "width": {
+            "additionalProperties": false,
+            "properties": {
+              "magnitude": {
+                "type": "number"
+              },
+              "unit": {
+                "enum": [
+                  "PT"
+                ],
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      },
+      "table_cell_location": {
+        "additionalProperties": false,
+        "properties": {
+          "column_index": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "row_index": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "segment_id": {
+            "type": "string"
+          },
+          "tab_id": {
+            "type": "string"
+          },
+          "table_start_index": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "table_start_index",
+          "row_index",
+          "column_index"
+        ],
+        "type": "object"
+      },
+      "uri": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "document_id",
+      "uri",
+      "table_cell_location"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLEDOCS_INSERT_IMAGE_IN_TABLE_CELL",
+  "version": "20261008_00"
+}

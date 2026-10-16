@@ -1,0 +1,37 @@
+{
+  "input_parameters": {
+    "properties": {
+      "allow_redisplay": {
+        "enum": [
+          "always",
+          "limited",
+          "unspecified"
+        ],
+        "type": "string"
+      },
+      "customer_id": {
+        "type": "string"
+      },
+      "ending_before": {
+        "type": "string"
+      },
+      "limit": {
+        "maximum": 100,
+        "minimum": 1,
+        "type": "integer"
+      },
+      "starting_after": {
+        "type": "string"
+      },
+      "type": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "customer_id"
+    ],
+    "type": "object"
+  },
+  "slug": "STRIPE_GET_CUSTOMERS_CUSTOMER_PAYMENT_METHODS",
+  "version": "20261014_00"
+}

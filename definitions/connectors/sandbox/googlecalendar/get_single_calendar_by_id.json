@@ -1,0 +1,38 @@
+{
+  "id": "sample",
+  "etag": "sample",
+  "kind": "sample",
+  "hidden": true,
+  "colorId": "sample",
+  "deleted": true,
+  "primary": true,
+  "summary": "sample",
+  "location": "sample",
+  "selected": true,
+  "timeZone": "sample",
+  "accessRole": "freeBusyReader",
+  "description": "sample",
+  "display_url": "sample",
+  "backgroundColor": "sample",
+  "foregroundColor": "sample",
+  "summaryOverride": "sample",
+  "defaultReminders": [
+    {
+      "method": "email",
+      "minutes": 1
+    }
+  ],
+  "conferenceProperties": {
+    "allowedConferenceSolutionTypes": [
+      "eventHangout"
+    ]
+  },
+  "notificationSettings": {
+    "notifications": [
+      {
+        "type": "eventCreation",
+        "method": "sample"
+      }
+    ]
+  }
+}

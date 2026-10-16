@@ -1,0 +1,15 @@
+{
+  "input_parameters": {
+    "properties": {
+      "quote": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "quote"
+    ],
+    "type": "object"
+  },
+  "slug": "STRIPE_DOWNLOAD_QUOTE_PDF",
+  "version": "20261014_00"
+}

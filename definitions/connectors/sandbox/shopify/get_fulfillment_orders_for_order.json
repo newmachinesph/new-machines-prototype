@@ -1,0 +1,90 @@
+{
+  "fulfillment_orders": [
+    {
+      "id": 1,
+      "status": "sample",
+      "shop_id": 1,
+      "order_id": 1,
+      "created_at": "sample",
+      "fulfill_at": "sample",
+      "fulfill_by": "sample",
+      "line_items": [
+        {
+          "id": 1,
+          "shop_id": 1,
+          "quantity": 1,
+          "variant_id": 1,
+          "line_item_id": 1,
+          "inventory_item_id": 1,
+          "financial_summaries": [],
+          "fulfillable_quantity": 1,
+          "fulfillment_order_id": 1
+        }
+      ],
+      "updated_at": "sample",
+      "destination": {
+        "id": 1,
+        "zip": "sample",
+        "city": "sample",
+        "email": "sample",
+        "phone": "sample",
+        "company": "sample",
+        "country": "sample",
+        "address1": "sample",
+        "address2": "sample",
+        "province": "sample",
+        "last_name": "sample",
+        "first_name": "sample"
+      },
+      "request_status": "sample",
+      "delivery_method": {
+        "id": 1,
+        "method_type": "sample",
+        "service_code": "sample",
+        "presented_name": "sample",
+        "branded_promise": {
+          "name": null,
+          "handle": null
+        },
+        "source_reference": "sample",
+        "additional_information": {
+          "phone": null,
+          "instructions": null
+        },
+        "max_delivery_date_time": "sample",
+        "min_delivery_date_time": "sample"
+      },
+      "assigned_location": {
+        "zip": "sample",
+        "city": "sample",
+        "name": "sample",
+        "phone": "sample",
+        "address1": "sample",
+        "address2": "sample",
+        "province": "sample",
+        "location_id": 1,
+        "country_code": "sample"
+      },
+      "fulfillment_holds": [
+        {
+          "reason": "sample",
+          "reason_notes": "sample"
+        }
+      ],
+      "merchant_requests": [
+        {
+          "kind": "sample",
+          "message": "sample",
+          "request_options": null
+        }
+      ],
+      "supported_actions": [
+        "sample"
+      ],
+      "assigned_location_id": 1,
+      "international_duties": {
+        "incoterm": "sample"
+      }
+    }
+  ]
+}

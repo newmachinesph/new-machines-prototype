@@ -1,0 +1,12 @@
+{
+  "input_parameters": {
+    "properties": {
+      "limit": {
+        "type": "integer"
+      }
+    },
+    "type": "object"
+  },
+  "slug": "SHOPIFY_LIST_LOCATIONS",
+  "version": "20261014_00"
+}

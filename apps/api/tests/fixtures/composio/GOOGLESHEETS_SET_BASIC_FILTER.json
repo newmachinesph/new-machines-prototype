@@ -1,0 +1,477 @@
+{
+  "input_parameters": {
+    "properties": {
+      "filter": {
+        "additionalProperties": false,
+        "properties": {
+          "criteria": {
+            "additionalProperties": {
+              "properties": {
+                "condition": {
+                  "anyOf": [
+                    {
+                      "properties": {
+                        "type": {
+                          "type": "string"
+                        },
+                        "values": {
+                          "anyOf": [
+                            {
+                              "items": {
+                                "properties": {
+                                  "relative_date": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  },
+                                  "user_entered_value": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  }
+                                },
+                                "type": "object"
+                              },
+                              "type": "array"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "type"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "hiddenValues": {
+                  "anyOf": [
+                    {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "visibleBackgroundColorStyle": {
+                  "anyOf": [
+                    {
+                      "properties": {
+                        "rgbColor": {
+                          "anyOf": [
+                            {
+                              "properties": {
+                                "alpha": {
+                                  "anyOf": [
+                                    {
+                                      "type": "number"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "blue": {
+                                  "anyOf": [
+                                    {
+                                      "type": "number"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "green": {
+                                  "anyOf": [
+                                    {
+                                      "type": "number"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "red": {
+                                  "anyOf": [
+                                    {
+                                      "type": "number"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                }
+                              },
+                              "type": "object"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "themeColor": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "type": "object"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "visibleForegroundColorStyle": {
+                  "anyOf": [
+                    {
+                      "properties": {
+                        "rgbColor": {
+                          "anyOf": [
+                            {
+                              "properties": {
+                                "alpha": {
+                                  "anyOf": [
+                                    {
+                                      "type": "number"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "blue": {
+                                  "anyOf": [
+                                    {
+                                      "type": "number"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "green": {
+                                  "anyOf": [
+                                    {
+                                      "type": "number"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "red": {
+                                  "anyOf": [
+                                    {
+                                      "type": "number"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                }
+                              },
+                              "type": "object"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "themeColor": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "type": "object"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "type": "object"
+            },
+            "type": "object"
+          },
+          "filterSpecs": {
+            "items": {
+              "properties": {
+                "columnIndex": {
+                  "type": "integer"
+                },
+                "dataSourceColumnReference": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "filterCriteria": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "condition": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "type": {
+                          "type": "string"
+                        },
+                        "values": {
+                          "items": {
+                            "properties": {
+                              "relative_date": {
+                                "type": "string"
+                              },
+                              "user_entered_value": {
+                                "type": "string"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "required": [
+                        "type"
+                      ],
+                      "type": "object"
+                    },
+                    "hiddenValues": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    "visibleBackgroundColorStyle": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "rgbColor": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "alpha": {
+                              "type": "number"
+                            },
+                            "blue": {
+                              "type": "number"
+                            },
+                            "green": {
+                              "type": "number"
+                            },
+                            "red": {
+                              "type": "number"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "themeColor": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "visibleForegroundColorStyle": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "rgbColor": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "alpha": {
+                              "type": "number"
+                            },
+                            "blue": {
+                              "type": "number"
+                            },
+                            "green": {
+                              "type": "number"
+                            },
+                            "red": {
+                              "type": "number"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "themeColor": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "range": {
+            "additionalProperties": false,
+            "properties": {
+              "end_column_index": {
+                "type": "integer"
+              },
+              "end_row_index": {
+                "type": "integer"
+              },
+              "sheet_id": {
+                "type": "integer"
+              },
+              "start_column_index": {
+                "type": "integer"
+              },
+              "start_row_index": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "sheet_id"
+            ],
+            "type": "object"
+          },
+          "sortSpecs": {
+            "items": {
+              "properties": {
+                "backgroundColorStyle": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "rgbColor": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "alpha": {
+                          "type": "number"
+                        },
+                        "blue": {
+                          "type": "number"
+                        },
+                        "green": {
+                          "type": "number"
+                        },
+                        "red": {
+                          "type": "number"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "themeColor": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "dataSourceColumnReference": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "dimensionIndex": {
+                  "type": "integer"
+                },
+                "foregroundColorStyle": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "rgbColor": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "alpha": {
+                          "type": "number"
+                        },
+                        "blue": {
+                          "type": "number"
+                        },
+                        "green": {
+                          "type": "number"
+                        },
+                        "red": {
+                          "type": "number"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "themeColor": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "sortOrder": {
+                  "enum": [
+                    "ASCENDING",
+                    "DESCENDING",
+                    "SORT_ORDER_UNSPECIFIED"
+                  ],
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "tableId": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "includeSpreadsheetInResponse": {
+        "type": "boolean"
+      },
+      "responseIncludeGridData": {
+        "type": "boolean"
+      },
+      "responseRanges": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "spreadsheetId": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "spreadsheetId",
+      "filter"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLESHEETS_SET_BASIC_FILTER",
+  "version": "20261001_00"
+}

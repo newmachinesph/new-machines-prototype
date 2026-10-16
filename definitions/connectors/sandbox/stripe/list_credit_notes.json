@@ -1,0 +1,79 @@
+{
+  "url": "sample",
+  "data": [
+    {
+      "id": "sample",
+      "pdf": "sample",
+      "memo": "sample",
+      "type": "sample",
+      "lines": {
+        "url": "sample",
+        "data": [],
+        "object": "sample",
+        "has_more": true
+      },
+      "total": 1,
+      "amount": 1,
+      "number": "sample",
+      "object": "sample",
+      "reason": "sample",
+      "status": "sample",
+      "created": 1,
+      "invoice": "sample",
+      "refunds": [
+        {
+          "type": "sample",
+          "refund": "sample",
+          "amount_refunded": 1,
+          "payment_record_refund": "sample"
+        }
+      ],
+      "currency": "sample",
+      "customer": "sample",
+      "livemode": true,
+      "metadata": {},
+      "subtotal": 1,
+      "voided_at": 1,
+      "total_taxes": [
+        {
+          "amount": 1,
+          "tax_rate": "sample",
+          "inclusive": true,
+          "taxable_amount": 1,
+          "taxability_reason": "sample"
+        }
+      ],
+      "effective_at": 1,
+      "shipping_cost": {
+        "taxes": [],
+        "amount_tax": 1,
+        "amount_total": 1,
+        "shipping_rate": "sample",
+        "amount_subtotal": 1
+      },
+      "amount_shipping": 1,
+      "discount_amount": 1,
+      "customer_account": "sample",
+      "discount_amounts": [
+        {
+          "amount": 1,
+          "discount": "sample"
+        }
+      ],
+      "out_of_band_amount": 1,
+      "pre_payment_amount": 1,
+      "post_payment_amount": 1,
+      "total_excluding_tax": 1,
+      "pretax_credit_amounts": [
+        {
+          "amount": 1,
+          "credit_type": "sample"
+        }
+      ],
+      "subtotal_excluding_tax": 1,
+      "customer_balance_transaction": "sample"
+    }
+  ],
+  "object": "sample",
+  "has_more": true
+}

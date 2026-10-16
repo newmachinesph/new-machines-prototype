@@ -1,0 +1,68 @@
+{
+  "input_parameters": {
+    "properties": {
+      "include_spreadsheet_in_response": {
+        "type": "boolean"
+      },
+      "insert_dimension": {
+        "additionalProperties": false,
+        "properties": {
+          "inherit_from_before": {
+            "type": "boolean"
+          },
+          "range": {
+            "additionalProperties": false,
+            "properties": {
+              "dimension": {
+                "enum": [
+                  "ROWS",
+                  "COLUMNS"
+                ],
+                "type": "string"
+              },
+              "end_index": {
+                "type": "integer"
+              },
+              "sheet_id": {
+                "type": "integer"
+              },
+              "start_index": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "sheet_id",
+              "dimension",
+              "start_index",
+              "end_index"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "range"
+        ],
+        "type": "object"
+      },
+      "response_include_grid_data": {
+        "type": "boolean"
+      },
+      "response_ranges": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "spreadsheet_id": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "spreadsheet_id",
+      "insert_dimension"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLESHEETS_INSERT_DIMENSION",
+  "version": "20261001_00"
+}

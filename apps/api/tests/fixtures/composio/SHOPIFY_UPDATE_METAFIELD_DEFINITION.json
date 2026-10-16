@@ -1,0 +1,154 @@
+{
+  "input_parameters": {
+    "properties": {
+      "access": {
+        "additionalProperties": false,
+        "properties": {
+          "admin": {
+            "additionalProperties": false,
+            "properties": {
+              "grant": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "customerAccount": {
+            "additionalProperties": false,
+            "properties": {
+              "grant": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "storefront": {
+            "additionalProperties": false,
+            "properties": {
+              "grant": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      },
+      "capabilities": {
+        "additionalProperties": false,
+        "properties": {
+          "adminFilterable": {
+            "additionalProperties": false,
+            "properties": {
+              "enabled": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          },
+          "smartCollectionCondition": {
+            "additionalProperties": false,
+            "properties": {
+              "enabled": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          },
+          "uniqueValues": {
+            "additionalProperties": false,
+            "properties": {
+              "enabled": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "type": "object"
+      },
+      "description": {
+        "type": "string"
+      },
+      "key": {
+        "type": "string"
+      },
+      "name": {
+        "type": "string"
+      },
+      "namespace": {
+        "type": "string"
+      },
+      "ownerType": {
+        "enum": [
+          "API_PERMISSION",
+          "ARTICLE",
+          "BLOG",
+          "CARTTRANSFORM",
+          "COLLECTION",
+          "COMPANY",
+          "COMPANY_LOCATION",
+          "CUSTOMER",
+          "DELIVERY_CUSTOMIZATION",
+          "DISCOUNT",
+          "DRAFTORDER",
+          "FULFILLMENT_CONSTRAINT_RULE",
+          "GIFT_CARD_TRANSACTION",
+          "LOCATION",
+          "MARKET",
+          "ORDER",
+          "ORDER_ROUTING_LOCATION_RULE",
+          "PAGE",
+          "PAYMENT_CUSTOMIZATION",
+          "PRODUCT",
+          "PRODUCTVARIANT",
+          "SELLING_PLAN",
+          "SHOP",
+          "VALIDATION"
+        ],
+        "type": "string"
+      },
+      "pin": {
+        "type": "boolean"
+      },
+      "useAsCollectionCondition": {
+        "type": "boolean"
+      },
+      "validations": {
+        "items": {
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "value": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "name",
+            "value"
+          ],
+          "type": "object"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "namespace",
+      "key",
+      "ownerType"
+    ],
+    "type": "object"
+  },
+  "slug": "SHOPIFY_UPDATE_METAFIELD_DEFINITION",
+  "version": "20261014_00"
+}

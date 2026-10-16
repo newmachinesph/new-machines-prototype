@@ -1,0 +1,55 @@
+{
+  "input_parameters": {
+    "properties": {
+      "background_blue": {
+        "type": "number"
+      },
+      "background_green": {
+        "type": "number"
+      },
+      "background_red": {
+        "type": "number"
+      },
+      "chart_spec": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "chart_type": {
+        "type": "string"
+      },
+      "data_range": {
+        "type": "string"
+      },
+      "legend_position": {
+        "type": "string"
+      },
+      "sheet_id": {
+        "type": "integer"
+      },
+      "spreadsheet_id": {
+        "type": "string"
+      },
+      "subtitle": {
+        "type": "string"
+      },
+      "title": {
+        "type": "string"
+      },
+      "x_axis_title": {
+        "type": "string"
+      },
+      "y_axis_title": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "spreadsheet_id",
+      "sheet_id",
+      "chart_type",
+      "data_range"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLESHEETS_CREATE_CHART",
+  "version": "20261001_00"
+}

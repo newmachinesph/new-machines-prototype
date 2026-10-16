@@ -1,0 +1,21 @@
+{
+  "input_parameters": {
+    "properties": {
+      "customer": {
+        "type": "string"
+      },
+      "expand": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "customer"
+    ],
+    "type": "object"
+  },
+  "slug": "STRIPE_GET_CUSTOMERS_CUSTOMER_CASH_BALANCE",
+  "version": "20261014_00"
+}

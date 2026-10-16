@@ -1,0 +1,234 @@
+{
+  "sheets": [
+    {
+      "data": [
+        {}
+      ],
+      "charts": [
+        {}
+      ],
+      "merges": [
+        {
+          "sheetId": 0,
+          "endRowIndex": 10,
+          "startRowIndex": 0,
+          "endColumnIndex": 5,
+          "startColumnIndex": 0
+        }
+      ],
+      "tables": [
+        {}
+      ],
+      "slicers": [
+        {}
+      ],
+      "rowGroups": [
+        {}
+      ],
+      "properties": {
+        "index": 1,
+        "title": "sample",
+        "hidden": true,
+        "sheetId": 1,
+        "tabColor": {
+          "red": null,
+          "blue": null,
+          "alpha": null,
+          "green": null
+        },
+        "sheetType": "SHEET_TYPE_UNSPECIFIED",
+        "rightToLeft": true,
+        "tabColorStyle": {
+          "rgbColor": null,
+          "themeColor": null
+        },
+        "gridProperties": {
+          "rowCount": null,
+          "columnCount": null,
+          "hideGridlines": null,
+          "frozenRowCount": null,
+          "frozenColumnCount": null,
+          "rowGroupControlAfter": null,
+          "columnGroupControlAfter": null
+        },
+        "dataSourceSheetProperties": {}
+      },
+      "basicFilter": {},
+      "filterViews": [
+        {}
+      ],
+      "bandedRanges": [
+        {}
+      ],
+      "columnGroups": [
+        {}
+      ],
+      "protectedRanges": [
+        {}
+      ],
+      "developerMetadata": [
+        {
+          "location": null,
+          "metadataId": 1,
+          "visibility": null,
+          "metadataKey": "sample",
+          "metadataValue": "sample"
+        }
+      ],
+      "conditionalFormats": [
+        {}
+      ]
+    }
+  ],
+  "properties": {
+    "title": "sample",
+    "locale": "sample",
+    "timeZone": "sample",
+    "autoRecalc": "RECALCULATION_INTERVAL_UNSPECIFIED",
+    "defaultFormat": {
+      "borders": {
+        "top": {},
+        "left": {},
+        "right": {},
+        "bottom": {}
+      },
+      "padding": {
+        "top": 1,
+        "left": 1,
+        "right": 1,
+        "bottom": 1
+      },
+      "textFormat": {
+        "bold": true,
+        "link": {},
+        "italic": true,
+        "fontSize": 1,
+        "underline": true,
+        "fontFamily": "sample",
+        "strikethrough": true,
+        "foregroundColor": null,
+        "foregroundColorStyle": null
+      },
+      "numberFormat": {
+        "type": "sample",
+        "pattern": "sample"
+      },
+      "textRotation": {
+        "angle": 1,
+        "vertical": true
+      },
+      "wrapStrategy": "WRAP_STRATEGY_UNSPECIFIED",
+      "textDirection": "TEXT_DIRECTION_UNSPECIFIED",
+      "backgroundColor": {
+        "red": 1,
+        "blue": 1,
+        "alpha": 1,
+        "green": 1
+      },
+      "verticalAlignment": "VERTICAL_ALIGN_UNSPECIFIED",
+      "horizontalAlignment": "HORIZONTAL_ALIGN_UNSPECIFIED",
+      "backgroundColorStyle": {
+        "rgbColor": null,
+        "themeColor": null
+      },
+      "hyperlinkDisplayType": "HYPERLINK_DISPLAY_TYPE_UNSPECIFIED"
+    },
+    "spreadsheetTheme": {
+      "themeColors": [
+        {
+          "color": null,
+          "colorType": null
+        }
+      ],
+      "primaryFontFamily": "sample"
+    },
+    "iterativeCalculationSettings": {
+      "maxIterations": 1,
+      "convergenceThreshold": 1
+    },
+    "importFunctionsExternalUrlAccessAllowed": true
+  },
+  "dataSources": [
+    {
+      "spec": {},
+      "sheetId": 1,
+      "dataSourceId": "sample",
+      "calculatedColumns": [
+        {}
+      ]
+    }
+  ],
+  "display_url": "sample",
+  "namedRanges": [
+    {
+      "name": "sample",
+      "range": {
+        "sheetId": 0,
+        "endRowIndex": 10,
+        "startRowIndex": 0,
+        "endColumnIndex": 5,
+        "startColumnIndex": 0
+      },
+      "namedRangeId": "sample"
+    }
+  ],
+  "spreadsheetId": "sample",
+  "spreadsheetUrl": "sample",
+  "developerMetadata": [
+    {
+      "location": {
+        "sheetId": 1,
+        "spreadsheet": true,
+        "locationType": "DEVELOPER_METADATA_LOCATION_TYPE_UNSPECIFIED",
+        "dimensionRange": {
+          "sheetId": null,
+          "endIndex": null,
+          "dimension": null,
+          "startIndex": null
+        }
+      },
+      "metadataId": 1,
+      "visibility": "DEVELOPER_METADATA_VISIBILITY_UNSPECIFIED",
+      "metadataKey": "sample",
+      "metadataValue": "sample"
+    }
+  ],
+  "dataSourceSchedules": [
+    {
+      "enabled": true,
+      "nextRun": {
+        "endTime": "sample",
+        "startTime": "sample"
+      },
+      "refreshScope": "DATA_SOURCE_REFRESH_SCOPE_UNSPECIFIED",
+      "dailySchedule": {
+        "startTime": {
+          "hours": null,
+          "nanos": null,
+          "minutes": null,
+          "seconds": null
+        }
+      },
+      "weeklySchedule": {
+        "startTime": {
+          "hours": null,
+          "nanos": null,
+          "minutes": null,
+          "seconds": null
+        },
+        "daysOfWeek": []
+      },
+      "monthlySchedule": {
+        "startTime": {
+          "hours": null,
+          "nanos": null,
+          "minutes": null,
+          "seconds": null
+        },
+        "daysOfMonth": [
+          1
+        ]
+      }
+    }
+  ]
+}

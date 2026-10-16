@@ -1,0 +1,40 @@
+{
+  "id": "sample",
+  "amount": 1,
+  "charge": "sample",
+  "object": "sample",
+  "reason": "sample",
+  "status": "sample",
+  "created": 1,
+  "currency": "sample",
+  "metadata": {},
+  "description": "sample",
+  "next_action": {
+    "type": "sample",
+    "display_details": {
+      "email_sent": {
+        "email_sent_at": 1,
+        "email_sent_to": "sample"
+      },
+      "expires_at": 1
+    }
+  },
+  "failure_reason": "sample",
+  "payment_intent": "sample",
+  "pending_reason": "sample",
+  "receipt_number": "sample",
+  "transfer_reversal": "sample",
+  "instructions_email": "sample",
+  "balance_transaction": "sample",
+  "destination_details": {
+    "card": {
+      "reference": "sample",
+      "reference_type": "sample",
+      "reference_status": "sample",
+      "network_decline_code": "sample"
+    },
+    "type": "sample"
+  },
+  "source_transfer_reversal": "sample",
+  "failure_balance_transaction": "sample"
+}

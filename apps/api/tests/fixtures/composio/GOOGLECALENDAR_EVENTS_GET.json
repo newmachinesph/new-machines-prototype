@@ -1,0 +1,25 @@
+{
+  "input_parameters": {
+    "properties": {
+      "calendar_id": {
+        "type": "string"
+      },
+      "event_id": {
+        "type": "string"
+      },
+      "max_attendees": {
+        "minimum": 1,
+        "type": "integer"
+      },
+      "time_zone": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "event_id"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLECALENDAR_EVENTS_GET",
+  "version": "20261010_00"
+}

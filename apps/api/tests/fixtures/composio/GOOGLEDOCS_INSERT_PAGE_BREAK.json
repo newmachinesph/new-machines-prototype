@@ -1,0 +1,53 @@
+{
+  "input_parameters": {
+    "properties": {
+      "documentId": {
+        "type": "string"
+      },
+      "insertPageBreak": {
+        "anyOf": [
+          {
+            "additionalProperties": false,
+            "properties": {
+              "location": {
+                "properties": {
+                  "index": {
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "index"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "location"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "endOfSegmentLocation": {
+                "properties": {},
+                "type": "object"
+              }
+            },
+            "required": [
+              "endOfSegmentLocation"
+            ],
+            "type": "object"
+          }
+        ]
+      }
+    },
+    "required": [
+      "documentId",
+      "insertPageBreak"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLEDOCS_INSERT_PAGE_BREAK",
+  "version": "20261008_00"
+}

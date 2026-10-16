@@ -1,0 +1,53 @@
+{
+  "input_parameters": {
+    "properties": {
+      "image_assets": {
+        "items": {
+          "properties": {
+            "file": {
+              "additionalProperties": false,
+              "properties": {
+                "mimetype": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "s3key": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name",
+                "mimetype",
+                "s3key"
+              ],
+              "type": "object"
+            },
+            "name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "name",
+            "file"
+          ],
+          "type": "object"
+        },
+        "type": "array"
+      },
+      "markdown_text": {
+        "type": "string"
+      },
+      "title": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "title"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLEDOCS_CREATE_DOCUMENT_MARKDOWN",
+  "version": "20261008_00"
+}

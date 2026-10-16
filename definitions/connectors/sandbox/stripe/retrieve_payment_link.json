@@ -1,0 +1,205 @@
+{
+  "id": "sample",
+  "url": "sample",
+  "active": true,
+  "object": "sample",
+  "currency": "sample",
+  "livemode": true,
+  "metadata": {},
+  "line_items": {
+    "url": "sample",
+    "data": [
+      {
+        "id": "sample",
+        "price": {
+          "id": null,
+          "type": null,
+          "active": null,
+          "object": null,
+          "product": null,
+          "currency": null,
+          "unit_amount": null,
+          "unit_amount_decimal": null
+        },
+        "taxes": [
+          {}
+        ],
+        "object": "sample",
+        "currency": "sample",
+        "quantity": 1,
+        "discounts": [
+          {}
+        ],
+        "amount_tax": 1,
+        "description": "sample",
+        "amount_total": 1,
+        "amount_discount": 1,
+        "amount_subtotal": 1
+      }
+    ],
+    "object": "sample",
+    "has_more": true
+  },
+  "application": "sample",
+  "custom_text": {
+    "submit": {
+      "message": "sample"
+    },
+    "after_submit": {
+      "message": "sample"
+    },
+    "shipping_address": {
+      "message": "sample"
+    },
+    "terms_of_service_acceptance": {
+      "message": "sample"
+    }
+  },
+  "submit_type": "sample",
+  "on_behalf_of": "sample",
+  "restrictions": {
+    "completed_sessions": {
+      "count": 1,
+      "limit": 1
+    }
+  },
+  "automatic_tax": {
+    "enabled": true,
+    "liability": {
+      "type": "sample",
+      "account": "sample"
+    }
+  },
+  "custom_fields": [
+    {
+      "key": "sample",
+      "text": {
+        "default_value": "sample",
+        "maximum_length": 1,
+        "minimum_length": 1
+      },
+      "type": "sample",
+      "label": {
+        "type": "sample",
+        "custom": "sample"
+      },
+      "numeric": {
+        "default_value": "sample",
+        "maximum_length": 1,
+        "minimum_length": 1
+      },
+      "dropdown": {
+        "options": [],
+        "default_value": "sample"
+      },
+      "optional": true
+    }
+  ],
+  "transfer_data": {
+    "amount": 1,
+    "destination": "sample"
+  },
+  "name_collection": {
+    "business": {
+      "enabled": true,
+      "optional": true
+    },
+    "individual": {
+      "enabled": true,
+      "optional": true
+    }
+  },
+  "after_completion": {
+    "type": "sample",
+    "redirect": {
+      "url": "sample"
+    },
+    "hosted_confirmation": {
+      "custom_message": "sample"
+    }
+  },
+  "inactive_message": "sample",
+  "invoice_creation": {
+    "enabled": true,
+    "invoice_data": {
+      "footer": "sample",
+      "issuer": {
+        "type": "sample",
+        "account": "sample"
+      },
+      "metadata": {},
+      "description": "sample",
+      "custom_fields": [
+        {
+          "name": null,
+          "value": null
+        }
+      ],
+      "account_tax_ids": [
+        "sample"
+      ],
+      "rendering_options": {
+        "template": "sample",
+        "amount_tax_display": "sample"
+      }
+    }
+  },
+  "shipping_options": [
+    {
+      "shipping_rate": "sample",
+      "shipping_amount": 1
+    }
+  ],
+  "customer_creation": "sample",
+  "subscription_data": {
+    "metadata": {},
+    "description": "sample",
+    "trial_settings": {
+      "end_behavior": {
+        "missing_payment_method": "sample"
+      }
+    },
+    "invoice_settings": {
+      "issuer": {
+        "type": "sample",
+        "account": "sample"
+      }
+    },
+    "trial_period_days": 1
+  },
+  "tax_id_collection": {
+    "enabled": true
+  },
+  "consent_collection": {
+    "promotions": "sample",
+    "terms_of_service": "sample",
+    "payment_method_reuse_agreement": {
+      "position": "sample"
+    }
+  },
+  "payment_intent_data": {
+    "metadata": {},
+    "description": "sample",
+    "capture_method": "sample",
+    "transfer_group": "sample",
+    "setup_future_usage": "sample",
+    "statement_descriptor": "sample",
+    "statement_descriptor_suffix": "sample"
+  },
+  "payment_method_types": [
+    "sample"
+  ],
+  "allow_promotion_codes": true,
+  "application_fee_amount": 1,
+  "application_fee_percent": 1,
+  "phone_number_collection": {
+    "enabled": true
+  },
+  "payment_method_collection": "sample",
+  "billing_address_collection": "sample",
+  "shipping_address_collection": {
+    "allowed_countries": [
+      "sample"
+    ]
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "input_parameters": {
+    "properties": {
+      "customer": {
+        "type": "string"
+      },
+      "expand": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "id": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "customer",
+      "id"
+    ],
+    "type": "object"
+  },
+  "slug": "STRIPE_GET_CUSTOMERS_CUSTOMER_BANK_ACCOUNTS_ID",
+  "version": "20261014_00"
+}

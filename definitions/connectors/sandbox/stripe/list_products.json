@@ -1,0 +1,38 @@
+{
+  "url": "sample",
+  "data": [
+    {
+      "id": "sample",
+      "url": "sample",
+      "name": "sample",
+      "active": true,
+      "images": [
+        "sample"
+      ],
+      "object": "sample",
+      "created": 1,
+      "updated": 1,
+      "livemode": true,
+      "metadata": {},
+      "tax_code": "sample",
+      "shippable": true,
+      "unit_label": "sample",
+      "description": "sample",
+      "default_price": "sample",
+      "marketing_features": [
+        {
+          "name": "sample"
+        }
+      ],
+      "package_dimensions": {
+        "width": 1,
+        "height": 1,
+        "length": 1,
+        "weight": 1
+      },
+      "statement_descriptor": "sample"
+    }
+  ],
+  "object": "sample",
+  "has_more": true
+}

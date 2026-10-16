@@ -1,0 +1,208 @@
+{
+  "draft_orders": [
+    {
+      "id": 1,
+      "name": "sample",
+      "note": "sample",
+      "tags": "sample",
+      "email": "sample",
+      "status": "sample",
+      "currency": "sample",
+      "customer": {
+        "id": 1,
+        "tags": "sample",
+        "email": "sample",
+        "phone": "sample",
+        "currency": "sample",
+        "last_name": "sample",
+        "created_at": "sample",
+        "first_name": "sample",
+        "tax_exempt": true,
+        "updated_at": "sample",
+        "total_spent": "sample",
+        "orders_count": 1,
+        "verified_email": true,
+        "default_address": {
+          "zip": null,
+          "city": null,
+          "name": null,
+          "phone": null,
+          "company": null,
+          "country": null,
+          "address1": null,
+          "address2": null,
+          "latitude": null,
+          "province": null,
+          "last_name": null,
+          "longitude": null,
+          "first_name": null,
+          "country_code": null,
+          "province_code": null
+        },
+        "admin_graphql_api_id": "sample"
+      },
+      "order_id": 1,
+      "tax_lines": [
+        {
+          "rate": 1,
+          "price": "sample",
+          "title": "sample"
+        }
+      ],
+      "total_tax": "sample",
+      "created_at": "sample",
+      "line_items": [
+        {
+          "id": 1,
+          "sku": "sample",
+          "name": "sample",
+          "grams": 1,
+          "price": "sample",
+          "title": "sample",
+          "custom": true,
+          "vendor": "sample",
+          "taxable": true,
+          "quantity": 1,
+          "gift_card": true,
+          "tax_lines": [],
+          "product_id": 1,
+          "properties": [],
+          "variant_id": 1,
+          "variant_title": "sample",
+          "applied_discount": null,
+          "requires_shipping": true,
+          "fulfillment_service": "sample",
+          "admin_graphql_api_id": "sample"
+        }
+      ],
+      "tax_exempt": true,
+      "updated_at": "sample",
+      "invoice_url": "sample",
+      "total_price": "sample",
+      "completed_at": "sample",
+      "payment_terms": {
+        "due_in_days": 1,
+        "payment_terms_name": "sample",
+        "payment_terms_type": "sample"
+      },
+      "shipping_line": {
+        "price": "sample",
+        "title": "sample",
+        "custom": true,
+        "handle": "sample"
+      },
+      "total_tax_set": {
+        "shop_money": {
+          "amount": null,
+          "currency_code": null
+        },
+        "presentment_money": {
+          "amount": null,
+          "currency_code": null
+        }
+      },
+      "subtotal_price": "sample",
+      "taxes_included": true,
+      "billing_address": {
+        "zip": "sample",
+        "city": "sample",
+        "name": "sample",
+        "phone": "sample",
+        "company": "sample",
+        "country": "sample",
+        "address1": "sample",
+        "address2": "sample",
+        "latitude": 1,
+        "province": "sample",
+        "last_name": "sample",
+        "longitude": 1,
+        "first_name": "sample",
+        "country_code": "sample",
+        "province_code": "sample"
+      },
+      "invoice_sent_at": "sample",
+      "note_attributes": [
+        {
+          "name": "sample",
+          "value": "sample"
+        }
+      ],
+      "applied_discount": {
+        "title": "sample",
+        "value": "sample",
+        "amount": "sample",
+        "value_type": "sample",
+        "description": "sample"
+      },
+      "shipping_address": {
+        "zip": "sample",
+        "city": "sample",
+        "name": "sample",
+        "phone": "sample",
+        "company": "sample",
+        "country": "sample",
+        "address1": "sample",
+        "address2": "sample",
+        "latitude": 1,
+        "province": "sample",
+        "last_name": "sample",
+        "longitude": 1,
+        "first_name": "sample",
+        "country_code": "sample",
+        "province_code": "sample"
+      },
+      "amount_due_now_set": {
+        "shop_money": {
+          "amount": null,
+          "currency_code": null
+        },
+        "presentment_money": {
+          "amount": null,
+          "currency_code": null
+        }
+      },
+      "total_discounts_set": {
+        "shop_money": {
+          "amount": null,
+          "currency_code": null
+        },
+        "presentment_money": {
+          "amount": null,
+          "currency_code": null
+        }
+      },
+      "admin_graphql_api_id": "sample",
+      "amount_due_later_set": {
+        "shop_money": {
+          "amount": null,
+          "currency_code": null
+        },
+        "presentment_money": {
+          "amount": null,
+          "currency_code": null
+        }
+      },
+      "presentment_currency": "sample",
+      "total_shipping_price_set": {
+        "shop_money": {
+          "amount": null,
+          "currency_code": null
+        },
+        "presentment_money": {
+          "amount": null,
+          "currency_code": null
+        }
+      },
+      "total_line_items_price_set": {
+        "shop_money": {
+          "amount": null,
+          "currency_code": null
+        },
+        "presentment_money": {
+          "amount": null,
+          "currency_code": null
+        }
+      }
+    }
+  ]
+}

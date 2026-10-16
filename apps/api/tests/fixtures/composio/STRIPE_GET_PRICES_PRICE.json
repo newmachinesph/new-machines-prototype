@@ -1,0 +1,15 @@
+{
+  "input_parameters": {
+    "properties": {
+      "price": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "price"
+    ],
+    "type": "object"
+  },
+  "slug": "STRIPE_GET_PRICES_PRICE",
+  "version": "20261014_00"
+}

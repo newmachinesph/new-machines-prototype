@@ -1,0 +1,15 @@
+{
+  "input_parameters": {
+    "properties": {
+      "charge_id": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "charge_id"
+    ],
+    "type": "object"
+  },
+  "slug": "STRIPE_RETRIEVE_CHARGE",
+  "version": "20261014_00"
+}

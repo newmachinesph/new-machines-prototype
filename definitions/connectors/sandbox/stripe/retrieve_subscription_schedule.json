@@ -1,0 +1,129 @@
+{
+  "id": "sample",
+  "object": "sample",
+  "phases": [
+    {
+      "items": [
+        {
+          "price": "sample",
+          "metadata": {},
+          "quantity": 1,
+          "discounts": [],
+          "tax_rates": [],
+          "billing_thresholds": null
+        }
+      ],
+      "currency": "sample",
+      "end_date": 1,
+      "metadata": {},
+      "discounts": [
+        {
+          "coupon": "sample",
+          "discount": "sample",
+          "promotion_code": "sample"
+        }
+      ],
+      "trial_end": 1,
+      "start_date": 1,
+      "description": "sample",
+      "on_behalf_of": "sample",
+      "automatic_tax": {
+        "enabled": true,
+        "liability": {},
+        "disabled_reason": "sample"
+      },
+      "transfer_data": {
+        "destination": "sample",
+        "amount_percent": 1
+      },
+      "invoice_settings": {
+        "issuer": {
+          "type": null,
+          "account": null
+        },
+        "days_until_due": 1,
+        "account_tax_ids": [
+          "sample"
+        ]
+      },
+      "add_invoice_items": [
+        {
+          "price": "sample",
+          "period": null,
+          "metadata": {},
+          "quantity": 1,
+          "discounts": [],
+          "tax_rates": []
+        }
+      ],
+      "collection_method": "sample",
+      "default_tax_rates": [
+        {}
+      ],
+      "billing_thresholds": {
+        "amount_gte": 1,
+        "reset_billing_cycle_anchor": true
+      },
+      "proration_behavior": "sample",
+      "billing_cycle_anchor": "sample",
+      "default_payment_method": "sample",
+      "application_fee_percent": 1
+    }
+  ],
+  "status": "sample",
+  "created": 1,
+  "customer": "sample",
+  "livemode": true,
+  "metadata": {},
+  "test_clock": "sample",
+  "application": "sample",
+  "canceled_at": 1,
+  "released_at": 1,
+  "billing_mode": {
+    "type": "sample",
+    "flexible": {
+      "proration_discounts": "sample"
+    },
+    "updated_at": 1
+  },
+  "completed_at": 1,
+  "end_behavior": "sample",
+  "subscription": "sample",
+  "current_phase": {
+    "end_date": 1,
+    "start_date": 1
+  },
+  "customer_account": "sample",
+  "default_settings": {
+    "description": "sample",
+    "on_behalf_of": "sample",
+    "automatic_tax": {
+      "enabled": true,
+      "liability": {},
+      "disabled_reason": "sample"
+    },
+    "transfer_data": {
+      "destination": "sample",
+      "amount_percent": 1
+    },
+    "invoice_settings": {
+      "issuer": {
+        "type": "sample",
+        "account": "sample"
+      },
+      "days_until_due": 1,
+      "account_tax_ids": [
+        "sample"
+      ]
+    },
+    "collection_method": "sample",
+    "billing_thresholds": {
+      "amount_gte": 1,
+      "reset_billing_cycle_anchor": true
+    },
+    "billing_cycle_anchor": "sample",
+    "default_payment_method": "sample",
+    "application_fee_percent": 1
+  },
+  "released_subscription": "sample"
+}

@@ -1,0 +1,166 @@
+{
+  "id": "sample",
+  "tax": 1,
+  "paid": true,
+  "lines": {
+    "url": "sample",
+    "data": [
+      {
+        "id": "sample",
+        "type": "sample",
+        "price": {},
+        "amount": 1,
+        "object": "sample",
+        "period": {
+          "end": null,
+          "start": null
+        },
+        "currency": "sample",
+        "livemode": true,
+        "metadata": {},
+        "quantity": 1,
+        "discounts": [],
+        "proration": true,
+        "tax_rates": [
+          {}
+        ],
+        "description": "sample",
+        "tax_amounts": [
+          {}
+        ],
+        "discountable": true,
+        "subscription": "sample",
+        "discount_amounts": [
+          {}
+        ],
+        "subscription_item": "sample",
+        "unit_amount_excluding_tax": "sample"
+      }
+    ],
+    "object": "sample",
+    "has_more": true,
+    "total_count": 1
+  },
+  "quote": "sample",
+  "total": 1,
+  "footer": "sample",
+  "number": "sample",
+  "object": "sample",
+  "status": "sample",
+  "created": 1,
+  "currency": "sample",
+  "customer": "sample",
+  "due_date": 1,
+  "livemode": true,
+  "metadata": {},
+  "subtotal": 1,
+  "attempted": true,
+  "discounts": [
+    "sample"
+  ],
+  "amount_due": 1,
+  "period_end": 1,
+  "test_clock": "sample",
+  "amount_paid": 1,
+  "application": "sample",
+  "description": "sample",
+  "invoice_pdf": "sample",
+  "account_name": "sample",
+  "auto_advance": true,
+  "on_behalf_of": "sample",
+  "period_start": 1,
+  "subscription": "sample",
+  "attempt_count": 1,
+  "automatic_tax": {
+    "status": "sample",
+    "enabled": true,
+    "liability": {}
+  },
+  "custom_fields": [
+    {}
+  ],
+  "customer_name": "sample",
+  "shipping_cost": {},
+  "transfer_data": {},
+  "billing_reason": "sample",
+  "customer_email": "sample",
+  "customer_phone": "sample",
+  "default_source": "sample",
+  "ending_balance": 1,
+  "payment_intent": "sample",
+  "receipt_number": "sample",
+  "account_country": "sample",
+  "account_tax_ids": [
+    "sample"
+  ],
+  "amount_shipping": 1,
+  "amount_remaining": 1,
+  "customer_address": {
+    "city": "sample",
+    "line1": "sample",
+    "line2": "sample",
+    "state": "sample",
+    "country": "sample",
+    "postal_code": "sample"
+  },
+  "customer_tax_ids": [
+    {
+      "type": "sample",
+      "value": "sample"
+    }
+  ],
+  "paid_out_of_band": true,
+  "payment_settings": {
+    "default_mandate": "sample",
+    "payment_method_types": [
+      "sample"
+    ],
+    "payment_method_options": {}
+  },
+  "shipping_details": {},
+  "starting_balance": 1,
+  "collection_method": "sample",
+  "customer_shipping": {
+    "name": "sample",
+    "phone": "sample",
+    "address": {
+      "city": "sample",
+      "line1": "sample",
+      "line2": "sample",
+      "state": "sample",
+      "country": "sample",
+      "postal_code": "sample"
+    }
+  },
+  "default_tax_rates": [
+    {}
+  ],
+  "rendering_options": {},
+  "total_tax_amounts": [
+    {}
+  ],
+  "hosted_invoice_url": "sample",
+  "status_transitions": {
+    "paid_at": 1,
+    "voided_at": 1,
+    "finalized_at": 1,
+    "marked_uncollectible_at": 1
+  },
+  "customer_tax_exempt": "sample",
+  "total_excluding_tax": 1,
+  "next_payment_attempt": 1,
+  "statement_descriptor": "sample",
+  "subscription_details": {},
+  "webhooks_delivered_at": 1,
+  "default_payment_method": "sample",
+  "subtotal_excluding_tax": 1,
+  "total_discount_amounts": [
+    {
+      "amount": 1,
+      "discount": "sample"
+    }
+  ],
+  "subscription_proration_date": 1,
+  "pre_payment_credit_notes_amount": 1,
+  "post_payment_credit_notes_amount": 1
+}

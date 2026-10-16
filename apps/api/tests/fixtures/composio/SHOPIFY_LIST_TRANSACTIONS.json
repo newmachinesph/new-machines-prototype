@@ -1,0 +1,24 @@
+{
+  "input_parameters": {
+    "properties": {
+      "fields": {
+        "type": "string"
+      },
+      "in_shop_currency": {
+        "type": "boolean"
+      },
+      "order_id": {
+        "type": "string"
+      },
+      "since_id": {
+        "type": "integer"
+      }
+    },
+    "required": [
+      "order_id"
+    ],
+    "type": "object"
+  },
+  "slug": "SHOPIFY_LIST_TRANSACTIONS",
+  "version": "20261014_00"
+}

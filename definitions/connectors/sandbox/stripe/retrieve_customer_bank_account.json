@@ -1,0 +1,20 @@
+{
+  "id": "sample",
+  "last4": "sample",
+  "object": "sample",
+  "status": "new",
+  "account": "sample",
+  "country": "sample",
+  "currency": "sample",
+  "customer": "sample",
+  "metadata": {},
+  "bank_name": "sample",
+  "fingerprint": "sample",
+  "account_type": "checking",
+  "routing_number": "sample",
+  "account_holder_name": "sample",
+  "account_holder_type": "individual",
+  "available_payout_methods": [
+    "instant"
+  ]
+}

@@ -1,0 +1,203 @@
+{
+  "body": {
+    "content": [
+      {
+        "table": {
+          "rows": null,
+          "columns": null,
+          "tableRows": null,
+          "tableStyle": null,
+          "suggestedDeletionIds": null,
+          "suggestedInsertionIds": null
+        },
+        "endIndex": 1,
+        "paragraph": {
+          "bullet": null,
+          "elements": null,
+          "paragraphStyle": null,
+          "positionedObjectIds": null,
+          "suggestedBulletChanges": null,
+          "suggestedPositionedObjectIds": null,
+          "suggestedParagraphStyleChanges": null
+        },
+        "startIndex": 1,
+        "sectionBreak": {
+          "sectionStyle": null,
+          "suggestedDeletionIds": null,
+          "suggestedInsertionIds": null
+        },
+        "tableOfContents": {
+          "content": null,
+          "suggestedDeletionIds": null,
+          "suggestedInsertionIds": null
+        }
+      }
+    ]
+  },
+  "tabs": [
+    {
+      "childTabs": [
+        {}
+      ],
+      "documentTab": {
+        "body": {
+          "content": null
+        },
+        "lists": {},
+        "footers": {},
+        "headers": {},
+        "footnotes": {},
+        "namedRanges": {},
+        "namedStyles": {
+          "styles": null
+        },
+        "documentStyle": {
+          "pageSize": null,
+          "marginTop": null,
+          "background": null,
+          "marginLeft": null,
+          "marginRight": null,
+          "marginBottom": null,
+          "marginFooter": null,
+          "marginHeader": null,
+          "documentFormat": null,
+          "defaultFooterId": null,
+          "defaultHeaderId": null,
+          "pageNumberStart": null,
+          "evenPageFooterId": null,
+          "evenPageHeaderId": null,
+          "defaultFootnoteId": null,
+          "firstPageFooterId": null,
+          "firstPageHeaderId": null,
+          "useCustomHeadersAndFooters": null,
+          "useCustomHeaderFooterMargins": null
+        },
+        "inlineObjects": {},
+        "positionedObjects": {},
+        "suggestedNamedStylesChanges": {},
+        "suggestedDocumentStyleChanges": {}
+      },
+      "tabProperties": {
+        "index": 1,
+        "tabId": "sample",
+        "title": "sample",
+        "iconEmoji": "sample",
+        "parentTabId": "sample",
+        "nestingLevel": 1
+      }
+    }
+  ],
+  "lists": {},
+  "title": "sample",
+  "footers": {},
+  "headers": {},
+  "footnotes": {},
+  "documentId": "sample",
+  "revisionId": "sample",
+  "display_url": "sample",
+  "documentUrl": "sample",
+  "namedRanges": {},
+  "namedStyles": {
+    "styles": [
+      {
+        "textStyle": {
+          "bold": null,
+          "link": null,
+          "italic": null,
+          "fontSize": null,
+          "smallCaps": null,
+          "underline": null,
+          "strikethrough": null,
+          "baselineOffset": null,
+          "backgroundColor": null,
+          "foregroundColor": null,
+          "weightedFontFamily": null
+        },
+        "namedStyleType": "sample",
+        "paragraphStyle": {
+          "shading": null,
+          "tabStops": null,
+          "alignment": null,
+          "borderTop": null,
+          "direction": null,
+          "headingId": null,
+          "indentEnd": null,
+          "borderLeft": null,
+          "spaceAbove": null,
+          "spaceBelow": null,
+          "borderRight": null,
+          "indentStart": null,
+          "lineSpacing": null,
+          "spacingMode": null,
+          "borderBottom": null,
+          "keepWithNext": null,
+          "borderBetween": null,
+          "namedStyleType": null,
+          "indentFirstLine": null,
+          "pageBreakBefore": null,
+          "keepLinesTogether": null,
+          "avoidWidowAndOrphan": null
+        }
+      }
+    ]
+  },
+  "documentStyle": {
+    "pageSize": {
+      "width": {
+        "unit": "sample",
+        "magnitude": 1
+      },
+      "height": {
+        "unit": "sample",
+        "magnitude": 1
+      }
+    },
+    "marginTop": {
+      "unit": "sample",
+      "magnitude": 1
+    },
+    "background": {
+      "color": {
+        "color": null
+      }
+    },
+    "marginLeft": {
+      "unit": "sample",
+      "magnitude": 1
+    },
+    "marginRight": {
+      "unit": "sample",
+      "magnitude": 1
+    },
+    "marginBottom": {
+      "unit": "sample",
+      "magnitude": 1
+    },
+    "marginFooter": {
+      "unit": "sample",
+      "magnitude": 1
+    },
+    "marginHeader": {
+      "unit": "sample",
+      "magnitude": 1
+    },
+    "documentFormat": {
+      "documentMode": "sample"
+    },
+    "defaultFooterId": "sample",
+    "defaultHeaderId": "sample",
+    "pageNumberStart": 1,
+    "evenPageFooterId": "sample",
+    "evenPageHeaderId": "sample",
+    "defaultFootnoteId": "sample",
+    "firstPageFooterId": "sample",
+    "firstPageHeaderId": "sample",
+    "useCustomHeadersAndFooters": true,
+    "useCustomHeaderFooterMargins": true
+  },
+  "inlineObjects": {},
+  "positionedObjects": {},
+  "suggestionsViewMode": "sample",
+  "suggestedNamedStylesChanges": {},
+  "suggestedDocumentStyleChanges": {}
+}

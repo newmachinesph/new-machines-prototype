@@ -1,0 +1,41 @@
+{
+  "input_parameters": {
+    "properties": {
+      "history_types": {
+        "items": {
+          "enum": [
+            "messageAdded",
+            "messageDeleted",
+            "labelAdded",
+            "labelRemoved"
+          ],
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "label_id": {
+        "type": "string"
+      },
+      "max_results": {
+        "maximum": 500,
+        "minimum": 1,
+        "type": "integer"
+      },
+      "page_token": {
+        "type": "string"
+      },
+      "start_history_id": {
+        "type": "string"
+      },
+      "user_id": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "start_history_id"
+    ],
+    "type": "object"
+  },
+  "slug": "GMAIL_LIST_HISTORY",
+  "version": "20261015_00"
+}

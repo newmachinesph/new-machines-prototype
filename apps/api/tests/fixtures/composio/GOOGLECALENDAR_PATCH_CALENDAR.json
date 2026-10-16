@@ -1,0 +1,27 @@
+{
+  "input_parameters": {
+    "properties": {
+      "calendar_id": {
+        "type": "string"
+      },
+      "description": {
+        "type": "string"
+      },
+      "location": {
+        "type": "string"
+      },
+      "summary": {
+        "type": "string"
+      },
+      "timezone": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "calendar_id"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLECALENDAR_PATCH_CALENDAR",
+  "version": "20261010_00"
+}

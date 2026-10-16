@@ -1,0 +1,40 @@
+{
+  "input_parameters": {
+    "properties": {
+      "documentId": {
+        "type": "string"
+      },
+      "sectionBreakLocation": {
+        "additionalProperties": false,
+        "properties": {
+          "index": {
+            "type": "integer"
+          },
+          "segmentId": {
+            "type": "string"
+          },
+          "tabId": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "text": {
+        "type": "string"
+      },
+      "type": {
+        "enum": [
+          "HEADER_FOOTER_TYPE_UNSPECIFIED",
+          "DEFAULT"
+        ],
+        "type": "string"
+      }
+    },
+    "required": [
+      "documentId"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLEDOCS_CREATE_HEADER",
+  "version": "20261008_00"
+}

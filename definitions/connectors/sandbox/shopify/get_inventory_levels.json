@@ -1,0 +1,11 @@
+{
+  "inventory_levels": [
+    {
+      "available": 1,
+      "updated_at": "sample",
+      "location_id": "109355139377",
+      "inventory_item_id": "54137761136945",
+      "admin_graphql_api_id": "sample"
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "input_parameters": {
+    "properties": {
+      "exclude_tables_in_banded_ranges": {
+        "type": "boolean"
+      },
+      "fields": {
+        "type": "string"
+      },
+      "include_grid_data": {
+        "type": "boolean"
+      },
+      "ranges": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "spreadsheet_id": {
+        "minLength": 1,
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "slug": "GOOGLESHEETS_GET_SPREADSHEET_INFO",
+  "version": "20261001_00"
+}

@@ -1,0 +1,74 @@
+{
+  "input_parameters": {
+    "properties": {
+      "document_id": {
+        "type": "string"
+      },
+      "requests": {
+        "items": {
+          "properties": {
+            "insertTableColumn": {
+              "additionalProperties": false,
+              "properties": {
+                "insertRight": {
+                  "type": "boolean"
+                },
+                "tableCellLocation": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "columnIndex": {
+                      "type": "integer"
+                    },
+                    "rowIndex": {
+                      "type": "integer"
+                    },
+                    "tableStartLocation": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "index": {
+                          "type": "integer"
+                        },
+                        "segmentId": {
+                          "type": "string"
+                        },
+                        "tabId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "index"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "tableStartLocation",
+                    "rowIndex",
+                    "columnIndex"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "tableCellLocation"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "insertTableColumn"
+          ],
+          "type": "object"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "document_id",
+      "requests"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLEDOCS_INSERT_TABLE_COLUMN",
+  "version": "20261008_00"
+}

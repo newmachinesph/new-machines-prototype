@@ -1,0 +1,102 @@
+{
+  "input_parameters": {
+    "properties": {
+      "body_html": {
+        "type": "string"
+      },
+      "collects": {
+        "items": {
+          "properties": {
+            "product_id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "product_id"
+          ],
+          "type": "object"
+        },
+        "type": "array"
+      },
+      "handle": {
+        "type": "string"
+      },
+      "image": {
+        "additionalProperties": false,
+        "properties": {
+          "alt": {
+            "type": "string"
+          },
+          "attachment": {
+            "type": "string"
+          },
+          "src": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "metafields": {
+        "items": {
+          "properties": {
+            "key": {
+              "type": "string"
+            },
+            "namespace": {
+              "type": "string"
+            },
+            "type": {
+              "type": "string"
+            },
+            "value": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "key",
+            "value",
+            "type",
+            "namespace"
+          ],
+          "type": "object"
+        },
+        "type": "array"
+      },
+      "published": {
+        "type": "boolean"
+      },
+      "published_scope": {
+        "enum": [
+          "web",
+          "global"
+        ],
+        "type": "string"
+      },
+      "sort_order": {
+        "enum": [
+          "manual",
+          "alpha-asc",
+          "alpha-desc",
+          "best-selling",
+          "created",
+          "created-desc",
+          "price-asc",
+          "price-desc"
+        ],
+        "type": "string"
+      },
+      "template_suffix": {
+        "type": "string"
+      },
+      "title": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "title"
+    ],
+    "type": "object"
+  },
+  "slug": "SHOPIFY_CREATE_CUSTOM_COLLECTION",
+  "version": "20261014_00"
+}

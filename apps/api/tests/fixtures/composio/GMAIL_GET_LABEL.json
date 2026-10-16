@@ -1,0 +1,18 @@
+{
+  "input_parameters": {
+    "properties": {
+      "id": {
+        "type": "string"
+      },
+      "user_id": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "id"
+    ],
+    "type": "object"
+  },
+  "slug": "GMAIL_GET_LABEL",
+  "version": "20261015_00"
+}

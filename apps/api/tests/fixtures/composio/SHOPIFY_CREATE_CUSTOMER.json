@@ -1,0 +1,101 @@
+{
+  "input_parameters": {
+    "properties": {
+      "addresses": {
+        "items": {
+          "properties": {
+            "address1": {
+              "type": "string"
+            },
+            "address2": {
+              "type": "string"
+            },
+            "city": {
+              "type": "string"
+            },
+            "company": {
+              "type": "string"
+            },
+            "country": {
+              "type": "string"
+            },
+            "country_code": {
+              "type": "string"
+            },
+            "country_name": {
+              "type": "string"
+            },
+            "customer_id": {
+              "type": "integer"
+            },
+            "default": {
+              "type": "boolean"
+            },
+            "first_name": {
+              "type": "string"
+            },
+            "id": {
+              "type": "integer"
+            },
+            "last_name": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "phone": {
+              "type": "string"
+            },
+            "province": {
+              "type": "string"
+            },
+            "province_code": {
+              "type": "string"
+            },
+            "zip": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "type": "array"
+      },
+      "email": {
+        "type": "string"
+      },
+      "first_name": {
+        "type": "string"
+      },
+      "last_name": {
+        "type": "string"
+      },
+      "note": {
+        "type": "string"
+      },
+      "password": {
+        "type": "string"
+      },
+      "password_confirmation": {
+        "type": "string"
+      },
+      "phone": {
+        "type": "string"
+      },
+      "send_email_invite": {
+        "type": "boolean"
+      },
+      "send_email_welcome": {
+        "type": "boolean"
+      },
+      "tags": {
+        "type": "string"
+      },
+      "verified_email": {
+        "type": "boolean"
+      }
+    },
+    "type": "object"
+  },
+  "slug": "SHOPIFY_CREATE_CUSTOMER",
+  "version": "20261014_00"
+}

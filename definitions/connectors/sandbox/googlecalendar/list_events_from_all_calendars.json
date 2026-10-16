@@ -1,0 +1,91 @@
+{
+  "events": [
+    {
+      "event": {
+        "id": "sample",
+        "end": {
+          "date": null,
+          "dateTime": null,
+          "timeZone": null
+        },
+        "etag": "sample",
+        "kind": "sample",
+        "start": {
+          "date": null,
+          "dateTime": null,
+          "timeZone": null
+        },
+        "status": "sample",
+        "colorId": "sample",
+        "created": "sample",
+        "creator": {
+          "id": null,
+          "self": null,
+          "email": null,
+          "displayName": null
+        },
+        "iCalUID": "sample",
+        "summary": "sample",
+        "updated": "sample",
+        "htmlLink": "sample",
+        "location": "sample",
+        "sequence": 1,
+        "attendees": [],
+        "eventType": "sample",
+        "organizer": {
+          "id": null,
+          "self": null,
+          "email": null,
+          "displayName": null
+        },
+        "recurrence": [
+          "sample"
+        ],
+        "visibility": "sample",
+        "description": "sample",
+        "display_url": "sample",
+        "hangoutLink": "sample",
+        "transparency": "sample",
+        "conferenceData": {
+          "notes": null,
+          "signature": null,
+          "parameters": null,
+          "entryPoints": null,
+          "conferenceId": null,
+          "conferenceSolution": null
+        },
+        "attendeesOmitted": true,
+        "recurringEventId": "sample",
+        "originalStartTime": {
+          "date": null,
+          "dateTime": null,
+          "timeZone": null
+        },
+        "endTimeUnspecified": true
+      },
+      "all_calendar_ids": [
+        "sample"
+      ],
+      "source_calendar_id": "sample",
+      "source_calendar_summary": "sample"
+    }
+  ],
+  "summary_view": [
+    {
+      "end": "sample",
+      "start": "sample",
+      "title": "sample",
+      "calendar": "sample",
+      "event_id": "sample",
+      "is_all_day": true,
+      "display_url": "sample"
+    }
+  ],
+  "calendars_queried": [
+    {
+      "id": "sample",
+      "summary": "sample"
+    }
+  ],
+  "errors_by_calendar": {}
+}

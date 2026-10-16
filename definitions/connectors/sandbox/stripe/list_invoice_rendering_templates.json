@@ -1,0 +1,17 @@
+{
+  "url": "sample",
+  "data": [
+    {
+      "id": "sample",
+      "object": "sample",
+      "status": "sample",
+      "created": 1,
+      "version": 1,
+      "livemode": true,
+      "metadata": {},
+      "nickname": "sample"
+    }
+  ],
+  "object": "sample",
+  "has_more": true
+}

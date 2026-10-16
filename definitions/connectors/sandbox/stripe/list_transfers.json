@@ -1,0 +1,31 @@
+{
+  "url": "sample",
+  "data": [
+    {
+      "id": "sample",
+      "amount": 1,
+      "object": "sample",
+      "created": 1,
+      "currency": "sample",
+      "livemode": true,
+      "metadata": {},
+      "reversed": true,
+      "reversals": {
+        "url": "sample",
+        "data": [],
+        "object": "sample",
+        "has_more": true
+      },
+      "description": "sample",
+      "destination": "sample",
+      "source_type": "sample",
+      "transfer_group": "sample",
+      "amount_reversed": 1,
+      "source_transaction": "sample",
+      "balance_transaction": "sample",
+      "destination_payment": "sample"
+    }
+  ],
+  "object": "sample",
+  "has_more": true
+}

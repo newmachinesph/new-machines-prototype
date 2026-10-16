@@ -1,0 +1,62 @@
+{
+  "fulfillments": [
+    {
+      "id": 1,
+      "name": "sample",
+      "status": "sample",
+      "receipt": {
+        "testcase": true,
+        "authorization": "sample"
+      },
+      "service": "sample",
+      "order_id": 1,
+      "created_at": "sample",
+      "line_items": [
+        {
+          "id": 1,
+          "sku": "sample",
+          "name": "sample",
+          "grams": 1,
+          "price": "sample",
+          "title": "sample",
+          "duties": [],
+          "vendor": "sample",
+          "taxable": true,
+          "quantity": 1,
+          "gift_card": true,
+          "price_set": null,
+          "tax_lines": [],
+          "product_id": 1,
+          "variant_id": 1,
+          "variant_title": "sample",
+          "requires_shipping": true,
+          "fulfillment_status": "sample",
+          "total_discount_set": null,
+          "discount_allocations": [],
+          "fulfillment_line_item_id": 1
+        }
+      ],
+      "updated_at": "sample",
+      "location_id": 1,
+      "tracking_url": "sample",
+      "tracking_urls": [
+        "sample"
+      ],
+      "origin_address": {
+        "zip": "sample",
+        "city": "sample",
+        "address1": "sample",
+        "address2": "sample",
+        "country_code": "sample",
+        "province_code": "sample"
+      },
+      "shipment_status": "sample",
+      "tracking_number": "sample",
+      "tracking_company": "sample",
+      "tracking_numbers": [
+        "sample"
+      ],
+      "admin_graphql_api_id": "sample"
+    }
+  ]
+}

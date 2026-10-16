@@ -1,0 +1,89 @@
+{
+  "input_parameters": {
+    "properties": {
+      "dataFilters": {
+        "items": {
+          "properties": {
+            "a1Range": {
+              "type": "string"
+            },
+            "developerMetadataLookup": {
+              "additionalProperties": false,
+              "properties": {
+                "locationType": {
+                  "enum": [
+                    "ROW",
+                    "COLUMN",
+                    "SHEET",
+                    "SPREADSHEET",
+                    "OBJECT"
+                  ],
+                  "type": "string"
+                },
+                "metadataId": {
+                  "type": "integer"
+                },
+                "metadataKey": {
+                  "type": "string"
+                },
+                "metadataValue": {
+                  "type": "string"
+                },
+                "visibility": {
+                  "enum": [
+                    "DOCUMENT",
+                    "PROJECT"
+                  ],
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "gridRange": {
+              "additionalProperties": false,
+              "properties": {
+                "endColumnIndex": {
+                  "exclusiveMinimum": 0,
+                  "type": "integer"
+                },
+                "endRowIndex": {
+                  "exclusiveMinimum": 0,
+                  "type": "integer"
+                },
+                "sheetId": {
+                  "type": "integer"
+                },
+                "startColumnIndex": {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                "startRowIndex": {
+                  "minimum": 0,
+                  "type": "integer"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "type": "array"
+      },
+      "excludeTablesInBandedRanges": {
+        "type": "boolean"
+      },
+      "includeGridData": {
+        "type": "boolean"
+      },
+      "spreadsheetId": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "spreadsheetId"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLESHEETS_GET_SPREADSHEET_BY_DATA_FILTER",
+  "version": "20261001_00"
+}

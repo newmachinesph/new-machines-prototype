@@ -1,0 +1,19 @@
+{
+  "job_id": "sample",
+  "status": "sample",
+  "results": [
+    {
+      "success": true,
+      "user_errors": [
+        {
+          "field": [],
+          "message": "sample"
+        }
+      ],
+      "variant_gid": "sample"
+    }
+  ],
+  "summary": "sample",
+  "result_url": "sample",
+  "object_count": "sample"
+}

@@ -1,0 +1,152 @@
+{
+  "url": "sample",
+  "data": [
+    {
+      "id": "sample",
+      "url": "sample",
+      "active": true,
+      "object": "sample",
+      "currency": "sample",
+      "livemode": true,
+      "metadata": {},
+      "line_items": {
+        "url": "sample",
+        "data": [],
+        "object": "sample",
+        "has_more": true
+      },
+      "application": "sample",
+      "custom_text": {
+        "submit": {
+          "message": null
+        },
+        "after_submit": {
+          "message": null
+        },
+        "shipping_address": {
+          "message": null
+        },
+        "terms_of_service_acceptance": {
+          "message": null
+        }
+      },
+      "submit_type": "sample",
+      "on_behalf_of": "sample",
+      "restrictions": {
+        "completed_sessions": {
+          "count": null,
+          "limit": null
+        }
+      },
+      "automatic_tax": {
+        "enabled": true,
+        "liability": {
+          "type": null,
+          "account": null
+        }
+      },
+      "custom_fields": [
+        {
+          "key": "sample",
+          "text": null,
+          "type": "sample",
+          "label": null,
+          "numeric": null,
+          "dropdown": null,
+          "optional": true
+        }
+      ],
+      "transfer_data": {
+        "amount": 1,
+        "destination": "sample"
+      },
+      "name_collection": {
+        "business": {
+          "enabled": null,
+          "optional": null
+        },
+        "individual": {
+          "enabled": null,
+          "optional": null
+        }
+      },
+      "after_completion": {
+        "type": "sample",
+        "redirect": {
+          "url": null
+        },
+        "hosted_confirmation": {
+          "custom_message": null
+        }
+      },
+      "inactive_message": "sample",
+      "invoice_creation": {
+        "enabled": true,
+        "invoice_data": {
+          "footer": null,
+          "issuer": null,
+          "metadata": null,
+          "description": null,
+          "custom_fields": null,
+          "account_tax_ids": null,
+          "rendering_options": null
+        }
+      },
+      "shipping_options": [
+        {
+          "shipping_rate": "sample",
+          "shipping_amount": 1
+        }
+      ],
+      "customer_creation": "sample",
+      "subscription_data": {
+        "metadata": {},
+        "description": "sample",
+        "trial_settings": {
+          "end_behavior": null
+        },
+        "invoice_settings": {
+          "issuer": null
+        },
+        "trial_period_days": 1
+      },
+      "tax_id_collection": {
+        "enabled": true
+      },
+      "consent_collection": {
+        "promotions": "sample",
+        "terms_of_service": "sample",
+        "payment_method_reuse_agreement": {
+          "position": null
+        }
+      },
+      "payment_intent_data": {
+        "metadata": {},
+        "description": "sample",
+        "capture_method": "sample",
+        "transfer_group": "sample",
+        "setup_future_usage": "sample",
+        "statement_descriptor": "sample",
+        "statement_descriptor_suffix": "sample"
+      },
+      "payment_method_types": [
+        "sample"
+      ],
+      "allow_promotion_codes": true,
+      "application_fee_amount": 1,
+      "application_fee_percent": 1,
+      "phone_number_collection": {
+        "enabled": true
+      },
+      "payment_method_collection": "sample",
+      "billing_address_collection": "sample",
+      "shipping_address_collection": {
+        "allowed_countries": [
+          "sample"
+        ]
+      }
+    }
+  ],
+  "object": "sample",
+  "has_more": true
+}

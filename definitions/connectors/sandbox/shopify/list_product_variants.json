@@ -1,0 +1,38 @@
+{
+  "variants": [
+    {
+      "id": 1,
+      "sku": "sample",
+      "grams": 1,
+      "price": "sample",
+      "title": "sample",
+      "weight": 1,
+      "barcode": "sample",
+      "option1": "sample",
+      "option2": "sample",
+      "option3": "sample",
+      "taxable": true,
+      "image_id": 1,
+      "position": 1,
+      "created_at": "sample",
+      "product_id": 1,
+      "updated_at": "sample",
+      "weight_unit": "sample",
+      "compare_at_price": "sample",
+      "inventory_policy": "sample",
+      "inventory_item_id": 1,
+      "requires_shipping": true,
+      "inventory_quantity": 1,
+      "presentment_prices": [
+        {
+          "price": null,
+          "compare_at_price": null
+        }
+      ],
+      "fulfillment_service": "sample",
+      "admin_graphql_api_id": "sample",
+      "inventory_management": "sample",
+      "old_inventory_quantity": 1
+    }
+  ]
+}

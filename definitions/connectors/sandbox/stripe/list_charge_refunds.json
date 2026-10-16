@@ -1,0 +1,123 @@
+{
+  "url": "sample",
+  "data": [
+    {
+      "id": "sample",
+      "amount": 1,
+      "charge": "sample",
+      "object": "sample",
+      "reason": "sample",
+      "status": "sample",
+      "created": 1,
+      "currency": "sample",
+      "metadata": {},
+      "description": "sample",
+      "next_action": {
+        "type": "sample",
+        "display_details": {
+          "email_sent": null,
+          "expires_at": null
+        }
+      },
+      "failure_reason": "sample",
+      "payment_intent": "sample",
+      "pending_reason": "sample",
+      "receipt_number": "sample",
+      "transfer_reversal": "sample",
+      "instructions_email": "sample",
+      "balance_transaction": "sample",
+      "destination_details": {
+        "eps": {},
+        "p24": {
+          "reference": null,
+          "reference_status": null
+        },
+        "pix": {},
+        "zip": {},
+        "alma": {},
+        "blik": {
+          "reference": null,
+          "reference_status": null,
+          "network_decline_code": null
+        },
+        "card": {
+          "type": null,
+          "reference": null,
+          "reference_type": null,
+          "reference_status": null
+        },
+        "type": "sample",
+        "swish": {
+          "reference": null,
+          "reference_status": null,
+          "network_decline_code": null
+        },
+        "twint": {},
+        "affirm": {},
+        "alipay": {},
+        "crypto": {
+          "reference": null
+        },
+        "klarna": {},
+        "mb_way": {
+          "reference": null,
+          "reference_status": null
+        },
+        "paynow": {},
+        "paypal": {
+          "network_decline_code": null
+        },
+        "sofort": {},
+        "cashapp": {},
+        "giropay": {},
+        "grabpay": {},
+        "revolut": {},
+        "amazon_pay": {},
+        "multibanco": {
+          "reference": null,
+          "reference_status": null
+        },
+        "wechat_pay": {},
+        "au_bank_transfer": {
+          "reference": null,
+          "reference_status": null
+        },
+        "br_bank_transfer": {
+          "reference": null,
+          "reference_status": null
+        },
+        "eu_bank_transfer": {
+          "reference": null,
+          "reference_status": null
+        },
+        "gb_bank_transfer": {
+          "reference": null,
+          "reference_status": null
+        },
+        "jp_bank_transfer": {
+          "reference": null,
+          "reference_status": null
+        },
+        "mx_bank_transfer": {
+          "reference": null,
+          "reference_status": null
+        },
+        "nz_bank_transfer": {},
+        "th_bank_transfer": {
+          "reference": null,
+          "reference_status": null
+        },
+        "us_bank_transfer": {
+          "reference": null,
+          "reference_status": null
+        },
+        "afterpay_clearpay": {},
+        "customer_cash_balance": {}
+      },
+      "source_transfer_reversal": "sample",
+      "failure_balance_transaction": "sample"
+    }
+  ],
+  "object": "sample",
+  "has_more": true
+}

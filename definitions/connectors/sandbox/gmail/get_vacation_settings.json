@@ -1,0 +1,11 @@
+{
+  "endTime": "sample",
+  "startTime": "sample",
+  "display_url": "sample",
+  "enableAutoReply": true,
+  "responseSubject": "sample",
+  "responseBodyHtml": "sample",
+  "restrictToDomain": true,
+  "restrictToContacts": true,
+  "responseBodyPlainText": "sample"
+}

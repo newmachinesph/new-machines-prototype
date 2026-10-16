@@ -1,0 +1,23 @@
+{
+  "input_parameters": {
+    "properties": {
+      "inventory_item_ids": {
+        "type": "string"
+      },
+      "limit": {
+        "maximum": 250,
+        "minimum": 1,
+        "type": "integer"
+      },
+      "location_ids": {
+        "type": "string"
+      },
+      "updated_at_min": {
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "slug": "SHOPIFY_GET_INVENTORY_LEVELS",
+  "version": "20261014_00"
+}

@@ -1,0 +1,58 @@
+{
+  "input_parameters": {
+    "properties": {
+      "calendar_ids": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "event_types": {
+        "items": {
+          "enum": [
+            "birthday",
+            "default",
+            "focusTime",
+            "fromGmail",
+            "outOfOffice",
+            "workingLocation"
+          ],
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "max_results_per_calendar": {
+        "type": "integer"
+      },
+      "q": {
+        "type": "string"
+      },
+      "response_detail": {
+        "enum": [
+          "minimal",
+          "full"
+        ],
+        "type": "string"
+      },
+      "show_deleted": {
+        "type": "boolean"
+      },
+      "single_events": {
+        "type": "boolean"
+      },
+      "time_max": {
+        "type": "string"
+      },
+      "time_min": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "time_min",
+      "time_max"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLECALENDAR_EVENTS_LIST_ALL_CALENDARS",
+  "version": "20261010_00"
+}

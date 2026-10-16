@@ -1,0 +1,28 @@
+{
+  "input_parameters": {
+    "properties": {
+      "calendarId": {
+        "type": "string"
+      },
+      "description": {
+        "type": "string"
+      },
+      "location": {
+        "type": "string"
+      },
+      "summary": {
+        "type": "string"
+      },
+      "timeZone": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "calendarId",
+      "summary"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLECALENDAR_CALENDARS_UPDATE",
+  "version": "20261010_00"
+}

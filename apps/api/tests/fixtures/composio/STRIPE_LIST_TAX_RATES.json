@@ -1,0 +1,28 @@
+{
+  "input_parameters": {
+    "properties": {
+      "active": {
+        "type": "boolean"
+      },
+      "created": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "ending_before": {
+        "type": "string"
+      },
+      "inclusive": {
+        "type": "boolean"
+      },
+      "limit": {
+        "type": "integer"
+      },
+      "starting_after": {
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "slug": "STRIPE_LIST_TAX_RATES",
+  "version": "20261014_00"
+}

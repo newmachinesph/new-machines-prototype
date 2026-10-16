@@ -1,0 +1,81 @@
+{
+  "url": "sample",
+  "data": [
+    {
+      "id": "sample",
+      "footer": "sample",
+      "header": "sample",
+      "number": "sample",
+      "object": "sample",
+      "status": "sample",
+      "created": 1,
+      "invoice": "sample",
+      "computed": {
+        "upfront": {
+          "amount_total": null,
+          "total_details": null,
+          "amount_subtotal": null
+        },
+        "recurring": {
+          "amount_total": null,
+          "total_details": null,
+          "amount_subtotal": null
+        }
+      },
+      "currency": "sample",
+      "customer": "sample",
+      "livemode": true,
+      "metadata": {},
+      "discounts": [
+        "sample"
+      ],
+      "expires_at": 1,
+      "from_quote": {
+        "quote": "sample",
+        "is_revision": true
+      },
+      "line_items": {
+        "url": "sample",
+        "data": [],
+        "object": "sample",
+        "has_more": true
+      },
+      "test_clock": "sample",
+      "application": "sample",
+      "description": "sample",
+      "amount_total": 1,
+      "on_behalf_of": "sample",
+      "subscription": "sample",
+      "automatic_tax": {
+        "status": "sample",
+        "enabled": true,
+        "liability": {}
+      },
+      "total_details": {},
+      "amount_subtotal": 1,
+      "customer_account": "sample",
+      "invoice_settings": {
+        "issuer": {},
+        "days_until_due": 1
+      },
+      "collection_method": "sample",
+      "default_tax_rates": [
+        "sample"
+      ],
+      "subscription_data": {
+        "effective_date": 1,
+        "trial_period_days": 1
+      },
+      "status_transitions": {
+        "accepted_at": 1,
+        "canceled_at": 1,
+        "finalized_at": 1
+      },
+      "subscription_schedule": "sample",
+      "application_fee_amount": 1,
+      "application_fee_percent": 1
+    }
+  ],
+  "object": "sample",
+  "has_more": true
+}

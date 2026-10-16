@@ -1,0 +1,36 @@
+{
+  "input_parameters": {
+    "properties": {
+      "document_id": {
+        "type": "string"
+      },
+      "find_text": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "match_case": {
+        "type": "boolean"
+      },
+      "replace_text": {
+        "type": "string"
+      },
+      "search_by_regex": {
+        "type": "boolean"
+      },
+      "tab_ids": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "document_id",
+      "find_text",
+      "replace_text"
+    ],
+    "type": "object"
+  },
+  "slug": "GOOGLEDOCS_REPLACE_ALL_TEXT",
+  "version": "20261008_00"
+}
