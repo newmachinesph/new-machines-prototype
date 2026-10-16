@@ -115,7 +115,9 @@ export function useReviewMemory() {
 
 export const useDisconnect = () =>
   useListMutation(q.disconnectConnectionMutation(), q.listConnectionsQueryKey(), (old: ListConnectionsResponse, vars) =>
-    old.map((c) => (c.app === vars.path.app_name ? { ...c, status: "not_connected" as const, grants: [] } : c)),
+    old.map((c) =>
+      connectorKey(c) === vars.path.app_name ? { ...c, status: "not_connected" as const, grants: [] } : c,
+    ),
   );
 
 type Named = Pick<ApiConnection, "key" | "app">;
@@ -186,7 +188,7 @@ export const useAllowGrant = () => useConnectionMutation(q.allowGrantMutation())
 /** Revoking takes the grant off the card at once and remembers it as revoked, so it can be allowed again. */
 export const useRevokeGrant = () =>
   useListMutation(q.revokeGrantMutation(), q.listConnectionsQueryKey(), (old: ListConnectionsResponse, vars) =>
-    old.map((c) => (c.app === vars.query.app ? withGrantRevoked(c, vars.query) : c)),
+    old.map((c) => (connectorKey(c) === vars.query.app ? withGrantRevoked(c, vars.query) : c)),
   );
 
 export const useRevokeToken = () =>

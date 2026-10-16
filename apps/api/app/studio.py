@@ -16,7 +16,7 @@ from dataclasses import dataclass, replace
 
 from pydantic import ValidationError
 
-from app import db, listings, live_connections, live_work, real_runs, settings
+from app import db, listings, live_connections, live_work, mcp_servers, real_runs, settings
 from app import studio_build as build
 from app.auth import Actor
 from app.catalog.agents import market_listing
@@ -53,6 +53,7 @@ from app.models.studio import (
     WorkflowYaml,
 )
 from app.runtime import routes
+from app.runtime.drivers import MCP_TRANSPORT
 from app.runtime.projection import TERMINAL_RUN_STATUSES
 
 # A release's definitions and the version they replace (None for a first save): what `_save` hands a
@@ -212,9 +213,11 @@ def _context(conn, org_id: str) -> _Context:
     bundle = registry.visible_bundle(conn, org_id)
     market = listings.market_info(conn, org_id)
     listed = {key: row for (kind, key), row in market.items() if kind == "agent"}
+    servers = mcp_servers.live_server_ids(conn, org_id)
     return _Context(
         bundle=bundle,
-        tools=build.tool_index(bundle),
+        # A removed MCP server's tools are not offered, so a save reports them as unknown tools.
+        tools={ref: t for ref, t in build.tool_index(bundle).items() if _offered(bundle, ref, servers)},
         agents={d.key: d.body for d in bundle.of("agent") if _is_own_or_platform(d.key, org_id, listed)},
         spaces={d.key: d for d in build.readable_spaces(bundle) if _is_own_or_platform(d.key, org_id)},
         schemas={d.key: d for d in bundle.of("schema") if _is_own_or_platform(d.key, org_id)},
@@ -242,10 +245,18 @@ def _palette_agent(d: Definition, ctx: _Context) -> PaletteAgent:
     )
 
 
+def _offered(bundle, ref: str, servers: set[str]) -> bool:
+    """A tool of an org's own MCP server is offered only while its server is not removed."""
+    connector = bundle.get("connector", ref.partition(".")[0])
+    body = connector.body if connector is not None else {}
+    return body.get("transport") != MCP_TRANSPORT or body.get("server") in servers
+
+
 def palette(actor: Actor) -> Palette:
     """Everything a pack's steps can use, from the registry: a new agent or app tool shows up by itself. The
     agents are the ones a draft may use (`_Context.agents`): the platform's, the org's own and other
-    workspaces' listed ones, with their listing."""
+    workspaces' listed ones, with their listing. An org's own MCP server's tools are labelled with the
+    server's name, while it is connected."""
     with db.connect() as conn:
         ctx = _context(conn, actor.org_id)
     return Palette(

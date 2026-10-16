@@ -39,121 +39,17 @@ sys.path.insert(0, str(Path(__file__).parent))
 from composio_schemas import OUT as FIXTURES  # noqa: E402
 from composio_schemas import UncheckedSchema, structural  # noqa: E402
 
-from app import settings  # noqa: E402
+from app import settings, tool_words  # noqa: E402
 from app.runtime.drivers import META_TOOL_PREFIX  # noqa: E402
 
 OVERRIDES = Path(__file__).parent / "connector_imports"
 CLASSES = ("read", "write", "delete", "money")
 BLOCKED = {"delete", "money"}  # a pack can never use these, so they are not imported
-READ_VERBS = {
-    "GET",
-    "LIST",
-    "FIND",
-    "SEARCH",
-    "LOOKUP",
-    "LOOK",
-    "QUERY",
-    "FETCH",
-    "READ",
-    "RETRIEVE",
-    "DOWNLOAD",
-    "EXPORT",
-    "AGGREGATE",
-    "COUNT",
-}
+# Shared with the sorting of an org's own MCP tools (app/tool_words.py); tests read them through this script.
+READ_VERBS, WRITE_WORDS, DELETE_WORDS = tool_words.READ_VERBS, tool_words.WRITE_WORDS, tool_words.DELETE_WORDS
+MONEY_WORDS, ACCESS_WORDS = tool_words.MONEY_WORDS, tool_words.ACCESS_WORDS
+example = tool_words.example
 WRITE_HINTS = {"updateHint", "createHint"}
-WRITE_WORDS = {
-    "REPLACE",
-    "UPDATE",
-    "UPSERT",
-    "SET",
-    "CREATE",
-    "ADD",
-    "INSERT",
-    "APPEND",
-    "MOVE",
-    "COPY",
-    "SORT",
-    "SEND",
-    "FORWARD",
-    "REPLY",
-    "POST",
-    "PUT",
-    "PATCH",
-    "MODIFY",
-    "RUN",
-    "EXECUTE",
-    "SHARE",
-    "INVITE",
-    "IMPORT",
-    "UPLOAD",
-    "SUBMIT",
-    "PUBLISH",
-    "COMPLETE",
-    "INSTALL",
-}
-DELETE_WORDS = {
-    "DELETE",
-    "CLEAR",
-    "REMOVE",
-    "TRASH",
-    "DESTROY",
-    "PURGE",
-    "ARCHIVE",
-    "CANCEL",
-    "VOID",
-    "DETACH",
-    "EXPIRE",
-    "CLOSE",
-    "REVOKE",
-    "DISABLE",
-}
-MONEY_WORDS = {
-    "PAY",
-    "PAID",
-    "PAYMENT",
-    "PAYMENTS",
-    "PAYOUT",
-    "PAYOUTS",
-    "REFUND",
-    "REFUNDS",
-    "CHARGE",
-    "CHARGES",
-    "TRANSFER",
-    "TRANSFERS",
-    "TRANSACTION",
-    "TRANSACTIONS",
-    "CHECKOUT",
-    "CAPTURE",
-    "CONFIRM",
-    "FINALIZE",
-    "TOPUP",
-    "BALANCE",
-    "CREDIT",
-    "INVOICE",
-    "INVOICES",
-    "SUBSCRIPTION",
-    "SUBSCRIPTIONS",
-    "ORDER",
-    "ORDERS",
-    "GIFT",
-    "FULFILL",
-}
-# Money verbs: a name that starts with a read verb but carries one of these does something, it is no read.
-MONEY_VERBS = {"PAY", "CAPTURE", "CONFIRM", "FINALIZE", "CHECKOUT", "TOPUP", "FULFILL"}
-# Words of actions that change who can reach data: shared, invited, watched from outside or sent as someone.
-# Unless they plainly read, they wait for a person to review them.
-ACCESS_WORDS = {
-    "SHARE",
-    "SHARING",
-    "INVITE",
-    "ACL",
-    "PERMISSION",
-    "PERMISSIONS",
-    "WATCH",
-    "FORWARDING",
-    "DELEGATE",
-}
 # Composio's own keys that only describe a value; any other key Composio sends is a constraint we keep or,
 # when the contract test cannot check it, a reason to leave the action out.
 ANNOTATIONS = {
@@ -235,13 +131,8 @@ def classify(tool: dict, toolkit: str, override: dict | None) -> tuple[str, str]
         return "delete", "marked destructive"
     if DELETE_WORDS & named:
         return "delete", "name deletes or cancels"
-    plainly_reads = (
-        bool(found)
-        and (found[0] in READ_VERBS or found[:2] == ["BATCH", "GET"])
-        and not (WRITE_WORDS | MONEY_VERBS) & named
-        and not WRITE_HINTS & tags
-    )
-    if plainly_reads:
+    reads = tool_words.plainly_reads(found) and not WRITE_HINTS & tags
+    if reads:
         return "read", f"name starts with {found[0].lower()}"
     if ACCESS_WORDS & named or "SEND_AS" in tool["slug"]:
         return "skip", "is about who can reach data; needs a reviewed override"
@@ -348,37 +239,6 @@ def input_schema(tool: dict, override: dict | None = None) -> dict:
     ours = copy_schema(theirs)
     ours.pop("description", None)
     return narrowed({"type": "object", **ours, "additionalProperties": False}, override or {}, tool["slug"])
-
-
-def example(schema, defs: dict | None = None, depth: int = 0):
-    """A plausible value for `schema`, for a generated sandbox response; `defs` resolves #/$defs/ refs."""
-    if not isinstance(schema, dict) or depth > 8:
-        return None
-    defs = defs or {}
-    ref = schema.get("$ref")
-    if isinstance(ref, str) and ref.startswith("#/$defs/"):
-        rest = {k: v for k, v in schema.items() if k != "$ref"}
-        return example({**(defs.get(ref.rsplit("/", 1)[-1]) or {}), **rest}, defs, depth + 1)
-    if schema.get("allOf"):
-        merged = {k: v for k, v in schema.items() if k != "allOf"}
-        for part in schema["allOf"]:
-            merged.update(part if isinstance(part, dict) else {})
-        return example(merged, defs, depth + 1)
-    if schema.get("examples"):
-        return schema["examples"][0]
-    if "enum" in schema and schema["enum"]:
-        return schema["enum"][0]
-    for branch in schema.get("anyOf") or schema.get("oneOf") or []:
-        if isinstance(branch, dict) and branch.get("type") != "null":
-            return example(branch, defs, depth + 1)
-    kind = schema.get("type")
-    kind = next((k for k in kind if k != "null"), None) if isinstance(kind, list) else kind
-    if kind == "object" or "properties" in schema:
-        return {k: example(v, defs, depth + 1) for k, v in (schema.get("properties") or {}).items()}
-    if kind == "array":
-        item = example(schema.get("items") or {}, defs, depth + 1)
-        return [] if item is None else [item]
-    return {"string": "sample", "integer": 1, "number": 1, "boolean": True}.get(kind)
 
 
 def sandbox_response(tool: dict) -> dict:

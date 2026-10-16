@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/skeleton";
 import { useErrorText } from "@/lib/api/use-error-text";
 import { useIsDemo, useMe } from "@/lib/queries/me";
 import { useConnections } from "@/lib/queries/org";
-import { useAllowGrant, useDisconnect, useRevokeGrant } from "@/lib/queries/workspace";
+import { connectorKey, useAllowGrant, useDisconnect, useRevokeGrant } from "@/lib/queries/workspace";
 import { useFormat } from "@/lib/use-format";
 import type { Connection, RevokedGrant } from "@/lib/types";
 import { ConnectChoices, FinishConnecting, RealAccountButton } from "./connect-actions";
@@ -110,11 +110,15 @@ function useCapabilityLabel() {
 /** The app's simulation label: none until it is connected, then Simulated when it serves sandbox data. */
 const isSimulated = (c: Connection) => c.status !== "not_connected" && (c.provider === "Mock" || c.mode === "sandbox");
 
+/** The org's apps. Its own MCP servers have their own section (`McpServers`). */
 export function ConnectionList() {
   const connections = useConnections();
   return (
     <QueryState query={connections} skeleton={<Skeleton className="h-96" />}>
-      {(conns) => (conns.length ? <ConnectionCards conns={conns} /> : <NoConnections />)}
+      {(all) => {
+        const conns = all.filter((c) => c.provider !== "MCP");
+        return conns.length ? <ConnectionCards conns={conns} /> : <NoConnections />;
+      }}
     </QueryState>
   );
 }
@@ -159,9 +163,12 @@ function ConnectionCards({ conns }: { conns: Connection[] }) {
   const controls = (attr: Control, app: string) =>
     [...(root.current?.querySelectorAll<HTMLElement>(`[data-${attr}]`) ?? [])].filter((el) => el.dataset[attr] === app);
 
-  const disconnect = (app: string) => {
+  // The API is told the connector key, never the display name: a custom MCP server named like an app must
+  // not reach that app's connection. Words and focus still go by the app name.
+  const disconnect = (c: Connection) => {
+    const app = c.app;
     disconnectConnection.mutate(
-      { path: { app_name: app } },
+      { path: { app_name: connectorKey(c) } },
       {
         onSuccess: (gone) =>
           demo
@@ -183,9 +190,10 @@ function ConnectionCards({ conns }: { conns: Connection[] }) {
       else if (tries > 1) focusControl(attr, app, tries - 1);
     });
   const focusFor = (app: string) => (status: Connection["status"]) => focusControl(FOCUS_FOR[status], app);
-  const revoke = (app: string, grant: Grant, index: number) => {
+  const revoke = (c: Connection, grant: Grant, index: number) => {
+    const app = c.app;
     revokeGrant.mutate(
-      { query: { app, install: grant.install, capability: grant.capability } },
+      { query: { app: connectorKey(c), install: grant.install, capability: grant.capability } },
       {
         onSuccess: () => toast(t("revokedToast"), t("revokedToastBody", { install: grant.install, app })),
         onError: (e) => toast(t("revokeFailed"), errorText(e), "blocked"),
@@ -195,10 +203,11 @@ function ConnectionCards({ conns }: { conns: Connection[] }) {
   };
   // The "Allow again" control leaves with its revoked entry once the answer lands. The revocation is forgotten
   // either way; the grant itself comes back only when a pack the workspace added still uses the capability.
-  const allow = (app: string, grant: RevokedGrant, index: number) => {
+  const allow = (c: Connection, grant: RevokedGrant, index: number) => {
+    const app = c.app;
     const words = { install: grant.install, capability: capabilityLabel(grant.capability), app };
     allowGrant.mutate(
-      { query: { app, install: grant.install, capability: grant.capability } },
+      { query: { app: connectorKey(c), install: grant.install, capability: grant.capability } },
       {
         onSuccess: (now) => {
           const back = now.grants.find((g) => g.install === grant.install && g.capability === grant.capability);
@@ -270,7 +279,7 @@ function ConnectionCards({ conns }: { conns: Connection[] }) {
                       className="h-10 sm:h-8"
                       data-cancel={c.app}
                       aria-label={t("cancelConnectingFor", { app: c.app })}
-                      onClick={() => disconnect(c.app)}
+                      onClick={() => disconnect(c)}
                     >
                       {t("cancelConnecting")}
                     </Button>
@@ -337,7 +346,7 @@ function ConnectionCards({ conns }: { conns: Connection[] }) {
                         title={t("disconnectTitle", { app: c.app })}
                         description={t("disconnectDescription", { app: c.app })}
                         confirmLabel={t("disconnectApp", { app: c.app })}
-                        onConfirm={() => disconnect(c.app)}
+                        onConfirm={() => disconnect(c)}
                       />
                     ) : null}
                     {askAdmin}
@@ -379,9 +388,7 @@ function ConnectionCards({ conns }: { conns: Connection[] }) {
                                   app: c.app,
                                 })}
                                 confirmLabel={t("revokeConfirm")}
-                                onConfirm={() =>
-                                  revoke(c.app, g, c.grants.filter((x) => x.access !== "denied").indexOf(g))
-                                }
+                                onConfirm={() => revoke(c, g, c.grants.filter((x) => x.access !== "denied").indexOf(g))}
                               />
                             ) : null}
                           </div>
@@ -410,7 +417,7 @@ function ConnectionCards({ conns }: { conns: Connection[] }) {
                                   app: c.app,
                                 })}
                                 disabled={allowGrant.isPending}
-                                onClick={() => allow(c.app, g, i)}
+                                onClick={() => allow(c, g, i)}
                               >
                                 {t("allowAgain")}
                               </Button>

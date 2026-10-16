@@ -917,12 +917,16 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "provider" },
+    { name = "anyio" },
     { name = "cachecontrol" },
     { name = "cel-python" },
     { name = "composio" },
+    { name = "cryptography" },
     { name = "fastapi" },
     { name = "google-auth" },
+    { name = "httpx" },
     { name = "jsonschema" },
+    { name = "mcp" },
     { name = "psycopg", extra = ["binary", "pool"] },
     { name = "psycopg-pool" },
     { name = "pyyaml" },
@@ -941,12 +945,16 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "provider", specifier = "==1.13.0" },
+    { name = "anyio", specifier = "==4.15.1" },
     { name = "cachecontrol", specifier = "==0.14.4" },
     { name = "cel-python", specifier = "==0.5.0" },
     { name = "composio", specifier = "==0.26.0" },
+    { name = "cryptography", specifier = "==50.0.2" },
     { name = "fastapi", specifier = "==0.141.1" },
     { name = "google-auth", specifier = "==2.61.0" },
+    { name = "httpx", specifier = "==0.28.1" },
     { name = "jsonschema", specifier = "==4.26.0" },
+    { name = "mcp", specifier = "==1.30.0" },
     { name = "psycopg", extras = ["binary", "pool"], specifier = "==3.3.6" },
     { name = "psycopg-pool", specifier = "==3.3.3" },
     { name = "pyyaml", specifier = "==6.0.3" },

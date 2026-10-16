@@ -24,6 +24,7 @@ SUBMIT_CONFLICTS = (
     "SANDBOX_UNAVAILABLE",
     "SPEND_CAP",
     "PACK_UNAVAILABLE",
+    "NOT_PUBLISHABLE",
     "VERSION_CONFLICT",
 )
 
@@ -103,7 +104,8 @@ def submit_studio_pack(
     """Submit the pack's saved version for the marketplace at a per-run price. Owners and admins of a
     workspace with a publisher profile. Every agent in the pack must be the platform's or listed (422
     PRIVATE_AGENTS names the agents that need to be listed first, each with where it stands: not submitted,
-    in review, unlisted or not approved). The automatic checks run the definition checks and a
+    in review, unlisted or not approved). A pack that uses the org's own MCP server cannot be submitted (409
+    NOT_PUBLISHABLE). The automatic checks run the definition checks and a
     sandbox test run with `input` and `budgetMinor` (a completed sandbox test of this version is reused). The
     version waits in `checking` until that run ends, then in `in_review` for New Machines."""
     _live(org_id, actor)

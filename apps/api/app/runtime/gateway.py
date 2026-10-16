@@ -9,6 +9,7 @@ from app.runtime import routes
 from app.runtime.drivers import (
     META_TOOL_PREFIX,
     ComposioDriver,
+    McpDriver,
     RouteChangedDriver,
     SandboxDriver,
     ToolResult,
@@ -24,7 +25,7 @@ GRANT_REVOKED = "GRANT_REVOKED"  # the org's connection does not grant the pack 
 NOT_CONNECTED = "NOT_CONNECTED"  # the app has no usable connection
 ROUTE_CHANGED = "ROUTE_CHANGED"  # the app was reconnected another way since the run started
 
-Driver = SandboxDriver | ComposioDriver | UnconnectedDriver | RouteChangedDriver
+Driver = SandboxDriver | ComposioDriver | McpDriver | UnconnectedDriver | RouteChangedDriver
 
 
 @dataclass
@@ -112,6 +113,11 @@ def _route_driver(snapshot: dict, connector_key: str, connector: dict, route: ro
         return UnconnectedDriver()
     if routes.route_changed(snapshot, connector_key, route):
         return RouteChangedDriver(str(connector.get("app") or connector_key))
+    if route.mode == "mcp":
+        # If the route and the pinned connector name different servers, fail closed.
+        if not route.account_id or connector.get("server") != route.account_id:
+            return UnconnectedDriver()
+        return McpDriver(route.account_id, org_id=str(snapshot.get("org_id") or ""))
     if route.mode == "composio":
         return ComposioDriver(user_id=route.user_id, account_id=route.account_id)
     return SandboxDriver(pack=_pack_key(snapshot))

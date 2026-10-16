@@ -38,7 +38,10 @@ def list_connections(actor: CurrentActor) -> list[Connection]:
     "/connections/{app_name}:connect",
     operation_id="connectConnection",
     response_model=ConnectStarted,
-    responses={**conflicts("CONFLICT", "LIVE_CONNECT_UNAVAILABLE", "NO_LIVE_TOOLKIT"), **SERVICE_RESPONSES},
+    responses={
+        **conflicts("CONFLICT", "LIVE_CONNECT_UNAVAILABLE", "NO_LIVE_TOOLKIT", "MCP_SERVER_CONNECTION"),
+        **SERVICE_RESPONSES,
+    },
 )
 def connect_connection(
     app_name: str, actor: CurrentActor, body: Annotated[ConnectRequest, Body(default_factory=ConnectRequest)]
@@ -47,7 +50,8 @@ def connect_connection(
     sandbox data. `mode: live` starts signing in to the org's own account: the connection is pending and
     `redirectUrl` is the app's sign-in page, which returns to the web's Connections page; only an owner or
     admin may, and only they may switch an app connected to the org's own account to sandbox data (403
-    FORBIDDEN otherwise). The demo workspace has none to make (409)."""
+    FORBIDDEN otherwise). The demo workspace has none to make (409). An org's own MCP server is managed under
+    its MCP servers (409 MCP_SERVER_CONNECTION)."""
     if not workspace.live():
         raise ApiProblem(409, "CONFLICT", "The demo workspace's apps are already set up.")
     if body.mode == "live":
@@ -61,25 +65,33 @@ def connect_connection(
     "/connections/{app_name}:sync",
     operation_id="syncConnection",
     response_model=Connection,
-    responses={**conflicts("CONFLICT", "LIVE_CONNECT_UNAVAILABLE"), **SERVICE_RESPONSES},
+    responses={
+        **conflicts("CONFLICT", "LIVE_CONNECT_UNAVAILABLE", "MCP_SERVER_CONNECTION"),
+        **SERVICE_RESPONSES,
+    },
 )
 def sync_connection(app_name: str, actor: CurrentActor) -> Connection:
     """Live workspace: check the org's own account for an app with Composio, after the person comes back from
     signing in. Connected when the account is active, with the grants of the packs that use the app; not
     connected (or needing sign-in again) when the sign-in failed or expired; still pending while it is in
-    progress. The demo workspace has nothing to sync (409)."""
+    progress. The demo workspace has nothing to sync (409). An org's own MCP server is managed under its MCP
+    servers (409 MCP_SERVER_CONNECTION)."""
     if not workspace.live():
         raise ApiProblem(409, "CONFLICT", "The demo workspace's apps are already set up.")
     return live_connections.sync(actor.org_id, app_name)
 
 
 @router.post(
-    "/connections/{app_name}:disconnect", operation_id="disconnectConnection", response_model=Connection
+    "/connections/{app_name}:disconnect",
+    operation_id="disconnectConnection",
+    response_model=Connection,
+    responses=conflicts("MCP_SERVER_CONNECTION"),
 )
 def disconnect_connection(app_name: str, actor: CurrentActor) -> Connection:
     """Disconnect an app: every pack the org added loses access to it. In the live workspace, an app
     connected to the org's own account (mode composio, whatever its status) is only disconnected by an owner
-    or admin (403 FORBIDDEN otherwise); its account is removed at the connection service."""
+    or admin (403 FORBIDDEN otherwise); its account is removed at the connection service. An org's own MCP
+    server is managed under its MCP servers (409 MCP_SERVER_CONNECTION)."""
     if workspace.live():
         return live_connections.disconnect(actor.org_id, app_name, actor.role)
     with locked_store():

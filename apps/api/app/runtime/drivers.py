@@ -1,4 +1,5 @@
-"""Connector drivers: sandbox responses from definitions, or live calls through Composio."""
+"""Connector drivers: sandbox responses from definitions, live calls through Composio, or calls to an
+org's own MCP server."""
 
 import json
 import logging
@@ -13,6 +14,7 @@ log = logging.getLogger(__name__)
 
 _SAFE_NAME = re.compile(r"^[A-Za-z0-9_-]+$")
 META_TOOL_PREFIX = "COMPOSIO_"  # Composio meta tools (multi-execute, remote bash, connections) never run
+MCP_TRANSPORT = "mcp"  # connector `transport` of an org's own MCP server (`custom_mcp`)
 
 
 _URL = re.compile(r"\w+://\S+")
@@ -38,14 +40,20 @@ class ToolResult:
 class SandboxDriver:
     """Returns a recorded response: the run's pack's own
     definitions/packs/<pack>/sandbox/<connector>/<tool id>.json when there is one, else the shared
-    definitions/connectors/sandbox/<connector>/<tool id>.json."""
+    definitions/connectors/sandbox/<connector>/<tool id>.json. With `samples` (an org's own MCP connector) it
+    answers each tool's `sample`, or `{"sandbox": true}`."""
 
     def __init__(
-        self, root: Path | None = None, pack: str | None = None, packs_root: Path | None = None
+        self,
+        root: Path | None = None,
+        pack: str | None = None,
+        packs_root: Path | None = None,
+        samples: bool = False,
     ) -> None:
         self._root = root or settings.defs_dir() / "connectors" / "sandbox"
         self._packs_root = packs_root or settings.defs_dir() / "packs"
         self._pack = pack if pack and _SAFE_NAME.match(pack) else None
+        self._samples = samples  # an org's own MCP connector: answer each tool's `sample`
 
     @property
     def pack(self) -> str | None:
@@ -59,6 +67,11 @@ class SandboxDriver:
         return self._root / connector / f"{tool_id}.json"
 
     def execute(self, connector: str, tool: dict, args: dict) -> ToolResult:
+        if self._samples:
+            sample = tool.get("sample")
+            return ToolResult(
+                ok=True, data=sample if isinstance(sample, dict) else {"sandbox": True}, mocked=True
+            )
         tool_id = str(tool.get("id", ""))
         if not (_SAFE_NAME.match(connector) and _SAFE_NAME.match(tool_id)):
             return ToolResult(
@@ -140,6 +153,8 @@ class ComposioDriver:
 
 NOT_CONNECTED = "NotConnected"  # error type: a live-workspace app with no usable connection
 ROUTE_CHANGED = "RouteChanged"  # error type: the app's route is not the one pinned when the run started
+TOOL_OFF = "ToolOff"  # error type: the org switched the MCP tool off since the run pinned it
+SECRETS_UNAVAILABLE = "SecretsUnavailable"  # error type: the MCP server's token cannot be opened now
 
 
 class UnconnectedDriver:
@@ -164,20 +179,78 @@ class RouteChangedDriver:
         return ToolResult(ok=False, data=None, mocked=False, error=error)
 
 
+def _failed(error: str) -> ToolResult:
+    return ToolResult(ok=False, data=None, mocked=False, error=error)
+
+
+class McpDriver:
+    """Calls a tool on the org's own MCP server: the server the connection row names, with its token, under
+    the server-address rules. The server must belong to the run's org. Nothing runs when the server was
+    removed or the tool was switched off since the run pinned it. A failure to answer marks the server
+    failing; an answer marks it active again."""
+
+    def __init__(self, server_id: str, *, org_id: str) -> None:
+        self._server_id = server_id
+        self._org_id = org_id
+
+    @property
+    def server_id(self) -> str:
+        return self._server_id
+
+    def execute(self, connector: str, tool: dict, args: dict) -> ToolResult:
+        from app import mcp_servers, secrets_box  # the database and the MCP client load only when used
+        from app.custom_mcp import client, safety
+
+        slug = str(tool.get("slug") or "")
+        if not (self._server_id and self._org_id):
+            return _failed(f"{NOT_CONNECTED}: {connector} is not connected")
+        try:
+            reach = mcp_servers.reach(self._server_id, connector, slug, org_id=self._org_id)
+        except mcp_servers.ServerGone:
+            return _failed(f"{NOT_CONNECTED}: {connector} is not connected")
+        except mcp_servers.ToolOff:
+            return _failed(f"{TOOL_OFF}: {slug} is switched off")
+        except secrets_box.SecretsUnavailable, secrets_box.SecretUnreadable:
+            log.error("mcp %s: the token cannot be opened", self._server_id)
+            return _failed(f"{SECRETS_UNAVAILABLE}: the {connector} token cannot be read right now")
+        try:
+            outcome = client.call_tool(reach.url, reach.header_name, reach.token, slug, args)
+        except safety.UrlRefused as refused:
+            if str(refused) == mcp_servers.BAD_HEADER_REASON:  # the stored header or token is unusable
+                log.error("mcp %s: the stored header or token cannot be sent", self._server_id)
+                return _failed(f"{SECRETS_UNAVAILABLE}: the {connector} token cannot be read right now")
+            mcp_servers.note_failure(self._server_id, mcp_servers.ADDRESS_REFUSED)
+            return _failed(f"UrlRefused: the {connector} server address is not allowed")
+        except client.McpUnreachable as exc:
+            log.warning("mcp %s.%s failed: %s", connector, tool.get("id"), exc)
+            mcp_servers.note_failure(self._server_id, mcp_servers.UNREACHABLE)
+            return _failed(f"McpUnreachable: the {connector} server did not answer")
+        mcp_servers.note_answer(self._server_id)
+        if not outcome.ok:
+            return _failed(f"ToolError: {safe_message(outcome.message)}")
+        return ToolResult(ok=True, data=outcome.data, mocked=False)
+
+
 def is_route_changed(result: ToolResult | None) -> bool:
     """Whether a call failed because its app's route is not the one pinned when the run started."""
     return result is not None and not result.ok and str(result.error or "").startswith(f"{ROUTE_CHANGED}:")
 
 
-def driver_for(connector_def: dict, mode: str, pack: str | None = None) -> SandboxDriver | ComposioDriver:
+def driver_for(
+    connector_def: dict, mode: str, pack: str | None = None
+) -> SandboxDriver | ComposioDriver | UnconnectedDriver:
     """`connector_def` is the connector body. mode: sandbox | live | auto (live if connected). `pack` is the
-    run's pack key, for its own sandbox data."""
+    run's pack key, for its own sandbox data. An org's own MCP server is reached only through the org's
+    connection (`gateway._route_driver`): a run that is not routed answers from samples, or runs nothing
+    in live mode."""
+    if mode not in ("sandbox", "auto", "live"):
+        raise ValueError(f"unknown connector mode {mode!r}")
+    if connector_def.get("transport") == MCP_TRANSPORT:
+        return UnconnectedDriver() if mode == "live" else SandboxDriver(pack=pack, samples=True)
     if mode == "sandbox":
         return SandboxDriver(pack=pack)
     if mode == "live":
         return ComposioDriver()
-    if mode != "auto":
-        raise ValueError(f"unknown connector mode {mode!r}")
     live = ComposioDriver()
     try:
         if live.is_connected(connector_def["toolkit"]):

@@ -23,7 +23,7 @@ class Connection(Model):
     app: str
     account: str
     status: Literal["connected", "not_connected", "sandbox", "needs_reauth", "pending"]
-    provider: Literal["Composio", "Mock"]
+    provider: Literal["Composio", "Mock", "MCP"]
     oauth_scopes: list[str]
     grants: list[Grant]
     # Live workspace: what a person revoked on this connection, whatever its status, so the web can offer to
@@ -32,9 +32,9 @@ class Connection(Model):
     last_used: str | Opt = None
     health: str | Opt = None
     # Live workspace: the connector definition key (what `:connect` takes) and how the app is reached
-    # (sandbox data, or the customer's own account through Composio).
+    # (sandbox data, the customer's own account through Composio, or the customer's own MCP server).
     key: str | Opt = None
-    mode: Literal["sandbox", "composio"] | Opt = None
+    mode: Literal["sandbox", "composio", "mcp"] | Opt = None
     # Live workspace: set when an action half-succeeded. "sign_in_not_removed": disconnected here, but the
     # account could not be removed at Composio yet (the next connect or disconnect retries).
     notice: Literal["sign_in_not_removed"] | Opt = None

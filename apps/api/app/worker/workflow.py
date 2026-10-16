@@ -18,6 +18,7 @@ with workflow.unsafe.imports_passed_through():
     # results; passing it through here keeps that import out of the sandbox (and its warning out of the log).
     import annotated_types  # noqa: F401
 
+    from app.custom_mcp import client as mcp_client
     from app.runtime import adk_agent, agent, gateway
     from app.runtime.projection import FAILURE_ROUTES
     from app.runtime.providers import MODEL_ACTIVITY_TIMEOUT_S, ModelTurn
@@ -57,6 +58,9 @@ _BOOKKEEPING_RETRY = RetryPolicy(
 )
 _BOOKKEEPING_WINDOW = timedelta(minutes=5)
 _STEP_TIMEOUT = timedelta(seconds=30)
+# An outside call may run to the MCP client's own deadline: the activity must outlast it (plus database time),
+# or Temporal retries a call the server is still running.
+_TOOL_TIMEOUT = timedelta(seconds=mcp_client.TIMEOUT_S + 15)
 _MODEL_TIMEOUT = timedelta(seconds=MODEL_ACTIVITY_TIMEOUT_S)
 _SIDE_EFFECT_NODES = {"connector"}
 HUMAN_OUTCOMES = {"resolved", "rejected"}
@@ -477,6 +481,8 @@ class PackRunner:
         """Run one activity. Without an explicit policy, side-effecting steps get the short one and the rest
         (database bookkeeping) retry within the bookkeeping window."""
         if retry is not None or side_effects:
+            if side_effects and timeout == _STEP_TIMEOUT:
+                timeout = _TOOL_TIMEOUT
             return await workflow.execute_activity_method(
                 method, arg, start_to_close_timeout=timeout, retry_policy=retry or _RETRY
             )

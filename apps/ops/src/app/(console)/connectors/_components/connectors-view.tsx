@@ -28,6 +28,9 @@ const COLUMNS: Column<ConnectorEntry>[] = [
       <span className="block min-w-0">
         <span className="block font-medium">{c.app}</span>
         <span className="block text-xs text-muted">{c.category}</span>
+        {c.ownerOrgName ? (
+          <span className="block text-xs text-muted">Own MCP server of {c.ownerOrgName}</span>
+        ) : null}
       </span>
     ),
   },

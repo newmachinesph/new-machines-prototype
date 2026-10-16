@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { Button, PageHeader } from "@/components/ui";
 import { ConnectDialog, ConnectionList } from "./connection-list";
+import { McpServers } from "./mcp-servers";
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getTranslations("nav"))("connections") };
@@ -17,6 +18,7 @@ export default async function ConnectionsPage() {
         actions={<ConnectDialog trigger={<Button variant="secondary">{t("connect.title")}</Button>} />}
       />
       <ConnectionList />
+      <McpServers />
     </>
   );
 }

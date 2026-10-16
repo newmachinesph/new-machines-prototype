@@ -37,6 +37,7 @@ from app.models.ops import (
 from app.models.runs import Run
 from app.run_tasks import OPEN_STATUSES, release_claims
 from app.runtime import gateway, routes
+from app.runtime.drivers import MCP_TRANSPORT
 from app.runtime.projection import TERMINAL_RUN_STATUSES
 from app.store import iso, locked_store
 
@@ -69,6 +70,7 @@ SUCCESS_WINDOW_DAYS = 7
 HOURS = 24
 LIVE_PROVIDER = "Composio"
 LIVE_AUTH = "oauth_managed"
+MCP_PROVIDER, MCP_AUTH = "MCP", "api_key"  # an org's own MCP server: a secret header, not OAuth
 # A connection row counts as connected only when a run could reach the app through it: the rule
 # `live_connections.shown_status` shows as connected or sandbox, in SQL.
 ROUTABLE = routes.ROUTABLE_SQL.format(c="c")
@@ -362,15 +364,27 @@ def _connector_usage(conn, now: datetime) -> tuple[dict[str, int], dict[str, dic
     return {r["app"]: int(r["orgs"]) for r in connected}, {r["connector"]: r for r in calls}
 
 
+def _org_owners(conn) -> dict[str, tuple[str, str]]:
+    """{connector key: (org id, org name)} of the connectors orgs own (their MCP servers'), in one query."""
+    rows = conn.execute(
+        "SELECT o.key, o.owner_id, g.name FROM definition_owners o JOIN orgs g ON g.id = o.owner_id "
+        "WHERE o.kind = 'connector' AND o.owner_kind = 'org'"
+    ).fetchall()
+    return {r["key"]: (r["owner_id"], r["name"]) for r in rows}
+
+
 def _connectors(conn, now: datetime, key: str | None = None) -> list[ConnectorEntry]:
     definitions = [v for v in registry.latest_of_kind(conn, "connector") if key is None or v.key == key]
     if not definitions:
         return []
     settings = ops_state.connector_settings(conn)
     connected, calls = _connector_usage(conn, now)
+    owned = _org_owners(conn)
     entries = []
     for version in definitions:
         body = version.body
+        mcp = body.get("transport") == MCP_TRANSPORT
+        owner_id, owner_name = owned.get(version.key, (None, None))
         app = str(body.get("app") or version.key)
         current = ops_state.effective_settings(body, settings.get(version.key))
         usage = calls.get(version.key) or {"calls": 0, "failed": 0}
@@ -381,8 +395,8 @@ def _connectors(conn, now: datetime, key: str | None = None) -> list[ConnectorEn
                 id=version.key,
                 app=app,
                 category=_category(scopes),
-                provider=LIVE_PROVIDER,
-                auth_type=LIVE_AUTH,
+                provider=MCP_PROVIDER if mcp else LIVE_PROVIDER,
+                auth_type=MCP_AUTH if mcp else LIVE_AUTH,
                 status=current["status"],
                 tenants_connected=connected.get(version.key, 0),
                 calls_today=total,
@@ -390,6 +404,8 @@ def _connectors(conn, now: datetime, key: str | None = None) -> list[ConnectorEn
                 last_health_check=None,
                 defaults=ConnectorDefaults(**current["defaults"]),
                 scopes=scopes,
+                owner_org_id=owner_id,
+                owner_org_name=owner_name,
             )
         )
     return entries
@@ -397,7 +413,8 @@ def _connectors(conn, now: datetime, key: str | None = None) -> list[ConnectorEn
 
 def list_connectors(conn, now: datetime | None = None) -> list[ConnectorEntry]:
     """One entry per connector definition (its latest version, as a run snapshot pins it), by key, with the
-    settings Ops persisted and today's usage (UTC). A settings row without a definition is not listed."""
+    settings Ops persisted and today's usage (UTC). A settings row without a definition is not listed.
+    An org's own MCP connector names its org (`owner_org_id`, `owner_org_name`)."""
     return _connectors(conn, _aware(now or datetime.now(UTC)))
 
 

@@ -5,7 +5,6 @@
   "additionalProperties": false,
   "required": [
     "app",
-    "toolkit",
     "tools",
     "defaults"
   ],
@@ -14,9 +13,20 @@
       "type": "string",
       "minLength": 1
     },
+    "transport": {
+      "enum": [
+        "composio",
+        "mcp"
+      ],
+      "default": "composio"
+    },
     "toolkit": {
       "type": "string",
       "minLength": 1
+    },
+    "server": {
+      "type": "string",
+      "pattern": "^mcp_[0-9a-f]{12}$"
     },
     "tools": {
       "type": "array",
@@ -62,10 +72,12 @@
           },
           "input_schema": {
             "type": "object"
+          },
+          "sample": {
+            "type": "object"
           }
         }
-      },
-      "minItems": 1
+      }
     },
     "defaults": {
       "type": "object",
@@ -105,6 +117,41 @@
             "deny"
           ]
         }
+      }
+    }
+  },
+  "if": {
+    "properties": {
+      "transport": {
+        "const": "mcp"
+      }
+    },
+    "required": [
+      "transport"
+    ]
+  },
+  "then": {
+    "required": [
+      "server"
+    ],
+    "not": {
+      "required": [
+        "toolkit"
+      ]
+    }
+  },
+  "else": {
+    "required": [
+      "toolkit"
+    ],
+    "not": {
+      "required": [
+        "server"
+      ]
+    },
+    "properties": {
+      "tools": {
+        "minItems": 1
       }
     }
   }

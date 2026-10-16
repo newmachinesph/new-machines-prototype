@@ -1,7 +1,7 @@
 """Submitting a Studio agent or pack for the marketplace (sub-project D): the automatic checks, then the
 version in `listings`. A failed definition check or the private-agent rule refuses the submission with the
-reasons and records nothing; the sandbox check decides when the version reaches the ops queue
-(`listings.settle_checks`)."""
+reasons and records nothing, as does anything that uses the org's own MCP server (409 NOT_PUBLISHABLE); the
+sandbox check decides when the version reaches the ops queue (`listings.settle_checks`)."""
 
 from dataclasses import dataclass
 from typing import Literal
@@ -19,6 +19,7 @@ from app.live_work import check_spend
 from app.models.publishing import SubmitListingRequest
 from app.models.requests import StartRunRequest
 from app.models.studio import PackDraft, SandboxRunRequest, StepDraft
+from app.runtime.drivers import MCP_TRANSPORT
 
 DEFINITION_PASSED = "The definition checks found no problems."
 AGENTS_PASSED = "Every agent in the pack is the platform's or listed."
@@ -33,6 +34,12 @@ NAME_MAX = 80
 FREE_INPUT = {"$schema": "https://json-schema.org/draft/2020-12/schema", "title": "Sample", "type": "object"}
 
 LISTED_ELSEWHERE = "listed by another workspace"  # `listings.submit`'s ValueError for another org's listing
+
+NOT_PUBLISHABLE = "NOT_PUBLISHABLE"
+NOT_PUBLISHABLE_DETAIL = (
+    "Anything that uses your own MCP server stays in your workspace. "
+    "It cannot be submitted to the marketplace."
+)
 
 Kind = Literal["agent", "pack"]
 
@@ -94,6 +101,24 @@ def _private_agents(conn, org_id: str, snapshot: dict) -> list[str]:
             body = snapshot["defs"]["agent"][v["key"]]["body"]
             names.append(f"{body.get('name') or v['key']} ({_agent_state(conn, listing)})")
     return sorted(names)
+
+
+def _connector_keys(kind: str, body: dict) -> set[str]:
+    """The connectors a saved pack names (its agents' tools included), or an agent's tools use."""
+    if kind == "pack":
+        return {str(c) for c in body.get("connectors") or []}
+    return {str(ref).partition(".")[0] for ref in (body.get("runtime") or {}).get("tools") or []}
+
+
+def _publishable(conn, org_id: str, kind: str, saved: registry.Version) -> None:
+    """409 NOT_PUBLISHABLE when the definition uses one of the org's own MCP servers: their connectors are
+    private to the org, so no buyer could run it."""
+    for key in sorted(_connector_keys(kind, saved.body)):
+        if not owners.in_org(key, org_id):
+            continue
+        connector = registry.latest(conn, "connector", key)
+        if connector is not None and connector.body.get("transport") == MCP_TRANSPORT:
+            raise ApiProblem(409, NOT_PUBLISHABLE, NOT_PUBLISHABLE_DETAIL)
 
 
 def _own_bundle(snapshot: dict, org_id: str) -> list[dict]:
@@ -159,6 +184,11 @@ def _pack_checks(conn, org_id: str, key: str) -> tuple[list[dict], list[dict]]:
             "This Workflow Pack uses an agent this workspace can no longer reach. Check its agents in the "
             "Studio, save the pack again, then submit it.",
         ) from None
+    # A listed agent can carry an MCP tool the pack's own `connectors` no longer name (the tool was switched
+    # off): the snapshot still pins its connector, and the bundle must never publish it.
+    for ckey, connector in (snapshot["defs"].get("connector") or {}).items():
+        if owners.in_org(ckey, org_id) and (connector["body"] or {}).get("transport") == MCP_TRANSPORT:
+            raise ApiProblem(409, NOT_PUBLISHABLE, NOT_PUBLISHABLE_DETAIL)
     if private := _private_agents(conn, org_id, snapshot):
         raise ApiProblem(
             422, "PRIVATE_AGENTS", f"These agents need to be listed first: {', '.join(private)}."
@@ -174,6 +204,7 @@ def _check(actor: Actor, kind: Kind, key: str) -> _Checked:
         listings.settle_checks(conn, actor.org_id)
         conn.commit()  # settle_checks locks listings: release them before anything else
         saved = studio._own(conn, actor.org_id, kind, key)
+        _publishable(conn, actor.org_id, kind, saved)
         _definition_issues(conn, actor, kind, key, saved)
         checks = [{"name": "definition", "state": "passed", "detail": DEFINITION_PASSED}]
         if kind == "pack":

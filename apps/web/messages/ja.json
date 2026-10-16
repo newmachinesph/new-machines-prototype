@@ -486,7 +486,15 @@
       "PUBLISHER_PROFILE_REQUIRED": "提出する前に、設定で公開をオンにしてください。",
       "SUBMISSION_OPEN": "このエージェントまたはパックには、審査を待っているバージョンがすでにあります。",
       "NOT_COPYABLE": "他の提供元のパックは追加できますが、コピーはできません。",
-      "NOT_EDITABLE": "このパックは Studio で開けません。"
+      "NOT_EDITABLE": "このパックは Studio で開けません。",
+      "MCP_UNREACHABLE": "サーバーが MCP サーバーとして応答しませんでした。アドレスとトークンを確認して、もう一度お試しください。",
+      "MCP_URL_REFUSED": "このアドレスは使用できません。公開インターネット上の https アドレスを使用してください。",
+      "MCP_NO_TOOLS": "このサーバーには、パックで使えるツールがありません。",
+      "NAME_TAKEN": "同じ名前のサーバーがすでにあります。別の名前を指定してください。",
+      "TOOL_BLOCKED": "ブロックされたツールはオンにできません。",
+      "SECRETS_UNAVAILABLE": "現在、自社の MCP サーバーに接続できません。しばらくしてからもう一度お試しください。",
+      "MCP_SERVER_CONNECTION": "このサーバーは「自社の MCP サーバー」で管理してください。",
+      "NOT_PUBLISHABLE": "自社の MCP サーバーを使うものはワークスペース内でのみ使えます。マーケットプレイスには提出できません。"
     },
     "pageCouldNotLoad": "このページを読み込めませんでした",
     "notFound": {
@@ -778,7 +786,84 @@
     "simulatedToastBody": "サインイン中にシミュレーションデータへ切り替えられました。実際のアカウントには何も届きません。",
     "badSignInLink": "アプリのサインインリンクが安全なウェブアドレスではなかったため、このページにとどまりました。",
     "switchToRealTitle": "{app}を実際のアカウントに切り替えますか？",
-    "switchToRealDescription": "{app}が必要な実行は、サインインが完了するまで続けられません。進行中の実行は次の{app}のステップで停止します。シミュレーションデータは使われなくなります。"
+    "switchToRealDescription": "{app}が必要な実行は、サインインが完了するまで続けられません。進行中の実行は次の{app}のステップで停止します。シミュレーションデータは使われなくなります。",
+    "mcp": {
+      "add": "自社の MCP サーバーを追加",
+      "dialogTitle": "自社の MCP サーバーを追加",
+      "dialogDescription": "New Machines がサーバーに接続してツールを一覧にし、パックで使う前に分類します。",
+      "name": "名前",
+      "nameHint": "Studio で各ツールの横に表示されます。",
+      "url": "サーバーのアドレス",
+      "urlHint": "公開インターネット上の https アドレスを入力してください（例: https://mcp.example.com/mcp）。",
+      "header": "ヘッダー",
+      "headerHint": "Authorization の場合は「Bearer」に続けてトークンを送信します。API キーの場合は別のヘッダー名を指定してください。",
+      "token": "トークン",
+      "tokenHint": "暗号化して保存します。再表示されるのは末尾 4 文字だけです。",
+      "connect": "接続",
+      "connecting": "接続中…",
+      "addFailed": "サーバーを追加できませんでした",
+      "toolsTitle": "{name} を接続しました",
+      "toolsLede": "各ツールはできることに応じて分類されています。パックで使わないツールはオフにしてください。",
+      "group": {
+        "read": "自由に実行",
+        "write": "実行前に確認",
+        "blocked": "ブロック"
+      },
+      "groupNote": {
+        "read": "データを読み取ります。確認なしで実行します。",
+        "write": "データを変更します。呼び出しごとに担当者が承認します。",
+        "blocked": "データの削除や送金を行います。パックには提供されません。"
+      },
+      "why": {
+        "marked_read_only": "サーバーが読み取り専用としています。",
+        "changes_data": "データを変更する可能性があります。",
+        "changes_access": "アクセス権を変更する可能性があります。",
+        "marked_destructive": "サーバーが破壊的な操作としています。",
+        "deletes": "名前から削除操作と判断しました。",
+        "moves_money": "名前から送金操作と判断しました。",
+        "reserved_name": "予約された名前です。",
+        "schema_unusable": "入力内容を検証できません。",
+        "schema_too_large": "入力の定義が 64 KB を超えています。"
+      },
+      "switchFailed": "ツールを切り替えられませんでした",
+      "done": "完了",
+      "heading": "自社の MCP サーバー",
+      "lede": "自社で運用している、または契約している MCP サーバーを接続できます。ツールは Studio に表示され、ほかのアプリと同じ承認と記録が適用されます。",
+      "empty": "MCP サーバーはまだありません。",
+      "askAdmin": "MCP サーバーの追加は、オーナーまたは管理者に依頼してください。",
+      "status": {
+        "active": "接続済み",
+        "failing": "応答なし",
+        "removed": "削除済み"
+      },
+      "toolCount": "{count, plural, other {# 件のツールを使用中}}",
+      "tokenEnds": "末尾が {last4} のトークン",
+      "lastError": {
+        "unreachable": "前回の呼び出しに応答がありませんでした。",
+        "address_refused": "アドレスが公開されていないため、前回の呼び出しは拒否されました。"
+      },
+      "showTools": "ツール",
+      "showToolsFor": "{name} のツール",
+      "refresh": "ツールを更新",
+      "refreshFor": "ツールを更新（{name}）",
+      "refreshedToast": "ツールを更新しました",
+      "refreshedToastBody": "{name} でパックが使えるツールは {count, plural, other {# 件}}です。",
+      "refreshFailed": "ツールを更新できませんでした",
+      "replaceToken": "トークンを置き換え",
+      "replaceTokenFor": "トークンを置き換え（{name}）",
+      "replaceTokenTitle": "{name} のトークンを置き換え",
+      "replaceTokenDescription": "New Machines は新しいトークンをサーバーで確認してから、古いトークンと置き換えます。",
+      "replaceTokenConfirm": "トークンを置き換え",
+      "replacedToast": "トークンを置き換えました",
+      "replaceFailed": "トークンを置き換えられませんでした",
+      "remove": "削除",
+      "removeFor": "{name} を削除",
+      "removeTitle": "{name} を削除しますか？",
+      "removeDescription": "トークンは削除され、パックはこのサーバーのツールを呼び出せなくなります。",
+      "removeConfirm": "サーバーを削除",
+      "removedToast": "{name} を削除しました",
+      "removeFailed": "サーバーを削除できませんでした"
+    }
   },
   "memory": {
     "title": "メモリ",

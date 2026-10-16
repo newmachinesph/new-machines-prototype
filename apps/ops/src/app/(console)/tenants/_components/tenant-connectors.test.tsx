@@ -13,6 +13,7 @@ describe("TenantConnectors", () => {
           { app: "shopify", status: "sandbox", mode: "sandbox" },
           { app: "gmail", status: "pending", mode: "composio" },
           { app: "slack", status: "connected" },
+          { app: "org-acme--acme-crm", status: "connected", mode: "mcp" },
         ]}
       />,
     );
@@ -23,6 +24,8 @@ describe("TenantConnectors", () => {
     expect(within(row("gmail")).getByText("Real")).toBeInTheDocument();
     expect(within(row("slack")).queryByText("Real")).not.toBeInTheDocument();
     expect(within(row("slack")).queryByText("Simulated")).not.toBeInTheDocument();
+    expect(within(row("org-acme--acme-crm")).getByText("Own MCP server")).toBeInTheDocument();
+    expect(within(row("org-acme--acme-crm")).queryByText("Real")).not.toBeInTheDocument();
   });
 
   it("says when a tenant has no connectors", () => {

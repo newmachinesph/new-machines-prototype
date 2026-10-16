@@ -216,6 +216,21 @@ describe("SubmitDialog", () => {
     expect(screen.getByText("These agents need to be listed first: Helper (not submitted).")).toBeInTheDocument();
   });
 
+  it("says a pack that uses the org's own MCP server stays private", async () => {
+    mocks.submit.mutate.mockImplementation((_v, h) =>
+      h.onError(new ApiError(409, "NOT_PUBLISHABLE", "detail as sent")),
+    );
+    packDialog();
+    await userEvent.type(screen.getByLabelText("Price per run"), "0.5");
+    await userEvent.type(screen.getByLabelText("As of"), "2026-10-01");
+    await userEvent.click(screen.getByRole("button", { name: "Submit for review" }));
+    expect(
+      screen.getByText(
+        "Anything that uses your own MCP server stays in your workspace. It cannot be submitted to the marketplace.",
+      ),
+    ).toBeInTheDocument();
+  });
+
   it("lists each issue of an invalid definition", async () => {
     mocks.submit.mutate.mockImplementation((_v, h) =>
       h.onError(

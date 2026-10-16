@@ -9,11 +9,13 @@ const CONNECTION: Record<TenantConnection["status"], { tone: "ink" | "quiet" | "
   pending: { tone: "human", label: "Signing in" },
 };
 
-/** How the tenant reaches the app: its own account through Composio, or sandbox data. Demo fixtures have no mode. */
+/** How the tenant reaches the app: its own account through Composio, its own MCP server, or sandbox data. Demo fixtures have no mode. */
 function Mode({ mode }: { mode: TenantConnection["mode"] }) {
   if (mode === "sandbox") return <SimTag />;
   if (mode === "composio")
     return <span className="rounded-sm bg-grey-100 px-1.5 py-px text-[11px] font-medium text-ink">Real</span>;
+  if (mode === "mcp")
+    return <span className="rounded-sm bg-grey-100 px-1.5 py-px text-[11px] font-medium text-ink">Own MCP server</span>;
   return null;
 }
 

@@ -3,8 +3,8 @@
 import { queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { acceptInvitation, addOrgReviewer, allowGrant, approveApproval, claimHumanTask, connectConnection, copyStudioPack, createStudioAgent, createStudioPack, createToken, declineApproval, declineInvitation, disablePublisher, disconnectConnection, getAgent, getCatalogTaxonomy, getHumanTask, getMe, getOrganization, getPublisher, getReviewerProfile, getStudioAgent, getStudioEarnings, getStudioListing, getStudioPack, getStudioPackWorkflow, getStudioPalette, getUsage, getWorkflowPack, getWorkflowRun, getWorkflowRunReceipt, importStudioWorkflow, installWorkflowPack, inviteMember, listAgents, listApprovals, listAttention, listConnections, listEarnings, listEligibleHumanTasks, listMembers, listMemory, listOrgReviewers, listPolicies, listStudioAgents, listStudioListings, listStudioPacks, listTokens, listWorkflowPacks, listWorkflowRuns, opsAddConnector, opsAddMemoryItem, opsApproveListing, opsApprovePack, opsApproveReviewer, opsCertifyPack, opsCreatePack, opsCreateTenant, opsDeclareIncident, opsDeleteMemoryItem, opsDeprecatePack, opsDisableConnector, opsEnableConnector, opsExportDefinition, opsGetBilling, opsGetDefinition, opsGetHealth, opsGetListing, opsGetMe, opsGetOverview, opsGetPack, opsGetRun, opsGetRuntimeStatus, opsGetTenant, opsHealthCheckConnector, opsListAudit, opsListAvailableToolkits, opsListConnectors, opsListDefinitions, opsListGuardrails, opsListListings, opsListMemoryItems, opsListMemorySpaces, opsListPacks, opsListReviewers, opsListRuns, opsListTeam, opsListTenants, opsPublishDefinition, opsReactivateTenant, opsReinstateReviewer, opsRejectListing, opsRejectPack, opsRelistListing, opsRepublishPack, opsRequestListingChanges, opsSetConnectorDefaults, opsSetGuardrail, opsSetReviewerLevel, opsSetTenantPlan, opsSetTenantSpendCap, opsSubmitPack, opsSuspendReviewer, opsSuspendTenant, opsUnlistListing, opsUpdateIncident, opsValidateDefinition, type Options, removeOrgReviewer, retractMemory, reviewMemoryCandidate, revokeGrant, revokeToken, savePublisher, saveStudioAgent, saveStudioPack, setReviewerNetwork, startWorkflowRun, submitHumanTask, submitStudioAgent, submitStudioPack, suggestWorkflowPack, syncConnection, testStudioPack, updateReviewerProfile, upgradeWorkflowPack, validateStudioAgent, validateStudioPack } from '../sdk.gen';
-import type { AcceptInvitationData, AcceptInvitationError, AcceptInvitationResponse, AddOrgReviewerData, AddOrgReviewerError, AddOrgReviewerResponse, AllowGrantData, AllowGrantError, AllowGrantResponse, ApproveApprovalData, ApproveApprovalError, ApproveApprovalResponse, ClaimHumanTaskData, ClaimHumanTaskError, ClaimHumanTaskResponse, ConnectConnectionData, ConnectConnectionError, ConnectConnectionResponse, CopyStudioPackData, CopyStudioPackError, CopyStudioPackResponse, CreateStudioAgentData, CreateStudioAgentError, CreateStudioAgentResponse, CreateStudioPackData, CreateStudioPackError, CreateStudioPackResponse, CreateTokenData, CreateTokenError, CreateTokenResponse, DeclineApprovalData, DeclineApprovalError, DeclineApprovalResponse, DeclineInvitationData, DeclineInvitationError, DeclineInvitationResponse, DisablePublisherData, DisablePublisherError, DisablePublisherResponse, DisconnectConnectionData, DisconnectConnectionError, DisconnectConnectionResponse, GetAgentData, GetAgentError, GetAgentResponse, GetCatalogTaxonomyData, GetCatalogTaxonomyError, GetCatalogTaxonomyResponse, GetHumanTaskData, GetHumanTaskError, GetHumanTaskResponse, GetMeData, GetMeError, GetMeResponse, GetOrganizationData, GetOrganizationError, GetOrganizationResponse, GetPublisherData, GetPublisherError, GetPublisherResponse, GetReviewerProfileData, GetReviewerProfileError, GetReviewerProfileResponse, GetStudioAgentData, GetStudioAgentError, GetStudioAgentResponse, GetStudioEarningsData, GetStudioEarningsError, GetStudioEarningsResponse, GetStudioListingData, GetStudioListingError, GetStudioListingResponse, GetStudioPackData, GetStudioPackError, GetStudioPackResponse, GetStudioPackWorkflowData, GetStudioPackWorkflowError, GetStudioPackWorkflowResponse, GetStudioPaletteData, GetStudioPaletteError, GetStudioPaletteResponse, GetUsageData, GetUsageError, GetUsageResponse, GetWorkflowPackData, GetWorkflowPackError, GetWorkflowPackResponse, GetWorkflowRunData, GetWorkflowRunError, GetWorkflowRunReceiptData, GetWorkflowRunReceiptError, GetWorkflowRunReceiptResponse, GetWorkflowRunResponse, ImportStudioWorkflowData, ImportStudioWorkflowError, ImportStudioWorkflowResponse, InstallWorkflowPackData, InstallWorkflowPackError, InstallWorkflowPackResponse, InviteMemberData, InviteMemberError, InviteMemberResponse, ListAgentsData, ListAgentsError, ListAgentsResponse, ListApprovalsData, ListApprovalsError, ListApprovalsResponse, ListAttentionData, ListAttentionError, ListAttentionResponse, ListConnectionsData, ListConnectionsError, ListConnectionsResponse, ListEarningsData, ListEarningsError, ListEarningsResponse, ListEligibleHumanTasksData, ListEligibleHumanTasksError, ListEligibleHumanTasksResponse, ListMembersData, ListMembersError, ListMembersResponse, ListMemoryData, ListMemoryError, ListMemoryResponse, ListOrgReviewersData, ListOrgReviewersError, ListOrgReviewersResponse, ListPoliciesData, ListPoliciesError, ListPoliciesResponse, ListStudioAgentsData, ListStudioAgentsError, ListStudioAgentsResponse, ListStudioListingsData, ListStudioListingsError, ListStudioListingsResponse, ListStudioPacksData, ListStudioPacksError, ListStudioPacksResponse, ListTokensData, ListTokensError, ListTokensResponse, ListWorkflowPacksData, ListWorkflowPacksError, ListWorkflowPacksResponse, ListWorkflowRunsData, ListWorkflowRunsError, ListWorkflowRunsResponse, OpsAddConnectorData, OpsAddConnectorError, OpsAddConnectorResponse, OpsAddMemoryItemData, OpsAddMemoryItemError, OpsAddMemoryItemResponse, OpsApproveListingData, OpsApproveListingError, OpsApproveListingResponse, OpsApprovePackData, OpsApprovePackError, OpsApprovePackResponse, OpsApproveReviewerData, OpsApproveReviewerError, OpsApproveReviewerResponse, OpsCertifyPackData, OpsCertifyPackError, OpsCertifyPackResponse, OpsCreatePackData, OpsCreatePackError, OpsCreatePackResponse, OpsCreateTenantData, OpsCreateTenantError, OpsCreateTenantResponse, OpsDeclareIncidentData, OpsDeclareIncidentError, OpsDeclareIncidentResponse, OpsDeleteMemoryItemData, OpsDeleteMemoryItemError, OpsDeleteMemoryItemResponse, OpsDeprecatePackData, OpsDeprecatePackError, OpsDeprecatePackResponse, OpsDisableConnectorData, OpsDisableConnectorError, OpsDisableConnectorResponse, OpsEnableConnectorData, OpsEnableConnectorError, OpsEnableConnectorResponse, OpsExportDefinitionData, OpsExportDefinitionError, OpsExportDefinitionResponse, OpsGetBillingData, OpsGetBillingError, OpsGetBillingResponse, OpsGetDefinitionData, OpsGetDefinitionError, OpsGetDefinitionResponse, OpsGetHealthData, OpsGetHealthError, OpsGetHealthResponse, OpsGetListingData, OpsGetListingError, OpsGetListingResponse, OpsGetMeData, OpsGetMeError, OpsGetMeResponse, OpsGetOverviewData, OpsGetOverviewError, OpsGetOverviewResponse, OpsGetPackData, OpsGetPackError, OpsGetPackResponse, OpsGetRunData, OpsGetRunError, OpsGetRunResponse, OpsGetRuntimeStatusData, OpsGetRuntimeStatusError, OpsGetRuntimeStatusResponse, OpsGetTenantData, OpsGetTenantError, OpsGetTenantResponse, OpsHealthCheckConnectorData, OpsHealthCheckConnectorError, OpsHealthCheckConnectorResponse, OpsListAuditData, OpsListAuditError, OpsListAuditResponse, OpsListAvailableToolkitsData, OpsListAvailableToolkitsError, OpsListAvailableToolkitsResponse, OpsListConnectorsData, OpsListConnectorsError, OpsListConnectorsResponse, OpsListDefinitionsData, OpsListDefinitionsError, OpsListDefinitionsResponse, OpsListGuardrailsData, OpsListGuardrailsError, OpsListGuardrailsResponse, OpsListListingsData, OpsListListingsError, OpsListListingsResponse, OpsListMemoryItemsData, OpsListMemoryItemsError, OpsListMemoryItemsResponse, OpsListMemorySpacesData, OpsListMemorySpacesError, OpsListMemorySpacesResponse, OpsListPacksData, OpsListPacksError, OpsListPacksResponse, OpsListReviewersData, OpsListReviewersError, OpsListReviewersResponse, OpsListRunsData, OpsListRunsError, OpsListRunsResponse, OpsListTeamData, OpsListTeamError, OpsListTeamResponse, OpsListTenantsData, OpsListTenantsError, OpsListTenantsResponse, OpsPublishDefinitionData, OpsPublishDefinitionError, OpsPublishDefinitionResponse, OpsReactivateTenantData, OpsReactivateTenantError, OpsReactivateTenantResponse, OpsReinstateReviewerData, OpsReinstateReviewerError, OpsReinstateReviewerResponse, OpsRejectListingData, OpsRejectListingError, OpsRejectListingResponse, OpsRejectPackData, OpsRejectPackError, OpsRejectPackResponse, OpsRelistListingData, OpsRelistListingError, OpsRelistListingResponse, OpsRepublishPackData, OpsRepublishPackError, OpsRepublishPackResponse, OpsRequestListingChangesData, OpsRequestListingChangesError, OpsRequestListingChangesResponse, OpsSetConnectorDefaultsData, OpsSetConnectorDefaultsError, OpsSetConnectorDefaultsResponse, OpsSetGuardrailData, OpsSetGuardrailError, OpsSetGuardrailResponse, OpsSetReviewerLevelData, OpsSetReviewerLevelError, OpsSetReviewerLevelResponse, OpsSetTenantPlanData, OpsSetTenantPlanError, OpsSetTenantPlanResponse, OpsSetTenantSpendCapData, OpsSetTenantSpendCapError, OpsSetTenantSpendCapResponse, OpsSubmitPackData, OpsSubmitPackError, OpsSubmitPackResponse, OpsSuspendReviewerData, OpsSuspendReviewerError, OpsSuspendReviewerResponse, OpsSuspendTenantData, OpsSuspendTenantError, OpsSuspendTenantResponse, OpsUnlistListingData, OpsUnlistListingError, OpsUnlistListingResponse, OpsUpdateIncidentData, OpsUpdateIncidentError, OpsUpdateIncidentResponse, OpsValidateDefinitionData, OpsValidateDefinitionError, OpsValidateDefinitionResponse, RemoveOrgReviewerData, RemoveOrgReviewerError, RemoveOrgReviewerResponse, RetractMemoryData, RetractMemoryError, RetractMemoryResponse, ReviewMemoryCandidateData, ReviewMemoryCandidateError, ReviewMemoryCandidateResponse, RevokeGrantData, RevokeGrantError, RevokeGrantResponse, RevokeTokenData, RevokeTokenError, RevokeTokenResponse, SavePublisherData, SavePublisherError, SavePublisherResponse, SaveStudioAgentData, SaveStudioAgentError, SaveStudioAgentResponse, SaveStudioPackData, SaveStudioPackError, SaveStudioPackResponse, SetReviewerNetworkData, SetReviewerNetworkError, SetReviewerNetworkResponse, StartWorkflowRunData, StartWorkflowRunError, StartWorkflowRunResponse, SubmitHumanTaskData, SubmitHumanTaskError, SubmitHumanTaskResponse, SubmitStudioAgentData, SubmitStudioAgentError, SubmitStudioAgentResponse, SubmitStudioPackData, SubmitStudioPackError, SubmitStudioPackResponse, SuggestWorkflowPackData, SuggestWorkflowPackError, SuggestWorkflowPackResponse, SyncConnectionData, SyncConnectionError, SyncConnectionResponse, TestStudioPackData, TestStudioPackError, TestStudioPackResponse, UpdateReviewerProfileData, UpdateReviewerProfileError, UpdateReviewerProfileResponse, UpgradeWorkflowPackData, UpgradeWorkflowPackError, UpgradeWorkflowPackResponse, ValidateStudioAgentData, ValidateStudioAgentError, ValidateStudioAgentResponse, ValidateStudioPackData, ValidateStudioPackError, ValidateStudioPackResponse } from '../types.gen';
+import { acceptInvitation, addMcpServer, addOrgReviewer, allowGrant, approveApproval, claimHumanTask, connectConnection, copyStudioPack, createStudioAgent, createStudioPack, createToken, declineApproval, declineInvitation, disablePublisher, disconnectConnection, getAgent, getCatalogTaxonomy, getHumanTask, getMe, getOrganization, getPublisher, getReviewerProfile, getStudioAgent, getStudioEarnings, getStudioListing, getStudioPack, getStudioPackWorkflow, getStudioPalette, getUsage, getWorkflowPack, getWorkflowRun, getWorkflowRunReceipt, importStudioWorkflow, installWorkflowPack, inviteMember, listAgents, listApprovals, listAttention, listConnections, listEarnings, listEligibleHumanTasks, listMcpServers, listMembers, listMemory, listOrgReviewers, listPolicies, listStudioAgents, listStudioListings, listStudioPacks, listTokens, listWorkflowPacks, listWorkflowRuns, opsAddConnector, opsAddMemoryItem, opsApproveListing, opsApprovePack, opsApproveReviewer, opsCertifyPack, opsCreatePack, opsCreateTenant, opsDeclareIncident, opsDeleteMemoryItem, opsDeprecatePack, opsDisableConnector, opsEnableConnector, opsExportDefinition, opsGetBilling, opsGetDefinition, opsGetHealth, opsGetListing, opsGetMe, opsGetOverview, opsGetPack, opsGetRun, opsGetRuntimeStatus, opsGetTenant, opsHealthCheckConnector, opsListAudit, opsListAvailableToolkits, opsListConnectors, opsListDefinitions, opsListGuardrails, opsListListings, opsListMemoryItems, opsListMemorySpaces, opsListPacks, opsListReviewers, opsListRuns, opsListTeam, opsListTenants, opsPublishDefinition, opsReactivateTenant, opsReinstateReviewer, opsRejectListing, opsRejectPack, opsRelistListing, opsRepublishPack, opsRequestListingChanges, opsSetConnectorDefaults, opsSetGuardrail, opsSetReviewerLevel, opsSetTenantPlan, opsSetTenantSpendCap, opsSubmitPack, opsSuspendReviewer, opsSuspendTenant, opsUnlistListing, opsUpdateIncident, opsValidateDefinition, type Options, refreshMcpServer, removeMcpServer, removeOrgReviewer, replaceMcpServerToken, retractMemory, reviewMemoryCandidate, revokeGrant, revokeToken, savePublisher, saveStudioAgent, saveStudioPack, setReviewerNetwork, startWorkflowRun, submitHumanTask, submitStudioAgent, submitStudioPack, suggestWorkflowPack, switchMcpToolOff, switchMcpToolOn, syncConnection, testStudioPack, updateReviewerProfile, upgradeWorkflowPack, validateStudioAgent, validateStudioPack } from '../sdk.gen';
+import type { AcceptInvitationData, AcceptInvitationError, AcceptInvitationResponse, AddMcpServerData, AddMcpServerError, AddMcpServerResponse, AddOrgReviewerData, AddOrgReviewerError, AddOrgReviewerResponse, AllowGrantData, AllowGrantError, AllowGrantResponse, ApproveApprovalData, ApproveApprovalError, ApproveApprovalResponse, ClaimHumanTaskData, ClaimHumanTaskError, ClaimHumanTaskResponse, ConnectConnectionData, ConnectConnectionError, ConnectConnectionResponse, CopyStudioPackData, CopyStudioPackError, CopyStudioPackResponse, CreateStudioAgentData, CreateStudioAgentError, CreateStudioAgentResponse, CreateStudioPackData, CreateStudioPackError, CreateStudioPackResponse, CreateTokenData, CreateTokenError, CreateTokenResponse, DeclineApprovalData, DeclineApprovalError, DeclineApprovalResponse, DeclineInvitationData, DeclineInvitationError, DeclineInvitationResponse, DisablePublisherData, DisablePublisherError, DisablePublisherResponse, DisconnectConnectionData, DisconnectConnectionError, DisconnectConnectionResponse, GetAgentData, GetAgentError, GetAgentResponse, GetCatalogTaxonomyData, GetCatalogTaxonomyError, GetCatalogTaxonomyResponse, GetHumanTaskData, GetHumanTaskError, GetHumanTaskResponse, GetMeData, GetMeError, GetMeResponse, GetOrganizationData, GetOrganizationError, GetOrganizationResponse, GetPublisherData, GetPublisherError, GetPublisherResponse, GetReviewerProfileData, GetReviewerProfileError, GetReviewerProfileResponse, GetStudioAgentData, GetStudioAgentError, GetStudioAgentResponse, GetStudioEarningsData, GetStudioEarningsError, GetStudioEarningsResponse, GetStudioListingData, GetStudioListingError, GetStudioListingResponse, GetStudioPackData, GetStudioPackError, GetStudioPackResponse, GetStudioPackWorkflowData, GetStudioPackWorkflowError, GetStudioPackWorkflowResponse, GetStudioPaletteData, GetStudioPaletteError, GetStudioPaletteResponse, GetUsageData, GetUsageError, GetUsageResponse, GetWorkflowPackData, GetWorkflowPackError, GetWorkflowPackResponse, GetWorkflowRunData, GetWorkflowRunError, GetWorkflowRunReceiptData, GetWorkflowRunReceiptError, GetWorkflowRunReceiptResponse, GetWorkflowRunResponse, ImportStudioWorkflowData, ImportStudioWorkflowError, ImportStudioWorkflowResponse, InstallWorkflowPackData, InstallWorkflowPackError, InstallWorkflowPackResponse, InviteMemberData, InviteMemberError, InviteMemberResponse, ListAgentsData, ListAgentsError, ListAgentsResponse, ListApprovalsData, ListApprovalsError, ListApprovalsResponse, ListAttentionData, ListAttentionError, ListAttentionResponse, ListConnectionsData, ListConnectionsError, ListConnectionsResponse, ListEarningsData, ListEarningsError, ListEarningsResponse, ListEligibleHumanTasksData, ListEligibleHumanTasksError, ListEligibleHumanTasksResponse, ListMcpServersData, ListMcpServersError, ListMcpServersResponse, ListMembersData, ListMembersError, ListMembersResponse, ListMemoryData, ListMemoryError, ListMemoryResponse, ListOrgReviewersData, ListOrgReviewersError, ListOrgReviewersResponse, ListPoliciesData, ListPoliciesError, ListPoliciesResponse, ListStudioAgentsData, ListStudioAgentsError, ListStudioAgentsResponse, ListStudioListingsData, ListStudioListingsError, ListStudioListingsResponse, ListStudioPacksData, ListStudioPacksError, ListStudioPacksResponse, ListTokensData, ListTokensError, ListTokensResponse, ListWorkflowPacksData, ListWorkflowPacksError, ListWorkflowPacksResponse, ListWorkflowRunsData, ListWorkflowRunsError, ListWorkflowRunsResponse, OpsAddConnectorData, OpsAddConnectorError, OpsAddConnectorResponse, OpsAddMemoryItemData, OpsAddMemoryItemError, OpsAddMemoryItemResponse, OpsApproveListingData, OpsApproveListingError, OpsApproveListingResponse, OpsApprovePackData, OpsApprovePackError, OpsApprovePackResponse, OpsApproveReviewerData, OpsApproveReviewerError, OpsApproveReviewerResponse, OpsCertifyPackData, OpsCertifyPackError, OpsCertifyPackResponse, OpsCreatePackData, OpsCreatePackError, OpsCreatePackResponse, OpsCreateTenantData, OpsCreateTenantError, OpsCreateTenantResponse, OpsDeclareIncidentData, OpsDeclareIncidentError, OpsDeclareIncidentResponse, OpsDeleteMemoryItemData, OpsDeleteMemoryItemError, OpsDeleteMemoryItemResponse, OpsDeprecatePackData, OpsDeprecatePackError, OpsDeprecatePackResponse, OpsDisableConnectorData, OpsDisableConnectorError, OpsDisableConnectorResponse, OpsEnableConnectorData, OpsEnableConnectorError, OpsEnableConnectorResponse, OpsExportDefinitionData, OpsExportDefinitionError, OpsExportDefinitionResponse, OpsGetBillingData, OpsGetBillingError, OpsGetBillingResponse, OpsGetDefinitionData, OpsGetDefinitionError, OpsGetDefinitionResponse, OpsGetHealthData, OpsGetHealthError, OpsGetHealthResponse, OpsGetListingData, OpsGetListingError, OpsGetListingResponse, OpsGetMeData, OpsGetMeError, OpsGetMeResponse, OpsGetOverviewData, OpsGetOverviewError, OpsGetOverviewResponse, OpsGetPackData, OpsGetPackError, OpsGetPackResponse, OpsGetRunData, OpsGetRunError, OpsGetRunResponse, OpsGetRuntimeStatusData, OpsGetRuntimeStatusError, OpsGetRuntimeStatusResponse, OpsGetTenantData, OpsGetTenantError, OpsGetTenantResponse, OpsHealthCheckConnectorData, OpsHealthCheckConnectorError, OpsHealthCheckConnectorResponse, OpsListAuditData, OpsListAuditError, OpsListAuditResponse, OpsListAvailableToolkitsData, OpsListAvailableToolkitsError, OpsListAvailableToolkitsResponse, OpsListConnectorsData, OpsListConnectorsError, OpsListConnectorsResponse, OpsListDefinitionsData, OpsListDefinitionsError, OpsListDefinitionsResponse, OpsListGuardrailsData, OpsListGuardrailsError, OpsListGuardrailsResponse, OpsListListingsData, OpsListListingsError, OpsListListingsResponse, OpsListMemoryItemsData, OpsListMemoryItemsError, OpsListMemoryItemsResponse, OpsListMemorySpacesData, OpsListMemorySpacesError, OpsListMemorySpacesResponse, OpsListPacksData, OpsListPacksError, OpsListPacksResponse, OpsListReviewersData, OpsListReviewersError, OpsListReviewersResponse, OpsListRunsData, OpsListRunsError, OpsListRunsResponse, OpsListTeamData, OpsListTeamError, OpsListTeamResponse, OpsListTenantsData, OpsListTenantsError, OpsListTenantsResponse, OpsPublishDefinitionData, OpsPublishDefinitionError, OpsPublishDefinitionResponse, OpsReactivateTenantData, OpsReactivateTenantError, OpsReactivateTenantResponse, OpsReinstateReviewerData, OpsReinstateReviewerError, OpsReinstateReviewerResponse, OpsRejectListingData, OpsRejectListingError, OpsRejectListingResponse, OpsRejectPackData, OpsRejectPackError, OpsRejectPackResponse, OpsRelistListingData, OpsRelistListingError, OpsRelistListingResponse, OpsRepublishPackData, OpsRepublishPackError, OpsRepublishPackResponse, OpsRequestListingChangesData, OpsRequestListingChangesError, OpsRequestListingChangesResponse, OpsSetConnectorDefaultsData, OpsSetConnectorDefaultsError, OpsSetConnectorDefaultsResponse, OpsSetGuardrailData, OpsSetGuardrailError, OpsSetGuardrailResponse, OpsSetReviewerLevelData, OpsSetReviewerLevelError, OpsSetReviewerLevelResponse, OpsSetTenantPlanData, OpsSetTenantPlanError, OpsSetTenantPlanResponse, OpsSetTenantSpendCapData, OpsSetTenantSpendCapError, OpsSetTenantSpendCapResponse, OpsSubmitPackData, OpsSubmitPackError, OpsSubmitPackResponse, OpsSuspendReviewerData, OpsSuspendReviewerError, OpsSuspendReviewerResponse, OpsSuspendTenantData, OpsSuspendTenantError, OpsSuspendTenantResponse, OpsUnlistListingData, OpsUnlistListingError, OpsUnlistListingResponse, OpsUpdateIncidentData, OpsUpdateIncidentError, OpsUpdateIncidentResponse, OpsValidateDefinitionData, OpsValidateDefinitionError, OpsValidateDefinitionResponse, RefreshMcpServerData, RefreshMcpServerError, RefreshMcpServerResponse, RemoveMcpServerData, RemoveMcpServerError, RemoveMcpServerResponse, RemoveOrgReviewerData, RemoveOrgReviewerError, RemoveOrgReviewerResponse, ReplaceMcpServerTokenData, ReplaceMcpServerTokenError, ReplaceMcpServerTokenResponse, RetractMemoryData, RetractMemoryError, RetractMemoryResponse, ReviewMemoryCandidateData, ReviewMemoryCandidateError, ReviewMemoryCandidateResponse, RevokeGrantData, RevokeGrantError, RevokeGrantResponse, RevokeTokenData, RevokeTokenError, RevokeTokenResponse, SavePublisherData, SavePublisherError, SavePublisherResponse, SaveStudioAgentData, SaveStudioAgentError, SaveStudioAgentResponse, SaveStudioPackData, SaveStudioPackError, SaveStudioPackResponse, SetReviewerNetworkData, SetReviewerNetworkError, SetReviewerNetworkResponse, StartWorkflowRunData, StartWorkflowRunError, StartWorkflowRunResponse, SubmitHumanTaskData, SubmitHumanTaskError, SubmitHumanTaskResponse, SubmitStudioAgentData, SubmitStudioAgentError, SubmitStudioAgentResponse, SubmitStudioPackData, SubmitStudioPackError, SubmitStudioPackResponse, SuggestWorkflowPackData, SuggestWorkflowPackError, SuggestWorkflowPackResponse, SwitchMcpToolOffData, SwitchMcpToolOffError, SwitchMcpToolOffResponse, SwitchMcpToolOnData, SwitchMcpToolOnError, SwitchMcpToolOnResponse, SyncConnectionData, SyncConnectionError, SyncConnectionResponse, TestStudioPackData, TestStudioPackError, TestStudioPackResponse, UpdateReviewerProfileData, UpdateReviewerProfileError, UpdateReviewerProfileResponse, UpgradeWorkflowPackData, UpgradeWorkflowPackError, UpgradeWorkflowPackResponse, ValidateStudioAgentData, ValidateStudioAgentError, ValidateStudioAgentResponse, ValidateStudioPackData, ValidateStudioPackError, ValidateStudioPackResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -548,7 +548,8 @@ export const listConnectionsOptions = (options?: Options<ListConnectionsData>) =
  * sandbox data. `mode: live` starts signing in to the org's own account: the connection is pending and
  * `redirectUrl` is the app's sign-in page, which returns to the web's Connections page; only an owner or
  * admin may, and only they may switch an app connected to the org's own account to sandbox data (403
- * FORBIDDEN otherwise). The demo workspace has none to make (409).
+ * FORBIDDEN otherwise). The demo workspace has none to make (409). An org's own MCP server is managed under
+ * its MCP servers (409 MCP_SERVER_CONNECTION).
  */
 export const connectConnectionMutation = (options?: Partial<Options<ConnectConnectionData>>): UseMutationOptions<ConnectConnectionResponse, ConnectConnectionError, Options<ConnectConnectionData>> => {
     const mutationOptions: UseMutationOptions<ConnectConnectionResponse, ConnectConnectionError, Options<ConnectConnectionData>> = {
@@ -570,7 +571,8 @@ export const connectConnectionMutation = (options?: Partial<Options<ConnectConne
  * Live workspace: check the org's own account for an app with Composio, after the person comes back from
  * signing in. Connected when the account is active, with the grants of the packs that use the app; not
  * connected (or needing sign-in again) when the sign-in failed or expired; still pending while it is in
- * progress. The demo workspace has nothing to sync (409).
+ * progress. The demo workspace has nothing to sync (409). An org's own MCP server is managed under its MCP
+ * servers (409 MCP_SERVER_CONNECTION).
  */
 export const syncConnectionMutation = (options?: Partial<Options<SyncConnectionData>>): UseMutationOptions<SyncConnectionResponse, SyncConnectionError, Options<SyncConnectionData>> => {
     const mutationOptions: UseMutationOptions<SyncConnectionResponse, SyncConnectionError, Options<SyncConnectionData>> = {
@@ -591,7 +593,8 @@ export const syncConnectionMutation = (options?: Partial<Options<SyncConnectionD
  *
  * Disconnect an app: every pack the org added loses access to it. In the live workspace, an app
  * connected to the org's own account (mode composio, whatever its status) is only disconnected by an owner
- * or admin (403 FORBIDDEN otherwise); its account is removed at the connection service.
+ * or admin (403 FORBIDDEN otherwise); its account is removed at the connection service. An org's own MCP
+ * server is managed under its MCP servers (409 MCP_SERVER_CONNECTION).
  */
 export const disconnectConnectionMutation = (options?: Partial<Options<DisconnectConnectionData>>): UseMutationOptions<DisconnectConnectionResponse, DisconnectConnectionError, Options<DisconnectConnectionData>> => {
     const mutationOptions: UseMutationOptions<DisconnectConnectionResponse, DisconnectConnectionError, Options<DisconnectConnectionData>> = {
@@ -640,6 +643,143 @@ export const allowGrantMutation = (options?: Partial<Options<AllowGrantData>>): 
     const mutationOptions: UseMutationOptions<AllowGrantResponse, AllowGrantError, Options<AllowGrantData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await allowGrant({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const listMcpServersQueryKey = (options: Options<ListMcpServersData>) => createQueryKey('listMcpServers', options);
+
+/**
+ * List Mcp Servers
+ *
+ * The org's MCP servers that are not removed, with their sorted tools. Any member.
+ */
+export const listMcpServersOptions = (options: Options<ListMcpServersData>) => queryOptions<ListMcpServersResponse, ListMcpServersError, ListMcpServersResponse, ReturnType<typeof listMcpServersQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await listMcpServers({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: listMcpServersQueryKey(options)
+});
+
+/**
+ * Add Mcp Server
+ *
+ * Connect the org's own MCP server: https only, on a public address. Its tools are listed and sorted into
+ * read (runs freely), write (asks first) and blocked (never offered), then published as a private connector
+ * for the org's Studio packs. Owners and admins.
+ */
+export const addMcpServerMutation = (options?: Partial<Options<AddMcpServerData>>): UseMutationOptions<AddMcpServerResponse, AddMcpServerError, Options<AddMcpServerData>> => {
+    const mutationOptions: UseMutationOptions<AddMcpServerResponse, AddMcpServerError, Options<AddMcpServerData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await addMcpServer({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Refresh Mcp Server
+ *
+ * List the server's tools again; the connector gets a new version only when they changed.
+ */
+export const refreshMcpServerMutation = (options?: Partial<Options<RefreshMcpServerData>>): UseMutationOptions<RefreshMcpServerResponse, RefreshMcpServerError, Options<RefreshMcpServerData>> => {
+    const mutationOptions: UseMutationOptions<RefreshMcpServerResponse, RefreshMcpServerError, Options<RefreshMcpServerData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await refreshMcpServer({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Switch Mcp Tool Off
+ *
+ * Switch one tool off: packs can no longer use it.
+ */
+export const switchMcpToolOffMutation = (options?: Partial<Options<SwitchMcpToolOffData>>): UseMutationOptions<SwitchMcpToolOffResponse, SwitchMcpToolOffError, Options<SwitchMcpToolOffData>> => {
+    const mutationOptions: UseMutationOptions<SwitchMcpToolOffResponse, SwitchMcpToolOffError, Options<SwitchMcpToolOffData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await switchMcpToolOff({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Switch Mcp Tool On
+ *
+ * Switch one tool back on. A blocked tool cannot be switched on (409 TOOL_BLOCKED).
+ */
+export const switchMcpToolOnMutation = (options?: Partial<Options<SwitchMcpToolOnData>>): UseMutationOptions<SwitchMcpToolOnResponse, SwitchMcpToolOnError, Options<SwitchMcpToolOnData>> => {
+    const mutationOptions: UseMutationOptions<SwitchMcpToolOnResponse, SwitchMcpToolOnError, Options<SwitchMcpToolOnData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await switchMcpToolOn({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Replace Mcp Server Token
+ *
+ * Replace the token, once the server lists its tools with the new one.
+ */
+export const replaceMcpServerTokenMutation = (options?: Partial<Options<ReplaceMcpServerTokenData>>): UseMutationOptions<ReplaceMcpServerTokenResponse, ReplaceMcpServerTokenError, Options<ReplaceMcpServerTokenData>> => {
+    const mutationOptions: UseMutationOptions<ReplaceMcpServerTokenResponse, ReplaceMcpServerTokenError, Options<ReplaceMcpServerTokenData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await replaceMcpServerToken({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Remove Mcp Server
+ *
+ * Remove the server: its token is deleted and its connection is no longer connected. Runs already
+ * started keep the connector version they pinned, but their calls fail.
+ */
+export const removeMcpServerMutation = (options?: Partial<Options<RemoveMcpServerData>>): UseMutationOptions<RemoveMcpServerResponse, RemoveMcpServerError, Options<RemoveMcpServerData>> => {
+    const mutationOptions: UseMutationOptions<RemoveMcpServerResponse, RemoveMcpServerError, Options<RemoveMcpServerData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await removeMcpServer({
                 ...options,
                 ...fnOptions,
                 throwOnError: true
@@ -1341,7 +1481,8 @@ export const submitStudioAgentMutation = (options?: Partial<Options<SubmitStudio
  * Submit the pack's saved version for the marketplace at a per-run price. Owners and admins of a
  * workspace with a publisher profile. Every agent in the pack must be the platform's or listed (422
  * PRIVATE_AGENTS names the agents that need to be listed first, each with where it stands: not submitted,
- * in review, unlisted or not approved). The automatic checks run the definition checks and a
+ * in review, unlisted or not approved). A pack that uses the org's own MCP server cannot be submitted (409
+ * NOT_PUBLISHABLE). The automatic checks run the definition checks and a
  * sandbox test run with `input` and `budgetMinor` (a completed sandbox test of this version is reused). The
  * version waits in `checking` until that run ends, then in `in_review` for New Machines.
  */

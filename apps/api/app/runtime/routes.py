@@ -1,5 +1,6 @@
 """How a live-workspace run reaches each app: the org's own connection row decides, per app and at the time
-of each call. A Composio connection that is connected reaches the org's own account; a sandbox connection
+of each call. A Composio connection that is connected reaches the org's own account; an MCP connection that is
+connected reaches the org's own MCP server (its account id is the server id); a sandbox connection
 serves sandbox data; anything else (not connected, pending, needs sign-in again, no row) runs nothing. Runs
 without the `routing` mark (the demo workspace) keep NM_CONNECTOR_MODE (see `gateway.driver_of`).
 
@@ -14,14 +15,15 @@ from app import db
 
 ORG_ROUTING = "org"  # snapshot["routing"] of a run started in the live workspace
 
-RouteMode = Literal["composio", "sandbox", "none"]
+RouteMode = Literal["composio", "mcp", "sandbox", "none"]
+REAL_MODES = frozenset({"composio", "mcp"})  # routes that reach the org's own account or server
 
 
 @dataclass(frozen=True)
 class Route:
     mode: RouteMode
     user_id: str | None = None  # the Composio user (composio routes only)
-    account_id: str | None = None  # the Composio connected account (composio routes only)
+    account_id: str | None = None  # the Composio connected account (composio) or the MCP server id (mcp)
     # (install, capability) pairs the connection grants; not part of a route's identity
     grants: frozenset[tuple[str, str]] = field(default=frozenset(), compare=False, repr=False)
 
@@ -54,6 +56,8 @@ def route_of(org_id: str, row: dict | None) -> Route:
         return NONE
     if row["mode"] == "composio" and row["status"] == "connected" and row.get("account_id"):
         return Route("composio", org_user_id(org_id), row.get("account_id"), _grants(row))
+    if row["mode"] == "mcp" and row["status"] == "connected" and row.get("account_id"):
+        return Route("mcp", account_id=row.get("account_id"), grants=_grants(row))
     if row["mode"] == "sandbox" and row["status"] == "sandbox":
         return Route("sandbox", grants=_grants(row))
     return NONE
@@ -63,6 +67,7 @@ def route_of(org_id: str, row: dict | None) -> Route:
 # rows a run could reach: those `live_connections.shown_status` shows as connected or sandbox.
 ROUTABLE_SQL = (
     "(({c}.mode = 'composio' AND {c}.status = 'connected' AND COALESCE({c}.account_id, '') <> '') "
+    "OR ({c}.mode = 'mcp' AND {c}.status = 'connected' AND COALESCE({c}.account_id, '') <> '') "
     "OR ({c}.mode = 'sandbox' AND {c}.status = 'sandbox'))"
 )
 
@@ -91,7 +96,7 @@ def current_route(org_id: str | None, connector_key: str) -> Route:
 
 def pinned_routes(conn, org_id: str, connector_keys: list[str]) -> dict[str, dict[str, str]]:
     """The snapshot fields that pin each connector's route now for a live run: `routes` (connector key ->
-    route mode) and `accounts` (connector key -> Composio connected account, composio routes only)."""
+    route mode) and `accounts` (connector key -> Composio connected account or MCP server id)."""
     org = org_routes(org_id, conn)
     found = {key: org.get(key, NONE) for key in connector_keys}
     return {

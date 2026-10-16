@@ -486,7 +486,15 @@
       "PUBLISHER_PROFILE_REQUIRED": "Turn on publishing in Settings before you submit.",
       "SUBMISSION_OPEN": "A version of this is already waiting for review.",
       "NOT_COPYABLE": "A pack from another publisher can be added, not copied.",
-      "NOT_EDITABLE": "This pack cannot be opened in the Studio."
+      "NOT_EDITABLE": "This pack cannot be opened in the Studio.",
+      "MCP_UNREACHABLE": "The server did not answer as an MCP server. Check the address and the token, then try again.",
+      "MCP_URL_REFUSED": "This address cannot be used. Use an https address on the public internet.",
+      "MCP_NO_TOOLS": "The server lists no tools your packs can use.",
+      "NAME_TAKEN": "You already have a server with this name. Choose another name.",
+      "TOOL_BLOCKED": "A blocked tool cannot be switched on.",
+      "SECRETS_UNAVAILABLE": "Your own MCP servers cannot be connected right now. Try again later.",
+      "MCP_SERVER_CONNECTION": "Manage this server under Your MCP servers.",
+      "NOT_PUBLISHABLE": "Anything that uses your own MCP server stays in your workspace. It cannot be submitted to the marketplace."
     },
     "pageCouldNotLoad": "This page could not load",
     "notFound": {
@@ -778,7 +786,84 @@
     "simulatedToastBody": "It was switched to simulated data while you were signing in. Nothing reaches your real account.",
     "badSignInLink": "The app's sign-in link was not a secure web address, so the browser stayed here.",
     "switchToRealTitle": "Switch {app} to your real account?",
-    "switchToRealDescription": "Runs that need {app} can't use it until the sign-in finishes; runs already going stop at their next {app} step. Simulated data stops being used."
+    "switchToRealDescription": "Runs that need {app} can't use it until the sign-in finishes; runs already going stop at their next {app} step. Simulated data stops being used.",
+    "mcp": {
+      "add": "Add your own MCP server",
+      "dialogTitle": "Add your own MCP server",
+      "dialogDescription": "New Machines connects to the server, lists its tools and sorts them before any pack can use them.",
+      "name": "Name",
+      "nameHint": "Shown in the Studio next to each tool.",
+      "url": "Server address",
+      "urlHint": "An https address on the public internet, such as https://mcp.example.com/mcp.",
+      "header": "Header",
+      "headerHint": "Authorization sends “Bearer” followed by the token. Use another header name for an API key.",
+      "token": "Token",
+      "tokenHint": "Stored encrypted. Only its last 4 characters are shown again.",
+      "connect": "Connect",
+      "connecting": "Connecting…",
+      "addFailed": "The server was not added",
+      "toolsTitle": "{name} is connected",
+      "toolsLede": "Each tool is sorted by what it can do. Switch off any tool your packs should not use.",
+      "group": {
+        "read": "Runs freely",
+        "write": "Asks first",
+        "blocked": "Blocked"
+      },
+      "groupNote": {
+        "read": "Reads data. Runs without asking.",
+        "write": "Changes data. A person approves each call.",
+        "blocked": "Deletes data or moves money. Never offered to a pack."
+      },
+      "why": {
+        "marked_read_only": "The server marks it read-only.",
+        "changes_data": "It can change data.",
+        "changes_access": "It can change who has access.",
+        "marked_destructive": "The server marks it destructive.",
+        "deletes": "Its name says it deletes.",
+        "moves_money": "Its name says it moves money.",
+        "reserved_name": "Its name is reserved.",
+        "schema_unusable": "Its inputs cannot be checked.",
+        "schema_too_large": "Its input description is larger than 64 KB."
+      },
+      "switchFailed": "The tool was not switched",
+      "done": "Done",
+      "heading": "Your MCP servers",
+      "lede": "Connect an MCP server your business runs or subscribes to. Its tools appear in the Studio with the same approvals and receipts as every other app.",
+      "empty": "No MCP servers yet.",
+      "askAdmin": "Ask an owner or admin to add an MCP server.",
+      "status": {
+        "active": "Connected",
+        "failing": "Not answering",
+        "removed": "Removed"
+      },
+      "toolCount": "{count, plural, one {# tool} other {# tools}} in use",
+      "tokenEnds": "Token ending {last4}",
+      "lastError": {
+        "unreachable": "The last call got no answer.",
+        "address_refused": "The last call was refused because the address is not public."
+      },
+      "showTools": "Tools",
+      "showToolsFor": "Tools of {name}",
+      "refresh": "Refresh tools",
+      "refreshFor": "Refresh tools of {name}",
+      "refreshedToast": "Tools refreshed",
+      "refreshedToastBody": "{name} lists {count, plural, one {# tool} other {# tools}} your packs can use.",
+      "refreshFailed": "The tools were not refreshed",
+      "replaceToken": "Replace token",
+      "replaceTokenFor": "Replace token of {name}",
+      "replaceTokenTitle": "Replace token of {name}",
+      "replaceTokenDescription": "New Machines checks the new token with the server before it replaces the old one.",
+      "replaceTokenConfirm": "Replace token",
+      "replacedToast": "Token replaced",
+      "replaceFailed": "The token was not replaced",
+      "remove": "Remove",
+      "removeFor": "Remove {name}",
+      "removeTitle": "Remove {name}?",
+      "removeDescription": "The token is deleted, and packs can no longer call the tools of this server.",
+      "removeConfirm": "Remove server",
+      "removedToast": "{name} removed",
+      "removeFailed": "The server was not removed"
+    }
   },
   "memory": {
     "title": "Memory",

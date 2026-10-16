@@ -127,7 +127,7 @@ class TenantConnection(Model):
     app: str
     status: Literal["connected", "not_connected", "sandbox", "needs_reauth", "pending"]
     # How the app is reached: sandbox data or the tenant's own account (live rows; demo fixtures have none).
-    mode: Literal["sandbox", "composio"] | Opt = None
+    mode: Literal["sandbox", "composio", "mcp"] | Opt = None
 
     @classmethod
     def of(cls, connection: Connection) -> TenantConnection:
@@ -260,7 +260,7 @@ class CreatePackRequest(RequestModel):
 # Connector catalog -------------------------------------------------------------------------------------
 
 Decision = Literal["permit", "require_approval", "deny"]
-ConnectorProvider = Literal["Composio", "Native", "Mock"]
+ConnectorProvider = Literal["Composio", "Native", "Mock", "MCP"]
 ConnectorAuth = Literal["oauth_managed", "oauth_own_app", "api_key"]
 ConnectorStatus = Literal["enabled", "beta", "disabled"]
 
@@ -292,6 +292,9 @@ class ConnectorEntry(Model):
     last_health_check: HealthCheck | Opt = None  # none in the live workspace, which has no health probe yet
     defaults: ConnectorDefaults
     scopes: list[str]
+    # An org's own connector (its MCP server): the org that owns it. None for the platform's connectors.
+    owner_org_id: str | Opt = None
+    owner_org_name: str | Opt = None
 
 
 class Toolkit(Model):

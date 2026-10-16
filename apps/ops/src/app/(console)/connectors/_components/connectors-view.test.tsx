@@ -28,6 +28,7 @@ const connector = vi.hoisted(() => ({
   app: "Stripe",
   category: "Payments",
   provider: "Composio",
+  ownerOrgName: undefined as string | undefined,
   authType: "api_key",
   status: "enabled",
   tenantsConnected: 4,
@@ -52,6 +53,7 @@ const renderView = () =>
 
 describe("ConnectorsView", () => {
   beforeEach(() => {
+    connector.ownerOrgName = undefined;
     state.canWrite = true;
     state.workspace = "demo";
     state.action = "add";
@@ -95,6 +97,17 @@ describe("ConnectorsView", () => {
     expect(screen.getByText("Connectors are added by publishing a definition.")).toBeInTheDocument();
     expect(screen.queryByText(/how healthy/)).toBeNull();
     expect(state.setAction).toHaveBeenCalledWith(null);
+  });
+
+  it("names the org that owns its own MCP server", () => {
+    connector.ownerOrgName = "Acme";
+    renderView();
+    expect(screen.getByText("Own MCP server of Acme")).toBeInTheDocument();
+  });
+
+  it("shows no owner line for a platform connector", () => {
+    renderView();
+    expect(screen.queryByText(/Own MCP server/)).toBeNull();
   });
 
   it("clears an unknown connector id from the URL", () => {

@@ -147,6 +147,12 @@ def composio_api_key() -> str | None:
     return os.environ.get("COMPOSIO_API_KEY") or None
 
 
+def secrets_key() -> str | None:
+    """NM_SECRETS_KEY: 32 bytes, URL-safe base64, that seals the tokens of the orgs' own MCP servers
+    (AES-GCM). Unset, nothing is sealed or opened (`secrets_box` fails closed)."""
+    return os.environ.get("NM_SECRETS_KEY") or None
+
+
 def defs_auto_apply() -> bool:
     return os.environ.get("NM_DEFS_AUTO_APPLY", "").lower() in {"1", "true", "yes", "on"}
 

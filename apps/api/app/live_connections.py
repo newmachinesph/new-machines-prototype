@@ -16,6 +16,7 @@ from app.defs.current import latest_bodies
 from app.errors import ApiProblem
 from app.models.org import Connection, ConnectStarted, Grant, RevokedGrant
 from app.runtime import routes
+from app.runtime.drivers import MCP_TRANSPORT
 
 log = logging.getLogger(__name__)
 
@@ -32,12 +33,31 @@ NOT_REMOVED = "sign_in_not_removed"
 # roles that invite people. Other members connect simulated data and sync a sign-in an admin started.
 REAL_ACCOUNT_ROLES = workspace.INVITER_ROLES
 FORBIDDEN = "FORBIDDEN"
+MCP_PROVIDER = "MCP"
+MCP_SERVER_CONNECTION = "MCP_SERVER_CONNECTION"
+MCP_SERVER_DETAIL = "Manage this server under Your MCP servers."
 
 
 def require_real_account_role(role: str) -> None:
     """403 unless `role` may change the org's real accounts (`REAL_ACCOUNT_ROLES`)."""
     if role not in REAL_ACCOUNT_ROLES:
         raise ApiProblem(403, FORBIDDEN, "Only an owner or admin can change the org's real accounts.")
+
+
+def _connectors(org_id: str) -> dict[str, dict]:
+    """The connector bodies the org may see: the platform's and its own (its MCP servers' connectors)."""
+    return latest_bodies("connector", org_id)
+
+
+def _is_mcp(connectors: dict[str, dict], key: str) -> bool:
+    return (connectors.get(key) or {}).get("transport") == MCP_TRANSPORT
+
+
+def _refuse_mcp(connectors: dict[str, dict], key: str) -> None:
+    """409: an org's own MCP server is connected, refreshed and removed under its MCP servers
+    (`mcp_servers`), never as an app."""
+    if _is_mcp(connectors, key):
+        raise ApiProblem(409, MCP_SERVER_CONNECTION, MCP_SERVER_DETAIL)
 
 
 def _resolve(connectors: dict[str, dict], name: str) -> str:
@@ -327,6 +347,11 @@ def _lock(conn, org_id: str, key: str) -> None:
     conn.execute("SELECT pg_advisory_xact_lock(hashtext(%s))", (f"{org_id}:{key}",))
 
 
+def lock_app(conn, org_id: str, key: str) -> None:
+    """`_lock` for the MCP servers service, which writes the org's row for its server's connector."""
+    _lock(conn, org_id, key)
+
+
 def shown_status(org_id: str, row: dict[str, Any]) -> str:
     """The row's status as the web and the ops console show it. A connected or sandbox row that a run would
     reach nothing through (`routes.route_of`: a Composio row without its account, a status that does not
@@ -353,24 +378,25 @@ def _connection(connectors: dict[str, dict], key: str, row: dict | None, org_id:
     at Composio) carries the `NOT_REMOVED` notice, in every list, until a connect or disconnect removes
     the account."""
     name = app_name(connectors, key)
+    mcp = _is_mcp(connectors, key)
     if row is None or row["status"] == "not_connected":
         return Connection(
             app=name,
             account="",
             status="not_connected",
-            provider="Mock",
+            provider=MCP_PROVIDER if mcp else "Mock",
             oauth_scopes=[],
             grants=[],
             revoked=_revoked(row),
             key=key,
-            notice=NOT_REMOVED if row is not None and row["account_id"] else None,
+            notice=NOT_REMOVED if row is not None and row["account_id"] and not mcp else None,
         )
     sandbox = row["mode"] == "sandbox"
     return Connection(
         app=name,
         account=SANDBOX_ACCOUNT if sandbox else "",
         status=shown_status(org_id, row),
-        provider="Mock" if sandbox else "Composio",
+        provider=MCP_PROVIDER if mcp else "Mock" if sandbox else "Composio",
         oauth_scopes=[],
         grants=[Grant.model_validate(g) for g in row["grants"] or []],
         revoked=_revoked(row),
@@ -390,7 +416,7 @@ def _rows(conn, org_id: str) -> dict[str, dict]:
 def list_connections(org_id: str) -> list[Connection]:
     """The connectors the org's added packs use (first added first), then any other app the org has a
     connection to (connected, pending or needing sign-in again)."""
-    connectors, bodies = latest_bodies("connector"), _pack_bodies(org_id)
+    connectors, bodies = _connectors(org_id), _pack_bodies(org_id)
     with db.connect() as conn:
         packs = _added_packs(conn, org_id, bodies)
         rows = _rows(conn, org_id)
@@ -406,8 +432,9 @@ def connect_sandbox(org_id: str, user_id: str, name: str, role: str) -> Connecti
     so it is only for `role` in `REAL_ACCOUNT_ROLES` (403 otherwise, checked under the lock); an app not
     connected, already on sandbox data, or a not-connected composio row that still holds a leftover account
     (retiring it is cleanup) is any member's to connect."""
-    connectors = latest_bodies("connector")
+    connectors = _connectors(org_id)
     key = _resolve(connectors, name)
+    _refuse_mcp(connectors, key)
     read, contracts = _read_packs(org_id)
     with db.connect() as conn:
         _lock(conn, org_id, key)
@@ -535,8 +562,9 @@ def connect_live(org_id: str, user_id: str, name: str) -> ConnectStarted:
     same account, which the winner now holds; the row as it is comes back, with no sign-in page: an unheld
     link would otherwise be an orphan if the person finished it. Once the new row is stored, the org's other
     accounts for the toolkit are swept away (`_sweep`)."""
-    connectors = latest_bodies("connector")
+    connectors = _connectors(org_id)
     key = _resolve(connectors, name)
+    _refuse_mcp(connectors, key)
     app = app_name(connectors, key)
     toolkit = str((connectors.get(key) or {}).get("toolkit") or "")
     if not toolkit:
@@ -599,8 +627,9 @@ def sync(org_id: str, name: str) -> Connection:
     it is, without asking Composio. The row is read and updated under the (org, app) lock, released while
     Composio answers, and the update matches the account, mode and status read, so a connect or switch in
     between is never overwritten."""
-    connectors = latest_bodies("connector")
+    connectors = _connectors(org_id)
     key = _resolve(connectors, name)
+    _refuse_mcp(connectors, key)
     with db.connect() as conn:
         _lock(conn, org_id, key)
         row = _rows(conn, org_id).get(key)
@@ -677,8 +706,9 @@ def disconnect(org_id: str, name: str, role: str) -> Connection:
     carries a notice. The row is changed under the (org, app) lock, released while Composio answers, and the
     id is forgotten only while the row still holds it, disconnected: a connect in between stored its own
     account, which stays."""
-    connectors = latest_bodies("connector")
+    connectors = _connectors(org_id)
     key = _resolve(connectors, name)
+    _refuse_mcp(connectors, key)
     with db.connect() as conn:
         _lock(conn, org_id, key)
         current = _rows(conn, org_id).get(key)
@@ -703,7 +733,7 @@ def revoke_grant(org_id: str, name: str, install: str, capability: str) -> None:
     """Remove one grant from the org's connection and remember it as revoked, so recomputing the connection's
     grants does not bring it back; 404 when it holds no such grant. Under the (org, app) lock, so a connect
     or re-grant in flight never writes grants read before this revocation."""
-    connectors = latest_bodies("connector")
+    connectors = _connectors(org_id)
     key = _resolve(connectors, name)
     with db.connect() as conn:
         _lock(conn, org_id, key)
@@ -732,7 +762,7 @@ def allow_grant(org_id: str, name: str, install: str, capability: str) -> Connec
     connection holds no such revocation: another org's connection looks the same as a missing one. The row is
     read under the (org, app) lock and locked itself (FOR UPDATE), so a revoke or a pack added meanwhile is
     never written over from a stale read."""
-    connectors = latest_bodies("connector")
+    connectors = _connectors(org_id)
     key = _resolve(connectors, name)
     read, contracts = _read_packs(org_id)
     with db.connect() as conn:
@@ -853,6 +883,6 @@ def grant_pack(
 def missing_apps(org_id: str, connector_keys: list[str]) -> list[str]:
     """Display names of `connector_keys` the org has no usable connection to: the same rule its runs follow
     (`routes.route_of`), so the start gate and the worker agree."""
-    connectors = latest_bodies("connector")
+    connectors = _connectors(org_id)
     by_app = routes.org_routes(org_id)
     return [app_name(connectors, k) for k in connector_keys if by_app.get(k, routes.NONE).mode == "none"]

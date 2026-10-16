@@ -2271,7 +2271,7 @@
           "connections"
         ],
         "summary": "Connect Connection",
-        "description": "Connect an app (a connector key or app name) for the org. `mode: sandbox` (the default) connects it to\nsandbox data. `mode: live` starts signing in to the org's own account: the connection is pending and\n`redirectUrl` is the app's sign-in page, which returns to the web's Connections page; only an owner or\nadmin may, and only they may switch an app connected to the org's own account to sandbox data (403\nFORBIDDEN otherwise). The demo workspace has none to make (409).",
+        "description": "Connect an app (a connector key or app name) for the org. `mode: sandbox` (the default) connects it to\nsandbox data. `mode: live` starts signing in to the org's own account: the connection is pending and\n`redirectUrl` is the app's sign-in page, which returns to the web's Connections page; only an owner or\nadmin may, and only they may switch an app connected to the org's own account to sandbox data (403\nFORBIDDEN otherwise). The demo workspace has none to make (409). An org's own MCP server is managed under\nits MCP servers (409 MCP_SERVER_CONNECTION).",
         "operationId": "connectConnection",
         "security": [
           {
@@ -2340,7 +2340,7 @@
             }
           },
           "409": {
-            "description": "Conflict (CONFLICT, LIVE_CONNECT_UNAVAILABLE, NO_LIVE_TOOLKIT).",
+            "description": "Conflict (CONFLICT, LIVE_CONNECT_UNAVAILABLE, NO_LIVE_TOOLKIT, MCP_SERVER_CONNECTION).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2378,7 +2378,7 @@
           "connections"
         ],
         "summary": "Sync Connection",
-        "description": "Live workspace: check the org's own account for an app with Composio, after the person comes back from\nsigning in. Connected when the account is active, with the grants of the packs that use the app; not\nconnected (or needing sign-in again) when the sign-in failed or expired; still pending while it is in\nprogress. The demo workspace has nothing to sync (409).",
+        "description": "Live workspace: check the org's own account for an app with Composio, after the person comes back from\nsigning in. Connected when the account is active, with the grants of the packs that use the app; not\nconnected (or needing sign-in again) when the sign-in failed or expired; still pending while it is in\nprogress. The demo workspace has nothing to sync (409). An org's own MCP server is managed under its MCP\nservers (409 MCP_SERVER_CONNECTION).",
         "operationId": "syncConnection",
         "security": [
           {
@@ -2438,7 +2438,7 @@
             }
           },
           "409": {
-            "description": "Conflict (CONFLICT, LIVE_CONNECT_UNAVAILABLE).",
+            "description": "Conflict (CONFLICT, LIVE_CONNECT_UNAVAILABLE, MCP_SERVER_CONNECTION).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2476,7 +2476,7 @@
           "connections"
         ],
         "summary": "Disconnect Connection",
-        "description": "Disconnect an app: every pack the org added loses access to it. In the live workspace, an app\nconnected to the org's own account (mode composio, whatever its status) is only disconnected by an owner\nor admin (403 FORBIDDEN otherwise); its account is removed at the connection service.",
+        "description": "Disconnect an app: every pack the org added loses access to it. In the live workspace, an app\nconnected to the org's own account (mode composio, whatever its status) is only disconnected by an owner\nor admin (403 FORBIDDEN otherwise); its account is removed at the connection service. An org's own MCP\nserver is managed under its MCP servers (409 MCP_SERVER_CONNECTION).",
         "operationId": "disconnectConnection",
         "security": [
           {
@@ -2536,7 +2536,7 @@
             }
           },
           "409": {
-            "description": "Conflict",
+            "description": "Conflict (MCP_SERVER_CONNECTION).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2740,6 +2740,737 @@
           },
           "409": {
             "description": "Conflict (CONFLICT).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/organizations/{org_id}/mcp-servers": {
+      "get": {
+        "tags": [
+          "mcp-servers"
+        ],
+        "summary": "List Mcp Servers",
+        "description": "The org's MCP servers that are not removed, with their sorted tools. Any member.",
+        "operationId": "listMcpServers",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Org Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/McpServer"
+                  },
+                  "title": "Response Listmcpservers"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "mcp-servers"
+        ],
+        "summary": "Add Mcp Server",
+        "description": "Connect the org's own MCP server: https only, on a public address. Its tools are listed and sorted into\nread (runs freely), write (asks first) and blocked (never offered), then published as a private connector\nfor the org's Studio packs. Owners and admins.",
+        "operationId": "addMcpServer",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Org Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddMcpServerRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/McpServer"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict (NAME_TAKEN).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request (MCP_UNREACHABLE, MCP_URL_REFUSED, MCP_NO_TOOLS).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Tokens cannot be sealed or opened right now (SECRETS_UNAVAILABLE).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/organizations/{org_id}/mcp-servers/{server_id}:refresh": {
+      "post": {
+        "tags": [
+          "mcp-servers"
+        ],
+        "summary": "Refresh Mcp Server",
+        "description": "List the server's tools again; the connector gets a new version only when they changed.",
+        "operationId": "refreshMcpServer",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Org Id"
+            }
+          },
+          {
+            "name": "server_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^mcp_[0-9a-f]{12}$",
+              "title": "Server Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/McpServer"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request (MCP_UNREACHABLE, MCP_URL_REFUSED, MCP_NO_TOOLS).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Tokens cannot be sealed or opened right now (SECRETS_UNAVAILABLE).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/organizations/{org_id}/mcp-servers/{server_id}/tools/{tool_id}:off": {
+      "post": {
+        "tags": [
+          "mcp-servers"
+        ],
+        "summary": "Switch Mcp Tool Off",
+        "description": "Switch one tool off: packs can no longer use it.",
+        "operationId": "switchMcpToolOff",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Org Id"
+            }
+          },
+          {
+            "name": "server_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^mcp_[0-9a-f]{12}$",
+              "title": "Server Id"
+            }
+          },
+          {
+            "name": "tool_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+              "title": "Tool Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/McpServer"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/organizations/{org_id}/mcp-servers/{server_id}/tools/{tool_id}:on": {
+      "post": {
+        "tags": [
+          "mcp-servers"
+        ],
+        "summary": "Switch Mcp Tool On",
+        "description": "Switch one tool back on. A blocked tool cannot be switched on (409 TOOL_BLOCKED).",
+        "operationId": "switchMcpToolOn",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Org Id"
+            }
+          },
+          {
+            "name": "server_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^mcp_[0-9a-f]{12}$",
+              "title": "Server Id"
+            }
+          },
+          {
+            "name": "tool_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+              "title": "Tool Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/McpServer"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict (TOOL_BLOCKED).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/organizations/{org_id}/mcp-servers/{server_id}:replace-token": {
+      "post": {
+        "tags": [
+          "mcp-servers"
+        ],
+        "summary": "Replace Mcp Server Token",
+        "description": "Replace the token, once the server lists its tools with the new one.",
+        "operationId": "replaceMcpServerToken",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Org Id"
+            }
+          },
+          {
+            "name": "server_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^mcp_[0-9a-f]{12}$",
+              "title": "Server Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplaceMcpTokenRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/McpServer"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request (MCP_UNREACHABLE, MCP_URL_REFUSED, MCP_NO_TOOLS).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Tokens cannot be sealed or opened right now (SECRETS_UNAVAILABLE).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/organizations/{org_id}/mcp-servers/{server_id}": {
+      "delete": {
+        "tags": [
+          "mcp-servers"
+        ],
+        "summary": "Remove Mcp Server",
+        "description": "Remove the server: its token is deleted and its connection is no longer connected. Runs already\nstarted keep the connector version they pinned, but their calls fail.",
+        "operationId": "removeMcpServer",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Org Id"
+            }
+          },
+          {
+            "name": "server_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^mcp_[0-9a-f]{12}$",
+              "title": "Server Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -6040,7 +6771,7 @@
             }
           },
           "409": {
-            "description": "Conflict (PUBLISHER_PROFILE_REQUIRED, SUBMISSION_OPEN, PLATFORM_PAUSED, SANDBOX_UNAVAILABLE, SPEND_CAP, PACK_UNAVAILABLE, VERSION_CONFLICT).",
+            "description": "Conflict (PUBLISHER_PROFILE_REQUIRED, SUBMISSION_OPEN, PLATFORM_PAUSED, SANDBOX_UNAVAILABLE, SPEND_CAP, PACK_UNAVAILABLE, NOT_PUBLISHABLE, VERSION_CONFLICT).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -6078,7 +6809,7 @@
           "studio"
         ],
         "summary": "Submit Studio Pack",
-        "description": "Submit the pack's saved version for the marketplace at a per-run price. Owners and admins of a\nworkspace with a publisher profile. Every agent in the pack must be the platform's or listed (422\nPRIVATE_AGENTS names the agents that need to be listed first, each with where it stands: not submitted,\nin review, unlisted or not approved). The automatic checks run the definition checks and a\nsandbox test run with `input` and `budgetMinor` (a completed sandbox test of this version is reused). The\nversion waits in `checking` until that run ends, then in `in_review` for New Machines.",
+        "description": "Submit the pack's saved version for the marketplace at a per-run price. Owners and admins of a\nworkspace with a publisher profile. Every agent in the pack must be the platform's or listed (422\nPRIVATE_AGENTS names the agents that need to be listed first, each with where it stands: not submitted,\nin review, unlisted or not approved). A pack that uses the org's own MCP server cannot be submitted (409\nNOT_PUBLISHABLE). The automatic checks run the definition checks and a\nsandbox test run with `input` and `budgetMinor` (a completed sandbox test of this version is reused). The\nversion waits in `checking` until that run ends, then in `in_review` for New Machines.",
         "operationId": "submitStudioPack",
         "security": [
           {
@@ -6159,7 +6890,7 @@
             }
           },
           "409": {
-            "description": "Conflict (PUBLISHER_PROFILE_REQUIRED, SUBMISSION_OPEN, PLATFORM_PAUSED, SANDBOX_UNAVAILABLE, SPEND_CAP, PACK_UNAVAILABLE, VERSION_CONFLICT).",
+            "description": "Conflict (PUBLISHER_PROFILE_REQUIRED, SUBMISSION_OPEN, PLATFORM_PAUSED, SANDBOX_UNAVAILABLE, SPEND_CAP, PACK_UNAVAILABLE, NOT_PUBLISHABLE, VERSION_CONFLICT).",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -12080,6 +12811,42 @@
         ],
         "title": "AddConnectorRequest"
       },
+      "AddMcpServerRequest": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 60,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "url": {
+            "type": "string",
+            "maxLength": 2048,
+            "minLength": 1,
+            "title": "Url"
+          },
+          "headerName": {
+            "type": "string",
+            "pattern": "^[!#$%&'*+.^_`|~0-9A-Za-z-]{1,64}$",
+            "title": "Headername",
+            "default": "Authorization"
+          },
+          "token": {
+            "type": "string",
+            "pattern": "^[!-~]{9,4096}$",
+            "title": "Token"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "url",
+          "token"
+        ],
+        "title": "AddMcpServerRequest",
+        "description": "`headerName` Authorization (the default) sends `Bearer <token>`; any other header sends the token\nas it is."
+      },
       "AddMemoryItemRequest": {
         "properties": {
           "text": {
@@ -12800,7 +13567,8 @@
             "type": "string",
             "enum": [
               "Composio",
-              "Mock"
+              "Mock",
+              "MCP"
             ],
             "title": "Provider"
           },
@@ -12842,7 +13610,8 @@
             "type": "string",
             "enum": [
               "sandbox",
-              "composio"
+              "composio",
+              "mcp"
             ],
             "title": "Mode"
           },
@@ -12893,7 +13662,8 @@
             "type": "string",
             "enum": [
               "Composio",
-              "Mock"
+              "Mock",
+              "MCP"
             ],
             "title": "Provider"
           },
@@ -12935,7 +13705,8 @@
             "type": "string",
             "enum": [
               "sandbox",
-              "composio"
+              "composio",
+              "mcp"
             ],
             "title": "Mode"
           },
@@ -13072,7 +13843,8 @@
             "enum": [
               "Composio",
               "Native",
-              "Mock"
+              "Mock",
+              "MCP"
             ],
             "title": "Provider"
           },
@@ -13121,6 +13893,14 @@
             },
             "type": "array",
             "title": "Scopes"
+          },
+          "ownerOrgId": {
+            "type": "string",
+            "title": "Ownerorgid"
+          },
+          "ownerOrgName": {
+            "type": "string",
+            "title": "Ownerorgname"
           }
         },
         "type": "object",
@@ -15042,6 +15822,85 @@
         "title": "MarketplaceListing",
         "description": "Another workspace's listed agent or pack. `fee` is per run (pack) or per call (agent); 0 shows as\n\"No fee\". `version` is the newest approved version; `installed_version` and `update_available` are set on\na pack the workspace has added."
       },
+      "McpServer": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "headerName": {
+            "type": "string",
+            "title": "Headername"
+          },
+          "tokenLast4": {
+            "type": "string",
+            "title": "Tokenlast4"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "failing",
+              "removed"
+            ],
+            "title": "Status"
+          },
+          "connectorKey": {
+            "type": "string",
+            "title": "Connectorkey"
+          },
+          "toolCount": {
+            "type": "integer",
+            "title": "Toolcount"
+          },
+          "tools": {
+            "items": {
+              "$ref": "#/components/schemas/McpTool"
+            },
+            "type": "array",
+            "title": "Tools"
+          },
+          "toolsListedAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Toolslistedat"
+          },
+          "lastError": {
+            "type": "string",
+            "enum": [
+              "unreachable",
+              "address_refused"
+            ],
+            "title": "Lasterror"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Createdat"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "url",
+          "headerName",
+          "status",
+          "connectorKey",
+          "toolCount",
+          "tools",
+          "createdAt"
+        ],
+        "title": "McpServer"
+      },
       "McpToken": {
         "properties": {
           "id": {
@@ -15091,6 +15950,60 @@
           "lastUsed"
         ],
         "title": "McpToken"
+      },
+      "McpTool": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "toolClass": {
+            "type": "string",
+            "enum": [
+              "read",
+              "write",
+              "blocked"
+            ],
+            "title": "Toolclass"
+          },
+          "why": {
+            "type": "string",
+            "enum": [
+              "marked_read_only",
+              "changes_data",
+              "changes_access",
+              "marked_destructive",
+              "deletes",
+              "moves_money",
+              "reserved_name",
+              "schema_unusable",
+              "schema_too_large"
+            ],
+            "title": "Why"
+          },
+          "on": {
+            "type": "boolean",
+            "title": "On"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "description",
+          "toolClass",
+          "why",
+          "on"
+        ],
+        "title": "McpTool"
       },
       "Me": {
         "properties": {
@@ -17563,6 +18476,21 @@
         ],
         "title": "RemoveReviewerRequest"
       },
+      "ReplaceMcpTokenRequest": {
+        "properties": {
+          "token": {
+            "type": "string",
+            "pattern": "^[!-~]{9,4096}$",
+            "title": "Token"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "token"
+        ],
+        "title": "ReplaceMcpTokenRequest"
+      },
       "Reviewer": {
         "properties": {
           "id": {
@@ -19188,7 +20116,8 @@
             "type": "string",
             "enum": [
               "sandbox",
-              "composio"
+              "composio",
+              "mcp"
             ],
             "title": "Mode"
           }

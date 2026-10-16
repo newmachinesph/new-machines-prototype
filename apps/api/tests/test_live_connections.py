@@ -201,8 +201,8 @@ def test_live_connect_without_a_composio_key_is_a_409(ana, db, monkeypatch):  # 
 def test_live_connect_of_a_connector_without_a_toolkit_is_a_409(ana, composio, monkeypatch):  # noqa: F811
     real = live_connections.latest_bodies
 
-    def without_toolkit(kind):
-        bodies = real(kind)
+    def without_toolkit(kind, org_id=None):
+        bodies = real(kind, org_id)
         if kind != "connector":
             return bodies
         return {k: {f: v for f, v in b.items() if f != "toolkit"} for k, b in bodies.items()}

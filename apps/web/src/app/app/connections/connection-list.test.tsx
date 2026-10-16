@@ -327,7 +327,7 @@ describe("ConnectionList in a live workspace", () => {
     expect(cancel).not.toHaveAttribute("data-disconnect");
     expect(cancel).toHaveAttribute("data-cancel", "Stripe");
     await userEvent.click(cancel);
-    expect(disconnect).toHaveBeenCalledWith({ path: { app_name: "Stripe" } }, expect.anything());
+    expect(disconnect).toHaveBeenCalledWith({ path: { app_name: "stripe" } }, expect.anything());
   });
 
   it("offers a simulated app the switch to its real account, after saying what it means", async () => {
@@ -377,6 +377,16 @@ describe("ConnectionList in a live workspace", () => {
     );
   });
 
+  it("leaves the org's own MCP servers to their own section", () => {
+    data.conns = [
+      live("Stripe", "stripe", "sandbox"),
+      { ...live("Acme CRM", "org-a1--acme-crm", "connected", "composio"), provider: "MCP", mode: "mcp" },
+    ];
+    renderWithIntl(<ConnectionList />);
+    expect(screen.getByRole("heading", { name: /^Stripe/ })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: /^Acme CRM/ })).not.toBeInTheDocument();
+  });
+
   it("lists a revoked grant and allows it again", async () => {
     const revoked = { install: "Order & Payment Reconciliation", capability: "payment.refund" };
     data.conns = [{ ...live("Stripe", "stripe", "sandbox"), revoked: [revoked] }];
@@ -391,7 +401,7 @@ describe("ConnectionList in a live workspace", () => {
         name: "Allow Order & Payment Reconciliation “Refund payment” on Stripe again",
       }),
     );
-    expect(allow).toHaveBeenCalledWith({ query: { app: "Stripe", ...revoked } }, expect.anything());
+    expect(allow).toHaveBeenCalledWith({ query: { app: "stripe", ...revoked } }, expect.anything());
     expect(toast).toHaveBeenCalledWith(
       "Access allowed again",
       "Order & Payment Reconciliation has “Refund payment” on Stripe again.",

@@ -23,6 +23,31 @@ export type AddConnectorRequest = {
 };
 
 /**
+ * AddMcpServerRequest
+ *
+ * `headerName` Authorization (the default) sends `Bearer <token>`; any other header sends the token
+ * as it is.
+ */
+export type AddMcpServerRequest = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Url
+     */
+    url: string;
+    /**
+     * Headername
+     */
+    headerName?: string;
+    /**
+     * Token
+     */
+    token: string;
+};
+
+/**
  * AddMemoryItemRequest
  */
 export type AddMemoryItemRequest = {
@@ -495,7 +520,7 @@ export type ConnectStarted = {
     /**
      * Provider
      */
-    provider: 'Composio' | 'Mock';
+    provider: 'Composio' | 'Mock' | 'MCP';
     /**
      * Oauthscopes
      */
@@ -523,7 +548,7 @@ export type ConnectStarted = {
     /**
      * Mode
      */
-    mode?: 'sandbox' | 'composio';
+    mode?: 'sandbox' | 'composio' | 'mcp';
     /**
      * Notice
      */
@@ -553,7 +578,7 @@ export type Connection = {
     /**
      * Provider
      */
-    provider: 'Composio' | 'Mock';
+    provider: 'Composio' | 'Mock' | 'MCP';
     /**
      * Oauthscopes
      */
@@ -581,7 +606,7 @@ export type Connection = {
     /**
      * Mode
      */
-    mode?: 'sandbox' | 'composio';
+    mode?: 'sandbox' | 'composio' | 'mcp';
     /**
      * Notice
      */
@@ -651,7 +676,7 @@ export type ConnectorEntry = {
     /**
      * Provider
      */
-    provider: 'Composio' | 'Native' | 'Mock';
+    provider: 'Composio' | 'Native' | 'Mock' | 'MCP';
     /**
      * Authtype
      */
@@ -681,6 +706,14 @@ export type ConnectorEntry = {
      * Scopes
      */
     scopes: Array<string>;
+    /**
+     * Ownerorgid
+     */
+    ownerOrgId?: string;
+    /**
+     * Ownerorgname
+     */
+    ownerOrgName?: string;
 };
 
 /**
@@ -1897,6 +1930,60 @@ export type MarketplaceListing = {
 };
 
 /**
+ * McpServer
+ */
+export type McpServer = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Url
+     */
+    url: string;
+    /**
+     * Headername
+     */
+    headerName: string;
+    /**
+     * Tokenlast4
+     */
+    tokenLast4?: string;
+    /**
+     * Status
+     */
+    status: 'active' | 'failing' | 'removed';
+    /**
+     * Connectorkey
+     */
+    connectorKey: string;
+    /**
+     * Toolcount
+     */
+    toolCount: number;
+    /**
+     * Tools
+     */
+    tools: Array<McpTool>;
+    /**
+     * Toolslistedat
+     */
+    toolsListedAt?: string;
+    /**
+     * Lasterror
+     */
+    lastError?: 'unreachable' | 'address_refused';
+    /**
+     * Createdat
+     */
+    createdAt: string;
+};
+
+/**
  * McpToken
  */
 export type McpToken = {
@@ -1932,6 +2019,36 @@ export type McpToken = {
      * Prefix
      */
     prefix?: string;
+};
+
+/**
+ * McpTool
+ */
+export type McpTool = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Description
+     */
+    description: string;
+    /**
+     * Toolclass
+     */
+    toolClass: 'read' | 'write' | 'blocked';
+    /**
+     * Why
+     */
+    why: 'marked_read_only' | 'changes_data' | 'changes_access' | 'marked_destructive' | 'deletes' | 'moves_money' | 'reserved_name' | 'schema_unusable' | 'schema_too_large';
+    /**
+     * On
+     */
+    on: boolean;
 };
 
 /**
@@ -3636,6 +3753,16 @@ export type RemoveReviewerRequest = {
 };
 
 /**
+ * ReplaceMcpTokenRequest
+ */
+export type ReplaceMcpTokenRequest = {
+    /**
+     * Token
+     */
+    token: string;
+};
+
+/**
  * Reviewer
  */
 export type Reviewer = {
@@ -4691,7 +4818,7 @@ export type TenantConnection = {
     /**
      * Mode
      */
-    mode?: 'sandbox' | 'composio';
+    mode?: 'sandbox' | 'composio' | 'mcp';
 };
 
 /**
@@ -6253,7 +6380,7 @@ export type ConnectConnectionErrors = {
      */
     404: Problem;
     /**
-     * Conflict (CONFLICT, LIVE_CONNECT_UNAVAILABLE, NO_LIVE_TOOLKIT).
+     * Conflict (CONFLICT, LIVE_CONNECT_UNAVAILABLE, NO_LIVE_TOOLKIT, MCP_SERVER_CONNECTION).
      */
     409: Problem;
     /**
@@ -6303,7 +6430,7 @@ export type SyncConnectionErrors = {
      */
     404: Problem;
     /**
-     * Conflict (CONFLICT, LIVE_CONNECT_UNAVAILABLE).
+     * Conflict (CONFLICT, LIVE_CONNECT_UNAVAILABLE, MCP_SERVER_CONNECTION).
      */
     409: Problem;
     /**
@@ -6353,7 +6480,7 @@ export type DisconnectConnectionErrors = {
      */
     404: Problem;
     /**
-     * Conflict
+     * Conflict (MCP_SERVER_CONNECTION).
      */
     409: Problem;
     /**
@@ -6480,6 +6607,370 @@ export type AllowGrantResponses = {
 };
 
 export type AllowGrantResponse = AllowGrantResponses[keyof AllowGrantResponses];
+
+export type ListMcpServersData = {
+    body?: never;
+    path: {
+        /**
+         * Org Id
+         */
+        org_id: string;
+    };
+    query?: never;
+    url: '/v1/organizations/{org_id}/mcp-servers';
+};
+
+export type ListMcpServersErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type ListMcpServersError = ListMcpServersErrors[keyof ListMcpServersErrors];
+
+export type ListMcpServersResponses = {
+    /**
+     * Response Listmcpservers
+     *
+     * Successful Response
+     */
+    200: Array<McpServer>;
+};
+
+export type ListMcpServersResponse = ListMcpServersResponses[keyof ListMcpServersResponses];
+
+export type AddMcpServerData = {
+    body: AddMcpServerRequest;
+    path: {
+        /**
+         * Org Id
+         */
+        org_id: string;
+    };
+    query?: never;
+    url: '/v1/organizations/{org_id}/mcp-servers';
+};
+
+export type AddMcpServerErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict (NAME_TAKEN).
+     */
+    409: Problem;
+    /**
+     * Invalid request (MCP_UNREACHABLE, MCP_URL_REFUSED, MCP_NO_TOOLS).
+     */
+    422: Problem;
+    /**
+     * Tokens cannot be sealed or opened right now (SECRETS_UNAVAILABLE).
+     */
+    503: Problem;
+};
+
+export type AddMcpServerError = AddMcpServerErrors[keyof AddMcpServerErrors];
+
+export type AddMcpServerResponses = {
+    /**
+     * Successful Response
+     */
+    201: McpServer;
+};
+
+export type AddMcpServerResponse = AddMcpServerResponses[keyof AddMcpServerResponses];
+
+export type RefreshMcpServerData = {
+    body?: never;
+    path: {
+        /**
+         * Org Id
+         */
+        org_id: string;
+        /**
+         * Server Id
+         */
+        server_id: string;
+    };
+    query?: never;
+    url: '/v1/organizations/{org_id}/mcp-servers/{server_id}:refresh';
+};
+
+export type RefreshMcpServerErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request (MCP_UNREACHABLE, MCP_URL_REFUSED, MCP_NO_TOOLS).
+     */
+    422: Problem;
+    /**
+     * Tokens cannot be sealed or opened right now (SECRETS_UNAVAILABLE).
+     */
+    503: Problem;
+};
+
+export type RefreshMcpServerError = RefreshMcpServerErrors[keyof RefreshMcpServerErrors];
+
+export type RefreshMcpServerResponses = {
+    /**
+     * Successful Response
+     */
+    200: McpServer;
+};
+
+export type RefreshMcpServerResponse = RefreshMcpServerResponses[keyof RefreshMcpServerResponses];
+
+export type SwitchMcpToolOffData = {
+    body?: never;
+    path: {
+        /**
+         * Org Id
+         */
+        org_id: string;
+        /**
+         * Server Id
+         */
+        server_id: string;
+        /**
+         * Tool Id
+         */
+        tool_id: string;
+    };
+    query?: never;
+    url: '/v1/organizations/{org_id}/mcp-servers/{server_id}/tools/{tool_id}:off';
+};
+
+export type SwitchMcpToolOffErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type SwitchMcpToolOffError = SwitchMcpToolOffErrors[keyof SwitchMcpToolOffErrors];
+
+export type SwitchMcpToolOffResponses = {
+    /**
+     * Successful Response
+     */
+    200: McpServer;
+};
+
+export type SwitchMcpToolOffResponse = SwitchMcpToolOffResponses[keyof SwitchMcpToolOffResponses];
+
+export type SwitchMcpToolOnData = {
+    body?: never;
+    path: {
+        /**
+         * Org Id
+         */
+        org_id: string;
+        /**
+         * Server Id
+         */
+        server_id: string;
+        /**
+         * Tool Id
+         */
+        tool_id: string;
+    };
+    query?: never;
+    url: '/v1/organizations/{org_id}/mcp-servers/{server_id}/tools/{tool_id}:on';
+};
+
+export type SwitchMcpToolOnErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict (TOOL_BLOCKED).
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type SwitchMcpToolOnError = SwitchMcpToolOnErrors[keyof SwitchMcpToolOnErrors];
+
+export type SwitchMcpToolOnResponses = {
+    /**
+     * Successful Response
+     */
+    200: McpServer;
+};
+
+export type SwitchMcpToolOnResponse = SwitchMcpToolOnResponses[keyof SwitchMcpToolOnResponses];
+
+export type ReplaceMcpServerTokenData = {
+    body: ReplaceMcpTokenRequest;
+    path: {
+        /**
+         * Org Id
+         */
+        org_id: string;
+        /**
+         * Server Id
+         */
+        server_id: string;
+    };
+    query?: never;
+    url: '/v1/organizations/{org_id}/mcp-servers/{server_id}:replace-token';
+};
+
+export type ReplaceMcpServerTokenErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request (MCP_UNREACHABLE, MCP_URL_REFUSED, MCP_NO_TOOLS).
+     */
+    422: Problem;
+    /**
+     * Tokens cannot be sealed or opened right now (SECRETS_UNAVAILABLE).
+     */
+    503: Problem;
+};
+
+export type ReplaceMcpServerTokenError = ReplaceMcpServerTokenErrors[keyof ReplaceMcpServerTokenErrors];
+
+export type ReplaceMcpServerTokenResponses = {
+    /**
+     * Successful Response
+     */
+    200: McpServer;
+};
+
+export type ReplaceMcpServerTokenResponse = ReplaceMcpServerTokenResponses[keyof ReplaceMcpServerTokenResponses];
+
+export type RemoveMcpServerData = {
+    body?: never;
+    path: {
+        /**
+         * Org Id
+         */
+        org_id: string;
+        /**
+         * Server Id
+         */
+        server_id: string;
+    };
+    query?: never;
+    url: '/v1/organizations/{org_id}/mcp-servers/{server_id}';
+};
+
+export type RemoveMcpServerErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type RemoveMcpServerError = RemoveMcpServerErrors[keyof RemoveMcpServerErrors];
+
+export type RemoveMcpServerResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type RemoveMcpServerResponse = RemoveMcpServerResponses[keyof RemoveMcpServerResponses];
 
 export type GetMeData = {
     body?: never;
@@ -8111,7 +8602,7 @@ export type SubmitStudioAgentErrors = {
      */
     404: Problem;
     /**
-     * Conflict (PUBLISHER_PROFILE_REQUIRED, SUBMISSION_OPEN, PLATFORM_PAUSED, SANDBOX_UNAVAILABLE, SPEND_CAP, PACK_UNAVAILABLE, VERSION_CONFLICT).
+     * Conflict (PUBLISHER_PROFILE_REQUIRED, SUBMISSION_OPEN, PLATFORM_PAUSED, SANDBOX_UNAVAILABLE, SPEND_CAP, PACK_UNAVAILABLE, NOT_PUBLISHABLE, VERSION_CONFLICT).
      */
     409: Problem;
     /**
@@ -8165,7 +8656,7 @@ export type SubmitStudioPackErrors = {
      */
     404: Problem;
     /**
-     * Conflict (PUBLISHER_PROFILE_REQUIRED, SUBMISSION_OPEN, PLATFORM_PAUSED, SANDBOX_UNAVAILABLE, SPEND_CAP, PACK_UNAVAILABLE, VERSION_CONFLICT).
+     * Conflict (PUBLISHER_PROFILE_REQUIRED, SUBMISSION_OPEN, PLATFORM_PAUSED, SANDBOX_UNAVAILABLE, SPEND_CAP, PACK_UNAVAILABLE, NOT_PUBLISHABLE, VERSION_CONFLICT).
      */
     409: Problem;
     /**

@@ -12,6 +12,19 @@ export const zAddConnectorRequest = z.object({
 });
 
 /**
+ * AddMcpServerRequest
+ *
+ * `headerName` Authorization (the default) sends `Bearer <token>`; any other header sends the token
+ * as it is.
+ */
+export const zAddMcpServerRequest = z.object({
+    name: z.string().min(1).max(60),
+    url: z.string().min(1).max(2048),
+    headerName: z.string().regex(/^[!#$%&'*+.^_`|~0-9A-Za-z-]{1,64}$/).optional().default('Authorization'),
+    token: z.string().regex(/^[!-~]{9,4096}$/)
+});
+
+/**
  * AddMemoryItemRequest
  */
 export const zAddMemoryItemRequest = z.object({
@@ -570,7 +583,8 @@ export const zConnectorEntry = z.object({
     provider: z.enum([
         'Composio',
         'Native',
-        'Mock'
+        'Mock',
+        'MCP'
     ]),
     authType: z.enum([
         'oauth_managed',
@@ -587,7 +601,9 @@ export const zConnectorEntry = z.object({
     errorRate: z.number().gte(0).lte(1),
     lastHealthCheck: zHealthCheck.optional(),
     defaults: zConnectorDefaults,
-    scopes: z.array(z.string())
+    scopes: z.array(z.string()),
+    ownerOrgId: z.string().optional(),
+    ownerOrgName: z.string().optional()
 });
 
 /**
@@ -750,6 +766,54 @@ export const zMcpToken = z.object({
 export const zCreatedToken = z.object({
     token: zMcpToken,
     secret: z.string()
+});
+
+/**
+ * McpTool
+ */
+export const zMcpTool = z.object({
+    id: z.string(),
+    name: z.string(),
+    description: z.string(),
+    toolClass: z.enum([
+        'read',
+        'write',
+        'blocked'
+    ]),
+    why: z.enum([
+        'marked_read_only',
+        'changes_data',
+        'changes_access',
+        'marked_destructive',
+        'deletes',
+        'moves_money',
+        'reserved_name',
+        'schema_unusable',
+        'schema_too_large'
+    ]),
+    on: z.boolean()
+});
+
+/**
+ * McpServer
+ */
+export const zMcpServer = z.object({
+    id: z.string(),
+    name: z.string(),
+    url: z.string(),
+    headerName: z.string(),
+    tokenLast4: z.string().optional(),
+    status: z.enum([
+        'active',
+        'failing',
+        'removed'
+    ]),
+    connectorKey: z.string(),
+    toolCount: z.int(),
+    tools: z.array(zMcpTool),
+    toolsListedAt: z.iso.datetime().optional(),
+    lastError: z.enum(['unreachable', 'address_refused']).optional(),
+    createdAt: z.iso.datetime()
 });
 
 /**
@@ -1664,6 +1728,13 @@ export const zRemoveReviewerRequest = z.object({
 });
 
 /**
+ * ReplaceMcpTokenRequest
+ */
+export const zReplaceMcpTokenRequest = z.object({
+    token: z.string().regex(/^[!-~]{9,4096}$/)
+});
+
+/**
  * Reviewer
  */
 export const zReviewer = z.object({
@@ -1725,14 +1796,22 @@ export const zConnectStarted = z.object({
         'needs_reauth',
         'pending'
     ]),
-    provider: z.enum(['Composio', 'Mock']),
+    provider: z.enum([
+        'Composio',
+        'Mock',
+        'MCP'
+    ]),
     oauthScopes: z.array(z.string()),
     grants: z.array(zGrant),
     revoked: z.array(zRevokedGrant).optional().default([]),
     lastUsed: z.string().optional(),
     health: z.string().optional(),
     key: z.string().optional(),
-    mode: z.enum(['sandbox', 'composio']).optional(),
+    mode: z.enum([
+        'sandbox',
+        'composio',
+        'mcp'
+    ]).optional(),
     notice: z.literal('sign_in_not_removed').optional(),
     redirectUrl: z.string().optional()
 });
@@ -1750,14 +1829,22 @@ export const zConnection = z.object({
         'needs_reauth',
         'pending'
     ]),
-    provider: z.enum(['Composio', 'Mock']),
+    provider: z.enum([
+        'Composio',
+        'Mock',
+        'MCP'
+    ]),
     oauthScopes: z.array(z.string()),
     grants: z.array(zGrant),
     revoked: z.array(zRevokedGrant).optional().default([]),
     lastUsed: z.string().optional(),
     health: z.string().optional(),
     key: z.string().optional(),
-    mode: z.enum(['sandbox', 'composio']).optional(),
+    mode: z.enum([
+        'sandbox',
+        'composio',
+        'mcp'
+    ]).optional(),
     notice: z.literal('sign_in_not_removed').optional()
 });
 
@@ -2351,7 +2438,11 @@ export const zTenantConnection = z.object({
         'needs_reauth',
         'pending'
     ]),
-    mode: z.enum(['sandbox', 'composio']).optional()
+    mode: z.enum([
+        'sandbox',
+        'composio',
+        'mcp'
+    ]).optional()
 });
 
 /**
@@ -3035,6 +3126,82 @@ export const zAllowGrantQuery = z.object({
  * Successful Response
  */
 export const zAllowGrantResponse = zConnection;
+
+export const zListMcpServersPath = z.object({
+    org_id: z.string()
+});
+
+/**
+ * Response Listmcpservers
+ *
+ * Successful Response
+ */
+export const zListMcpServersResponse = z.array(zMcpServer);
+
+export const zAddMcpServerBody = zAddMcpServerRequest;
+
+export const zAddMcpServerPath = z.object({
+    org_id: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zAddMcpServerResponse = zMcpServer;
+
+export const zRefreshMcpServerPath = z.object({
+    org_id: z.string(),
+    server_id: z.string().regex(/^mcp_[0-9a-f]{12}$/)
+});
+
+/**
+ * Successful Response
+ */
+export const zRefreshMcpServerResponse = zMcpServer;
+
+export const zSwitchMcpToolOffPath = z.object({
+    org_id: z.string(),
+    server_id: z.string().regex(/^mcp_[0-9a-f]{12}$/),
+    tool_id: z.string().regex(/^[a-z][a-z0-9_-]{0,63}$/)
+});
+
+/**
+ * Successful Response
+ */
+export const zSwitchMcpToolOffResponse = zMcpServer;
+
+export const zSwitchMcpToolOnPath = z.object({
+    org_id: z.string(),
+    server_id: z.string().regex(/^mcp_[0-9a-f]{12}$/),
+    tool_id: z.string().regex(/^[a-z][a-z0-9_-]{0,63}$/)
+});
+
+/**
+ * Successful Response
+ */
+export const zSwitchMcpToolOnResponse = zMcpServer;
+
+export const zReplaceMcpServerTokenBody = zReplaceMcpTokenRequest;
+
+export const zReplaceMcpServerTokenPath = z.object({
+    org_id: z.string(),
+    server_id: z.string().regex(/^mcp_[0-9a-f]{12}$/)
+});
+
+/**
+ * Successful Response
+ */
+export const zReplaceMcpServerTokenResponse = zMcpServer;
+
+export const zRemoveMcpServerPath = z.object({
+    org_id: z.string(),
+    server_id: z.string().regex(/^mcp_[0-9a-f]{12}$/)
+});
+
+/**
+ * Successful Response
+ */
+export const zRemoveMcpServerResponse = z.void();
 
 /**
  * Successful Response

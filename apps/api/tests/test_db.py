@@ -26,6 +26,7 @@ EXPECTED_TABLES = {
     "listing_versions",
     "listed_definitions",
     "fee_lines",
+    "mcp_servers",
     "schema_migrations",
 }
 APP_TABLES = sorted(EXPECTED_TABLES - {"schema_migrations"})
