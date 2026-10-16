@@ -14,7 +14,7 @@ from app import db, settings
 from app.defs.loader import load_bundle
 from app.models.runs import Run
 from app.routers import tasks
-from app.runtime import agent, gateway, providers
+from app.runtime import agent, gateway, projection, providers
 from app.runtime.drivers import ToolResult
 from app.worker import activities
 from app.worker.activities import NodeCall
@@ -882,7 +882,7 @@ def test_a_seed_pack_runs_through_review_and_approval_to_drafts(runtime_env, pac
     assert result.kind == "Email drafts" and len(result.items) == 4
     assert [(r.label, r.value) for r in result.rows] == [("Drafts created", "4")]
     assert [i.label for i in result.items] == [f"{d['to']} — {d['subject']}" for d in made]
-    assert [i.detail for i in result.items] == [d["body"][:160] for d in made]
+    assert [i.detail for i in result.items] == [projection._clip(d["body"]) for d in made]
     # Every call ran on sandbox data, so the headline says so and claims no email in Gmail.
     assert result.summary.startswith(
         "4 "

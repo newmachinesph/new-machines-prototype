@@ -16,7 +16,7 @@ import { capCeiling, capChoices, packRunFee, startCap } from "@/lib/run-budget";
 import { useFormat } from "@/lib/use-format";
 import type { Pack } from "@/lib/types";
 import { useCapabilityLabel } from "@/app/app/agents/capability-label";
-import { usePerRunPrice } from "../../per-run";
+import { usePerRunCost } from "../../per-run";
 
 const POOLS = ["team_then_network", "team", "network"] as const;
 type Pool = (typeof POOLS)[number];
@@ -79,7 +79,7 @@ export function InstallReview({ pack: p, settings = false }: { pack: Pack; setti
   const tl = useTranslations("listedMarket");
   const feeLabel = useFeeLabel();
   const { money, list } = useFormat();
-  const perRun = usePerRunPrice();
+  const perRun = usePerRunCost();
   const label = useCapabilityLabel();
   const errorText = useErrorText();
   const live = useIsLive();
@@ -141,7 +141,7 @@ export function InstallReview({ pack: p, settings = false }: { pack: Pack; setti
     );
   }
 
-  const price = perRun(p.estimate);
+  const cost = perRun(p);
   const capText = money(usd(cap));
 
   return (
@@ -238,11 +238,26 @@ export function InstallReview({ pack: p, settings = false }: { pack: Pack; setti
                 },
                 {
                   label: t("perRunLabel"),
-                  value: (
-                    <span className="tnum">
-                      {price === null ? t("perRunUnset", { cap: capText }) : t("perRunValue", { price, cap: capText })}
-                    </span>
-                  ),
+                  // A catalog range reads as one sentence; a price note and the contract's cap each take a line,
+                  // then what a run adds and where it stops (see usePerRunCost).
+                  value:
+                    cost.note || cost.cap ? (
+                      <span className="block">
+                        {cost.note ? <span className="block">{cost.note}</span> : null}
+                        {cost.cap ? <span className="tnum block">{cost.cap}</span> : null}
+                        <span className="tnum mt-0.5 block text-muted">
+                          {needsReviewers
+                            ? t("perRunStopReviewers", { cap: capText })
+                            : t("perRunStop", { cap: capText })}
+                        </span>
+                      </span>
+                    ) : (
+                      <span className="tnum">
+                        {cost.range === null
+                          ? t("perRunUnset", { cap: capText })
+                          : t("perRunValue", { price: cost.range, cap: capText })}
+                      </span>
+                    ),
                 },
                 // A listed pack's fee is charged on every run, on top of the estimate, and counts toward the cap.
                 ...(p.listing && p.listing.fee.amountMinor > 0

@@ -3,6 +3,7 @@
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Fragment } from "react";
 import { QueryState } from "@/components/query-state";
 import { useCodes, useWho } from "@/components/run-codes";
 import { TechnicalDetails } from "@/components/run-disclosures";
@@ -122,7 +123,9 @@ function Evidence({ run, deliverable: d }: { run: Run; deliverable: NonNullable<
                 <ul className="divide-y divide-rule">
                   {d.items.map((item, i) => (
                     <li key={i} className="px-5 py-3">
-                      <div className="text-sm font-medium break-words">{item.label}</div>
+                      <div className="text-sm font-medium break-words">
+                        <ItemLabel label={item.label} />
+                      </div>
                       <p className="mt-1 text-[13px] leading-snug break-words whitespace-pre-line text-grey-700">
                         {item.detail}
                       </p>
@@ -249,6 +252,28 @@ function Evidence({ run, deliverable: d }: { run: Run; deliverable: NonNullable<
       </div>
     </>
   );
+}
+
+/** A long run of characters with no space or "@": an opaque id such as a 40-character order id. */
+const OPAQUE_ID = /^[^\s@]{24,}$/;
+
+/** An item's label. A long opaque id in it is cut with "…" so it does not crowd the row; its title keeps it
+ * whole. Labels join their parts with " — "; one with no such id renders as is. */
+function ItemLabel({ label }: { label: string }) {
+  const parts = label.split(" — ");
+  if (!parts.some((p) => OPAQUE_ID.test(p))) return <>{label}</>;
+  return parts.map((p, i) => (
+    <Fragment key={i}>
+      {i > 0 ? " — " : null}
+      {OPAQUE_ID.test(p) ? (
+        <span title={p} className="inline-block max-w-[16ch] truncate align-bottom">
+          {p}
+        </span>
+      ) : (
+        p
+      )}
+    </Fragment>
+  ));
 }
 
 /** What the run did outside New Machines, from its own tool calls: each app and action, read or write, how

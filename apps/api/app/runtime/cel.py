@@ -15,7 +15,20 @@ def _lower_ascii(text: Any) -> celtypes.StringType:
     return celtypes.StringType("".join(c.lower() if c.isascii() else c for c in str(text)))
 
 
-_FUNCTIONS = {"lowerAscii": _lower_ascii}
+def _format_minor(amount: Any) -> Any:
+    """`formatMinor(amount_minor)`: a whole number of minor units (centavos, cents) as a major-unit amount
+    with thousands separators and two decimals, e.g. 5618280 -> "56,182.80". Callers add the currency sign."""
+    if isinstance(amount, celtypes.BoolType | bool) or not isinstance(amount, int | float):
+        return celpy.CELEvalError(f"formatMinor() needs a whole number, not {type(amount).__name__}")
+    if isinstance(amount, float) and not amount.is_integer():
+        return celpy.CELEvalError(f"formatMinor() needs a whole number of minor units, not {amount}")
+    minor = int(amount)
+    sign = "-" if minor < 0 else ""
+    major, cents = divmod(abs(minor), 100)
+    return celtypes.StringType(f"{sign}{major:,}.{cents:02d}")
+
+
+_FUNCTIONS = {"lowerAscii": _lower_ascii, "formatMinor": _format_minor}
 
 
 class CelError(ValueError):

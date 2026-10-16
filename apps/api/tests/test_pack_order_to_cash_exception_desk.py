@@ -5,6 +5,7 @@ The pack's sandbox fixtures (sandbox/custom-business-app/<tool>.json) are genera
 (scripts/demo_data), so the checks read ids, dates and amounts from the fixture files; only the planted
 cases' amounts (DEMO_CASES.md) and the sellers are fixed."""
 
+import re
 from datetime import date
 
 from jsonschema import Draft202012Validator
@@ -110,8 +111,8 @@ def _state(triage: dict | None = None, drafts: dict | None = None, *, granted: b
 
 
 def _pesos(minor: int) -> str:
-    """Pesos the way the pack's CEL writes them: no thousands separators."""
-    return f"₱{minor // 100}.{minor % 100:02d}"
+    """Pesos the way the pack's CEL writes them (formatMinor): thousands separators, two decimals."""
+    return f"₱{minor // 100:,}.{minor % 100:02d}"
 
 
 def _days(reference: str) -> int:
@@ -343,6 +344,9 @@ def test_the_approval_says_what_it_sends_and_posts_in_pesos():
     )
     assert runtime_cel.resolve(summary, _state(triage, drafts)) == expected
     assert "DEMO-SNP-1 (₱40,252.80) is above ₱20,000" in expected
+    amounts = re.findall(r"₱[\d,]+(?:\.\d+)?", runtime_cel.resolve(summary, _state(triage, drafts)))
+    assert amounts and all(re.fullmatch(r"₱\d{1,3}(,\d{3})*(\.\d{2})?", a) for a in amounts), amounts
+    assert any("," in a for a in amounts[:4])  # the totals above ₱999.99 carry a separator too
     nothing = {
         **triage,
         "exceptions": [],

@@ -113,6 +113,33 @@ describe("EvidencePage", () => {
     expect(screen.getByText("Drafts created")).toBeInTheDocument();
   });
 
+  it("shows a long item detail whole and cuts a long opaque id in the label with its full value in the title", () => {
+    const orderId = "gid-shopify-order-7f3c2a9b1e4d5f6a7b8c9d0e";
+    const detail =
+      "Shipped on 2026-10-01 and invoiced the same day; the invoice is now 5 working days past the due date " +
+      "with no payment recorded in the ledger. Action: collection reminder (drafted).";
+    const d = drafts.deliverable as NonNullable<Run["deliverable"]>;
+    query.run = {
+      ...drafts,
+      deliverable: { ...d, items: [{ label: `${orderId} — Harbor Cafe — Shipped, not paid`, detail }] },
+    };
+    renderWithIntl(<EvidencePage id={drafts.id} />);
+    const id = screen.getByTitle(orderId);
+    expect(id).toHaveTextContent(orderId);
+    expect(id).toHaveClass("truncate");
+    expect(id.parentElement).toHaveTextContent(`${orderId} — Harbor Cafe — Shipped, not paid`);
+    const shown = screen.getByText(/past the due date/);
+    expect(shown).toHaveTextContent(detail);
+    expect(shown).not.toHaveClass("truncate");
+    expect(shown.className).not.toMatch(/line-clamp/);
+  });
+
+  it("leaves an email address in an item label whole", () => {
+    query.run = drafts;
+    renderWithIntl(<EvidencePage id={drafts.id} />);
+    expect(screen.getByText("ar@example.net — Your refund request")).not.toHaveAttribute("title");
+  });
+
   it("builds what was permitted, the contract and the basis from the run, not the reconciliation copy", () => {
     query.run = drafts;
     renderWithIntl(<EvidencePage id={drafts.id} />);

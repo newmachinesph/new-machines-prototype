@@ -34,27 +34,19 @@ deliverable_view:
     - label: Payments pending confirmation
       value: >-
         =string(deliverable.totals.payment_pending_confirmation.count) + ' · ₱' +
-        string(deliverable.totals.payment_pending_confirmation.amount_minor / 100) + '.' +
-        (deliverable.totals.payment_pending_confirmation.amount_minor % 100 < 10 ? '0' : '') +
-        string(deliverable.totals.payment_pending_confirmation.amount_minor % 100)
+        formatMinor(deliverable.totals.payment_pending_confirmation.amount_minor)
     - label: Shipped, not paid
       value: >-
         =string(deliverable.totals.shipped_not_paid.count) + ' · ₱' +
-        string(deliverable.totals.shipped_not_paid.amount_minor / 100) + '.' +
-        (deliverable.totals.shipped_not_paid.amount_minor % 100 < 10 ? '0' : '') +
-        string(deliverable.totals.shipped_not_paid.amount_minor % 100)
+        formatMinor(deliverable.totals.shipped_not_paid.amount_minor)
     - label: Paid, not shipped
       value: >-
         =string(deliverable.totals.paid_not_shipped.count) + ' · ₱' +
-        string(deliverable.totals.paid_not_shipped.amount_minor / 100) + '.' +
-        (deliverable.totals.paid_not_shipped.amount_minor % 100 < 10 ? '0' : '') +
-        string(deliverable.totals.paid_not_shipped.amount_minor % 100)
+        formatMinor(deliverable.totals.paid_not_shipped.amount_minor)
     - label: Disputed
       value: >-
         =string(deliverable.totals.disputed.count) + ' · ₱' +
-        string(deliverable.totals.disputed.amount_minor / 100) + '.' +
-        (deliverable.totals.disputed.amount_minor % 100 < 10 ? '0' : '') +
-        string(deliverable.totals.disputed.amount_minor % 100)
+        formatMinor(deliverable.totals.disputed.amount_minor)
     - label: Reminders drafted
       value: =string(deliverable.actions.reminders_drafted)
     - label: Finance notes

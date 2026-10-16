@@ -126,8 +126,18 @@ def test_a_view_renders_kind_summary_facts_and_one_item_per_draft():
         "c0@example.com — Invoice INV-0 is overdue",
     ]
     assert d.items[0].detail == "Hello,\n\nYour invoice is overdue."
-    assert d.items[2].detail == long_body[:160] and len(d.items[2].detail) == 160
+    assert d.items[2].detail == long_body  # a detail that fits is shown whole
     assert d.limitations == [projection.SIMULATED_LIMITATION] and d.unresolved == [] and d.evidence == []
+
+
+def test_a_long_item_detail_is_cut_at_a_word_and_says_so():
+    words = "Invoice is 5 working days past the due date and still unpaid. " * 20
+    clipped = projection._clip(words)
+    assert len(clipped) <= projection.VIEW_DETAIL_MAX and clipped.endswith("…")
+    assert words.startswith(clipped[:-1]) and words[len(clipped) - 1] == " "  # ends on a whole word
+    assert projection._clip("x" * 700) == "x" * (projection.VIEW_DETAIL_MAX - 1) + "…"  # no break: cut hard
+    assert projection._clip("short note") == "short note"
+    assert projection._clip("Paid, then " + "y" * 600) == "Paid, then…"
 
 
 def test_a_view_summary_counts_one_draft_in_the_singular():

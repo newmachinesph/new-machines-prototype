@@ -176,3 +176,45 @@ describe("PackPage edit a copy", () => {
     expect(editCopy()).toBeNull();
   });
 });
+
+describe("PackPage costs", () => {
+  const costs = () => screen.getByRole("heading", { name: "What it costs" }).closest("section")!;
+  const agentsTools = () => within(costs()).getByText("Agents and tools").parentElement!;
+
+  it("shows the price note as the estimate and the contract budget as a cap, not a range from zero", () => {
+    state.live = true;
+    state.extra = {
+      estimate: { aiMin: usd(0), aiMax: usd(3000), humanMax: usd(0) },
+      priceNote: "About $0.80 to $3.00 of AI work per run. No reviewer time: you approve the actions yourself.",
+    };
+    renderWithIntl(<PackPage slug="order-to-cash-exception-desk" />);
+    expect(agentsTools()).toHaveTextContent("About $0.80 to $3.00 of AI work per run.");
+    expect(within(agentsTools()).getByText("Up to $30.00 per run (cap)")).toBeInTheDocument();
+    expect(costs().textContent).not.toMatch(/\$0\.00/);
+  });
+
+  it("shows only the cap when a pack has no price note and its estimate starts at zero", () => {
+    state.extra = { estimate: { aiMin: usd(0), aiMax: usd(3000), humanMax: usd(0) } };
+    renderWithIntl(<PackPage slug="order-to-cash-exception-desk" />);
+    expect(within(agentsTools()).getByText("Up to $30.00 per run (cap)")).toBeInTheDocument();
+    expect(costs().textContent).not.toMatch(/\$0\.00/);
+  });
+
+  it("keeps a catalog estimate range that does not start at zero, with no cap line", () => {
+    renderWithIntl(<PackPage slug="order-payment-reconciliation" />);
+    expect(within(agentsTools()).getByText("$0.60–$2.40 per run")).toBeInTheDocument();
+    expect(within(costs()).queryByText(/\(cap\)/)).toBeNull();
+  });
+
+  it("says usage-based when there is neither an estimate nor a cap", () => {
+    state.extra = { estimate: { aiMin: usd(0), aiMax: usd(0), humanMax: usd(0) } };
+    renderWithIntl(<PackPage slug="order-payment-reconciliation" />);
+    expect(agentsTools()).toHaveTextContent("Usage-based");
+  });
+
+  it("writes the cap in Japanese", () => {
+    state.extra = { estimate: { aiMin: usd(0), aiMax: usd(3000), humanMax: usd(0) } };
+    renderWithIntl(<PackPage slug="order-to-cash-exception-desk" />, { locale: "ja" });
+    expect(screen.getByText(/1回の実行あたり最大.*30\.00.*（上限）/)).toBeInTheDocument();
+  });
+});

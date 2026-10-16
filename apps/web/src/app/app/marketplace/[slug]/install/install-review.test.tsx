@@ -111,6 +111,34 @@ describe("InstallReview spending cap", () => {
     expect(screen.queryByText(/\$0\.00–\$0\.00/)).toBeNull();
   });
 
+  it("shows the price note and the contract cap instead of a range from $0.00", () => {
+    const desk = {
+      ...pack,
+      estimate: { aiMin: usd(0), aiMax: usd(3000), humanMax: usd(0) },
+      priceNote: "About $0.80 to $3.00 of AI work per run. No reviewer time: you approve the actions yourself.",
+    };
+    renderWithIntl(<InstallReview pack={desk} />);
+    const line = within(summary()).getByText("Per run").parentElement!;
+    expect(line).toHaveTextContent("About $0.80 to $3.00 of AI work per run.");
+    expect(within(line).getByText("Up to $30.00 per run (cap)")).toBeInTheDocument();
+    // No reviewer budget: the line does not add reviewer pay.
+    expect(within(line).getByText("A run stops and asks you above $20.00")).toBeInTheDocument();
+    expect(summary().textContent).not.toMatch(/\$0\.00/);
+  });
+
+  it("adds reviewer pay after the cap when the pack has a reviewer budget, in Japanese too", () => {
+    const capped = { ...pack, estimate: { aiMin: usd(0), aiMax: usd(2250), humanMax: usd(750) } };
+    const { unmount } = renderWithIntl(<InstallReview pack={capped} />);
+    const line = within(summary()).getByText("Per run").parentElement!;
+    expect(within(line).getByText("Up to $22.50 per run (cap)")).toBeInTheDocument();
+    expect(within(line).getByText("Plus reviewer pay. A run stops and asks you above $20.00")).toBeInTheDocument();
+    unmount();
+    renderWithIntl(<InstallReview pack={capped} />, { locale: "ja" });
+    const ja = screen.getByText(/^1回の実行あたり最大/).parentElement!;
+    expect(ja).toHaveTextContent(/1回の実行あたり最大\$22\.50（上限）/);
+    expect(ja).toHaveTextContent("レビュアー報酬は別途。");
+  });
+
   it("does not repeat the cap and reviewer choices as summary rows", () => {
     renderWithIntl(<InstallReview pack={pack} />);
     expect(within(summary()).queryByText("Cap")).toBeNull();

@@ -991,7 +991,9 @@
       }
     },
     "price": {
-      "range": "{min}–{max}"
+      "range": "{min}–{max}",
+      "cap": "Up to {amount} per run (cap)",
+      "capPlusFee": "Up to {amount} per run (cap), plus the fee"
     },
     "trial": {
       "title": "Try it in the sandbox",
@@ -1104,6 +1106,8 @@
       "perRunLabel": "Per run",
       "perRunValue": "{price} plus reviewer pay. A run stops and asks you above {cap}",
       "perRunUnset": "Agent price not set, plus reviewer pay. A run stops and asks you above {cap}",
+      "perRunStop": "A run stops and asks you above {cap}",
+      "perRunStopReviewers": "Plus reviewer pay. A run stops and asks you above {cap}",
       "feeNote": "Added to every run, on top of the estimate, and counted toward the cap.",
       "region": "Data region",
       "agree": "I agree to the work contract and pay terms for this pack.",

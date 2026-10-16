@@ -105,6 +105,31 @@ def test_cel_evaluate_returns_plain_json_types():
     assert cel.evaluate('timestamp("2026-10-06T00:00:00Z")', state) == "2026-10-06T00:00:00Z"
 
 
+@pytest.mark.parametrize(
+    ("minor", "text"),
+    [
+        (0, "0.00"),
+        (5, "0.05"),
+        (99999, "999.99"),
+        (100000, "1,000.00"),
+        (5618280, "56,182.80"),
+        (123456789, "1,234,567.89"),
+        (-150005, "-1,500.05"),
+        (4025280.0, "40,252.80"),
+    ],
+)
+def test_cel_format_minor_groups_thousands_with_two_decimals(minor, text):
+    state = _state(match={"amount_minor": minor})
+    assert cel.evaluate("formatMinor(nodes.match.output.amount_minor)", state) == text
+    assert cel.evaluate("'₱' + nodes.match.output.amount_minor.formatMinor()", state) == "₱" + text
+
+
+@pytest.mark.parametrize("value", ['"12"', "12.5", "true"])
+def test_cel_format_minor_refuses_what_is_not_a_whole_number(value):
+    with pytest.raises(cel.CelError):
+        cel.evaluate(f"formatMinor({value})", _state())
+
+
 def test_cel_evaluate_error_raises():
     with pytest.raises(cel.CelError):
         cel.evaluate("nodes.nope.output", _state())

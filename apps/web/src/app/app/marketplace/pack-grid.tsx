@@ -16,7 +16,7 @@ import { useFeeLabel } from "@/lib/listing-fee";
 import { useFormat } from "@/lib/use-format";
 import { useCanBuild } from "@/app/studio/can-build";
 import { ListedAgents } from "./listed-agents";
-import { usePerRunPrice } from "./per-run";
+import { shortPriceNote, usePerRunCost } from "./per-run";
 
 // Sentinel values double as the `category` URL parameter, so they stay English; the labels shown are translated.
 const ALL = "All packs";
@@ -88,7 +88,8 @@ export function PackGrid() {
   const fee = useFeeLabel();
   const { list } = useFormat();
   const [mode, setMode] = useQueryState("view", parseAsString.withDefault("packs"));
-  const perRun = usePerRunPrice();
+  const perRun = usePerRunCost();
+  const tp = useTranslations("marketplace.price");
   const packsQuery = usePacks();
   const agentsQuery = useAgents();
   const agentById = useAgentById();
@@ -259,7 +260,8 @@ export function PackGrid() {
                           {shown.map((p) => {
                             // Every app a sandbox mock: say so once for the card, not once per app.
                             const allMocked = p.connectors.length > 0 && p.connectors.every((k) => k.mocked);
-                            const price = perRun(p.estimate);
+                            const cost = perRun(p);
+                            const hasFee = !!p.listing && p.listing.fee.amountMinor > 0;
                             return (
                               <li key={p.slug}>
                                 <Link
@@ -332,14 +334,28 @@ export function PackGrid() {
                                       ))}
                                       {allMocked ? <MockTag /> : null}
                                     </span>
-                                    <span className="tnum ml-auto whitespace-nowrap text-grey-700">
+                                    <span className="tnum ml-auto text-right text-grey-700" data-testid="pack-cost">
                                       {/* A listed pack's fee (above) is charged on top of the estimate: say so, so the
-                                          card never reads as two prices for one run. */}
-                                      {price === null
-                                        ? t("perRunUnset")
-                                        : p.listing && p.listing.fee.amountMinor > 0
-                                          ? t("perRunPlusFee", { price })
-                                          : t("perRun", { price })}
+                                          card never reads as two prices for one run. The note's priced sentence
+                                          is the typical cost; an estimate that is only the contract's cap says so. */}
+                                      {cost.note ? <span className="block">{shortPriceNote(cost.note)}</span> : null}
+                                      {!cost.note && cost.range !== null ? (
+                                        <span className="block whitespace-nowrap">
+                                          {hasFee
+                                            ? t("perRunPlusFee", { price: cost.range })
+                                            : t("perRun", { price: cost.range })}
+                                        </span>
+                                      ) : null}
+                                      {cost.cap ? (
+                                        <span
+                                          className={
+                                            cost.note ? "block whitespace-nowrap text-muted" : "block whitespace-nowrap"
+                                          }
+                                        >
+                                          {hasFee ? tp("capPlusFee", { amount: cost.capAmount ?? "" }) : cost.cap}
+                                        </span>
+                                      ) : null}
+                                      {!cost.note && cost.range === null && !cost.cap ? t("perRunUnset") : null}
                                     </span>
                                   </div>
                                 </Link>

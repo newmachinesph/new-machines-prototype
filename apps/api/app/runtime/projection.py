@@ -39,7 +39,7 @@ HUMAN_WORKFORCE = "Human workforce"  # `who` of the line that opens a review tas
 DECISION_MODEL_LABEL = "Decision model"  # product copy: never the model's or vendor's name
 _MODEL_ANSWERED = ("answered", "skipped")
 VIEW_ITEMS_MAX = 50  # a pack's deliverable view shows at most this many items
-VIEW_DETAIL_MAX = 160  # characters of an item's detail
+VIEW_DETAIL_MAX = 600  # characters of an item's detail; a longer one is cut at a word and ends with "…"
 
 log = logging.getLogger(__name__)
 
@@ -569,6 +569,19 @@ def _text(value: Any) -> str:
     return "" if value is None else str(value)
 
 
+def _clip(text: str, limit: int = VIEW_DETAIL_MAX) -> str:
+    """`text` whole when it fits in `limit` characters, else cut at the last word break before the limit and
+    ended with "…" (cut at the limit when there is no break), so a row never stops mid-word unmarked."""
+    if len(text) <= limit:
+        return text
+    head = text[: limit - 1]
+    if not text[limit - 1].isspace():
+        breaks = [i for i, c in enumerate(head) if c.isspace()]
+        if breaks and breaks[-1] > 0:
+            head = head[: breaks[-1]]
+    return head.rstrip().rstrip(",;:—-").rstrip() + "…"
+
+
 def _view_items(spec: dict, state: dict) -> list[dict]:
     source = _view_value(spec["from"], state)
     if not isinstance(source, list):
@@ -577,7 +590,7 @@ def _view_items(spec: dict, state: dict) -> list[dict]:
     for item in source[:VIEW_ITEMS_MAX]:
         scope = {**state, "item": item}
         detail = _text(_view_value(spec["detail"], scope))
-        items.append({"label": _text(_view_value(spec["label"], scope)), "detail": detail[:VIEW_DETAIL_MAX]})
+        items.append({"label": _text(_view_value(spec["label"], scope)), "detail": _clip(detail)})
     return items
 
 

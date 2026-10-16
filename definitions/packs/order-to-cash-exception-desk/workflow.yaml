@@ -165,9 +165,7 @@ nodes:
         collection reminders') + ' as Gmail drafts for ' +
         string(nodes.triage.output.totals.shipped_not_paid.count) + ' shipped-but-not-paid ' +
         (nodes.triage.output.totals.shipped_not_paid.count == 1 ? 'invoice' : 'invoices') + ' (' + '₱' +
-        string(nodes.triage.output.totals.shipped_not_paid.amount_minor / 100) + '.' +
-        (nodes.triage.output.totals.shipped_not_paid.amount_minor % 100 < 10 ? '0' : '') +
-        string(nodes.triage.output.totals.shipped_not_paid.amount_minor % 100) + ' outstanding)') + '; post
+        formatMinor(nodes.triage.output.totals.shipped_not_paid.amount_minor) + ' outstanding)') + '; post
         ' + string(size(nodes.triage.output.exceptions.filter(e, (e.recommended_action == 'confirm_payment'
         || e.recommended_action == 'escalate_finance') && nodes.sales_orders.output.sales_orders.exists(o,
         string(o.id) == string(e.order_id))))) + ' finance ' +
@@ -177,13 +175,9 @@ nodes:
         string(nodes.triage.output.totals.payment_pending_confirmation.count) + ' ' +
         (nodes.triage.output.totals.payment_pending_confirmation.count == 1 ? 'payment' : 'payments') + '
         pending confirmation, ' + '₱' +
-        string(nodes.triage.output.totals.payment_pending_confirmation.amount_minor / 100) + '.' +
-        (nodes.triage.output.totals.payment_pending_confirmation.amount_minor % 100 < 10 ? '0' : '') +
-        string(nodes.triage.output.totals.payment_pending_confirmation.amount_minor % 100) + '; ' +
+        formatMinor(nodes.triage.output.totals.payment_pending_confirmation.amount_minor) + '; ' +
         string(nodes.triage.output.totals.disputed.count) + ' disputed, ' + '₱' +
-        string(nodes.triage.output.totals.disputed.amount_minor / 100) + '.' +
-        (nodes.triage.output.totals.disputed.amount_minor % 100 < 10 ? '0' : '') +
-        string(nodes.triage.output.totals.disputed.amount_minor % 100) + '; ' +
+        formatMinor(nodes.triage.output.totals.disputed.amount_minor) + '; ' +
         string(size(nodes.triage.output.exceptions.filter(e, (e.recommended_action == 'confirm_payment' ||
         e.recommended_action == 'escalate_finance') && nodes.sales_orders.output.sales_orders.exists(o,
         string(o.id) == string(e.order_id))).filter(e, e.kind == 'shipped_not_paid'))) + '
@@ -195,9 +189,7 @@ nodes:
         string(e.order_id)))) == 1 ? 'nudge' : 'nudges') + ' (' +
         string(nodes.triage.output.totals.paid_not_shipped.count) + ' paid ' +
         (nodes.triage.output.totals.paid_not_shipped.count == 1 ? 'order' : 'orders') + ' waiting, ' + '₱' +
-        string(nodes.triage.output.totals.paid_not_shipped.amount_minor / 100) + '.' +
-        (nodes.triage.output.totals.paid_not_shipped.amount_minor % 100 < 10 ? '0' : '') +
-        string(nodes.triage.output.totals.paid_not_shipped.amount_minor % 100) + ').' +
+        formatMinor(nodes.triage.output.totals.paid_not_shipped.amount_minor) + ').' +
         (nodes.triage.output.sign_off_note == '' ? '' : ' ' + nodes.triage.output.sign_off_note) +
         (size(nodes.draft.output.drafts.filter(d, !(nodes.sales_orders.output.sales_orders.filter(o,
         string(o.id) == string(d.order_id)).exists(o, nodes.customers.output.customers.exists(c,

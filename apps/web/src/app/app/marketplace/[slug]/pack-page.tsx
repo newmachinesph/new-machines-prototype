@@ -24,10 +24,11 @@ import { useFeeLabel } from "@/lib/listing-fee";
 import { useAgentById, useAgents, usePack, useUpgradePack } from "@/lib/queries/catalog";
 import { useIsLive } from "@/lib/queries/me";
 import { shownVersion } from "@/lib/shown-version";
+import type { Pack } from "@/lib/types";
 import { useFormat } from "@/lib/use-format";
 import { useCapabilityLabel } from "@/app/app/agents/capability-label";
 import { useCanBuild } from "@/app/studio/can-build";
-import { usePerRunPrice } from "../per-run";
+import { usePerRunCost } from "../per-run";
 import { SandboxTrial, TRIAL_ID } from "./sandbox-trial";
 
 /** A newer version of a pack the workspace added. Runs keep their version until someone in the workspace updates it. */
@@ -61,13 +62,27 @@ function UpdateCallout({ slug, listing }: { slug: string; listing: MarketplaceLi
   );
 }
 
+/** What agents and tools cost a run: the pack's typical estimate (its price note, or the catalog's estimate
+ * range), then its cap (see usePerRunCost). */
+function AgentsToolsCost({ pack }: { pack: Pack }) {
+  const t = useTranslations("marketplace.pack");
+  const { note, range, cap } = usePerRunCost()(pack);
+  const estimate = note ?? (range === null ? null : t("perRun", { price: range }));
+  if (!estimate && !cap) return <>{t("perRunUnset")}</>;
+  return (
+    <span className="block">
+      {estimate ? <span className="block">{estimate}</span> : null}
+      {cap ? <span className={estimate ? "tnum mt-0.5 block text-muted" : "tnum block"}>{cap}</span> : null}
+    </span>
+  );
+}
+
 export function PackPage({ slug }: { slug: string }) {
   const t = useTranslations("marketplace.pack");
   const tc = useTranslations("common");
   const tl = useTranslations("listedMarket");
   const fee = useFeeLabel();
   const { money, list } = useFormat();
-  const perRun = usePerRunPrice();
   const label = useCapabilityLabel();
   const packQuery = usePack(slug);
   const agentsQuery = useAgents();
@@ -245,14 +260,7 @@ export function PackPage({ slug }: { slug: string }) {
                           rows={[
                             {
                               label: t("agentsTools"),
-                              value: (() => {
-                                const price = perRun(p.estimate);
-                                return (
-                                  <span className="tnum">
-                                    {price === null ? t("perRunUnset") : t("perRun", { price })}
-                                  </span>
-                                );
-                              })(),
+                              value: <AgentsToolsCost pack={p} />,
                             },
                             ...(p.listing
                               ? [
