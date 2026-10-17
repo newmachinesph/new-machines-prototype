@@ -184,23 +184,91 @@ def readable_spaces(org_id: str) -> dict[str, dict]:
     }
 
 
-def readable_space(org_id: str, space: str) -> dict:
-    """The definition body of `space`; 422 unless the org may read it."""
-    body = readable_spaces(org_id).get(space)
+def _readable(spaces: dict[str, dict], space: str) -> dict:
+    """The body of `space` in `spaces` (the org's readable spaces); 422 when it is not there."""
+    body = spaces.get(space)
     if body is None:
         raise ApiProblem(422, "SCHEMA_INVALID", f"space: no memory space called {space}.")
     return body
+
+
+def readable_space(org_id: str, space: str) -> dict:
+    """The definition body of `space`; 422 unless the org may read it."""
+    return _readable(readable_spaces(org_id), space)
 
 
 def space_name(space: str, body: dict) -> str:
     return str(body.get("name") or space)
 
 
+def pack_spaces(defs: live_catalog.Definitions, pack: dict) -> set[str]:
+    """The memory spaces a pack uses: the space of each memory node (recall or remember) of its workflow,
+    and every space one of its agents writes (the space's `writers`)."""
+    workflow = defs.bodies("workflow").get(str(pack.get("workflow") or "")) or {}
+    used = set()
+    for node in workflow.get("nodes") or []:
+        cfg = node.get("config") if isinstance(node, dict) else None
+        if (
+            isinstance(node, dict)
+            and node.get("type") == "memory"
+            and isinstance(cfg, dict)
+            and cfg.get("space")
+        ):
+            used.add(str(cfg["space"]))
+    agents = {str(a) for a in pack.get("agents") or []}
+    for key, body in defs.bodies("memory_space").items():
+        if agents & {str(w) for w in body.get("writers") or []}:
+            used.add(key)
+    return used
+
+
+def spaces_in_use(org_id: str, readable: dict[str, dict]) -> dict[str, dict]:
+    """Of `readable` (the org's readable spaces, computed once per request), the spaces in use by the org:
+    those a pack it has added uses (`pack_spaces`), each pack read at the version its installation pins, so
+    the page matches what the org's runs recall. Empty for an org with no packs, so its Memory page shows
+    no other business's policies."""
+    if not readable:
+        return {}
+    with db.connect() as conn:
+        rows = conn.execute(
+            "SELECT pack_slug, pack_version FROM installations WHERE org_id = %s", (org_id,)
+        ).fetchall()
+    if not rows:
+        return {}
+    defs = live_catalog.definitions(org_id)
+    used: set[str] = set()
+    with db.connect() as conn:
+        for row in rows:
+            latest = defs.pack(row["pack_slug"])
+            if latest is None:  # withdrawn since: its spaces are no longer in use
+                continue
+            pinned = registry.get_version(conn, "pack", latest.key, int(row["pack_version"]))
+            used |= pack_spaces(defs, (pinned or latest).body)
+    return {key: body for key, body in readable.items() if key in used}
+
+
+def space_in_use(org_id: str, space: str) -> dict:
+    """The definition body of `space`; 422 unless the org may read it and a pack it has added uses it. The
+    readable spaces are loaded once for both checks."""
+    readable = readable_spaces(org_id)
+    body = _readable(readable, space)
+    if space not in spaces_in_use(org_id, readable):
+        raise ApiProblem(
+            422,
+            "SCHEMA_INVALID",
+            f"space: none of the packs you have added uses {space_name(space, body)}. Add a pack first.",
+        )
+    return body
+
+
+def space_options(spaces: dict[str, dict]) -> list[MemorySpaceOption]:
+    return [MemorySpaceOption(id=key, name=space_name(key, body)) for key, body in spaces.items()]
+
+
 def memory_spaces(org_id: str) -> list[MemorySpaceOption]:
-    """The spaces the org may add its own memory to: every space it may read, by name."""
-    return [
-        MemorySpaceOption(id=key, name=space_name(key, body)) for key, body in readable_spaces(org_id).items()
-    ]
+    """The spaces the org may add its own memory to: the readable ones a pack it has added uses, by name.
+    Empty until the org adds a pack."""
+    return space_options(spaces_in_use(org_id, readable_spaces(org_id)))
 
 
 def require_manager(actor: Actor, action: str = "add a memory") -> None:
@@ -261,15 +329,19 @@ def _params(org_id: str, **more) -> dict:
 
 
 def list_memory(org_id: str) -> list[MemoryItem]:
-    """The org's own items and the shared ones (seed and console), in spaces the org may read, newest
-    first. Retracted items stay listed, marked retracted; quarantined items never are."""
+    """The org's own items in every space it may read, and the shared ones (seed and console) only in the
+    spaces a pack it has added uses, newest first. Retracted items stay listed, marked retracted; quarantined
+    items never are."""
     spaces = readable_spaces(org_id)
     if not spaces:
         return []
+    used = list(spaces_in_use(org_id, spaces))
     with db.connect() as conn:
         rows = conn.execute(
-            f"{_MEMORY_SELECT} AND space = ANY(%(spaces)s) ORDER BY created_at DESC, id DESC LIMIT %(limit)s",
-            _params(org_id, spaces=list(spaces), limit=MEMORY_LIMIT),
+            f"{_MEMORY_SELECT} AND space = ANY(%(spaces)s) "
+            "AND (org_id IS NOT NULL OR space = ANY(%(used)s)) "
+            "ORDER BY created_at DESC, id DESC LIMIT %(limit)s",
+            _params(org_id, spaces=list(spaces), used=used, limit=MEMORY_LIMIT),
         ).fetchall()
     return [_memory_item(r, spaces) for r in rows]
 
@@ -287,9 +359,9 @@ def memory_exists(org_id: str, item_id: str) -> bool:
 
 
 def add_memory(actor: Actor, space: str, text: str) -> MemoryItem:
-    """Add an item of the org's own to `space` (422 unless the org may read it). Runs of the org recall it
-    from now on; no other org's do. The caller has checked the actor's role."""
-    body = readable_space(actor.org_id, space)
+    """Add an item of the org's own to `space` (422 unless the org may read it and a pack it has added uses
+    it). Runs of the org recall it from now on; no other org's do. The caller has checked the actor's role."""
+    body = space_in_use(actor.org_id, space)
     with db.connect() as conn:
         _check_team_memory_cap(conn, actor.org_id)
         item = memory.remember(conn, space, text, TEAM_SOURCE, actor.user_id, org_id=actor.org_id)

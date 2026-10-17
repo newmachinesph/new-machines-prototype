@@ -233,3 +233,14 @@ def worker_concurrency() -> int:
 def db_pool_max() -> int:
     """Largest Postgres pool this process opens."""
     return _positive_int("NM_DB_POOL_MAX", 8)
+
+
+def langfuse_keys() -> tuple[str, str, str] | None:
+    """(host, public key, secret key) of the Langfuse project that receives the agents' model-call traces,
+    or None unless all three are set: then no trace leaves the process. Never log or return the keys."""
+    host = os.environ.get("LANGFUSE_HOST", "").strip()
+    public_key = os.environ.get("LANGFUSE_PUBLIC_KEY", "").strip()
+    secret_key = os.environ.get("LANGFUSE_SECRET_KEY", "").strip()
+    if not (host and public_key and secret_key):
+        return None
+    return host, public_key, secret_key

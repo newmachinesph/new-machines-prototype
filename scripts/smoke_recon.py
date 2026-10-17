@@ -11,6 +11,7 @@ any failure.
 
 import argparse
 import os
+import signal
 import socket
 import subprocess
 import sys
@@ -189,6 +190,19 @@ def drive(api, pack: str, model_env: str) -> int:
     return 0
 
 
+def stop_worker(worker: subprocess.Popen) -> None:
+    """Ask the worker to stop (it finishes its activities and sends its model-call traces), then make sure
+    it is gone. The worker treats Ctrl+Break on Windows like SIGTERM elsewhere."""
+    if worker.poll() is not None:
+        return
+    worker.send_signal(signal.CTRL_BREAK_EVENT if sys.platform == "win32" else signal.SIGTERM)
+    try:
+        worker.wait(timeout=15)
+    except subprocess.TimeoutExpired:
+        worker.kill()
+        worker.wait(timeout=15)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--pack", default="order-payment-reconciliation", choices=sorted(PACKS))
@@ -232,8 +246,15 @@ def main() -> int:
     print("migrated and applied definitions")
 
     log = tempfile.NamedTemporaryFile("w+", suffix=".log", prefix="smoke-worker-", delete=False)  # noqa: SIM115
+    # Its own process group on Windows, so `stop_worker` can send it Ctrl+Break and nothing else.
+    group = subprocess.CREATE_NEW_PROCESS_GROUP if sys.platform == "win32" else 0
     worker = subprocess.Popen(
-        [sys.executable, "-m", "app.worker"], cwd=API_DIR, env=os.environ.copy(), stdout=log, stderr=log
+        [sys.executable, "-m", "app.worker"],
+        cwd=API_DIR,
+        env=os.environ.copy(),
+        stdout=log,
+        stderr=log,
+        creationflags=group,
     )
     try:
         time.sleep(3)
@@ -247,12 +268,7 @@ def main() -> int:
         with TestClient(create_app()) as api:
             return drive(api, args.pack, args.model_env)
     finally:
-        worker.terminate()
-        try:
-            worker.wait(timeout=15)
-        except subprocess.TimeoutExpired:
-            worker.kill()
-            worker.wait(timeout=15)
+        stop_worker(worker)
         log.close()
         print("worker log:", log.name)
 

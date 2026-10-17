@@ -41,6 +41,7 @@ import { useAgentName, usePackName, usePacks } from "@/lib/queries/catalog";
 import { useCanBuild } from "@/app/studio/can-build";
 import { useIsDemo, useIsLive, useMe } from "@/lib/queries/me";
 import { useOrg } from "@/lib/queries/org";
+import { usePlanName } from "@/lib/plan-name";
 import { useStudioListing } from "@/lib/queries/publishing";
 import { useStudioAgent, useStudioPack } from "@/lib/queries/studio";
 import { useEligibleTasks } from "@/lib/queries/tasks";
@@ -313,10 +314,6 @@ function NavLink({
 
 /** The first letter of a name, for the small workspace and person badges. */
 const initial = (name: string | undefined) => (name?.trim()[0] ?? "").toUpperCase();
-/** The plans the messages name (`nav.plans`); the API's plan names are compared lower-cased. */
-const PLANS = ["trial", "pro"] as const;
-type PlanKey = (typeof PLANS)[number];
-const planKey = (plan: string): PlanKey | undefined => PLANS.find((p) => p === plan.toLowerCase());
 
 /** Who is signed in: their name, else their email, else the demo operator (demo) or a plain "You" (live). */
 function usePerson() {
@@ -325,7 +322,7 @@ function usePerson() {
   const demo = useIsDemo();
   const known = me?.name || me?.email || "";
   const name = known || (me ? (demo ? t("demoOperator") : t("you")) : "");
-  return { name, known, role: me ? t(`roles.${me.role}`) : "" };
+  return { name, role: me ? t(`roles.${me.role}`) : "" };
 }
 
 /**
@@ -344,25 +341,16 @@ function useReplayTour(): ((opener: Element | null) => void) | undefined {
   };
 }
 
-/** `returnFocusTo` is where focus goes after a tour started from this menu: its own trigger, unless that leaves the
- * page with the menu (in the drawer). */
-function WorkspaceMenu({ mode, returnFocusTo }: { mode: ShellMode; returnFocusTo?: RefObject<HTMLElement | null> }) {
+/** Where to work: the business workspace, the reviewer portal and, live, the Studio. The person's own entries
+ * (language, the tour, sign out) are in the AccountMenu at the bottom of the sidebar. */
+function WorkspaceMenu({ mode }: { mode: ShellMode }) {
   const work = mode === "work";
-  const trigger = useRef<HTMLButtonElement>(null);
-  const replayTour = useReplayTour();
-  const tTour = useTranslations("tour.common");
   const live = useIsLive();
-  const { signOut } = useSession();
-  const toast = useToast();
   const t = useTranslations("nav");
   const meQuery = useMe();
   const me = meQuery.data;
-  const planName = useOrg().data?.plan;
-  // The plans the messages name are shown in the interface language; any other plan as the API sent it.
-  const known = planName ? planKey(planName) : undefined;
-  const plan = known ? t(`plans.${known}`) : planName;
+  const plan = usePlanName()(useOrg().data?.plan);
   const demo = useIsDemo();
-  const person = usePerson();
   const failed = meQuery.isError;
   const orgName = me?.orgName ?? "";
   // The demo's reviewer is a made-up persona; a live reviewer portal is the signed-in person's.
@@ -373,10 +361,8 @@ function WorkspaceMenu({ mode, returnFocusTo }: { mode: ShellMode; returnFocusTo
   return (
     <MenuRoot>
       <MenuTrigger
-        ref={trigger}
         className="flex min-h-10 w-full items-center gap-2.5 rounded-md px-2 py-1 text-left hover:bg-grey-50 data-[popup-open]:bg-grey-100"
         aria-label={t("switchWorkspace", { name: label })}
-        data-tour="account-menu"
       >
         <span
           className={cn(
@@ -440,25 +426,75 @@ function WorkspaceMenu({ mode, returnFocusTo }: { mode: ShellMode; returnFocusTo
             </MenuLink>
           ) : null}
         </MenuGroup>
+      </MenuPopup>
+    </MenuRoot>
+  );
+}
+
+/**
+ * The signed-in person, at the bottom of the sidebar and of the drawer: a menu button showing their name and role,
+ * whose menu names them (name and email), switches the language, replays the area's tour and signs out. Base UI
+ * gives it the menu button pattern: arrow keys move, Escape closes and focus returns to the button.
+ * `returnFocusTo` is where focus goes after a tour started from this menu: its own trigger, unless that leaves the
+ * page with the menu (in the drawer).
+ */
+function AccountMenu({ mode, returnFocusTo }: { mode: ShellMode; returnFocusTo?: RefObject<HTMLElement | null> }) {
+  const work = mode === "work";
+  const t = useTranslations("nav");
+  const tTour = useTranslations("tour.common");
+  const trigger = useRef<HTMLButtonElement>(null);
+  const replayTour = useReplayTour();
+  const { signOut } = useSession();
+  const toast = useToast();
+  const me = useMe().data;
+  const demo = useIsDemo();
+  const person = usePerson();
+  // The demo's reviewer is a made-up persona; a live reviewer portal is the signed-in person's.
+  const persona = work && demo;
+  const name = persona ? t("reviewerName") : person.name;
+  // In the reviewer portal everyone works as a reviewer, whatever their workspace role.
+  const role = persona ? t("reviewerRole") : work ? t("roles.reviewer") : person.role;
+  // The email is the menu's second line when the name is not already it; otherwise there is no second line, as
+  // the role already shows on the trigger.
+  const email = !persona && me?.email && me.email !== name ? me.email : undefined;
+  return (
+    <MenuRoot>
+      <MenuTrigger
+        ref={trigger}
+        className="flex min-h-10 w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left hover:bg-grey-50 data-[popup-open]:bg-grey-100"
+        aria-label={t("accountMenu", { name: name || t("groups.account") })}
+        data-tour="account-menu"
+      >
+        <span
+          className="grid size-6 shrink-0 place-items-center rounded-full bg-grey-100 text-[11px] font-semibold"
+          aria-hidden
+        >
+          {persona ? "R" : initial(person.name)}
+        </span>
+        <span className="min-w-0 flex-1 text-xs leading-tight">
+          <span className="block truncate font-medium text-ink">{name}</span>
+          <span className="block truncate text-muted">{role}</span>
+        </span>
+        <ChevronsUpDown className="size-3.5 shrink-0 text-grey-500" aria-hidden />
+      </MenuTrigger>
+      <MenuPopup align="start" side="top" className="w-64">
+        <div className="px-2.5 pt-1 pb-2 text-sm">
+          <div className="truncate font-medium">{name}</div>
+          {email ? <div className="truncate text-xs text-muted">{email}</div> : null}
+        </div>
         <MenuSeparator />
         <LanguageMenuItems />
         <MenuSeparator />
-        <MenuGroup>
-          <MenuGroupLabel>{t("groups.account")}</MenuGroupLabel>
-          <div className="truncate px-2.5 pb-1.5 text-sm text-grey-700">
-            {demo ? t("signedInAs") : person.known ? t("signedInAsUser", { who: person.known }) : t("signedIn")}
-          </div>
-          {replayTour ? (
-            <MenuItem onClick={() => replayTour((returnFocusTo ?? trigger).current)}>
-              <Compass className="size-4 text-grey-500" strokeWidth={1.75} aria-hidden />
-              {tTour("replay")}
-            </MenuItem>
-          ) : null}
-          <MenuItem onClick={() => void signOut().catch(() => toast(t("signOutFailed"), t("tryAgain"), "blocked"))}>
-            <LogOut className="size-4 text-grey-500" strokeWidth={1.75} aria-hidden />
-            {t("signOut")}
+        {replayTour ? (
+          <MenuItem onClick={() => replayTour((returnFocusTo ?? trigger).current)}>
+            <Compass className="size-4 text-grey-500" strokeWidth={1.75} aria-hidden />
+            {tTour("replay")}
           </MenuItem>
-        </MenuGroup>
+        ) : null}
+        <MenuItem onClick={() => void signOut().catch(() => toast(t("signOutFailed"), t("tryAgain"), "blocked"))}>
+          <LogOut className="size-4 text-grey-500" strokeWidth={1.75} aria-hidden />
+          {t("signOut")}
+        </MenuItem>
       </MenuPopup>
     </MenuRoot>
   );
@@ -557,12 +593,8 @@ function SimulationStrip() {
 }
 
 function Sidebar({ mode, path }: { mode: ShellMode; path: string }) {
-  const work = mode === "work";
   const setPaletteOpen = useUi((s) => s.setPaletteOpen);
   const t = useTranslations("nav");
-  const person = usePerson();
-  const demo = useIsDemo();
-  const persona = work && demo;
   return (
     <aside className="hidden w-[248px] shrink-0 border-r border-rule bg-paper lg:block">
       <div className="sticky top-0 flex h-dvh flex-col">
@@ -584,21 +616,7 @@ function Sidebar({ mode, path }: { mode: ShellMode; path: string }) {
         <div className="border-t border-rule p-3">
           <SimulationBadge />
           <SwitchWorkspaceLink mode={mode} />
-          <div className="flex items-center gap-2.5 px-2.5 py-1.5">
-            <span
-              className="grid size-6 place-items-center rounded-full bg-grey-100 text-[11px] font-semibold"
-              aria-hidden
-            >
-              {persona ? "R" : initial(person.name)}
-            </span>
-            <div className="min-w-0 text-xs leading-tight">
-              <div className="truncate font-medium text-ink">{persona ? t("reviewerName") : person.name}</div>
-              {/* In the reviewer portal everyone works as a reviewer, whatever their workspace role. */}
-              <div className="truncate text-muted">
-                {persona ? t("reviewerRole") : work ? t("roles.reviewer") : person.role}
-              </div>
-            </div>
-          </div>
+          <AccountMenu mode={mode} />
         </div>
       </div>
     </aside>
@@ -643,7 +661,7 @@ function MobileNav({ mode, path }: { mode: ShellMode; path: string }) {
           <div className="flex items-center gap-1 px-3 pt-3">
             {/* A pick in the workspace menu closes the drawer even when it links to the current page. */}
             <div className="min-w-0 flex-1" onClickCapture={(e) => (e.target as HTMLElement).closest("a") && close()}>
-              <WorkspaceMenu mode={mode} returnFocusTo={openButton} />
+              <WorkspaceMenu mode={mode} />
             </div>
             <Dialog.Close
               aria-label={t("closeNavigation")}
@@ -658,6 +676,8 @@ function MobileNav({ mode, path }: { mode: ShellMode; path: string }) {
           <div className="border-t border-rule p-3">
             <SimulationBadge />
             <SwitchWorkspaceLink mode={mode} onNavigate={close} />
+            {/* Signing out leaves the page; a tour closes the drawer itself (see useReplayTour). */}
+            <AccountMenu mode={mode} returnFocusTo={openButton} />
           </div>
         </Dialog.Popup>
       </Dialog.Portal>

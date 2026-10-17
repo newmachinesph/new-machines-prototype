@@ -3,13 +3,24 @@
 import { useTranslations } from "next-intl";
 import type { CardComponentProps } from "nextstepjs";
 import { useEffect, useId, useRef, type KeyboardEvent } from "react";
+import { createPortal } from "react-dom";
 import { Button } from "@/components/ui";
+import { cn } from "@/lib/cn";
+import { SHEET_MAX_WIDTH } from "@/lib/tour/fit";
+import { useMatches } from "@/lib/use-matches";
+
+// The library's overlay and card container; the sheet sits above them.
+const SHEET_Z = 1000;
 
 /**
  * One step of a product tour, in the app's own popup style. The tour library places it and draws the spotlight;
  * Escape (skip) and the arrow keys (back, next) are handled there. Focus moves to the step's main button, so Enter
  * goes on, and Tab cycles through the card's buttons. The provider makes the page inert while the card shows and
  * returns focus to it when the tour closes.
+ *
+ * On a phone (below `sm`) the card leaves the library's container for a sheet along the bottom of the window, so it
+ * never sits over the element it points at or the content under it; `useFitStep` scrolls the target into the room
+ * above it. The sheet has no caret.
  */
 export function TourCard({ step, currentStep, totalSteps, nextStep, prevStep, skipTour, arrow }: CardComponentProps) {
   const t = useTranslations("tour.common");
@@ -18,6 +29,8 @@ export function TourCard({ step, currentStep, totalSteps, nextStep, prevStep, sk
   const primary = useRef<HTMLButtonElement>(null);
   const first = currentStep === 0;
   const last = currentStep === totalSteps - 1;
+  // Matches on the server and without matchMedia (tests): the pointed card is the default.
+  const sheet = !useMatches(`(min-width: ${SHEET_MAX_WIDTH}px)`);
 
   useEffect(() => {
     primary.current?.focus({ preventScroll: true });
@@ -34,7 +47,7 @@ export function TourCard({ step, currentStep, totalSteps, nextStep, prevStep, sk
     buttons[next].focus();
   };
 
-  return (
+  const card = (
     <div
       // A new dialog for each step, so focus moving into it announces the step: the library keeps one card mounted,
       // and Next keeping focus on the same button would announce nothing after step 1.
@@ -44,12 +57,18 @@ export function TourCard({ step, currentStep, totalSteps, nextStep, prevStep, sk
       aria-labelledby={titleId}
       aria-describedby={bodyId}
       onKeyDown={containFocus}
-      className="relative w-[min(340px,calc(100vw-2rem))] rounded-[10px] border border-rule bg-paper p-4 text-ink shadow-[0_8px_28px_rgb(17_17_17/0.12)]"
+      data-tour-card
+      className={cn(
+        "relative rounded-[10px] border border-rule bg-paper p-4 text-ink shadow-[0_8px_28px_rgb(17_17_17/0.12)]",
+        sheet ? "w-full" : "w-[min(340px,calc(100vw-2rem))]",
+      )}
     >
-      {/* The library's caret, filled with the card's own colour. */}
-      <span className="text-paper" aria-hidden>
-        {arrow}
-      </span>
+      {/* The library's caret, filled with the card's own colour. A sheet points at nothing. */}
+      {sheet ? null : (
+        <span className="text-paper" aria-hidden>
+          {arrow}
+        </span>
+      )}
       <p className="tnum text-xs text-muted">{t("stepOf", { n: currentStep + 1, total: totalSteps })}</p>
       <h2 id={titleId} className="mt-1 text-base font-semibold">
         {step.title}
@@ -75,5 +94,17 @@ export function TourCard({ step, currentStep, totalSteps, nextStep, prevStep, sk
         </div>
       </div>
     </div>
+  );
+
+  if (!sheet || typeof document === "undefined") return card;
+  return createPortal(
+    <div
+      data-tour-sheet
+      className="fixed inset-x-0 bottom-0 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+      style={{ zIndex: SHEET_Z }}
+    >
+      {card}
+    </div>,
+    document.body,
   );
 }

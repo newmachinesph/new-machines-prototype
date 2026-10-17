@@ -9,5 +9,5 @@ writers: [ops-agent]
 seed_items:
   - Card processing fees are 2.9% plus 30 cents per charge. A fee is expected and not a mismatch only when the merchant reports net amounts; this merchant reports gross amounts, so a charge that is short by the fee is a mismatch.
   - Amounts that differ by 1 cent or less are rounding and count as a match.
-  - A refund is recorded on the original charge (refunded set to true, or amount_refunded above 0), not as a separate negative charge.
+  - A refund is recorded on the original charge (the charge is marked refunded, or shows a refunded amount above 0), not as a separate negative charge.
   - Orders over $500 need a person to confirm before they are reported as matched.

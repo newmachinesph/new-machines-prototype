@@ -37,7 +37,7 @@ test("the demo path works end to end", async ({ page }) => {
   await expectNoSeriousA11yViolations(page);
 
   await page
-    .getByRole("button", { name: /switch workspace/ })
+    .getByRole("button", { name: /account menu/ })
     .first()
     .click();
   await page.getByRole("menuitemradio", { name: "日本語" }).click();

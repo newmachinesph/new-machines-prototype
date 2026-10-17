@@ -15,6 +15,7 @@ from app.defs.model import Bundle
 from app.defs.registry import apply_bundle
 from app.defs.validate import validate_bundle
 from app.errors import document_problem_json, install_error_handlers
+from app.runtime import tracing
 
 log = logging.getLogger(__name__)
 
@@ -58,11 +59,25 @@ def apply_definitions() -> None:
     log.info("Startup: %d migrations, %d new definition versions.", len(applied), len(created))
 
 
+# Cloud Run sends SIGKILL 10 s after SIGTERM: stopping the worker and sending its traces share this budget.
+SHUTDOWN_BUDGET_S = 9.0
+
+
+def _send_traces(worker_stopped: bool, budget_s: float) -> None:
+    """Send the embedded worker's model-call traces still batched, within what is left of the shutdown budget.
+    A worker that did not stop keeps its client: a model call still in flight must not build a second one."""
+    timeout = max(1.0, min(tracing.FLUSH_TIMEOUT_S, budget_s))
+    if worker_stopped:
+        tracing.shutdown(timeout)
+    else:
+        tracing.flush(timeout)
+
+
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     """With NM_DEFS_AUTO_APPLY on, the server applies migrations and definition files before serving; with
-    NM_EMBEDDED_WORKER on (and the runtime on) it then starts the PackRunner worker in-process. The
-    Postgres pool (opened on first use) is closed on shutdown."""
+    NM_EMBEDDED_WORKER on (and the runtime on) it then starts the PackRunner worker in-process. On shutdown
+    the worker's model-call traces are sent, then the Postgres pool (opened on first use) is closed."""
     if settings.defs_auto_apply():
         apply_definitions()
     embedded = settings.runtime_enabled() and settings.embedded_worker()
@@ -77,7 +92,10 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
         if embedded:
             from app.worker.embedded import stop_embedded
 
+            started = asyncio.get_running_loop().time()
             worker_stopped = await asyncio.to_thread(stop_embedded)
+            left = SHUTDOWN_BUDGET_S - (asyncio.get_running_loop().time() - started)
+            await asyncio.to_thread(_send_traces, worker_stopped, left)
         if worker_stopped:
             db.reset_pool()
         else:

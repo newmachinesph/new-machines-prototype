@@ -178,8 +178,10 @@ function TourHost({ children }: { children: ReactNode }) {
           side: s.side,
           // The tour explains; it does not navigate. Clicks on the highlighted element wait until it closes.
           disableInteraction: true,
-          pointerPadding: 8,
-          pointerRadius: 10,
+          // A step with no target (centred, or a sheet on a phone) gets no spotlight: padding alone would draw a
+          // dot in the middle of the window.
+          pointerPadding: s.selector ? 8 : 0,
+          pointerRadius: s.selector ? 10 : 0,
           // A target scrolled into view clears the sticky top bar.
           scrollOffset: TOP_CLEARANCE,
         })),

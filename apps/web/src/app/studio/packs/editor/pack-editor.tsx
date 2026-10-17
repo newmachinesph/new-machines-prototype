@@ -38,7 +38,7 @@ import { StepList } from "./step-list";
 import { StepIssuesContext } from "./step-node";
 import { StepSettings } from "./step-settings";
 import { TestDialog } from "./test-dialog";
-import { useMatches } from "./use-matches";
+import { useMatches } from "@/lib/use-matches";
 import { YamlDialog } from "./yaml-dialog";
 
 const NO_ISSUES: ServerIssue[] = [];

@@ -24,10 +24,12 @@ the product. `NM_WORKSPACE` picks one per deployment.
 | Workflow runtime: runs, retries, approvals, human tasks, budgets and caps | Live (Temporal + Postgres) |
 | Agent steps (agents built on Google ADK) | Live, on Gemini models on Vertex AI; a fake provider for tests and keyless local runs |
 | Policy checks on every tool call (Tool Gateway) and decision rules | Live |
+| Business memory: owners and admins add a memory to a space their workspace reads | Live; applies from the next run, retractable, 100 per workspace |
 | Work receipts (hash-chained, verified when a run page loads) | Live |
 | App connections: Gmail, Google Calendar, Docs and Sheets, Shopify, Stripe | Live per workspace through each app's own sign-in, or simulated data per app; each connection picks |
 | A workspace's own MCP servers as connectors | Live |
 | Human review: claim, review, submit in the reviewer portal | Live; network reviewers see a redacted copy |
+| Accounts: sign in with Google, or create an account with email and password | Live; no verification email is sent, and invitations need a Google sign-in |
 | Developer Studio: build, test in the sandbox, publish, list on the marketplace with operator review | Live |
 | Billing, plan, publisher fees, reviewer pay and payouts | **Simulated**: metered from real run steps, but no money moves |
 | Operator console guardrails | Pause-all-runs is enforced; the other switches are stored and labelled simulated |
@@ -140,7 +142,9 @@ NEXT_PUBLIC_FIREBASE_APP_ID=local
 and its default is in `apps/api/app/settings.py`, and `.env.example` lists them all: copy it to a gitignored
 `.env` at the repo root for the decision model, Temporal Cloud or real app connections, and never commit it.
 Real models are Gemini on Vertex AI (`definitions/models.yaml`): set `GOOGLE_CLOUD_PROJECT` and sign in with
-`gcloud auth application-default login`; no model API key is needed.
+`gcloud auth application-default login`; no model API key is needed. To see the agents' model calls in
+Langfuse (prompt, output, token usage and cost, one trace per run), set `LANGFUSE_HOST`,
+`LANGFUSE_PUBLIC_KEY` and `LANGFUSE_SECRET_KEY`; with any of them empty nothing is sent.
 
 On Windows, use `127.0.0.1` rather than `localhost` for Postgres and Temporal: the containers bind IPv4 only.
 

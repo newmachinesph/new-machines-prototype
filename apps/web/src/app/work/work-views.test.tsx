@@ -137,7 +137,7 @@ describe("reviewer portal in a live workspace", () => {
   it("labels pay as simulated without calling the workspace a demo", () => {
     workspace.demo = false;
     renderWithIntl(<WorkView />);
-    expect(screen.getByText("Pay is simulated")).toBeInTheDocument();
+    expect(screen.getByText("Pay is simulated: no money moves.")).toBeInTheDocument();
     expect(screen.queryByText(/demo/i)).not.toBeInTheDocument();
     workspace.demo = true;
   });
@@ -195,7 +195,7 @@ describe("reviewer portal with team and network tasks", () => {
     ];
     renderWithIntl(<EarningsView />);
     expect(screen.getByText(/Reviews for your own workspace's team are unpaid/)).toBeInTheDocument();
-    expect(screen.getByText("Pay is simulated")).toBeInTheDocument();
+    expect(screen.getByText("Pay is simulated: no money moves.")).toBeInTheDocument();
     expect(screen.queryByText(/demo/i)).toBeNull();
     const team = screen.getByText("Team check").closest("li")!;
     expect(team).toHaveTextContent("Team review, unpaid");
@@ -246,7 +246,7 @@ describe("reviewer portal with team and network tasks", () => {
     ];
     renderWithIntl(<EarningsView />, { locale: "ja" });
     expect(screen.getByText(/チームとして行ったレビューは無報酬です/)).toBeInTheDocument();
-    expect(screen.getByText("報酬は模擬です")).toBeInTheDocument();
+    expect(screen.getByText("報酬は模擬です。お金は動きません。")).toBeInTheDocument();
     expect(screen.getByText("チームのレビュー、無報酬")).toBeInTheDocument();
     lists.earnings = null;
   });

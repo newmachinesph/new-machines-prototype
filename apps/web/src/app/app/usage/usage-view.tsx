@@ -12,6 +12,7 @@ import { useNow } from "@/lib/clock";
 import { usd } from "@/lib/format";
 import { useIsDemo } from "@/lib/queries/me";
 import { useUsage } from "@/lib/queries/workspace";
+import { usePlanName } from "@/lib/plan-name";
 import { monthOf, spendSplit } from "@/lib/spend";
 import type { LedgerTxn, Organization } from "@/lib/types";
 import { useFormat } from "@/lib/use-format";
@@ -146,6 +147,7 @@ function UsageBody({ ORG, LEDGER }: { ORG: Organization; LEDGER: LedgerTxn[] }) 
   const t = useTranslations("usage");
   const tc = useTranslations("common");
   const { money, monthName } = useFormat();
+  const planName = usePlanName();
   const demo = useIsDemo();
   const now = new Date(useNow());
   const split = spendSplit(ORG, LEDGER, monthOf(now));
@@ -222,8 +224,8 @@ function UsageBody({ ORG, LEDGER }: { ORG: Organization; LEDGER: LedgerTxn[] }) 
                   {
                     label: t("plan"),
                     value: hasPlanFee
-                      ? t("planValue", { plan: ORG.plan, price: money(split.plan) })
-                      : t("planValueFree", { plan: ORG.plan }),
+                      ? t("planValue", { plan: planName(ORG.plan), price: money(split.plan) })
+                      : t("planValueFree", { plan: planName(ORG.plan) }),
                   },
                   ...(demo ? [{ label: t("includes"), value: t("includesValue") }] : []),
                   { label: t("payment"), value: demo ? t("paymentValue") : t("paymentValueLive") },

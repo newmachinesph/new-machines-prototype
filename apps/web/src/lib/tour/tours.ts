@@ -30,7 +30,8 @@ export const TOURS: Record<TourName, TourStepDef[]> = {
     { key: "runs", selector: target("nav-runs"), side: "right", centerWhenHidden: true },
     { key: "approvals", selector: target("nav-approvals"), side: "right", centerWhenHidden: true },
     { key: "usage", selector: target("nav-usage"), side: "right", centerWhenHidden: true },
-    { key: "help", selector: target("account-menu"), side: "bottom-left", centerWhenHidden: true },
+    // The account menu is at the bottom of the sidebar: the card sits to its right, bottoms aligned.
+    { key: "help", selector: target("account-menu"), side: "right-bottom", centerWhenHidden: true },
   ],
   // The Studio exists in a live workspace only, and its home shows all four of these.
   studio: [

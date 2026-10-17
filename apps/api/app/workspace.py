@@ -111,9 +111,26 @@ class Membership:
     role: str
 
 
-def workspace_name(name: str | None) -> str:
-    first = name.split()[0] if name else ""
-    return f"{first}'s workspace" if first else "My workspace"
+WORKSPACE_NAME_MAX = 80  # characters of the person's part of a new org's name
+
+
+def _plain(text: str) -> str:
+    """`text` without control and zero-width characters, its whitespace collapsed to single spaces."""
+    return " ".join("".join(ch for ch in text if ch.isprintable()).split())
+
+
+def workspace_name(name: str | None, email: str | None = None) -> str:
+    """The name of a user's first org: their full display name's workspace ("QA Reviewer's workspace");
+    without a name, the email's local part; without either, "Your workspace". The person's part is cut to
+    `WORKSPACE_NAME_MAX` characters, on a word boundary when there is one."""
+    who = _plain(name) if name else ""
+    if not who and email:
+        who = _plain(email.split("@", 1)[0])
+    if len(who) > WORKSPACE_NAME_MAX:
+        cut = who[:WORKSPACE_NAME_MAX]
+        head = cut.rpartition(" ")[0]
+        who = (head if head and who[WORKSPACE_NAME_MAX] != " " else cut).rstrip()
+    return f"{who}'s workspace" if who else "Your workspace"
 
 
 def membership(identity: Identity) -> Membership:
@@ -153,7 +170,10 @@ def _active(conn, user_id: str) -> Membership | None:
 
 def _provision(conn, identity: Identity) -> None:
     org_id = f"org_{secrets.token_hex(8)}"
-    conn.execute("INSERT INTO orgs (id, name) VALUES (%s, %s)", (org_id, workspace_name(identity.name)))
+    conn.execute(
+        "INSERT INTO orgs (id, name) VALUES (%s, %s)",
+        (org_id, workspace_name(identity.name, identity.email)),
+    )
     conn.execute(
         "INSERT INTO org_members (org_id, user_id, email, name, role, status, reviewer) "
         "VALUES (%s, %s, %s, %s, 'owner', 'active', true)",

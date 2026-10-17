@@ -343,6 +343,7 @@ function AgentForm({
               <label className="text-sm font-medium">
                 {t("name")}
                 <input
+                  name="name"
                   className={INPUT}
                   value={draft.name}
                   maxLength={80}
@@ -357,6 +358,7 @@ function AgentForm({
               <label className="text-sm font-medium">
                 {t("summary")}
                 <input
+                  name="summary"
                   className={INPUT}
                   value={draft.summary}
                   maxLength={280}
@@ -371,6 +373,7 @@ function AgentForm({
               <label className="text-sm font-medium">
                 {t("instructions")}
                 <textarea
+                  name="instructions"
                   className={AREA}
                   rows={8}
                   value={draft.instructions}
@@ -402,6 +405,7 @@ function AgentForm({
               <label className="text-sm font-medium">
                 {t("maxTurns")}
                 <input
+                  name="maxTurns"
                   type="number"
                   inputMode="numeric"
                   className={`${INPUT} max-w-32`}

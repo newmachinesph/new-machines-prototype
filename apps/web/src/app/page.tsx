@@ -55,11 +55,8 @@ export default async function LandingPage({ searchParams }: { searchParams: Sear
           </div>
 
           <div className="rounded-[14px] border border-rule bg-paper p-6 shadow-[0_1px_2px_rgb(17_17_17/0.04)] sm:p-7">
-            <h2 className="text-lg font-semibold tracking-tight">
-              {area ? t("signInTitleNext", { page: t(`continueTo.${area}`) }) : t("signInTitle")}
-            </h2>
-            <p className="mt-1 text-sm leading-relaxed text-muted">{t("signInHelp")}</p>
-            <SignInForm />
+            {/* The form heads itself: what it says depends on whether a person is signing in or creating an account. */}
+            <SignInForm area={area} />
           </div>
         </div>
 

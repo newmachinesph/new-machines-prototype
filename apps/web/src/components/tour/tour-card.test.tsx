@@ -1,6 +1,6 @@
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { renderWithIntl } from "@/test/intl";
 import { TourCard } from "./tour-card";
 
@@ -100,4 +100,42 @@ describe("TourCard", () => {
     expect(screen.getByRole("button", { name: "完了" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "戻る" })).toBeInTheDocument();
   });
+
+  describe("on a phone", () => {
+    beforeEach(() => {
+      // jsdom has no matchMedia; here the window is narrower than sm.
+      window.matchMedia = vi.fn((query: string) => ({
+        matches: !query.includes("min-width"),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      })) as never;
+    });
+    afterEach(() => {
+      // @ts-expect-error jsdom defines none; back to that.
+      delete window.matchMedia;
+    });
+
+    it("is a sheet along the bottom of the window, outside the library's container, with no caret", () => {
+      const { container } = renderWithIntl(<TourCard {...props(1)} />);
+      const dialog = screen.getByRole("dialog", { name: "Runs" });
+      const sheet = dialog.parentElement!;
+      expect(sheet).toHaveAttribute("data-tour-sheet");
+      expect(sheet).toHaveClass("fixed", "inset-x-0", "bottom-0");
+      expect(sheet.parentElement).toBe(document.body);
+      expect(container).not.toContainElement(dialog);
+      expect(dialog).toHaveClass("w-full");
+      expect(screen.queryByTestId("arrow")).toBeNull();
+      expect(screen.getByRole("button", { name: "Next" })).toHaveFocus();
+    });
+  });
+});
+
+const props = (currentStep: number) => ({
+  step: { title: "Runs", content: "Every run, with its status and spend." },
+  currentStep,
+  totalSteps: 6,
+  nextStep: vi.fn(),
+  prevStep: vi.fn(),
+  skipTour: vi.fn(),
+  arrow: <svg data-testid="arrow" />,
 });

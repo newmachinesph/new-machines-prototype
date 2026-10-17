@@ -136,6 +136,30 @@ describe("SignInForm fields", () => {
     expect(screen.getByText("Enter your password.")).toBeInTheDocument();
   });
 
+  it("gives focus back to the Google button when its popup is closed, with nothing to say", async () => {
+    session.signInWithGoogle.mockReset().mockRejectedValue({ code: "auth/popup-closed-by-user" });
+    renderWithIntl(<SignInForm />);
+    const google = screen.getByRole("button", { name: "Continue with Google" });
+    await userEvent.click(google);
+    await waitFor(() => expect(google).toBeEnabled());
+    await waitFor(() => expect(google).toHaveFocus());
+    expect(screen.getByRole("alert")).toBeEmptyDOMElement();
+  });
+
+  it("says in the alert that the sign-in failed, and moves focus to it", async () => {
+    session.signInWithEmail.mockReset().mockRejectedValue({ code: "auth/invalid-credential" });
+    renderWithIntl(<SignInForm />);
+    await userEvent.type(screen.getByRole("textbox", { name: "Email" }), "nora@example.com");
+    await userEvent.type(screen.getByLabelText("Password"), "wrong-one");
+    await userEvent.click(screen.getByRole("button", { name: "Sign in" }));
+    const alert = screen.getByRole("alert");
+    await waitFor(() =>
+      expect(alert).toHaveTextContent("That email and password did not match. Check them and try again."),
+    );
+    await waitFor(() => expect(alert).toHaveFocus());
+    expect(screen.getByRole("button", { name: "Sign in" })).toBeEnabled();
+  });
+
   it("splits the note into a member line and a reviewer line", () => {
     renderWithIntl(<SignInForm />);
     expect(
@@ -215,18 +239,97 @@ describe("SignInForm creating an account", () => {
   });
 
   it.each([
-    ["auth/email-already-in-use", "An account with that email already exists. Sign in instead."],
-    ["auth/invalid-email", "That email address does not look right. Check it and try again."],
-    ["auth/weak-password", "That password is too easy to guess. Choose a longer one."],
+    ["auth/email-already-in-use", "Email", "An account with that email already exists. Sign in instead."],
+    ["auth/invalid-email", "Email", "That email address does not look right. Check it and try again."],
+    ["auth/weak-password", "Password", "That password is too easy to guess. Choose a longer one."],
+  ])(
+    "puts %s under the %s field, announces it, focuses the field and clears it once typed in",
+    async (code, field, message) => {
+      session.createAccountWithEmail.mockRejectedValue({ code });
+      await openCreate();
+      await fill("Nora", "nora@example.com", "longenough1");
+      const input = field === "Email" ? screen.getByRole("textbox", { name: field }) : screen.getByLabelText(field);
+      await waitFor(() => expect(input).toHaveFocus());
+      expect(input).toHaveAttribute("aria-invalid", "true");
+      expect(input).toHaveAccessibleDescription(field === "Password" ? `${message} At least 8 characters.` : message);
+      // Announced through the live region too (a submit from the field itself re-reads nothing), but shown only once.
+      const alert = screen.getByRole("alert");
+      expect(alert).toHaveTextContent(message);
+      expect(alert).toHaveClass("sr-only");
+      expect(screen.getByRole("button", { name: "Create account" })).toBeEnabled();
+
+      await userEvent.type(input, "x");
+      expect(input).not.toHaveAttribute("aria-invalid");
+      expect(screen.queryByText(message)).toBeNull();
+      expect(alert).toBeEmptyDOMElement();
+    },
+  );
+
+  it.each([
     ["auth/too-many-requests", "Too many attempts. Wait a minute and try again."],
     ["auth/network-request-failed", "Can't reach the sign-in service. Check your connection and try again."],
     ["auth/internal-error", "Your account could not be created. Try again."],
-  ])("explains %s and gives the form back", async (code, message) => {
+  ])("explains %s in the alert, moves focus to it and gives the form back", async (code, message) => {
     session.createAccountWithEmail.mockRejectedValue({ code });
     await openCreate();
+    // Mounted before there is anything to say, so the message is announced when it arrives.
+    const alert = screen.getByRole("alert");
+    expect(alert).toBeEmptyDOMElement();
     await fill("Nora", "nora@example.com", "longenough1");
-    expect(await screen.findByRole("alert")).toHaveTextContent(message);
+    await waitFor(() => expect(alert).toHaveTextContent(message));
+    await waitFor(() => expect(alert).toHaveFocus());
+    for (const name of ["Name", "Email"])
+      expect(screen.getByRole("textbox", { name })).not.toHaveAttribute("aria-invalid");
     expect(screen.getByRole("button", { name: "Create account" })).toBeEnabled();
+  });
+
+  it("clears the password and hides it again when switching between the forms", async () => {
+    renderWithIntl(<SignInForm />);
+    await userEvent.type(screen.getByLabelText("Password"), "secret-one");
+    await userEvent.click(screen.getByRole("button", { name: "Show password" }));
+    expect(screen.getByLabelText("Password")).toHaveAttribute("type", "text");
+
+    await userEvent.click(screen.getByRole("button", { name: "Create an account" }));
+    const password = screen.getByLabelText("Password");
+    expect(password).toHaveValue("");
+    expect(password).toHaveAttribute("type", "password");
+    expect(screen.getByRole("button", { name: "Show password" })).toHaveAttribute("aria-pressed", "false");
+
+    await userEvent.type(password, "longenough1");
+    await userEvent.click(screen.getByRole("button", { name: "Sign in" }));
+    expect(screen.getByLabelText("Password")).toHaveValue("");
+  });
+
+  it.each([
+    [null, "Sign in to the demo workspace"],
+    ["app", "Sign in to continue to the business workspace"],
+    ["work", "Sign in to continue to the reviewer portal"],
+    ["studio", "Sign in to continue to the Studio"],
+  ] as const)(
+    "heads the card for signing in (area %s), and for creating an account once switched",
+    async (area, title) => {
+      renderWithIntl(<SignInForm area={area} />);
+      expect(screen.getByRole("heading", { level: 2, name: title })).toBeInTheDocument();
+      expect(screen.getByText("Use the demo login you were sent, or any Google account.")).toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole("button", { name: "Create an account" }));
+      expect(screen.getByRole("heading", { level: 2, name: "Create your workspace" })).toBeInTheDocument();
+      expect(
+        screen.getByText("Set up an account for your business. You can also continue with Google."),
+      ).toBeInTheDocument();
+      expect(screen.queryByText(/Sign in to|demo login you were sent/)).toBeNull();
+
+      await userEvent.click(screen.getByRole("button", { name: "Sign in" }));
+      expect(screen.getByRole("heading", { level: 2, name: title })).toBeInTheDocument();
+    },
+  );
+
+  it("heads the card in Japanese too", async () => {
+    renderWithIntl(<SignInForm />, { locale: "ja" });
+    expect(screen.getByRole("heading", { level: 2, name: "デモワークスペースにサインイン" })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "アカウントを作成" }));
+    expect(screen.getByRole("heading", { level: 2, name: "ワークスペースを作成" })).toBeInTheDocument();
+    expect(screen.getByText(/ビジネス用のアカウントを設定します/)).toBeInTheDocument();
   });
 
   it("says that invitations need Google, and drops the note when switching back", async () => {

@@ -18,6 +18,6 @@ authorization:
   region_policy_ref: region/asia-south1
   policy_ref: policy/default
 
-budget: {currency: USD, maximum_minor: 1500, human_budget_minor: 2000}
+budget: {currency: USD, maximum_minor: 1500, human_budget_minor: 500}
 limits: {max_attempts: 3, deadline_s: 172800}
 routes: {success: done, failure: failed, timeout: failed, human_review: review}

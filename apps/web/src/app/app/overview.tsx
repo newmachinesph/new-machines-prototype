@@ -26,6 +26,7 @@ import { missingApps, useAttention, useConnections } from "@/lib/queries/org";
 import { useRuns } from "@/lib/queries/runs";
 import { useUsage } from "@/lib/queries/workspace";
 import { daysLeftInMonth, monthOf, spendSplit } from "@/lib/spend";
+import { usePlanName } from "@/lib/plan-name";
 import type { Connection, Pack, RunSummary, Usage } from "@/lib/types";
 import { useFormat } from "@/lib/use-format";
 import { AskBox } from "./ask-box";
@@ -115,6 +116,7 @@ function Budget({ usage: { org, ledger } }: { usage: Usage }) {
   const t = useTranslations("overview");
   const tc = useTranslations("common");
   const { monthName } = useFormat();
+  const planName = usePlanName();
   const now = new Date(useNow());
   const split = spendSplit(org, ledger, monthOf(now));
   const cap = org.monthlyCap.amountMinor;
@@ -152,7 +154,7 @@ function Budget({ usage: { org, ledger } }: { usage: Usage }) {
       </div>
       <dl className="divide-y divide-rule px-4 pb-1 text-sm">
         {[
-          { k: t("plan", { plan: org.plan }), v: split.plan, c: "bg-ink" },
+          { k: t("plan", { plan: planName(org.plan) }), v: split.plan, c: "bg-ink" },
           { k: tc("agentsModelsTools"), v: split.agentsExclFees, c: "bg-machine" },
           ...(split.fees.amountMinor > 0
             ? [{ k: t("publisherFees"), v: split.fees, c: "bg-grey-500", sim: true }]

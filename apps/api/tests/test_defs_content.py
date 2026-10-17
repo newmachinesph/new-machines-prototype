@@ -374,9 +374,20 @@ def test_the_refund_memory_matches_the_find_order_rule(bundle):
         for space in ("customer-accounts", "retail-commerce")
         for item in bundle.get("memory_space", space).body["seed_items"]
     )
-    assert "refunded set to true" in seeds and "amount_refunded" in seeds
+    assert "marked refunded" in seeds and "refunded amount" in seeds
     assert "Refunds appear as negative charges" not in seeds
     assert 'whole word "opened" or "used"' in seeds and '"unused" does not count' in seeds
+
+
+def test_seed_memory_reads_as_plain_language(bundle):
+    """A business owner reads the seeds on the Memory page: no raw field identifiers such as
+    `payment_terms_days`, and nothing that reads as if the sample business were the reader's own."""
+    identifier = re.compile(r"\b[a-z]+_[a-z_]+\b")
+    for space in bundle.of("memory_space"):
+        for item in space.body.get("seed_items") or []:
+            assert not identifier.search(item), (space.key, item)
+            assert "set to true" not in item, (space.key, item)
+            assert "the business's" not in item, (space.key, item)
 
 
 def test_connector_defaults_and_classes(bundle):
@@ -537,6 +548,17 @@ def test_contract(bundle):
         "verification_ruleset_ref": f"{SLUG}/output",
         "buyer_acceptance_required": False,
     }
+
+
+def test_every_pack_budget_leaves_room_for_the_agents(bundle):
+    """The reviewer budget is part of the maximum: when it meets or exceeds it, nothing is left for agents and
+    tools, and the marketplace card loses its per-run cap line (as overdue-invoice-follow-up once did)."""
+    for contract in bundle.of("contract"):
+        budget = contract.body.get("budget") or {}
+        maximum, human = budget.get("maximum_minor"), budget.get("human_budget_minor")
+        if maximum is None or human is None:
+            continue
+        assert 0 <= human < maximum, (contract.key, budget)
 
 
 def test_files_are_lf_only():

@@ -4,6 +4,7 @@ Nina reviews for the network from her own org, Ben is another org's owner who ne
 from datetime import UTC, datetime, timedelta
 
 import pytest
+from psycopg.types.json import Jsonb
 
 from app import review_routing
 from app.errors import ApiProblem
@@ -233,11 +234,11 @@ def test_a_network_reviewer_reaches_their_own_orgs_task_only_as_the_team(nina, d
     ]
 
 
-NOTE = "Ana's workspace asked: call +1 415-555-0100 or write ana@example.com."
+NOTE = "Ana Reyes's workspace asked: call +1 415-555-0100 or write ana@example.com."
 LEAKS = (
-    "Ana's workspace",
-    "ana's workspace",
-    "ANA'S WORKSPACE",
+    "Ana Reyes's workspace",
+    "ana reyes's workspace",
+    "ANA REYES'S WORKSPACE",
     "ana@example.com",
     "555-0100",
     "run_ht_1",  # the other org's run id
@@ -248,12 +249,17 @@ LEAKS = (
 
 def _leaky_payload() -> dict:
     return {
-        "title": "Review for Ana's workspace",
+        "title": "Review for Ana Reyes's workspace",
         "instructions": NOTE,
         "expires_at": "2026-10-15T09:00:00Z",
         "show": [
             {**SHOWN[0], "note": NOTE, "flag": NOTE},
-            {**SHOWN[0], "ref": "ANA'S WORKSPACE-77", "counterpart_ref": "ch_ana's workspace", "note": ""},
+            {
+                **SHOWN[0],
+                "ref": "ANA REYES'S WORKSPACE-77",
+                "counterpart_ref": "ch_ana reyes's workspace",
+                "note": "",
+            },
         ],
     }
 
@@ -264,9 +270,9 @@ def _assert_clean(text: str) -> None:
 
 
 def test_network_reviewers_get_a_copy_without_the_org_or_contact_details(ana, nina, db):
-    note = "Ana's workspace asked: call +1 415-555-0100 or write ana@example.com."
+    note = "Ana Reyes's workspace asked: call +1 415-555-0100 or write ana@example.com."
     payload = {
-        "title": "Review for Ana's workspace",
+        "title": "Review for Ana Reyes's workspace",
         "instructions": note,
         "show": [{**SHOWN[0], "note": note, "flag": note}],
     }
@@ -274,7 +280,7 @@ def test_network_reviewers_get_a_copy_without_the_org_or_contact_details(ana, ni
     offer = nina.get("/v1/human-tasks/eligible").json()[0]
     task = nina.get(f"/v1/human-tasks/{_pid(db)}")
     for text in (str(offer), task.text):
-        assert "Ana's workspace" not in text
+        assert "Ana Reyes's workspace" not in text
         assert "ana@example.com" not in text and "555-0100" not in text
     body = task.json()
     assert body["via"] == "network" and body["buyer"] == "A New Machines customer"
@@ -287,7 +293,8 @@ def test_network_reviewers_get_a_copy_without_the_org_or_contact_details(ana, ni
 def test_a_review_that_shows_an_object_reads_as_labelled_details(ana, nina, db):
     """A pack built in the Studio often shows an agent's output: one row per key, sent with the task, not
     the offer. The network copy is cleaned like the records; the team's hides contact details only."""
-    show = {"request": f"Check order #1001 for Ana's workspace. {NOTE}", "matched": True, "lines": [1, 2]}
+    request = f"Check order #1001 for Ana Reyes's workspace. {NOTE}"
+    show = {"request": request, "matched": True, "lines": [1, 2]}
     _task(db, ana.org_id, "network", payload={"title": "Review the request", "show": show})
     offer = nina.get("/v1/human-tasks/eligible").json()[0]
     assert "details" not in offer
@@ -305,9 +312,12 @@ def test_a_review_that_shows_an_object_reads_as_labelled_details(ana, nina, db):
         **_rows(db, "SELECT * FROM run_tasks")[0],
         "via": "team",
         "run_title": "R",
-        "org_name": "Ana's workspace",
+        "org_name": "Ana Reyes's workspace",
     }
-    own = "Check order #1001 for Ana's workspace. Ana's workspace asked: call Hidden or write Hidden."
+    own = (
+        "Check order #1001 for Ana Reyes's workspace. "
+        "Ana Reyes's workspace asked: call Hidden or write Hidden."
+    )
     assert {d.label: d.value for d in tasks.real_task(row).details}["Request"] == own
 
 
@@ -356,7 +366,8 @@ def test_a_mixed_list_shows_its_plain_values_as_one_details_row():
 
 def test_no_network_response_carries_the_org_or_contact_details(ana, nina, db):
     _task(db, ana.org_id, "network", payload=_leaky_payload())
-    db.execute("UPDATE runs SET projection = jsonb_set(projection, '{title}', '\"Ana''s workspace recon\"')")
+    title = Jsonb("Ana Reyes's workspace recon")
+    db.execute("UPDATE runs SET projection = jsonb_set(projection, '{title}', %s)", (title,))
     db.commit()
     responses = [
         nina.get("/v1/human-tasks/eligible"),
@@ -391,7 +402,7 @@ def test_no_network_response_carries_the_org_or_contact_details(ana, nina, db):
     [stored] = _rows(db, "SELECT result->'resolutions' AS res FROM run_tasks")
     assert [(r["order_id"], r["resolution"]) for r in stored["res"]] == [
         ("#1003", "explained"),
-        ("ANA'S WORKSPACE-77", "refunded"),
+        ("ANA REYES'S WORKSPACE-77", "refunded"),
     ]
 
 
@@ -399,7 +410,7 @@ def test_renamed_record_ids_never_collide_and_reach_the_run_as_their_real_ids(an
     show = [
         "not a record",
         {"amount_minor": 100},  # no id at all: the reviewer and the run know it as record-2
-        {"order_id": "Ana's workspace-1", "amount_minor": 200},  # names the org: renamed
+        {"order_id": "Ana Reyes's workspace-1", "amount_minor": 200},  # names the org: renamed
         {**SHOWN[0], "ref": "record-3"},  # a literal ref equal to the renamed id's first choice
     ]
     _task(db, ana.org_id, "network", payload={"show": show})
@@ -415,7 +426,7 @@ def test_renamed_record_ids_never_collide_and_reach_the_run_as_their_real_ids(an
     [stored] = _rows(db, "SELECT result->'resolutions' AS res FROM run_tasks")
     assert [(r["order_id"], r["resolution"]) for r in stored["res"]] == [
         ("record-2", "a"),
-        ("Ana's workspace-1", "b"),
+        ("Ana Reyes's workspace-1", "b"),
         ("record-3", "c"),
     ]
 
@@ -431,7 +442,7 @@ def test_item_notes_reach_the_run_under_the_items_real_ids(ana, nina, db):
     review = {**REVIEW, "recordNotes": notes}
     assert nina.post(f"/v1/human-tasks/{_pid(db)}:submit", json=review).status_code == 200
     [stored] = _rows(db, "SELECT result->>'note' AS note FROM run_tasks")
-    assert stored["note"] == "Checked.\n\n#1003: Fine.\n\nANA'S WORKSPACE-77: Refund it."
+    assert stored["note"] == "Checked.\n\n#1003: Fine.\n\nANA REYES'S WORKSPACE-77: Refund it."
 
 
 def test_no_reviewer_card_shows_an_email_address_and_notes_still_reach_the_item(ana, nina, db):
@@ -460,7 +471,7 @@ def test_a_shown_id_standing_for_two_real_ids_is_dropped():
 
 
 def test_the_network_deadline_keeps_its_digits(ana, nina, db):
-    _task(db, ana.org_id, "network", payload={"expires_at": "2026-10-15 09:00 for Ana's workspace"})
+    _task(db, ana.org_id, "network", payload={"expires_at": "2026-10-15 09:00 for Ana Reyes's workspace"})
     assert nina.get(f"/v1/human-tasks/{_pid(db)}").json()["deadline"] == "2026-10-15 09:00 for the customer"
 
 
@@ -478,9 +489,9 @@ def test_decided_tasks_and_other_peoples_claims_do_not_crowd_the_list(ana, db):
 
 
 def test_the_team_sees_its_own_copy_unpaid(ana, db):
-    _task(db, ana.org_id, "team", payload={"title": "Review for Ana's workspace"})
+    _task(db, ana.org_id, "team", payload={"title": "Review for Ana Reyes's workspace"})
     body = ana.get("/v1/human-tasks/ht_1").json()
-    assert body["via"] == "team" and body["title"] == "Review for Ana's workspace"
+    assert body["via"] == "team" and body["title"] == "Review for Ana Reyes's workspace"
     assert body["pay"]["amountMinor"] == 0 and body["payTerms"] == "Team review: unpaid"
 
 

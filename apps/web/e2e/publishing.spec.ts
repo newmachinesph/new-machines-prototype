@@ -344,7 +344,7 @@ test("the Japanese marketplace shows the fee", async ({ page, context }) => {
   await page.goto("/app/marketplace?view=agents");
   await expect(page.getByRole("link", { name: "Matcher" })).toBeVisible();
   await page
-    .getByRole("button", { name: /switch workspace/ })
+    .getByRole("button", { name: /account menu/ })
     .first()
     .click();
   await page.getByRole("menuitemradio", { name: "日本語" }).click();

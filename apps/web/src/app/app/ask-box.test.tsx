@@ -47,6 +47,27 @@ describe("AskBox suggestion chips", () => {
     expect(screen.getAllByRole("button")).toHaveLength(3);
   });
 
+  it("keeps the placeholder short on a phone, where the full one with its example is cut off", () => {
+    // jsdom has no matchMedia, which reads as wide; here the window is narrower than sm.
+    window.matchMedia = vi.fn((query: string) => ({
+      matches: !query.includes("min-width"),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    })) as never;
+    try {
+      renderWithIntl(<AskBox />);
+      expect(screen.getByRole("textbox")).toHaveAttribute("placeholder", "Describe the outcome you want");
+    } finally {
+      // @ts-expect-error jsdom defines none; back to that.
+      delete window.matchMedia;
+    }
+  });
+
+  it("gives the full placeholder, with its example, from sm up", () => {
+    renderWithIntl(<AskBox />);
+    expect(screen.getByRole("textbox")).toHaveAttribute("placeholder", expect.stringContaining("for example"));
+  });
+
   it("sends the same English query from a chip and from the button, in Japanese", async () => {
     renderWithIntl(<AskBox />, { locale: "ja" });
     await userEvent.click(screen.getByRole("button", { name: "先週の注文をStripeの入金と突き合わせる" }));

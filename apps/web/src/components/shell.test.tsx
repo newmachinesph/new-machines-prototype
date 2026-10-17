@@ -13,8 +13,10 @@ const LIVE_ME = {
   orgName: "Ana's workspace",
   role: "owner",
   name: "Ana Reyes",
+  email: "ana@example.com",
   workspace: "live",
 };
+const signOut = vi.hoisted(() => vi.fn(() => Promise.resolve()));
 const data = vi.hoisted(() => ({
   me: { isPending: false, isError: false, data: {} } as MeState,
   plan: "Trial",
@@ -26,7 +28,7 @@ const data = vi.hoisted(() => ({
 
 // The workspace menu's language items refresh the router after a choice; the menu must open without one.
 vi.mock("next/navigation", () => ({ usePathname: () => data.path, useRouter: () => ({ refresh: vi.fn() }) }));
-vi.mock("@/lib/auth/session", () => ({ useSession: () => ({ signOut: vi.fn() }) }));
+vi.mock("@/lib/auth/session", () => ({ useSession: () => ({ signOut }) }));
 // The palette itself is tested on its own; here it only reports the pages AppShell hands it.
 vi.mock("./command-palette", () => ({
   CommandPalette: ({
@@ -82,6 +84,7 @@ describe("AppShell", () => {
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
     })) as never;
+    signOut.mockClear();
     data.me = ok({ ...LIVE_ME });
     data.plan = "Trial";
     data.path = "/app";
@@ -340,21 +343,88 @@ describe("AppShell", () => {
     const { unmount } = renderWithIntl(<AppShell>page</AppShell>);
     await userEvent.click(screen.getAllByRole("button", { name: "Ana's workspace, switch workspace" })[0]);
     expect(await screen.findByRole("menuitem", { name: /Developer Studio/ })).toHaveAttribute("href", "/studio");
-    // The menu is grouped: where to switch to, the language, then the account.
+    // The menu is only about where to work: the person's own entries are in the account menu.
     const menu = screen.getByRole("menu");
     expect(within(menu).getByRole("group", { name: "Switch to" })).toContainElement(
       within(menu).getByRole("menuitem", { name: /Reviewer portal/ }),
     );
-    expect(within(menu).getByRole("group", { name: "Language" })).toBeInTheDocument();
-    const account = within(menu).getByRole("group", { name: "Account" });
-    expect(account).toHaveTextContent("Signed in as Ana Reyes");
-    expect(within(account).getByRole("menuitem", { name: "Sign out" })).toBeInTheDocument();
+    expect(within(menu).queryByRole("group", { name: "Language" })).toBeNull();
+    expect(within(menu).queryByRole("menuitem", { name: "Sign out" })).toBeNull();
     unmount();
     data.me = ok({ ...LIVE_ME, workspace: "demo" });
     renderWithIntl(<AppShell>page</AppShell>);
     await userEvent.click(screen.getAllByRole("button", { name: "Ana's workspace, switch workspace" })[0]);
     expect(await screen.findByRole("menuitem", { name: /Reviewer portal/ })).toBeInTheDocument();
     expect(screen.queryByRole("menuitem", { name: /Developer Studio/ })).toBeNull();
+  });
+
+  describe("the account menu", () => {
+    const accountTrigger = () => screen.getAllByRole("button", { name: "Ana Reyes, account menu" })[0];
+
+    it("is the person's block at the bottom of the sidebar: name and role on the button, email in the menu", async () => {
+      renderWithIntl(<AppShell>page</AppShell>);
+      const trigger = accountTrigger();
+      expect(screen.getByRole("complementary")).toContainElement(trigger);
+      expect(trigger).toHaveTextContent("Ana Reyes");
+      expect(trigger).toHaveTextContent("Owner");
+      await userEvent.click(trigger);
+      const menu = await screen.findByRole("menu");
+      expect(menu).toHaveTextContent("Ana Reyes");
+      expect(menu).toHaveTextContent("ana@example.com");
+      // The name and email are not items: arrow keys and Enter never land on them.
+      expect(within(menu).queryByRole("menuitem", { name: /Ana Reyes/ })).toBeNull();
+    });
+
+    it("has no second line when the email is the name, rather than repeating the role", async () => {
+      data.me = ok({ ...LIVE_ME, name: "ana@example.com" });
+      renderWithIntl(<AppShell>page</AppShell>);
+      await userEvent.click(screen.getAllByRole("button", { name: "ana@example.com, account menu" })[0]);
+      const menu = await screen.findByRole("menu");
+      expect(within(menu).getAllByText("ana@example.com")).toHaveLength(1);
+      expect(within(menu).queryByText("Owner")).toBeNull();
+    });
+
+    it("switches the language, with the current one marked", async () => {
+      renderWithIntl(<AppShell>page</AppShell>);
+      await userEvent.click(accountTrigger());
+      const language = within(await screen.findByRole("menu")).getByRole("group", { name: "Language" });
+      expect(within(language).getByRole("menuitemradio", { name: "English" })).toHaveAttribute("aria-checked", "true");
+      expect(within(language).getByRole("menuitemradio", { name: "日本語" })).toHaveAttribute("aria-checked", "false");
+    });
+
+    it("signs out", async () => {
+      renderWithIntl(<AppShell>page</AppShell>);
+      await userEvent.click(accountTrigger());
+      await userEvent.click(await screen.findByRole("menuitem", { name: "Sign out" }));
+      expect(signOut).toHaveBeenCalledTimes(1);
+    });
+
+    it("works from the keyboard and returns focus to its button when it closes", async () => {
+      renderWithIntl(<AppShell>page</AppShell>);
+      const trigger = accountTrigger();
+      trigger.focus();
+      await userEvent.keyboard("{Enter}");
+      const menu = await screen.findByRole("menu");
+      expect(trigger).toHaveAttribute("aria-expanded", "true");
+      await userEvent.keyboard("{Escape}");
+      expect(menu).not.toBeInTheDocument();
+      expect(trigger).toHaveFocus();
+    });
+
+    it("is in the drawer too, below the navigation", async () => {
+      renderWithIntl(<AppShell>page</AppShell>);
+      await userEvent.click(screen.getByRole("button", { name: "Open navigation" }));
+      const drawer = await screen.findByRole("dialog", { name: "Navigation" });
+      expect(within(drawer).getByRole("button", { name: "Ana Reyes, account menu" })).toBeInTheDocument();
+    });
+
+    it("shows the demo's reviewer persona in the reviewer portal", () => {
+      data.me = ok({ ...LIVE_ME, workspace: "demo" });
+      data.path = "/work";
+      renderWithIntl(<AppShell mode="work">page</AppShell>);
+      const trigger = screen.getAllByRole("button", { name: "Reviewer 204, account menu" })[0];
+      expect(trigger).toHaveTextContent("Philippines, invoice review");
+    });
   });
 
   describe("the tour", () => {
@@ -367,10 +437,10 @@ describe("AppShell", () => {
       );
     beforeEach(() => replay.mockReset());
 
-    it("replays the welcome tour from the workspace menu, on its overview, back to the menu", async () => {
+    it("replays the welcome tour from the account menu, on its overview, back to the menu", async () => {
       data.path = "/app/marketplace";
       withTour();
-      const trigger = screen.getAllByRole("button", { name: "Ana's workspace, switch workspace" })[0];
+      const trigger = screen.getAllByRole("button", { name: "Ana Reyes, account menu" })[0];
       await userEvent.click(trigger);
       await userEvent.click(await screen.findByRole("menuitem", { name: "Take the tour" }));
       expect(replay).toHaveBeenCalledWith("welcome", { href: "/app", opener: trigger });
@@ -381,7 +451,7 @@ describe("AppShell", () => {
       async (path) => {
         data.path = path;
         withTour();
-        await userEvent.click(screen.getAllByRole("button", { name: "Ana's workspace, switch workspace" })[0]);
+        await userEvent.click(screen.getAllByRole("button", { name: "Ana Reyes, account menu" })[0]);
         await userEvent.click(await screen.findByRole("menuitem", { name: "Take the tour" }));
         expect(replay).toHaveBeenCalledWith("run", expect.objectContaining({ href: "/app/runs/run_1042" }));
       },
@@ -390,7 +460,7 @@ describe("AppShell", () => {
     it("replays the Studio tour in the Studio", async () => {
       data.path = "/studio/packs";
       withTour("studio");
-      await userEvent.click(screen.getAllByRole("button", { name: "Ana's workspace, switch workspace" })[0]);
+      await userEvent.click(screen.getAllByRole("button", { name: "Ana Reyes, account menu" })[0]);
       await userEvent.click(await screen.findByRole("menuitem", { name: "Take the tour" }));
       expect(replay).toHaveBeenCalledWith("studio", expect.objectContaining({ href: "/studio" }));
     });
@@ -399,7 +469,7 @@ describe("AppShell", () => {
       data.path = "/work";
       withTour("work");
       expect(screen.queryByTestId("palette-action-tour")).not.toBeInTheDocument();
-      await userEvent.click(screen.getAllByRole("button", { name: /switch workspace/ })[0]);
+      await userEvent.click(screen.getAllByRole("button", { name: /account menu/ })[0]);
       await screen.findByRole("menuitem", { name: "Sign out" });
       expect(screen.queryByRole("menuitem", { name: "Take the tour" })).not.toBeInTheDocument();
     });

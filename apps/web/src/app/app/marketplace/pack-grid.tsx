@@ -355,6 +355,10 @@ export function PackGrid() {
                                           {hasFee ? tp("capPlusFee", { amount: cost.capAmount ?? "" }) : cost.cap}
                                         </span>
                                       ) : null}
+                                      {/* Every card carries a cap line: a pack whose contract sets none says so. */}
+                                      {cost.note && cost.range === null && !cost.cap ? (
+                                        <span className="block whitespace-nowrap text-muted">{tp("noCap")}</span>
+                                      ) : null}
                                       {!cost.note && cost.range === null && !cost.cap ? t("perRunUnset") : null}
                                     </span>
                                   </div>

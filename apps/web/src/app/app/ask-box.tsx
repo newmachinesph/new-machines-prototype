@@ -9,6 +9,7 @@ import { useToast } from "@/components/base";
 import { useErrorText } from "@/lib/api/use-error-text";
 import { useSuggestPack } from "@/lib/queries/catalog";
 import { useMe } from "@/lib/queries/me";
+import { useMatches } from "@/lib/use-matches";
 
 // The label is translated; the query sent to the suggestion API stays English because its keyword match is English-only.
 // Each chip names a pack its workspace has: the demo's fixtures and the live marketplace list different ones.
@@ -35,6 +36,8 @@ export function AskBox() {
     ...(workspace === "demo" ? DEMO_SUGGESTIONS : workspace === "live" ? LIVE_SUGGESTIONS : []),
   ];
   const [q, setQ] = useState("");
+  // The full placeholder, with its example, is cut short on a phone: there a shorter one fits the field.
+  const wide = useMatches("(min-width: 640px)");
   // Set when a chip fills the input: the English query to send while the input shows the translated label.
   const [chipQuery, setChipQuery] = useState<string | null>(null);
   const suggest = useSuggestPack();
@@ -63,7 +66,7 @@ export function AskBox() {
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.nativeEvent.isComposing) submit();
           }}
-          placeholder={t("placeholder")}
+          placeholder={t(wide ? "placeholder" : "placeholderShort")}
           name="ask"
           className="h-12 w-full bg-transparent text-[15px] outline-none placeholder:text-grey-500"
         />

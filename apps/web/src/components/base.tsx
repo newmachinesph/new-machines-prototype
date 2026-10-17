@@ -125,15 +125,18 @@ export const MenuTrigger = BaseMenu.Trigger;
 export function MenuPopup({
   children,
   align = "end",
+  side = "bottom",
   className,
 }: {
   children: ReactNode;
   align?: "start" | "end" | "center";
+  /** Where the menu opens; a trigger at the bottom of the window opens upward. Flips when there is no room. */
+  side?: "top" | "bottom";
   className?: string;
 }) {
   return (
     <BaseMenu.Portal>
-      <BaseMenu.Positioner align={align} sideOffset={6} className="z-50">
+      <BaseMenu.Positioner align={align} side={side} sideOffset={6} className="z-50">
         <BaseMenu.Popup className={cn(POPUP, "min-w-56 p-1.5", className)}>{children}</BaseMenu.Popup>
       </BaseMenu.Positioner>
     </BaseMenu.Portal>

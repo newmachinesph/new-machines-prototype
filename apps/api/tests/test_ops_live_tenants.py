@@ -136,8 +136,8 @@ def test_each_org_is_a_tenant_with_its_own_figures(live, ana, ben, busy):
     a = tenants[ana.org_id]
     expected = {
         "id": ana.org_id,
-        "name": "Ana's workspace",
-        "short": "AW",
+        "name": "Ana Reyes's workspace",
+        "short": "AR",
         "plan": "Starter",
         "status": "active",
         "region": "asia-south1",
@@ -160,7 +160,7 @@ def test_each_org_is_a_tenant_with_its_own_figures(live, ana, ben, busy):
     # Nothing of ana's org counts towards ben's: every aggregate is scoped to its own org.
     b = tenants[ben.org_id]
     assert (b["name"], b["ownerEmail"], b["seats"], b["members"]) == (
-        "Ben's workspace",
+        "Ben Ito's workspace",
         "ben@example.com",
         1,
         1,
@@ -208,7 +208,7 @@ def test_tenants_filter_by_status_and_query(live, ana, ben):
     assert [t["id"] for t in _tenants(live, status="suspended")] == [ben.org_id]
     assert [t["id"] for t in _tenants(live, status="active")] == [ana.org_id]
     assert _tenants(live, status="churned") == []
-    assert [t["id"] for t in _tenants(live, q="  ANA'S ")] == [ana.org_id]
+    assert [t["id"] for t in _tenants(live, q="  REYES'S ")] == [ana.org_id]
     assert [t["id"] for t in _tenants(live, q="BEN@example")] == [ben.org_id]
     assert [t["id"] for t in _tenants(live, q=ana.org_id[-6:].upper())] == [ana.org_id]
     assert _tenants(live, q="%") == []  # the query is a plain substring, not a LIKE pattern

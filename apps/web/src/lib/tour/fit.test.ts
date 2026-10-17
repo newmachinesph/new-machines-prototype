@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cardRoom, DEFAULT_CARD_ROOM, fitsWithCard, scrollToFit, TOP_CLEARANCE } from "./fit";
+import { cardRoom, DEFAULT_CARD_ROOM, fitsWithCard, isSheet, scrollToFit, SHEET_MAX_WIDTH, TOP_CLEARANCE } from "./fit";
 
 const ROOM = 300;
 const desktop = { width: 1440, height: 900, scrollY: 0, docHeight: 3000, cardRoom: ROOM };
@@ -51,6 +51,24 @@ describe("scrollToFit", () => {
   it("puts a card above a target near the end of the document below it instead when there is no room above", () => {
     expect(scrollToFit("top", box(20, 60), { ...desktop, docHeight: 900 })).toBe(20 - TOP_CLEARANCE);
   });
+
+  it("on a phone fits the target above the sheet at the bottom, whatever the step's side", () => {
+    // A card above this target would want it near the bottom; the sheet wants it under the top bar, where it is.
+    const r = box(100, 120, 16, 358);
+    expect(scrollToFit("top", r, { ...phone, scrollY: 1000 })).toBe(0);
+    expect(scrollToFit("right-bottom", r, phone)).toBe(0);
+    // Too low for the sheet's room (844 - 300 = 544): scroll it up under the top bar.
+    expect(scrollToFit("top", box(500, 100, 16, 358), phone)).toBe(500 - TOP_CLEARANCE);
+  });
+});
+
+describe("isSheet", () => {
+  it("is a sheet below sm and a pointed card from sm up", () => {
+    expect(isSheet(390)).toBe(true);
+    expect(isSheet(SHEET_MAX_WIDTH - 1)).toBe(true);
+    expect(isSheet(SHEET_MAX_WIDTH)).toBe(false);
+    expect(isSheet(1440)).toBe(false);
+  });
 });
 
 describe("fitsWithCard", () => {
@@ -72,6 +90,16 @@ describe("cardRoom", () => {
     vi.spyOn(card, "offsetHeight", "get").mockReturnValue(250);
     document.body.append(card);
     expect(cardRoom()).toBe(283);
+  });
+
+  it("measures the card itself when it has left the library's container for the sheet", () => {
+    const container = document.createElement("div");
+    container.dataset.name = "nextstep-card";
+    const card = document.createElement("div");
+    card.setAttribute("data-tour-card", "");
+    vi.spyOn(card, "offsetHeight", "get").mockReturnValue(180);
+    document.body.append(container, card);
+    expect(cardRoom()).toBe(213);
   });
 
   it("keeps a generous room while no card is on screen", () => {

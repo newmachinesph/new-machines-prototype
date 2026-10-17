@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { signInWithDemoLogin } from "../helpers";
 import {
   contextAs,
   HIRE_WORDS,
@@ -41,8 +42,8 @@ test.describe("journey 1: first visit", () => {
     await page.goto("/");
     await settle(page);
     await shot(page, "j1-landing-1440");
-    await page.getByRole("button", { name: "Sign in" }).first().click();
-    await page.waitForURL(/\/app$/);
+    // The form refuses empty fields; mock auth takes any demo login.
+    await signInWithDemoLogin(page);
     await settle(page);
     await shot(page, "j1-overview-first-visit");
     const text = await mainText(page);

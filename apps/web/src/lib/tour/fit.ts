@@ -10,22 +10,32 @@ export const DEFAULT_CARD_ROOM = 300;
 const SIDE_ROOM = 256;
 /** Gap kept under a target whose card sits above it. */
 const BOTTOM_GAP = 16;
-/** The library's own container for the card. */
-const CARD_SELECTOR = '[data-name="nextstep-card"]';
+/** Below this window width (Tailwind's `sm`) the card is a sheet along the bottom of the window, whatever a step's
+ * side: a phone has no room beside a target, and a card below one would cover what comes next on the page. */
+export const SHEET_MAX_WIDTH = 640;
+/** The card itself (TourCard), which the sheet takes out of the library's container; else that container. */
+const CARD_SELECTOR = "[data-tour-card]";
+const CONTAINER_SELECTOR = '[data-name="nextstep-card"]';
 
 /** The height a step's card needs next to its target: the card on screen, measured, plus its gap. */
 export function cardRoom(doc: Document = document): number {
-  const height = doc.querySelector<HTMLElement>(CARD_SELECTOR)?.offsetHeight;
+  const card = doc.querySelector<HTMLElement>(CARD_SELECTOR) ?? doc.querySelector<HTMLElement>(CONTAINER_SELECTOR);
+  const height = card?.offsetHeight;
   return height ? height + CARD_GAP : DEFAULT_CARD_ROOM;
 }
+
+/** Whether a window this wide shows the card as a bottom sheet. */
+export const isSheet = (width: number) => width < SHEET_MAX_WIDTH;
 
 /** A target's box in viewport coordinates. */
 export type Box = { top: number; bottom: number; left: number; right: number };
 /** The window: its size, how far it is scrolled, the document's full height, and the room the card needs. */
 export type View = { width: number; height: number; scrollY: number; docHeight: number; cardRoom: number };
 
-/** Where the card ends up relative to its target, following the library's own flips (`checkSideCutOff`). */
-function placement(side: TourSide, r: Box, v: View): "above" | "below" | "beside" {
+/** Where the card ends up relative to its target: a sheet on a phone, else following the library's own flips
+ * (`checkSideCutOff`). */
+function placement(side: TourSide, r: Box, v: View): "above" | "below" | "beside" | "sheet" {
+  if (isSheet(v.width)) return "sheet";
   const spaceAbove = r.top + v.scrollY;
   const spaceBelow = v.docHeight - (r.bottom + v.scrollY);
   let s: string = side;
@@ -50,7 +60,8 @@ function placement(side: TourSide, r: Box, v: View): "above" | "below" | "beside
  */
 export function scrollToFit(side: TourSide, r: Box, v: View): number {
   const where = placement(side, r, v);
-  if (where === "below") {
+  // A sheet takes the bottom of the window, as a card below its target does.
+  if (where === "below" || where === "sheet") {
     return r.top >= TOP_CLEARANCE && r.bottom + v.cardRoom <= v.height ? 0 : r.top - TOP_CLEARANCE;
   }
   if (where === "above") {

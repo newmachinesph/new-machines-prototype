@@ -242,6 +242,7 @@ function AddMemory() {
   const atLimit = text.length >= TEXT_MAX;
   const countId = useId();
   const spacesNoteId = useId();
+  const textField = useRef<HTMLTextAreaElement>(null);
   // What the space field says about its list: failed, still loading, or nothing to choose from.
   const spacesNote = spaces.isError
     ? t("spacesFailed")
@@ -251,13 +252,18 @@ function AddMemory() {
         ? null
         : t("noSpaces");
 
-  // Closing (Cancel, Escape, the X, or a saved memory) starts the next one afresh.
+  // Closing starts the next memory afresh.
+  const close = () => {
+    setOpen(false);
+    setText("");
+    setSpace("");
+  };
+  // Cancel, Escape, the X and a click outside close it. Closed while the memory is still being saved, the draft is
+  // kept: a save that then fails is reported by its toast, and reopening brings the text back to retry.
   const change = (o: boolean) => {
-    setOpen(o);
-    if (!o) {
-      setText("");
-      setSpace("");
-    }
+    if (o) setOpen(true);
+    else if (add.isPending) setOpen(false);
+    else close();
   };
 
   const submit = () => {
@@ -266,9 +272,13 @@ function AddMemory() {
       {
         onSuccess: () => {
           toast(t("addedToast"), t("addedToastBody"));
-          change(false);
+          close();
         },
-        onError: (e) => toast(t("addFailed"), errorText(e), "blocked"),
+        onError: (e) => {
+          toast(t("addFailed"), errorText(e), "blocked");
+          // Back to the text to try again (when the dialog is still open).
+          focusAfterClose(() => textField.current);
+        },
       },
     );
   };
@@ -290,6 +300,7 @@ function AddMemory() {
           e.preventDefault();
           if (valid) submit();
         }}
+        aria-busy={add.isPending}
         className="mt-4"
       >
         {/* Nothing changes under a person's hands while the memory is being saved. */}
@@ -325,6 +336,7 @@ function AddMemory() {
             </label>
             <textarea
               id="mem-text"
+              ref={textField}
               value={text}
               onChange={(e) => setText(e.target.value)}
               rows={4}
@@ -344,7 +356,7 @@ function AddMemory() {
           <div className="flex justify-end gap-2">
             <ModalClose render={<Button variant="ghost" />}>{tc("cancel")}</ModalClose>
             <Button type="submit" disabled={!valid || add.isPending}>
-              {t("save")}
+              {add.isPending ? t("saving") : t("save")}
             </Button>
           </div>
         </fieldset>

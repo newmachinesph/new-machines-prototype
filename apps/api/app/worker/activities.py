@@ -19,7 +19,18 @@ from temporalio import activity
 from temporalio.exceptions import ApplicationError
 
 from app import db, fees, settings
-from app.runtime import agent, cel, decisions, drivers, gateway, memory, projection, providers, receipt
+from app.runtime import (
+    agent,
+    cel,
+    decisions,
+    drivers,
+    gateway,
+    memory,
+    projection,
+    providers,
+    receipt,
+    tracing,
+)
 from app.runtime.drivers import ToolResult, safe_message
 from app.runtime.providers import ModelProvider, ToolSpec
 
@@ -993,14 +1004,16 @@ class PackActivities:
         with _config_errors():
             models_def = _body(call.snapshot, "models", MODELS_KEY)
             provider, model = providers.provider_for(call.profile, models_def, settings.model_env())
-        turn = (self._provider or provider).call(
-            model=model,
-            system=call.system,
-            messages=call.messages,
-            tools=[ToolSpec(**t) for t in call.tools],
-            max_tokens=MAX_TOKENS,
-        )
-        cost = providers.cost_minor(models_def, call.profile, turn.input_tokens, turn.output_tokens)
+        with tracing.generation(call, model) as traced:
+            turn = (self._provider or provider).call(
+                model=model,
+                system=call.system,
+                messages=call.messages,
+                tools=[ToolSpec(**t) for t in call.tools],
+                max_tokens=MAX_TOKENS,
+            )
+            cost = providers.cost_minor(models_def, call.profile, turn.input_tokens, turn.output_tokens)
+            traced.record(turn, cost)
         usage = {"input_tokens": turn.input_tokens, "output_tokens": turn.output_tokens, "cost_minor": cost}
         _commit(call, [("model.usage", usage)])
         return {"content": turn.content, "stop_reason": turn.stop_reason, "cost_minor": cost}

@@ -109,7 +109,7 @@ def test_first_sign_in_provisions_an_org_with_the_user_as_owner(live, db):
         "email": "ana@example.com",
         "name": "Ana Reyes",
         "orgId": first["orgId"],
-        "orgName": "Ana's workspace",
+        "orgName": "Ana Reyes's workspace",
         "role": "owner",
         "workspace": "live",
         "invitations": [],
@@ -118,7 +118,7 @@ def test_first_sign_in_provisions_an_org_with_the_user_as_owner(live, db):
     [org] = _rows(db, "SELECT id, name, plan, monthly_cap_minor, status FROM orgs")
     assert org == {
         "id": first["orgId"],
-        "name": "Ana's workspace",
+        "name": "Ana Reyes's workspace",
         "plan": "trial",
         "monthly_cap_minor": 2500,
         "status": "active",
@@ -127,9 +127,33 @@ def test_first_sign_in_provisions_an_org_with_the_user_as_owner(live, db):
     assert member == {"user_id": "uid_ana", "email": "ana@example.com", "role": "owner", "status": "active"}
 
 
-def test_without_a_name_the_workspace_is_my_workspace(live):
-    assert me(live, "anon")["orgName"] == "My workspace"
+def test_without_a_name_or_email_the_workspace_is_your_workspace(live):
+    assert me(live, "anon")["orgName"] == "Your workspace"
     assert "email" not in me(live, "anon")
+
+
+@pytest.mark.parametrize(
+    ("name", "email", "expected"),
+    [
+        ("Ana", None, "Ana's workspace"),
+        ("QA Reviewer", "qa@example.com", "QA Reviewer's workspace"),  # the whole name, not its first word
+        ("Dr Jane Lee", None, "Dr Jane Lee's workspace"),
+        ("  Ana   Reyes ", None, "Ana Reyes's workspace"),
+        (None, "jane.lee@example.com", "jane.lee's workspace"),  # no name: the email's local part
+        ("", "jane.lee@example.com", "jane.lee's workspace"),
+        (None, None, "Your workspace"),
+        ("   ", "", "Your workspace"),
+        ("Jane​Doe\x00 ‏Lee\x1b", None, "JaneDoe Lee's workspace"),  # zero-width and control
+        ("​﻿", "a\x00b@example.com", "ab's workspace"),
+        # Over 80 characters: cut on a word boundary (13 words of 6 characters each, then "Ma" is dropped).
+        (" ".join(["Maria"] * 20), None, " ".join(["Maria"] * 13) + "'s workspace"),
+        ("x" * 100, None, "x" * 80 + "'s workspace"),  # one long word: cut at the limit
+        (" ".join(["Maria"] * 13) + " " + "x" * 20, None, " ".join(["Maria"] * 13) + "'s workspace"),
+    ],
+)
+def test_the_workspace_is_named_after_the_full_name_then_the_email(name, email, expected):
+    assert workspace.workspace_name(name, email) == expected
+    assert len(expected) <= workspace.WORKSPACE_NAME_MAX + len("'s workspace")
 
 
 def test_each_user_gets_their_own_org(live):
@@ -296,11 +320,11 @@ def test_signing_in_with_an_invitation_provisions_an_own_org_and_lists_the_invit
         "pending": True,
     }
     ben = me(live, "ben")
-    assert ben["orgId"] != org and (ben["orgName"], ben["role"]) == ("Ben's workspace", "owner")
+    assert ben["orgId"] != org and (ben["orgName"], ben["role"]) == ("Ben Ito's workspace", "owner")
     [invitation] = ben["invitations"]
     assert {k: v for k, v in invitation.items() if k != "invitedAt"} == {
         "orgId": org,
-        "orgName": "Ana's workspace",
+        "orgName": "Ana Reyes's workspace",
         "role": "member",
     }
     assert invitation["invitedAt"].endswith("Z")
@@ -328,7 +352,7 @@ def test_accepting_moves_the_user_and_deletes_their_empty_org(live, db):
     ben = r.json()
     assert (ben["orgId"], ben["orgName"], ben["role"], ben["invitations"]) == (
         org,
-        "Ana's workspace",
+        "Ana Reyes's workspace",
         "member",
         [],
     )
@@ -547,8 +571,8 @@ def test_org_reports_plan_cap_and_this_months_spend(live, db):
     body = live.get(f"/v1/organizations/{org}", headers=as_("ana")).json()
     assert body == {
         "id": org,
-        "name": "Ana's workspace",
-        "short": "Ana's workspace",
+        "name": "Ana Reyes's workspace",
+        "short": "Ana Reyes's workspace",
         "plan": "Trial",
         "monthlyCap": _money(2500),
         "monthSpent": _money(555),

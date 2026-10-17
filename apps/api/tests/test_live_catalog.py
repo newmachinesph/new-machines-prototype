@@ -631,9 +631,16 @@ def _remember(db, text: str, source: str, org_id: str | None) -> str:
     return item["id"]
 
 
-def test_memory_is_the_orgs_own_and_the_shared_items(ana, ben, db):
-    seeds = {r["id"] for r in _rows(db, "SELECT id FROM memory_items WHERE source = 'seed'")}
+def test_memory_is_the_orgs_own_and_the_shared_items_of_its_packs_spaces(ana, ben, db):
+    """Ana has added the reconciliation pack, which uses retail-commerce: she sees that space's seeds and
+    console items with her own. Ben has added nothing, so he sees no shared item at all."""
+    assert ana.hire().status_code == 201
+    seeds = {
+        r["id"]
+        for r in _rows(db, "SELECT id FROM memory_items WHERE source = 'seed' AND space = 'retail-commerce'")
+    }
     assert seeds
+    assert len(_rows(db, "SELECT id FROM memory_items WHERE source = 'seed'")) > len(seeds)
     own = _remember(db, "Ana's stores batch payouts on Fridays.", "run:run_a:recall:1", ana.org_id)
     console = _remember(db, "Fees under $1 are rounding.", "console", None)
     stray = _remember(db, "Written before items had an org.", "run:run_x:recall:1", None)
@@ -641,7 +648,7 @@ def test_memory_is_the_orgs_own_and_the_shared_items(ana, ben, db):
     assert set(listed) == seeds | {own, console}
     assert listed[own]["source"] == "Run run_a" and listed[own]["sourceRun"] == "run_a"
     assert listed[console]["source"] == "New Machines"
-    assert {m["id"] for m in ben.get("/v1/memory").json()} == seeds | {console}
+    assert ben.get("/v1/memory").json() == []
     assert stray not in listed
     assert all(m["id"] not in {"mem_001"} for m in listed.values())  # no fixtures
 

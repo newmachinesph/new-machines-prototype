@@ -13,30 +13,33 @@ vi.mock("next-intl/server", async () => {
       createTranslator({ locale: "en", messages: en, namespace: namespace as never }),
   };
 });
-vi.mock("./sign-in-form", () => ({ SignInForm: () => <form aria-label="sign-in" /> }));
+// The form heads itself from `area`; what it shows is its own test's business.
+vi.mock("./sign-in-form", () => ({
+  SignInForm: ({ area }: { area: string | null }) => <form aria-label="sign-in" data-area={area ?? "none"} />,
+}));
 vi.mock("./run-record", () => ({ RunRecord: () => <section /> }));
 vi.mock("@/components/language-switch", () => ({ LanguageSwitch: () => <div /> }));
 
 const page = async (next?: string) => renderWithIntl(await LandingPage({ searchParams: Promise.resolve({ next }) }));
 
 describe("landing page", () => {
-  it("titles the form for the demo workspace by default", async () => {
+  it("gives the form no area by default", async () => {
     await page();
-    expect(screen.getByRole("heading", { level: 2, name: "Sign in to the demo workspace" })).toBeInTheDocument();
+    expect(screen.getByRole("form", { name: "sign-in" })).toHaveAttribute("data-area", "none");
   });
 
   it.each([
-    ["/work", "the reviewer portal"],
-    ["/app/runs/run_1042", "the business workspace"],
-    ["/studio", "the Studio"],
-  ])("says where sign-in continues to when next is %s", async (next, where) => {
+    ["/work", "work"],
+    ["/app/runs/run_1042", "app"],
+    ["/studio", "studio"],
+  ])("tells the form where sign-in continues to when next is %s", async (next, area) => {
     await page(next);
-    expect(screen.getByRole("heading", { level: 2, name: `Sign in to continue to ${where}` })).toBeInTheDocument();
+    expect(screen.getByRole("form", { name: "sign-in" })).toHaveAttribute("data-area", area);
   });
 
   it("ignores an unsafe next", async () => {
     await page("//evil.com");
-    expect(screen.getByRole("heading", { level: 2, name: "Sign in to the demo workspace" })).toBeInTheDocument();
+    expect(screen.getByRole("form", { name: "sign-in" })).toHaveAttribute("data-area", "none");
   });
 
   it("keeps the footer to a neutral line", async () => {

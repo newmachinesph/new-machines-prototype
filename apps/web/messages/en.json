@@ -61,7 +61,7 @@
     "find": "Find",
     "reviewerName": "Reviewer 204",
     "switchWorkspace": "{name}, switch workspace",
-    "signedInAs": "Signed in as the demo operator",
+    "accountMenu": "{name}, account menu",
     "current": "Current",
     "reviewerPortal": "Reviewer portal",
     "businessWorkspace": "Business workspace",
@@ -107,7 +107,6 @@
         "actions": "Actions"
       }
     },
-    "signedInAsUser": "Signed in as {who}",
     "roles": {
       "owner": "Owner",
       "admin": "Admin",
@@ -121,7 +120,6 @@
     "sandboxBadge": "Simulated data, simulated billing",
     "sandboxTooltip": "Apps not connected to your real account use simulated data. Connect them on the Connections page. Billing is simulated: no money moves.",
     "you": "You",
-    "signedIn": "Signed in",
     "workspaceLoading": "Loading workspace",
     "workspaceUnavailable": "Workspace unavailable",
     "studio": "Studio home",
@@ -571,6 +569,8 @@
       "joinNoteReviewer": "Reviewers: after signing in, open the reviewer portal from the menu."
     },
     "createAccount": {
+      "title": "Create your workspace",
+      "help": "Set up an account for your business. You can also continue with Google.",
       "switchPrompt": "New here?",
       "switch": "Create an account",
       "backPrompt": "Already have an account?",
@@ -615,6 +615,7 @@
     "ask": {
       "label": "What work do you want done?",
       "placeholder": "What work do you want done? Describe the outcome, for example “reconcile orders and payouts every week”",
+      "placeholderShort": "Describe the outcome you want",
       "suggest": "Suggest a pack",
       "clear": "Clear",
       "finding": "Finding a pack...",
@@ -911,7 +912,7 @@
   },
   "memory": {
     "title": "Memory",
-    "lede": "What your agents know about how your business works: the policies your workspace started with, and what an agent learns from a run once a person approves it. Your systems of record always win over memory.",
+    "lede": "What your agents know about how your business works: the policies that come with the packs you added, and what an agent learns from a run once a person approves it. Your systems of record always win over memory.",
     "inUse": "In use",
     "count": "{n, plural, one {# memory} other {# memories}}",
     "none": "No memories in use. Agents rely only on your systems of record.",
@@ -927,12 +928,13 @@
       "space": "Applies to",
       "spacesLoading": "Loading where a memory can apply…",
       "spacesFailed": "Could not load where a memory can apply. Close this and try again.",
-      "noSpaces": "There is nowhere for a memory to apply yet.",
+      "noSpaces": "Add a pack first. Memories apply to the work your packs do.",
       "text": "Memory",
       "textPlaceholder": "For example: never refund an opened item without a person's approval.",
       "count": "{n} of {max} characters",
       "atLimit": "That is the limit. Keep it to one rule.",
       "save": "Save memory",
+      "saving": "Saving…",
       "addedToast": "Memory added",
       "addedToastBody": "Your agents use it from their next run.",
       "addFailed": "Could not add memory"
@@ -965,7 +967,7 @@
       "rejectedBody": "It stays in the history."
     },
     "source": {
-      "seed": "Set up with your workspace",
+      "seed": "Comes with a pack you added",
       "console": "Added by New Machines",
       "team": "Added by your team",
       "run": "From run {n}",
@@ -1033,7 +1035,8 @@
     "price": {
       "range": "{min}–{max}",
       "cap": "Up to {amount} per run (cap)",
-      "capPlusFee": "Up to {amount} per run (cap), plus the fee"
+      "capPlusFee": "Up to {amount} per run (cap), plus the fee",
+      "noCap": "No per-run cap set"
     },
     "trial": {
       "title": "Try it in the sandbox",
@@ -1561,7 +1564,7 @@
       "lede": "You are paid for every accepted submission, including when you reject the agent's work or a later step fails.",
       "simulated": "No real payouts in this demo",
       "ledeLive": "Reviews you do for the New Machines reviewer network earn simulated pay: no money moves. Reviews for your own workspace's team are unpaid.",
-      "simulatedLive": "Pay is simulated",
+      "simulatedLive": "Pay is simulated: no money moves.",
       "owed": "Owed",
       "paid": "Paid so far",
       "tasks": "Tasks",
@@ -1588,7 +1591,7 @@
     },
     "empty": "No review tasks are open right now. New ones appear here when a run needs a person.",
     "emptyNetwork": "No review tasks are open right now. Turn on network reviewing to get review tasks from other New Machines customers.",
-    "simulatedPayLive": "Pay is simulated",
+    "simulatedPayLive": "Pay is simulated: no money moves.",
     "teamUnpaid": "Team review, unpaid",
     "network": "Network",
     "profile": {

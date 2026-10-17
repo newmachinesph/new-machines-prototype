@@ -32,6 +32,11 @@ export async function setLocale(context: BrowserContext, locale: "en" | "ja") {
 /** Sign in through the landing page the way a person does. Mock auth takes any demo login, but the form wants one filled in. */
 export async function signInThroughLanding(page: Page) {
   await page.goto("/");
+  await signInWithDemoLogin(page);
+}
+
+/** On the landing page already: fill in the demo login and sign in. */
+export async function signInWithDemoLogin(page: Page) {
   await page.getByRole("textbox", { name: "Email" }).fill("demo@newmachin.es");
   await page.getByLabel("Password", { exact: true }).fill("demo-login");
   await page.getByRole("button", { name: "Sign in", exact: true }).click();

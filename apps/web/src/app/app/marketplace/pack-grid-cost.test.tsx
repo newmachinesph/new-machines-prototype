@@ -47,6 +47,11 @@ vi.mock("@/lib/queries/catalog", () => ({
       pack("o2c", "Exception desk", { priceNote: NOTE }),
       pack("bare", "Bare cap"),
       pack("listed", "Listed cap", { listing }),
+      // A contract whose reviewer budget uses up its maximum leaves no cap for agents and tools.
+      pack("uncapped", "Uncapped note", {
+        priceNote: NOTE,
+        estimate: { aiMin: usd(0), aiMax: usd(0), humanMax: usd(2000) },
+      }),
     ]),
   useAgents: () => ok([]),
   useAgentById: () => () => undefined,
@@ -65,6 +70,13 @@ describe("PackGrid cost per run", () => {
     expect(within(cost(/Exception desk/)).getByText("Up to $30.00 per run (cap)")).toBeInTheDocument();
     expect(cost(/Bare cap/)).toHaveTextContent(/^Up to \$30\.00 per run \(cap\)$/);
     expect(document.body.textContent).not.toMatch(/\$0\.00/);
+  });
+
+  it("gives a pack with a note but no cap the cap line too, saying none is set", () => {
+    renderWithIntl(<PackGrid />);
+    expect(cost(/Uncapped note/)).toHaveTextContent("About $0.80 to $3.00 of AI work per run.");
+    expect(within(cost(/Uncapped note/)).getByText("No per-run cap set")).toBeInTheDocument();
+    expect(cost(/Uncapped note/)).not.toHaveTextContent("Usage-based");
   });
 
   it("says a listed pack's fee comes on top of the cap", () => {
