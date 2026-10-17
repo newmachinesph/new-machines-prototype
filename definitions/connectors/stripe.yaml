@@ -54,10 +54,11 @@ tools:
   - id: create_customer
     slug: STRIPE_CREATE_CUSTOMER
     version: '20261014_00'
+    name: Create customer
     action_class: write
     capability: payments.write
-    description: Creates a new customer in Stripe, required for creating charges or subscriptions; an email is highly
-      recommended for customer communications.
+    description: Create a new customer record with a name, email address, phone, address and description. Returns the
+      new customer and its id.
     input_schema:
       type: object
       properties:
@@ -89,10 +90,11 @@ tools:
   - id: create_customer_tax_id
     slug: STRIPE_CREATE_CUSTOMER_TAX_ID
     version: '20261014_00'
+    name: Add customer tax ID
     action_class: write
     capability: payments.write
-    description: Creates a new tax ID for a customer, used for tax compliance and invoicing across 100+ supported
-      country-specific tax ID formats. Use when you need to add tax identification to a customer account.
+    description: Add a tax identification number to a customer, by customer id, giving its type and value, for tax compliance
+      and invoicing.
     input_schema:
       type: object
       required:
@@ -121,10 +123,11 @@ tools:
   - id: create_price
     slug: STRIPE_CREATE_PRICE
     version: '20261014_00'
+    name: Create price
     action_class: write
     capability: payments.write
-    description: Creates a new Stripe Price for a product, defining its charges (one-time or recurring) and billing
-      scheme; requires either an existing `product` ID or `product_data`.
+    description: Create a price for a product, by product id or new product details, with a currency and a one-time
+      or recurring amount, tiers or billing scheme. Returns the new price and its id.
     input_schema:
       type: object
       required:
@@ -391,10 +394,11 @@ tools:
   - id: create_product
     slug: STRIPE_CREATE_PRODUCT
     version: '20261014_00'
+    name: Create product
     action_class: write
     capability: payments.write
-    description: Creates a new product in Stripe, encoding the request as `application/x-www-form-urlencoded` by flattening
-      nested structures.
+    description: Create a new product with a name and optional description, images, tax code, shipping details and default
+      price. Returns the new product and its id.
     input_schema:
       type: object
       required:
@@ -563,9 +567,10 @@ tools:
   - id: download_file_contents
     slug: STRIPE_DOWNLOAD_FILE_CONTENTS
     version: '20261014_00'
+    name: Download file
     action_class: read
     capability: payments.read
-    description: Download authenticated file contents when the file purpose permits it.
+    description: Download the contents of a stored file by file id, when the file's purpose allows it.
     input_schema:
       type: object
       required:
@@ -578,10 +583,10 @@ tools:
   - id: download_quote_pdf
     slug: STRIPE_DOWNLOAD_QUOTE_PDF
     version: '20261014_00'
+    name: Download quote PDF
     action_class: read
     capability: payments.read
-    description: Tool to download the PDF for a finalized quote from Stripe. Use when you need to retrieve the PDF
-      document of a quote that has been finalized.
+    description: Download the PDF of a finalized quote, by quote id.
     input_schema:
       type: object
       required:
@@ -594,10 +599,10 @@ tools:
   - id: get_charge_refund_details
     slug: STRIPE_GET_CHARGES_CHARGE_REFUNDS_REFUND
     version: '20261014_00'
+    name: Get charge refund
     action_class: read
     capability: payments.read
-    description: Tool to retrieve the details of an existing refund within a specific charge. Use when you need to
-      get refund information using both the charge ID and refund ID.
+    description: Get one refund on a charge, by charge id and refund id, with its amount, status, reason and date.
     input_schema:
       type: object
       required:
@@ -621,10 +626,11 @@ tools:
   - id: retrieve_customer_bank_account
     slug: STRIPE_GET_CUSTOMERS_CUSTOMER_BANK_ACCOUNTS_ID
     version: '20261014_00'
+    name: Get customer bank account
     action_class: read
     capability: payments.read
-    description: Retrieves details about a specific bank account stored on a Stripe customer. Use when you need to
-      view bank account information for a customer.
+    description: Get one bank account saved on a customer, by customer id and bank account id, with its bank name, country,
+      currency, last digits and status.
     input_schema:
       type: object
       required:
@@ -648,10 +654,11 @@ tools:
   - id: get_customer_cash_balance
     slug: STRIPE_GET_CUSTOMERS_CUSTOMER_CASH_BALANCE
     version: '20261014_00'
+    name: Get customer cash balance
     action_class: read
     capability: payments.read
-    description: Tool to retrieve a customer's cash balance. Use when you need to check the current cash balance for
-      a specific Stripe customer, including available funds by currency.
+    description: 'Get a customer''s cash balance by customer id: the funds available to them, by currency, and the balance
+      settings.'
     input_schema:
       type: object
       required:
@@ -670,9 +677,11 @@ tools:
   - id: list_customer_payment_methods
     slug: STRIPE_GET_CUSTOMERS_CUSTOMER_PAYMENT_METHODS
     version: '20261014_00'
+    name: List customer payment methods
     action_class: read
     capability: payments.read
-    description: Retrieves a list of payment methods for a given customer, supporting type filtering and pagination.
+    description: List the payment methods saved on one customer, by customer id, optionally only those of one type,
+      a page at a time.
     input_schema:
       type: object
       required:
@@ -707,10 +716,11 @@ tools:
   - id: get_customer_subscription_discount
     slug: STRIPE_GET_CUSTOMERS_CUSTOMER_SUBS_SUB_EXPOSED_ID_DISCOUNT
     version: '20261014_00'
+    name: Get subscription discount
     action_class: read
     capability: payments.read
-    description: Tool to retrieve the discount currently applied to a customer's subscription. Use when you need to
-      check if a subscription has an active discount and get details about the coupon or promotion code.
+    description: Get the discount currently applied to a customer's subscription, by customer id and subscription id,
+      with its coupon or promotion code.
     input_schema:
       type: object
       required:
@@ -735,10 +745,10 @@ tools:
   - id: retrieve_invoice
     slug: STRIPE_GET_INVOICES_INVOICE
     version: '20261014_00'
+    name: Get invoice
     action_class: read
     capability: payments.read
-    description: Tool to retrieve a specific invoice by ID. Use when you need to get detailed information about an
-      existing invoice.
+    description: Get one invoice by invoice id, with its number, customer, amounts, due date, status and line items.
     input_schema:
       type: object
       required:
@@ -757,10 +767,11 @@ tools:
   - id: get_invoice_line_items
     slug: STRIPE_GET_INVOICES_INVOICE_LINES
     version: '20261014_00'
+    name: List invoice line items
     action_class: read
     capability: payments.read
-    description: Tool to retrieve a paginated list of line items for a specific invoice. Use when you need to see
-      the individual charges, products, or services included in an invoice.
+    description: List the line items of one invoice, by invoice id, a page at a time, with each item's description,
+      quantity and amount.
     input_schema:
       type: object
       required:
@@ -784,10 +795,10 @@ tools:
   - id: retrieve_payment_link
     slug: STRIPE_GET_PAYMENT_LINK
     version: '20261014_00'
+    name: Get payment link
     action_class: read
     capability: payments.read
-    description: Tool to retrieve details of an existing Stripe payment link by ID. Use when you need to get information
-      about a specific payment link.
+    description: Get one payment link by its id, with its web address, whether it is active and its line items.
     input_schema:
       type: object
       required:
@@ -806,10 +817,10 @@ tools:
   - id: retrieve_payment_method_configuration
     slug: STRIPE_GET_PAYMENT_METHOD_CONFIGURATION
     version: '20261014_00'
+    name: Get payment method configuration
     action_class: read
     capability: payments.read
-    description: Tool to retrieve a specific payment method configuration by its unique identifier. Use when you need
-      to inspect the settings and availability of payment methods for a given configuration.
+    description: Get one payment method configuration by its id, showing which payment methods are turned on and available.
     input_schema:
       type: object
       required:
@@ -823,10 +834,10 @@ tools:
   - id: retrieve_price
     slug: STRIPE_GET_PRICES_PRICE
     version: '20261014_00'
+    name: Get price
     action_class: read
     capability: payments.read
-    description: Retrieves detailed information for a specific Stripe price using its unique ID. Use when you need
-      to fetch price details.
+    description: Get one price by price id, with its product, currency, amount, billing interval and whether it is active.
     input_schema:
       type: object
       required:
@@ -839,10 +850,11 @@ tools:
   - id: retrieve_product
     slug: STRIPE_GET_PRODUCTS_ID
     version: '20261014_00'
+    name: Get product
     action_class: read
     capability: payments.read
-    description: Retrieves detailed information for an existing Stripe product using its unique product ID. Use when
-      you need to fetch details about a specific product.
+    description: Get one product by product id, with its name, description, images, default price and whether it is
+      active.
     input_schema:
       type: object
       required:
@@ -861,10 +873,10 @@ tools:
   - id: retrieve_product_feature
     slug: STRIPE_GET_PRODUCTS_PRODUCT_FEATURES_ID
     version: '20261014_00'
+    name: Get product feature
     action_class: read
     capability: payments.read
-    description: Retrieves a specific product feature by its ID. Use when you need to get details about a particular
-      feature attached to a product.
+    description: Get one feature attached to a product, by product id and feature id.
     input_schema:
       type: object
       required:
@@ -881,10 +893,10 @@ tools:
   - id: retrieve_refund
     slug: STRIPE_GET_REFUNDS_REFUND
     version: '20261014_00'
+    name: Get refund
     action_class: read
     capability: payments.read
-    description: Tool to retrieve details of a specific Stripe refund by ID. Use when you need to get information
-      about an existing refund.
+    description: Get one refund by refund id, with its amount, currency, status, reason and the charge it refunds.
     input_schema:
       type: object
       required:
@@ -897,10 +909,10 @@ tools:
   - id: retrieve_subscription_schedule
     slug: STRIPE_GET_SUBSCRIPTION_SCHEDULES_SCHEDULE
     version: '20261014_00'
+    name: Get subscription schedule
     action_class: read
     capability: payments.read
-    description: Retrieve a subscription schedule using its unique identifier. Use when you need to view details of
-      an existing schedule including phases, settings, and status.
+    description: Get one subscription schedule by its id, with its phases, settings and status.
     input_schema:
       type: object
       required:
@@ -919,10 +931,10 @@ tools:
   - id: list_payment_methods
     slug: STRIPE_GET_V1_PAYMENT_METHODS_PAYMENT_METHODS2
     version: '20261014_00'
+    name: List payment methods
     action_class: read
     capability: payments.read
-    description: Tool to retrieve a list of PaymentMethods with filtering and pagination support. Use when you need
-      to list payment methods, optionally filtering by customer, type, or redisplay settings.
+    description: List payment methods a page at a time, optionally only those of one customer or of one type.
     input_schema:
       type: object
       properties:
@@ -961,10 +973,11 @@ tools:
   - id: list_balance_transactions
     slug: STRIPE_LIST_BALANCE_TRANSACTIONS
     version: '20261014_00'
+    name: List balance transactions
     action_class: read
     capability: payments.read
-    description: Lists all balance transactions for the connected Stripe account. Use this action when you need to
-      retrieve the transaction history of funds moving through your Stripe account.
+    description: 'List the movements of funds through the account a page at a time: charges, refunds, payouts, fees
+      and more, optionally only of one type, currency, payout or source, or in a date range.'
     input_schema:
       type: object
       properties:
@@ -1016,10 +1029,11 @@ tools:
   - id: list_charge_refunds
     slug: STRIPE_LIST_CHARGE_REFUNDS
     version: '20261014_00'
+    name: List charge refunds
     action_class: read
     capability: payments.read
-    description: Lists all refunds for a specific charge in Stripe. Use this action when you need to retrieve all
-      refunds associated with a particular charge ID.
+    description: List the refunds made on one charge, by charge id, a page at a time, with each refund's amount, status
+      and date.
     input_schema:
       type: object
       required:
@@ -1053,10 +1067,11 @@ tools:
   - id: list_credit_notes
     slug: STRIPE_LIST_CREDIT_NOTES
     version: '20261014_00'
+    name: List credit notes
     action_class: read
     capability: payments.read
-    description: Lists Stripe credit notes with optional filtering by customer, invoice, or customer account, and
-      pagination support.
+    description: List credit notes a page at a time, optionally only those of one customer or one invoice, or created
+      in a date range.
     input_schema:
       type: object
       properties:
@@ -1091,10 +1106,11 @@ tools:
   - id: list_customers
     slug: STRIPE_LIST_CUSTOMERS
     version: '20261014_00'
+    name: List customers
     action_class: read
     capability: payments.read
-    description: Retrieves a list of Stripe customers, with options to filter by email, creation date, or test clock,
-      and support for pagination.
+    description: List customers a page at a time, optionally only those with a given email address or created in a date
+      range.
     input_schema:
       type: object
       properties:
@@ -1125,11 +1141,11 @@ tools:
   - id: list_customer_subscriptions
     slug: STRIPE_LIST_CUSTOMER_SUBSCRIPTIONS
     version: '20261014_00'
+    name: List customer subscriptions
     action_class: read
     capability: payments.read
-    description: Tool to list all active subscriptions for a customer in Stripe. Use when you need to retrieve all
-      subscriptions associated with a specific customer ID. Supports pagination via starting_after and ending_before
-      cursors.
+    description: List the subscriptions of one customer, by customer id, a page at a time, with each one's status, items
+      and billing period.
     input_schema:
       type: object
       required:
@@ -1166,10 +1182,11 @@ tools:
   - id: list_disputes
     slug: STRIPE_LIST_DISPUTES
     version: '20261014_00'
+    name: List disputes
     action_class: read
     capability: payments.read
-    description: Tool to list all disputes from a Stripe account. Use when you need to retrieve disputes with optional
-      filtering by charge or payment intent.
+    description: List payment disputes a page at a time, optionally only those on one charge or payment, or created
+      in a date range, with each dispute's amount, reason and status.
     input_schema:
       type: object
       properties:
@@ -1199,10 +1216,11 @@ tools:
   - id: list_invoice_items
     slug: STRIPE_LIST_INVOICEITEMS
     version: '20261014_00'
+    name: List invoice items
     action_class: read
     capability: payments.read
-    description: Retrieves a paginated list of Stripe invoice items. Use to filter by customer, invoice, creation
-      date, or attachment status with cursor-based pagination.
+    description: List invoice items a page at a time, optionally only those of one customer or invoice, created in a
+      date range or not yet attached to an invoice.
     input_schema:
       type: object
       properties:
@@ -1241,10 +1259,11 @@ tools:
   - id: list_invoice_payments
     slug: STRIPE_LIST_INVOICE_PAYMENTS
     version: '20261014_00'
+    name: List invoice payments
     action_class: read
     capability: payments.read
-    description: Tool to list all payments for invoices in Stripe. Use when you need to retrieve payment information
-      associated with invoices, including pagination and filtering by invoice ID, status, or creation date.
+    description: List payments made against invoices a page at a time, optionally only those of one invoice, with a
+      given status or created in a date range.
     input_schema:
       type: object
       properties:
@@ -1275,10 +1294,10 @@ tools:
   - id: list_invoice_rendering_templates
     slug: STRIPE_LIST_INVOICE_RENDERING_TEMPLATES
     version: '20261014_00'
+    name: List invoice templates
     action_class: read
     capability: payments.read
-    description: Tool to list all invoice rendering templates ordered by creation date. Use when you need to retrieve
-      available invoice rendering templates.
+    description: List the templates available for rendering invoices, newest first, a page at a time.
     input_schema:
       type: object
       properties:
@@ -1300,10 +1319,11 @@ tools:
   - id: list_payment_intents
     slug: STRIPE_LIST_PAYMENT_INTENTS
     version: '20261014_00'
+    name: List payments
     action_class: read
     capability: payments.read
-    description: Tool to list PaymentIntents from Stripe. Use when you need to retrieve a list of payment intents
-      with optional filtering by customer, creation date, or pagination parameters.
+    description: List payments (payment intents) a page at a time, optionally only those of one customer or created
+      in a date range, with each one's amount, currency and status.
     input_schema:
       type: object
       properties:
@@ -1338,9 +1358,10 @@ tools:
   - id: list_payment_links
     slug: STRIPE_LIST_PAYMENT_LINKS
     version: '20261014_00'
+    name: List payment links
     action_class: read
     capability: payments.read
-    description: Retrieves a list of payment links from Stripe, sorted by creation date in descending order by default.
+    description: List payment links a page at a time, newest first, optionally only active or only inactive ones.
     input_schema:
       type: object
       properties:
@@ -1360,10 +1381,11 @@ tools:
   - id: list_payouts
     slug: STRIPE_LIST_PAYOUTS
     version: '20261014_00'
+    name: List payouts
     action_class: read
     capability: payments.read
-    description: Lists Stripe payouts sent to external accounts or received from Stripe, sorted by creation date descending
-      (newest first), with optional filtering by arrival date, creation date, destination, and status.
+    description: List payouts to and from the account's bank, newest first, a page at a time, optionally only those
+      with a given status, destination, arrival date or creation date.
     input_schema:
       type: object
       properties:
@@ -1402,10 +1424,11 @@ tools:
   - id: list_prices
     slug: STRIPE_LIST_PRICES
     version: '20261014_00'
+    name: List prices
     action_class: read
     capability: payments.read
-    description: Tool to list Stripe prices. Use when you need to retrieve and filter price objects before processing
-      write operations.
+    description: List prices a page at a time, optionally only those of one product, currency or type, active or not,
+      recurring or one-time, or with given lookup keys.
     input_schema:
       type: object
       properties:
@@ -1457,10 +1480,11 @@ tools:
   - id: list_products
     slug: STRIPE_LIST_PRODUCTS
     version: '20261014_00'
+    name: List products
     action_class: read
     capability: payments.read
-    description: Retrieves a list of Stripe products, with optional filtering and pagination; `starting_after`/`ending_before`
-      cursors must be valid product IDs from a previous response.
+    description: List products a page at a time, optionally only given ids, active or not, shippable or not, or created
+      in a date range.
     input_schema:
       type: object
       properties:
@@ -1507,10 +1531,10 @@ tools:
   - id: list_quotes
     slug: STRIPE_LIST_QUOTES
     version: '20261014_00'
+    name: List quotes
     action_class: read
     capability: payments.read
-    description: Retrieves a list of Stripe quotes with pagination support. Use to fetch quotes by customer, status,
-      or creation date.
+    description: List quotes a page at a time, optionally only those of one customer or with a given status.
     input_schema:
       type: object
       properties:
@@ -1542,10 +1566,11 @@ tools:
   - id: list_refunds
     slug: STRIPE_LIST_REFUNDS
     version: '20261014_00'
+    name: List refunds
     action_class: read
     capability: payments.read
-    description: Lists Stripe refunds, sorted by creation date descending (newest first), with optional filtering
-      by charge or payment_intent and pagination support.
+    description: List refunds newest first, a page at a time, optionally only those on one charge or payment, with each
+      refund's amount, currency and status.
     input_schema:
       type: object
       properties:
@@ -1570,10 +1595,11 @@ tools:
   - id: list_subscriptions
     slug: STRIPE_LIST_SUBSCRIPTIONS
     version: '20261014_00'
+    name: List subscriptions
     action_class: read
     capability: payments.read
-    description: Retrieves a list of Stripe subscriptions, optionally filtered by various criteria such as customer,
-      price, status, collection method, and date ranges, with support for pagination.
+    description: List subscriptions a page at a time, optionally only those of one customer or price, with a given status
+      or collection method, or by billing period or creation date.
     input_schema:
       type: object
       properties:
@@ -1628,9 +1654,11 @@ tools:
   - id: list_tax_rates
     slug: STRIPE_LIST_TAX_RATES
     version: '20261014_00'
+    name: List tax rates
     action_class: read
     capability: payments.read
-    description: Retrieves a list of tax rates, which are returned sorted by creation date in descending order.
+    description: List tax rates newest first, a page at a time, optionally only active or inactive ones, inclusive or
+      exclusive, or created in a date range.
     input_schema:
       type: object
       properties:
@@ -1666,10 +1694,11 @@ tools:
   - id: list_transfers
     slug: STRIPE_LIST_TRANSFERS
     version: '20261014_00'
+    name: List transfers
     action_class: read
     capability: payments.read
-    description: List all transfers sent to connected accounts. Transfers are returned in reverse chronological order.
-      Use when you need to retrieve transfer history or monitor funds sent to connected accounts.
+    description: List transfers sent to connected accounts, newest first, a page at a time, optionally only those to
+      one destination, in one transfer group or created in a date range.
     input_schema:
       type: object
       properties:
@@ -1705,9 +1734,10 @@ tools:
   - id: retrieve_balance
     slug: STRIPE_RETRIEVE_BALANCE
     version: '20261014_00'
+    name: Get balance
     action_class: read
     capability: payments.read
-    description: Retrieves the complete current balance details for the connected Stripe account.
+    description: 'Get the account''s current balance: the funds available and pending, by currency.'
     input_schema:
       type: object
       properties: {}
@@ -1715,9 +1745,10 @@ tools:
   - id: retrieve_charge_details
     slug: STRIPE_RETRIEVE_CHARGE
     version: '20261014_00'
+    name: Get charge
     action_class: read
     capability: payments.read
-    description: Retrieves full details for an existing Stripe charge using its unique ID.
+    description: Get one charge by charge id, with its amount, currency, status, customer, payment method and refunds.
     input_schema:
       type: object
       required:
@@ -1730,9 +1761,11 @@ tools:
   - id: retrieve_customer
     slug: STRIPE_RETRIEVE_CUSTOMER
     version: '20261014_00'
+    name: Get customer
     action_class: read
     capability: payments.read
-    description: Retrieves detailed information for an existing Stripe customer using their unique customer ID.
+    description: Get one customer by customer id, with their name, email address, phone, address, balance and default
+      payment method.
     input_schema:
       type: object
       required:
@@ -1745,9 +1778,11 @@ tools:
   - id: retrieve_payment_intent
     slug: STRIPE_RETRIEVE_PAYMENT_INTENT
     version: '20261014_00'
+    name: Get payment
     action_class: read
     capability: payments.read
-    description: Retrieves a PaymentIntent by its ID; `client_secret` is required if a publishable API key is used.
+    description: Get one payment (payment intent) by its id, with its amount, currency, status, customer and payment
+      method.
     input_schema:
       type: object
       required:
@@ -1763,10 +1798,11 @@ tools:
   - id: retrieve_upcoming_invoice
     slug: STRIPE_RETRIEVE_UPCOMING_INVOICE
     version: '20261014_00'
+    name: Preview upcoming invoice
     action_class: read
     capability: payments.read
-    description: Tool to preview the upcoming invoice for a customer, showing all pending charges including subscription
-      renewals and invoice items.
+    description: Preview the next invoice for a customer or subscription before it is created, showing pending charges
+      such as subscription renewals and invoice items, with optional changes to try out.
     input_schema:
       type: object
       properties:
@@ -1919,10 +1955,11 @@ tools:
   - id: search_customers
     slug: STRIPE_SEARCH_CUSTOMERS
     version: '20261014_00'
+    name: Search customers
     action_class: read
     capability: payments.read
-    description: Retrieves a list of Stripe customers matching a search query that adheres to Stripe's Search Query
-      Language.
+    description: Search customers with a query on fields such as email address, name or metadata, in the payment provider's
+      search syntax, a page at a time.
     input_schema:
       type: object
       required:
@@ -1951,10 +1988,11 @@ tools:
   - id: search_payment_intents
     slug: STRIPE_SEARCH_PAYMENT_INTENTS
     version: '20261014_00'
+    name: Search payments
     action_class: read
     capability: payments.read
-    description: Searches for PaymentIntents using Stripe's Search Query Language. Use when you need to find payments
-      by status, amount, customer, or other criteria.
+    description: Search payments (payment intents) with a query on status, amount, customer or metadata, in the payment
+      provider's search syntax, a page at a time.
     input_schema:
       type: object
       required:
@@ -1978,10 +2016,11 @@ tools:
   - id: search_stripe_prices
     slug: STRIPE_SEARCH_PRICES
     version: '20261014_00'
+    name: Search prices
     action_class: read
     capability: payments.read
-    description: Search for prices using Stripe's Search Query Language. Use when you need to find prices by status,
-      currency, product, or other criteria with flexible query syntax.
+    description: Search prices with a query on status, currency, product or metadata, in the payment provider's search
+      syntax, a page at a time.
     input_schema:
       type: object
       required:
@@ -2005,10 +2044,11 @@ tools:
   - id: search_stripe_products
     slug: STRIPE_SEARCH_PRODUCTS
     version: '20261014_00'
+    name: Search products
     action_class: read
     capability: payments.read
-    description: Tool to search for products using Stripe's Search Query Language. Use when you need to find products
-      based on specific criteria like active status, name, or metadata.
+    description: Search products with a query on status, name or metadata, in the payment provider's search syntax,
+      a page at a time.
     input_schema:
       type: object
       required:
@@ -2034,10 +2074,11 @@ tools:
   - id: search_subscriptions
     slug: STRIPE_SEARCH_SUBSCRIPTIONS
     version: '20261014_00'
+    name: Search subscriptions
     action_class: read
     capability: payments.read
-    description: Searches for subscriptions using Stripe's Search Query Language. Use when you need to find subscriptions
-      by status, metadata, created timestamp, or canceled_at timestamp.
+    description: Search subscriptions with a query on status, metadata, creation date or cancellation date, in the payment
+      provider's search syntax, a page at a time.
     input_schema:
       type: object
       required:

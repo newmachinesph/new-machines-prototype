@@ -6,12 +6,23 @@ capability_prefix: mail
 tools:
   GMAIL_LIST_THREADS:
     name: List threads
+    description: List conversation threads in the mailbox that match a search query, a page at a time, with each thread's
+      id and, when verbose is on, its messages.
     why: Its id got a suffix (list_threads is the hand-written email search); the Studio shows this name instead.
   GMAIL_REPLY_TO_THREAD:
+    name: Reply to thread
+    description: Send a reply in an existing conversation thread, by thread id, keeping the thread's subject. Takes
+      the message body, the recipient and optional cc and bcc. It is sent at once.
     capability: mail.send
   GMAIL_FORWARD_MESSAGE:
+    name: Forward email
+    description: Forward an existing email, by message id, with its body and attachments, to one or more recipients,
+      with optional cc, bcc and a note of your own. It is sent at once.
     capability: mail.send
   GMAIL_SEND_DRAFT:
+    name: Send draft
+    description: Send a saved draft, by draft id, to the recipients already on it. Nothing on the draft can be changed
+      here, and it is sent at once.
     action_class: write
     capability: mail.send
     why: Sends a saved draft; Composio marks it destructive, but as a send it asks first like send_email.
@@ -40,21 +51,140 @@ tools:
   GMAIL_WHO_AM_I:
     skip: Describes the connection itself.
   GMAIL_LIST_SEND_AS:
+    name: List sending addresses
+    description: 'List the addresses the mailbox can send from: the primary address and any send-as aliases, with their
+      display names.'
     action_class: read
     capability: mail.read
     why: Lists the addresses the mailbox can send from; sends nothing.
   GMAIL_SETTINGS_SEND_AS_GET:
+    name: Get sending address
+    description: 'Read one send-as address''s settings, by email address: its display name, signature, reply-to address
+      and verification status.'
     action_class: read
     capability: mail.read
     why: Reads one send-from address's settings; sends nothing.
   GMAIL_UPDATE_VACATION_SETTINGS:
     skip: Sends an automatic reply to everyone who writes in.
   GMAIL_ADD_LABEL_TO_EMAIL:
+    name: Change labels on an email
+    description: Add labels to one email or remove labels from it, given its message id and the label ids to add and
+      remove. Returns the email with the labels it now carries.
     restrict:
       add_label_ids.items: {pattern: '^(?!(?:[Tt][Rr][Aa][Ss][Hh]|[Ss][Pp][Aa][Mm])$).+$'}  # labelling TRASH or SPAM would delete the mail
   GMAIL_MODIFY_THREAD_LABELS:
+    name: Change labels on a thread
+    description: Add or remove labels on a whole conversation thread, given its thread id and the label ids to add and
+      remove. Every message in the thread changes.
     restrict:
       add_label_ids.items: {pattern: '^(?!(?:[Tt][Rr][Aa][Ss][Hh]|[Ss][Pp][Aa][Mm])$).+$'}  # labelling TRASH or SPAM would delete the mail
   GMAIL_BATCH_MODIFY_MESSAGES:
+    name: Change labels on many emails
+    description: Add or remove labels on up to 1,000 emails at once, given their message ids and the label ids to add
+      and remove. Useful for archiving many emails or marking them read or unread.
     restrict:
       addLabelIds.items: {pattern: '^(?!(?:[Tt][Rr][Aa][Ss][Hh]|[Ss][Pp][Aa][Mm])$).+$'}  # labelling TRASH or SPAM would delete the mail
+
+  # Names and descriptions the Studio shows (its picker prefixes the app name) and agents read.
+  GMAIL_CREATE_LABEL:
+    name: Create label
+    description: Create a new label in the mailbox with a unique name and optional colors and visibility settings. Returns
+      the new label and its id.
+  GMAIL_FETCH_MESSAGE_BY_MESSAGE_ID:
+    name: Get email
+    description: Get one email by its message id, with sender, recipients, subject, date and body. The format setting
+      chooses how much detail comes back.
+  GMAIL_FETCH_MESSAGE_BY_THREAD_ID:
+    name: Get thread
+    description: Get the messages in one conversation thread by its thread id, a page at a time, with sender, subject,
+      date and text for each.
+  GMAIL_GET_ATTACHMENT:
+    name: Get attachment
+    description: Download one attachment from an email, given the message id, attachment id and file name. Returns the
+      file with its type and name.
+  GMAIL_GET_AUTO_FORWARDING:
+    name: Get auto-forwarding settings
+    description: 'Read the mailbox''s automatic forwarding settings: whether it is on, the address mail is forwarded
+      to and what happens to forwarded mail.'
+  GMAIL_GET_CONTACTS:
+    name: List contacts
+    description: List the account's saved contacts a page at a time, with the chosen fields such as names, email addresses
+      and phone numbers. Can also include other people the account has emailed.
+  GMAIL_GET_DRAFT:
+    name: Get draft
+    description: Get one saved draft by its draft id, with recipients, subject and body, to check it before it is sent.
+      The format setting chooses how much detail comes back.
+  GMAIL_GET_FILTER:
+    name: Get filter
+    description: Get one mail filter by its id, with the criteria it matches and the actions it takes.
+  GMAIL_GET_LABEL:
+    name: Get label
+    description: Get one label by its id, with its name, type, visibility settings, color and how many messages and
+      threads carry it.
+  GMAIL_GET_LANGUAGE_SETTINGS:
+    name: Get language settings
+    description: Read the mailbox's display language setting.
+  GMAIL_GET_PEOPLE:
+    name: Get contact details
+    description: Get one contact's details by its resource name, or list the other people the account has emailed, with
+      the chosen fields such as names, email addresses and phone numbers.
+  GMAIL_GET_PROFILE:
+    name: Get mailbox profile
+    description: 'Read the mailbox''s profile: its email address, how many messages and conversation threads it holds
+      and its current history id.'
+  GMAIL_GET_VACATION_SETTINGS:
+    name: Get out-of-office settings
+    description: 'Read the mailbox''s out-of-office auto-reply settings: whether it is on, its subject and message and
+      the dates it runs.'
+  GMAIL_LIST_DRAFTS:
+    name: List drafts
+    description: List the mailbox's saved drafts a page at a time. With verbose on, each draft comes with its subject,
+      body, sender and date.
+  GMAIL_LIST_FILTERS:
+    name: List filters
+    description: List every mail filter in the mailbox, with the criteria each one matches and the actions it takes.
+  GMAIL_LIST_FORWARDING_ADDRESSES:
+    name: List forwarding addresses
+    description: List the addresses the mailbox is allowed to forward mail to, with each one's verification status.
+  GMAIL_LIST_HISTORY:
+    name: List mailbox changes
+    description: 'List what changed in the mailbox since a given history id, a page at a time: messages added, removed
+      or relabelled. Useful for picking up what is new since a previous run.'
+  GMAIL_LIST_LABELS:
+    name: List labels
+    description: List every label in the mailbox, system and custom, with each one's id and name, and more detail when
+      asked.
+  GMAIL_PATCH_LABEL:
+    name: Change label
+    description: 'Change some settings of a custom label by its id: name, color or visibility. Settings left out stay
+      as they are. System labels such as Inbox and Sent cannot be changed.'
+  GMAIL_SEARCH_PEOPLE:
+    name: Search contacts
+    description: Search the account's contacts by name, nickname, email address, phone number or organization. Returns
+      the matching people with the chosen fields.
+  GMAIL_SETTINGS_GET_IMAP:
+    name: Get IMAP settings
+    description: 'Read the mailbox''s IMAP settings: whether IMAP access is on, how deleted messages are handled and
+      the maximum folder size.'
+  GMAIL_SETTINGS_GET_POP:
+    name: Get POP settings
+    description: 'Read the mailbox''s POP settings: which messages POP clients can download and what happens to them
+      afterwards.'
+  GMAIL_UNTRASH_MESSAGE:
+    name: Restore email from trash
+    description: Move one email out of the trash, by message id, back to where it was.
+  GMAIL_UNTRASH_THREAD:
+    name: Restore thread from trash
+    description: Move a whole conversation thread out of the trash, by thread id, with all its messages.
+  GMAIL_UPDATE_CONTACT:
+    name: Update contact
+    description: 'Replace chosen fields on a saved contact, by its resource name: give the new values and name the fields
+      to update. Fields not named stay as they are.'
+  GMAIL_UPDATE_DRAFT:
+    name: Update draft
+    description: 'Replace a saved draft''s content by draft id: recipient, subject, body and optional cc and bcc. The
+      whole draft is replaced, so give every part it should keep. Nothing is sent.'
+  GMAIL_UPDATE_LABEL:
+    name: Update label
+    description: Update a custom label's name, color or visibility settings by its id. System labels such as Inbox and
+      Sent cannot be changed.

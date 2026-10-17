@@ -63,11 +63,11 @@ tools:
   - id: add_sheet
     slug: GOOGLESHEETS_ADD_SHEET
     version: '20261001_00'
+    name: Add sheet
     action_class: write
     capability: sheets.write
-    description: Add a GRID sheet with rows and columns to an existing spreadsheet. This action does not create chart-only
-      or DATA_SOURCE sheets. Use properties to configure the GRID sheet's dimensions, tab color, position, visibility,
-      and text direction.
+    description: Add a new tab (sheet) to a spreadsheet, by spreadsheet id, with an optional title and settings such
+      as size, tab color, position and visibility. Returns the new sheet's id.
     input_schema:
       type: object
       required:
@@ -221,10 +221,12 @@ tools:
   - id: aggregate_column_data
     slug: GOOGLESHEETS_AGGREGATE_COLUMN_DATA
     version: '20261001_00'
+    name: Aggregate column
     action_class: read
     capability: sheets.read
-    description: Searches for rows where a specific column matches a value and performs mathematical operations on
-      data from another column.
+    description: Sum, average, count, find the min or max of, or take a percentage of one column in a sheet, by
+      spreadsheet id and sheet name, optionally only over rows where another column matches a value. Returns the
+      result and the rows it used.
     input_schema:
       type: object
       required:
@@ -297,10 +299,11 @@ tools:
   - id: append_dimension
     slug: GOOGLESHEETS_APPEND_DIMENSION
     version: '20261001_00'
+    name: Add empty rows or columns
     action_class: write
     capability: sheets.write
-    description: Tool to append new rows or columns to a sheet, increasing its size. Use when you need to add empty
-      rows or columns to an existing sheet.
+    description: Add a number of empty rows or columns to the end of a sheet, by spreadsheet id and sheet id, making
+      it bigger.
     input_schema:
       type: object
       required:
@@ -341,10 +344,11 @@ tools:
   - id: auto_resize_rows_or_columns
     slug: GOOGLESHEETS_AUTO_RESIZE_DIMENSIONS
     version: '20261001_00'
+    name: Auto-fit rows or columns
     action_class: write
     capability: sheets.write
-    description: Auto-fit column widths or row heights for a dimension range using batchUpdate.autoResizeDimensions.
-      Use when you need to automatically adjust row heights or column widths to fit content after writing data.
+    description: Resize a range of rows or columns in a sheet to fit their content, by spreadsheet id, sheet and start
+      and end positions.
     input_schema:
       type: object
       required:
@@ -386,10 +390,11 @@ tools:
   - id: batch_update_values_by_data_filter
     slug: GOOGLESHEETS_BATCH_UPDATE_VALUES_BY_DATA_FILTER
     version: '20261001_00'
+    name: Update values by filter
     action_class: write
     capability: sheets.write
-    description: Tool to update values in ranges matching data filters. Use when you need to update specific data
-      in a Google Sheet based on criteria rather than fixed cell ranges.
+    description: Write values into the ranges of a spreadsheet that match given data filters rather than fixed cell
+      ranges, by spreadsheet id. Returns how many cells changed.
     input_schema:
       type: object
       required:
@@ -555,9 +560,11 @@ tools:
   - id: create_chart
     slug: GOOGLESHEETS_CREATE_CHART
     version: '20261001_00'
+    name: Create chart
     action_class: write
     capability: sheets.write
-    description: Create a chart in a Google Sheets spreadsheet using the specified data range and chart type.
+    description: Create a chart on a sheet from a data range, by spreadsheet id and sheet id, with a chart type and
+      optional title, axis titles, legend position and colors. Returns the new chart's id.
     input_schema:
       type: object
       required:
@@ -624,10 +631,11 @@ tools:
   - id: create_google_sheet
     slug: GOOGLESHEETS_CREATE_GOOGLE_SHEET1
     version: '20261001_00'
+    name: Create spreadsheet
     action_class: write
     capability: sheets.write
-    description: Creates a new Google Spreadsheet in the connected account's Drive, named by title (Google names it
-      'Untitled spreadsheet' without one).
+    description: Create a new spreadsheet in the connected account's drive, with an optional title. Returns the new
+      spreadsheet's id and web address.
     input_schema:
       type: object
       properties:
@@ -639,10 +647,11 @@ tools:
   - id: create_spreadsheet_column
     slug: GOOGLESHEETS_CREATE_SPREADSHEET_COLUMN
     version: '20261001_00'
+    name: Insert column
     action_class: write
     capability: sheets.write
-    description: Creates a new column in a Google Spreadsheet. Specify the target sheet using sheet_id (numeric) or
-      sheet_name (text). If neither is provided, defaults to the first sheet (sheet_id=0).
+    description: Insert one empty column into a sheet, by spreadsheet id and sheet id or name, at a given position,
+      optionally with the formatting of the column before it.
     input_schema:
       type: object
       required:
@@ -688,10 +697,11 @@ tools:
   - id: create_spreadsheet_row
     slug: GOOGLESHEETS_CREATE_SPREADSHEET_ROW
     version: '20261001_00'
+    name: Insert row
     action_class: write
     capability: sheets.write
-    description: Inserts a new, empty row into a specified sheet of a Google Spreadsheet at a given index, optionally
-      inheriting formatting from the row above.
+    description: Insert one empty row into a sheet, by spreadsheet id and sheet id or name, at a given position, optionally
+      with the formatting of the row above.
     input_schema:
       type: object
       required:
@@ -738,10 +748,11 @@ tools:
   - id: export_drive_spreadsheet
     slug: GOOGLESHEETS_EXPORT_DRIVE_FILE
     version: '20261001_00'
+    name: Export spreadsheet
     action_class: read
     capability: sheets.read
-    description: Export an entire native spreadsheet as XLSX, ODS, PDF, ZIP, CSV, or TSV; use Export Sheet as PDF
-      for print layout and range controls.
+    description: 'Export a whole spreadsheet as a file in the chosen format, by file id: XLSX, ODS, PDF, CSV, TSV or
+      a zip of web pages. Returns the file.'
     input_schema:
       type: object
       required:
@@ -767,10 +778,11 @@ tools:
   - id: export_sheet_as_pdf
     slug: GOOGLESHEETS_EXPORT_SHEET_AS_PDF
     version: '20261001_00'
+    name: Export sheet as PDF
     action_class: read
     capability: sheets.read
-    description: Render one sheet tab or rectangular range as PDF with orientation, gridline, margin, and fit-to-width
-      controls.
+    description: Export one sheet, or a rectangle of cells in it, as a PDF, by spreadsheet id and sheet id, with settings
+      for orientation, margins, gridlines and fitting to the page width.
     input_schema:
       type: object
       required:
@@ -849,10 +861,11 @@ tools:
   - id: find_and_replace_in_spreadsheet
     slug: GOOGLESHEETS_FIND_REPLACE
     version: '20261001_00'
+    name: Find and replace
     action_class: write
     capability: sheets.write
-    description: Tool to find and replace text in a Google Spreadsheet. Use when you need to fix formula errors, update
-      values, or perform bulk text replacements across cells.
+    description: Find text in a spreadsheet, by spreadsheet id, and replace it in one sheet, a range or every sheet,
+      with options to match case or whole cells and to include formulas. Returns how many cells changed.
     input_schema:
       type: object
       required:
@@ -928,9 +941,11 @@ tools:
   - id: format_cell
     slug: GOOGLESHEETS_FORMAT_CELL
     version: '20261001_00'
+    name: Format cells
     action_class: write
     capability: sheets.write
-    description: Applies text and background cell formatting to a specified range in a Google Sheets worksheet.
+    description: 'Apply formatting to a range of cells in a sheet, by spreadsheet id and sheet: text color, bold, italic,
+      font, size, alignment, wrapping, borders, background and number format.'
     input_schema:
       type: object
       required:
@@ -1112,10 +1127,11 @@ tools:
   - id: get_conditional_format_rules
     slug: GOOGLESHEETS_GET_CONDITIONAL_FORMAT_RULES
     version: '20261001_00'
+    name: List conditional formatting rules
     action_class: read
     capability: sheets.read
-    description: List conditional formatting rules for each sheet (or a selected sheet) in a normalized, easy-to-edit
-      form. Use when you need to view, audit, or prepare to modify conditional format rules.
+    description: List the conditional formatting rules of a spreadsheet, or of one sheet in it, by spreadsheet id, in
+      a plain form that shows each rule's range, condition and format.
     input_schema:
       type: object
       required:
@@ -1139,10 +1155,11 @@ tools:
   - id: get_data_validation_rules
     slug: GOOGLESHEETS_GET_DATA_VALIDATION_RULES
     version: '20261001_00'
+    name: List data validation rules
     action_class: read
     capability: sheets.read
-    description: Tool to extract data validation rules from a Google Sheets spreadsheet. Use when you need to understand
-      dropdown lists, allowed values, custom formulas, or other validation constraints for cells.
+    description: 'List the data validation rules of a spreadsheet, or of chosen ranges or one sheet, by spreadsheet
+      id: dropdown lists, allowed values and custom formulas for cells.'
     input_schema:
       type: object
       required:
@@ -1170,10 +1187,11 @@ tools:
   - id: get_sheet_names
     slug: GOOGLESHEETS_GET_SHEET_NAMES
     version: '20261001_00'
+    name: List sheet names
     action_class: read
     capability: sheets.read
-    description: Lists all worksheet names from a specified Google Spreadsheet (which must exist), useful for discovering
-      sheets before further operations.
+    description: List the names of the tabs (sheets) in a spreadsheet, by spreadsheet id, optionally leaving out hidden
+      ones.
     input_schema:
       type: object
       required:
@@ -1194,11 +1212,11 @@ tools:
   - id: get_spreadsheet_by_data_filter
     slug: GOOGLESHEETS_GET_SPREADSHEET_BY_DATA_FILTER
     version: '20261001_00'
+    name: Get spreadsheet by filter
     action_class: read
     capability: sheets.read
-    description: Returns the spreadsheet at the given ID, filtered by the specified data filters. Use this tool when
-      you need to retrieve specific subsets of data from a Google Sheet based on criteria like A1 notation, developer
-      metadata, or grid ranges.
+    description: Get a spreadsheet's details and, when asked, the cell data in the ranges that match given data filters,
+      by spreadsheet id.
     input_schema:
       type: object
       required:
@@ -1286,11 +1304,11 @@ tools:
   - id: get_spreadsheet_info
     slug: GOOGLESHEETS_GET_SPREADSHEET_INFO
     version: '20261001_00'
+    name: Get spreadsheet details
     action_class: read
     capability: sheets.read
-    description: Retrieves metadata for a Google Spreadsheet using its ID. By default, returns essential information
-      (ID, title, sheet properties) to avoid payload size issues. Use the fields parameter for comprehensive metadata
-      or specific fields.
+    description: 'Get a spreadsheet''s details by spreadsheet id: its title, its sheets and their properties, and more
+      fields or cell data when asked.'
     input_schema:
       type: object
       properties:
@@ -1327,10 +1345,11 @@ tools:
   - id: insert_dimension
     slug: GOOGLESHEETS_INSERT_DIMENSION
     version: '20261001_00'
+    name: Insert rows or columns
     action_class: write
     capability: sheets.write
-    description: Tool to insert new rows or columns into a sheet at a specified location. Use when you need to add
-      empty rows or columns within an existing Google Sheet.
+    description: Insert empty rows or columns into a sheet at a given position, by spreadsheet id, sheet id and the
+      range to insert, optionally with the formatting of the row or column before.
     input_schema:
       type: object
       required:
@@ -1401,10 +1420,11 @@ tools:
   - id: list_charts
     slug: GOOGLESHEETS_LIST_CHARTS
     version: '20261001_00'
+    name: List charts
     action_class: read
     capability: sheets.read
-    description: Lists all charts in a Google Sheets spreadsheet across all sheets, returning chart_id, sheet metadata,
-      chart type, title, and position.
+    description: List the charts in a spreadsheet across all its sheets, by spreadsheet id, with each chart's id, sheet,
+      type, title and position.
     input_schema:
       type: object
       required:
@@ -1434,10 +1454,11 @@ tools:
   - id: look_up_spreadsheet_row
     slug: GOOGLESHEETS_LOOKUP_SPREADSHEET_ROW
     version: '20261001_00'
+    name: Find row
     action_class: read
     capability: sheets.read
-    description: Finds the first row in a Google Spreadsheet where a cell's entire content exactly matches the query
-      string, searching within a specified A1 notation range or the first sheet by default.
+    description: Find the first row in a spreadsheet where a cell exactly matches a search value, by spreadsheet id
+      and an optional range. Returns that row's values and position.
     input_schema:
       type: object
       required:
@@ -1481,11 +1502,10 @@ tools:
   - id: move_or_resize_chart
     slug: GOOGLESHEETS_MOVE_CHART
     version: '20261001_00'
+    name: Move or resize chart
     action_class: write
     capability: sheets.write
-    description: Move or resize an existing chart on a Google Sheets spreadsheet. Use this action when you need to
-      reposition a chart to a different location on the same or different sheet, move it to a brand-new sheet, or
-      change its size.
+    description: Move a chart to a new position or another sheet, or change its size, by spreadsheet id and chart id.
     input_schema:
       type: object
       required:
@@ -1550,10 +1570,11 @@ tools:
   - id: search_developer_metadata
     slug: GOOGLESHEETS_SEARCH_DEVELOPER_METADATA
     version: '20261001_00'
+    name: Search developer metadata
     action_class: read
     capability: sheets.read
-    description: Tool to search for developer metadata in a spreadsheet. Use when you need to find specific metadata
-      entries based on filters.
+    description: Find the developer metadata entries in a spreadsheet that match given data filters, by spreadsheet
+      id. Returns each entry with its key, value and location.
     input_schema:
       type: object
       required:
@@ -1646,9 +1667,11 @@ tools:
   - id: search_spreadsheets
     slug: GOOGLESHEETS_SEARCH_SPREADSHEETS
     version: '20261001_00'
+    name: Search spreadsheets
     action_class: read
     capability: sheets.read
-    description: Search for Google Spreadsheets using various filters including name, content, date ranges, and more.
+    description: Search the account's spreadsheets by name, content, dates, starred or shared-with-me status, a page
+      at a time. Returns the matching spreadsheets with their id, name and dates.
     input_schema:
       type: object
       properties:
@@ -1706,10 +1729,11 @@ tools:
   - id: set_basic_filter
     slug: GOOGLESHEETS_SET_BASIC_FILTER
     version: '20261001_00'
+    name: Set filter
     action_class: write
     capability: sheets.write
-    description: Tool to set a basic filter on a sheet in a Google Spreadsheet. Use when you need to filter or sort
-      data within a specific range on a sheet.
+    description: 'Set the basic filter on a sheet, by spreadsheet id: the range it covers and optional sort order and
+      filter criteria per column.'
     input_schema:
       type: object
       required:
@@ -2068,10 +2092,11 @@ tools:
   - id: set_data_validation_rule
     slug: GOOGLESHEETS_SET_DATA_VALIDATION_RULE
     version: '20261001_00'
+    name: Set data validation
     action_class: write
     capability: sheets.write
-    description: Tool to set or clear data validation rules (including dropdowns) on a range in Google Sheets. Use
-      when you need to apply dropdown lists, range-based dropdowns, or custom formula validation to cells.
+    description: 'Set or clear a data validation rule on a range of cells, by spreadsheet id, sheet id and cell positions:
+      a dropdown list of values, a dropdown from a range or a custom formula, with an optional help message.'
     input_schema:
       type: object
       required:
@@ -2196,10 +2221,11 @@ tools:
   - id: sort_range
     slug: GOOGLESHEETS_SORT_RANGE
     version: '20261001_00'
+    name: Sort range
     action_class: write
     capability: sheets.write
-    description: Sorts data within a specified range in a Google Sheet based on one or more sort criteria. Use this
-      action when you need to reorder rows in a range by column values, with support for multi-level (cascading) sorts.
+    description: Sort the rows of a range in a spreadsheet, by spreadsheet id, by one or more columns in ascending or
+      descending order.
     input_schema:
       type: object
       required:
@@ -2347,11 +2373,11 @@ tools:
   - id: batch_get_spreadsheet_values_by_data_filter
     slug: GOOGLESHEETS_SPREADSHEETS_VALUES_BATCH_GET_BY_DATA_FILTER
     version: '20261001_00'
+    name: Read values by filter
     action_class: read
     capability: sheets.read
-    description: Tool to return one or more ranges of values from a spreadsheet that match the specified data filters.
-      Use when you need to retrieve specific data sets based on filtering criteria rather than entire sheets or fixed
-      ranges.
+    description: Read the values in the ranges of a spreadsheet that match given data filters, by spreadsheet id, with
+      options for how values and dates are rendered.
     input_schema:
       type: object
       required:
@@ -2432,11 +2458,11 @@ tools:
   - id: update_chart
     slug: GOOGLESHEETS_UPDATE_CHART
     version: '20261001_00'
+    name: Update chart
     action_class: write
     capability: sheets.write
-    description: Update the specification of an existing chart in a Google Sheets spreadsheet. Use this action when
-      you need to modify an existing chart's properties such as its title, chart type, data ranges, colors, axes,
-      or other visual settings.
+    description: 'Replace an existing chart''s specification, by spreadsheet id and chart id: its title, type, data
+      ranges, colors, axes and other settings.'
     input_schema:
       type: object
       required:
@@ -2466,10 +2492,11 @@ tools:
   - id: update_dimension_properties
     slug: GOOGLESHEETS_UPDATE_DIMENSION_PROPERTIES
     version: '20261001_00'
+    name: Resize or hide rows or columns
     action_class: write
     capability: sheets.write
-    description: Tool to hide/unhide rows or columns and set row heights or column widths. Use when you need to change
-      visibility or pixel sizing of dimensions in a Google Sheet.
+    description: Hide or show a range of rows or columns in a sheet, or set their height or width in pixels, by spreadsheet
+      id, sheet and start and end positions.
     input_schema:
       type: object
       required:
@@ -2530,11 +2557,11 @@ tools:
   - id: update_sheet_properties
     slug: GOOGLESHEETS_UPDATE_SHEET_PROPERTIES
     version: '20261001_00'
+    name: Update sheet properties
     action_class: write
     capability: sheets.write
-    description: Tool to update properties of a sheet (worksheet) within a Google Spreadsheet, such as its title,
-      index, visibility, tab color, or grid properties. Use this when you need to modify the metadata or appearance
-      of a specific sheet.
+    description: 'Change a sheet''s properties within a spreadsheet, by spreadsheet id: its title, position, visibility,
+      tab color or grid settings.'
     input_schema:
       type: object
       required:
@@ -2671,10 +2698,11 @@ tools:
   - id: update_spreadsheet_properties
     slug: GOOGLESHEETS_UPDATE_SPREADSHEET_PROPERTIES
     version: '20261001_00'
+    name: Update spreadsheet properties
     action_class: write
     capability: sheets.write
-    description: Tool to update SPREADSHEET-LEVEL properties such as the spreadsheet's title, locale, time zone, or
-      auto-recalculation settings. Use when you need to modify the overall configuration of a Google Spreadsheet.
+    description: 'Change a spreadsheet''s own properties by spreadsheet id: its title, locale, time zone or recalculation
+      settings, naming which fields to change.'
     input_schema:
       type: object
       required:
@@ -2994,10 +3022,11 @@ tools:
   - id: batch_update_spreadsheet_values
     slug: GOOGLESHEETS_UPDATE_VALUES_BATCH
     version: '20261001_00'
+    name: Update several ranges
     action_class: write
     capability: sheets.write
-    description: Tool to set values in one or more ranges of a spreadsheet. Use when you need to update multiple ranges
-      in a single operation for better performance.
+    description: Write values into one or more ranges of a spreadsheet in one step, by spreadsheet id, each range with
+      its own rows of values. Returns how many cells changed.
     input_schema:
       type: object
       required:
@@ -3083,10 +3112,11 @@ tools:
   - id: upsert_rows
     slug: GOOGLESHEETS_UPSERT_ROWS
     version: '20261001_00'
+    name: Update or add rows
     action_class: write
     capability: sheets.write
-    description: Upsert rows - update existing rows by key, append new ones. Automatically handles column mapping
-      and partial updates.
+    description: Update the rows of a sheet whose key column matches the given rows and append the rest as new rows,
+      by spreadsheet id and sheet name, matching columns by header.
     input_schema:
       type: object
       required:
@@ -3166,10 +3196,11 @@ tools:
   - id: get_spreadsheet_values
     slug: GOOGLESHEETS_VALUES_GET
     version: '20261001_00'
+    name: Read range
     action_class: read
     capability: sheets.read
-    description: Returns a range of values from a spreadsheet. Use when you need to read data from specific cells
-      or ranges in a Google Sheet.
+    description: Read the values in one range of a spreadsheet, by spreadsheet id and range, optionally limited to a
+      span of rows, with options for how values and dates are rendered.
     input_schema:
       type: object
       required:
@@ -3224,10 +3255,11 @@ tools:
   - id: update_cells
     slug: GOOGLESHEETS_VALUES_UPDATE
     version: '20261001_00'
+    name: Update cells
     action_class: write
     capability: sheets.write
-    description: Tool to set values in a range of a Google Spreadsheet. Use when you need to update or overwrite existing
-      cell values in a specific range.
+    description: Write values into a range of a spreadsheet, by spreadsheet id and range, overwriting what is there.
+      Values can be entered as typed or kept raw. Returns how many cells changed.
     input_schema:
       type: object
       required:

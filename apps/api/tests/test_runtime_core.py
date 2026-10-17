@@ -15,6 +15,7 @@ from app.defs.loader import load_bundle
 from app.models.runs import Run
 from app.runtime import agent, cel, decisions, drivers, gateway, memory, projection, providers, receipt
 from app.runtime.providers import FakeProvider, ModelTurn, ToolSpec
+from app.worker import activities
 
 PACK = "order-payment-reconciliation"
 SANDBOX = settings.defs_dir() / "connectors" / "sandbox"
@@ -338,6 +339,22 @@ def test_call_tool_rejects_arguments_outside_the_tool_schema(snapshot):
     )
     assert decision.verdict == "PERMIT"
     assert result.ok is False and "invalid arguments" in result.error
+
+
+# --- finish_node -----------------------------------------------------------------------------------
+
+
+def test_finish_node_rejects_a_result_off_the_schema_with_its_errors_and_records_nothing(snapshot):
+    match = _match_result(snapshot)
+    assert match["mismatches"]
+    bad = {**match, "mismatches": [{**r, "date": f"{r['date']}T09:12:00Z"} for r in match["mismatches"]]}
+    call = activities.AgentResult("run_unit", snapshot, "match", 1, 7, bad)
+    done = activities.PackActivities(provider=FakeProvider()).finish_node(call)  # no database is touched
+    assert list(done) == ["rejected"]
+    errors = done["rejected"]
+    assert 0 < len(errors) <= activities.MAX_REPORTED_ERRORS
+    assert errors[0].startswith("mismatches/0/date: ") and "does not match" in errors[0]
+    assert all(len(e) < 200 for e in errors)
 
 
 # --- decisions -------------------------------------------------------------------------------------

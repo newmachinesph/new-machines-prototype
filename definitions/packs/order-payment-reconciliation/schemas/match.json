@@ -15,9 +15,9 @@
         "properties": {
           "order_id": {"type": "string", "description": "Order name, such as #1001."},
           "charge_id": {"type": "string", "description": "Charge id, such as ch_..."},
-          "date": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$", "description": "Order date."},
+          "date": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$", "description": "Order date as YYYY-MM-DD (the date only, no time)."},
           "amount_minor": {"type": "integer", "description": "Order total in minor units (cents)."},
-          "currency": {"type": "string", "pattern": "^[A-Z]{3}$"}
+          "currency": {"type": "string", "pattern": "^[A-Z]{3}$", "description": "Three-letter currency code in upper case, such as USD."}
         }
       }
     },
@@ -38,7 +38,7 @@
           "date": {
             "type": "string",
             "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
-            "description": "Order date, or payment date when there is no order."
+            "description": "Order date, or payment date when there is no order, as YYYY-MM-DD (the date only, no time)."
           },
           "amount_minor": {
             "type": "integer",
@@ -48,7 +48,7 @@
             "type": "integer",
             "description": "Payment amount minus order total, in minor units. Negative means underpaid."
           },
-          "currency": {"type": "string", "pattern": "^[A-Z]{3}$"},
+          "currency": {"type": "string", "pattern": "^[A-Z]{3}$", "description": "Three-letter currency code in upper case, such as USD."},
           "explanation": {"type": "string", "minLength": 1, "description": "One sentence."}
         }
       }
@@ -67,7 +67,7 @@
         "mismatch_count": {"type": "integer", "minimum": 0},
         "orders_total_minor": {"type": "integer"},
         "charges_total_minor": {"type": "integer"},
-        "currency": {"type": "string", "pattern": "^[A-Z]{3}$"}
+        "currency": {"type": "string", "pattern": "^[A-Z]{3}$", "description": "Three-letter currency code in upper case, such as USD."}
       }
     }
   }

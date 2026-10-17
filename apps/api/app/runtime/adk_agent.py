@@ -24,7 +24,7 @@ from google.adk.tools import BaseTool, ToolContext
 from google.genai import types
 from pydantic import PrivateAttr
 
-from app.runtime.agent import REPROMPT, cut_off_results, cut_off_uses
+from app.runtime.agent import REPROMPT, cut_off_results, cut_off_uses, rejection
 from app.runtime.providers import SUBMIT_TOOL
 
 log = logging.getLogger(__name__)
@@ -34,7 +34,12 @@ MODEL_NAME = "nm/agent"
 
 
 class TurnsExhausted(Exception):
-    pass
+    """No accepted result within max_turns. `rejected` holds the schema errors of the last result the model
+    submitted, when finish_node rejected one."""
+
+    def __init__(self, max_turns: int, rejected: list[str] | None = None) -> None:
+        super().__init__(max_turns)
+        self.max_turns, self.rejected = max_turns, list(rejected or [])
 
 
 class OutputTruncated(Exception):
@@ -42,10 +47,17 @@ class OutputTruncated(Exception):
 
 
 @dataclass
+class Rejected:
+    """finish_node refused the result: it does not match the output schema. The model gets the errors back."""
+
+    errors: list[str]
+
+
+@dataclass
 class AgentHooks:
     model: Callable[[str, list[dict], list[dict]], Awaitable[tuple[list[dict], str]]]  # content, stop reason
     tool: Callable[[dict], Awaitable[dict]]
-    submit: Callable[[Any], Awaitable[tuple[Any, str]]]
+    submit: Callable[[Any], Awaitable[tuple[Any, str] | Rejected]]  # (output, route), or the rejection
 
 
 def adk_name(agent_id: str) -> str:
@@ -204,7 +216,8 @@ def _unoffered_to_gateway(hooks: AgentHooks, offered: set[str]):
 
 
 class SubmitTool(BaseTool):
-    """submit_result: validates through the workflow's submit hook (finish_node) and ends the agent's loop."""
+    """submit_result: validates through the workflow's submit hook (finish_node). An accepted result ends
+    the agent's loop; a rejected one goes back to the model with the schema errors, and the loop goes on."""
 
     def __init__(self, spec: dict, hooks: AgentHooks, sink: dict) -> None:
         super().__init__(name=SUBMIT_TOOL, description=spec.get("description", ""))
@@ -214,14 +227,19 @@ class SubmitTool(BaseTool):
         return _declaration(self.name, self.description, self._schema)
 
     async def run_async(self, *, args: dict[str, Any], tool_context: ToolContext) -> Any:
-        self._sink["result"] = await self._hooks.submit(dict(args))
+        done = await self._hooks.submit(dict(args))
+        if isinstance(done, Rejected):
+            self._sink["rejected"] = done.errors
+            return rejection(done.errors)
+        self._sink["result"] = done
         tool_context.actions.skip_summarization = True
         return {"ok": True}
 
 
 async def run_agent(spec: dict, hooks: AgentHooks, session_user: str) -> tuple[Any, str]:
-    """Run until submit_result succeeds; a text-only answer is re-prompted. Raises TurnsExhausted, or
-    OutputTruncated when the last turn was cut off at the output limit."""
+    """Run until submit_result is accepted; a text-only answer is re-prompted. Raises TurnsExhausted (with
+    the schema errors of the last rejected result, if any), or OutputTruncated when the last turn was cut off
+    at the output limit."""
     sink: dict = {}
     tools: list[BaseTool] = [GatewayTool(t, hooks) for t in spec["tools"] if t["name"] != SUBMIT_TOOL]
     submit = next(t for t in spec["tools"] if t["name"] == SUBMIT_TOOL)
@@ -237,13 +255,18 @@ async def run_agent(spec: dict, hooks: AgentHooks, session_user: str) -> tuple[A
     runner = InMemoryRunner(agent=agent, app_name=APP_NAME)
     session = await runner.session_service.create_session(app_name=APP_NAME, user_id=session_user)
     text = spec["messages"][0]["content"]
-    while "result" not in sink:
-        message = types.Content(role="user", parts=[types.Part(text=text)])
-        events = runner.run_async(user_id=session_user, session_id=session.id, new_message=message)
-        async with aclosing(events) as stream:
-            async for _ in stream:
-                pass
-        text = REPROMPT
+    try:
+        while "result" not in sink:
+            message = types.Content(role="user", parts=[types.Part(text=text)])
+            events = runner.run_async(user_id=session_user, session_id=session.id, new_message=message)
+            async with aclosing(events) as stream:
+                async for _ in stream:
+                    pass
+            text = REPROMPT
+    except TurnsExhausted as exc:
+        if "rejected" in sink:
+            raise TurnsExhausted(exc.max_turns, sink["rejected"]) from exc
+        raise
     return sink["result"]
 
 

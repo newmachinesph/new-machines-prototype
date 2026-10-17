@@ -16,26 +16,131 @@ tools:
   GOOGLEDOCS_LIST_SPREADSHEET_CHARTS:
     skip: A Sheets action; the Google Sheets connector has it.
   GOOGLEDOCS_CREATE_DOCUMENT_MARKDOWN:
+    name: Create document from markdown
+    description: Create a new document with the given title and, optionally, content written in Markdown, which becomes
+      formatted text. Returns the new document's id.
     drop: [image_assets]  # takes files uploaded to Composio first, which a run cannot do
   GOOGLEDOCS_EXPORT_DOCUMENT_AS_PDF:
+    name: Export as PDF
+    description: Export a document as a PDF file, by file id, with an optional file name. Documents over 10 MB cannot
+      be exported.
     id: export_pdf
   GOOGLEDOCS_COPY_DOCUMENT:
+    name: Copy document
+    description: Make a copy of an existing document by document id, with an optional new title. Useful for starting
+      from a template. Returns the new document's id.
     id: copy_document
   GOOGLEDOCS_INSERT_TEXT_ACTION:
+    name: Insert text
+    description: Insert text into a document, by document id, either at a given position or appended to the end.
     id: insert_text
-  GOOGLEDOCS_REPLACE_ALL_TEXT:
-    id: replace_all_text
   GOOGLEDOCS_REPLACE_IMAGE:
+    name: Replace image
+    description: Replace an existing image in a document with a new one from a web address, by document id and the image's
+      object id.
     id: replace_image
   GOOGLEDOCS_GET_DOCUMENT_PLAINTEXT:
+    name: Get document text
+    description: Get a document's content as plain text, by document id, including paragraphs, lists and tables, with
+      options for headers, footers, footnotes and tabs.
     id: get_document_text
   GOOGLEDOCS_UPDATE_DOCUMENT_MARKDOWN:
     action_class: delete
     why: Replaces the whole document, which loses everything in it, like update_existing_document.
   GOOGLEDOCS_REPLACE_ALL_TEXT:
+    name: Find and replace text
+    description: Find every occurrence of a piece of text in a document, by document id, and replace it with other text,
+      optionally matching case. Returns how many were replaced.
     drop: [search_by_regex]  # a pattern can match far more than the agent means to change
     restrict:
       replace_text: {minLength: 1}  # replacing with nothing deletes text
   GOOGLEDOCS_UPDATE_DOCUMENT_SECTION_MARKDOWN:
+    name: Replace section with markdown
+    description: Insert or replace one section of a document, by document id and start and optional end positions, with
+      content written in Markdown, which becomes formatted text.
     restrict:
       markdown_text: {minLength: 1}
+
+  # Names and descriptions the Studio shows (its picker prefixes the app name) and agents read.
+  GOOGLEDOCS_CREATE_AND_POPULATE_TABLE:
+    name: Create table with content
+    description: Insert a table with a given number of rows and columns into a document, by document id, and fill its
+      cells with text in one step, at a position or at the end.
+  GOOGLEDOCS_CREATE_DOCUMENT:
+    name: Create document
+    description: Create a new document with the given title and optional opening text. Returns the new document's id
+      and details.
+  GOOGLEDOCS_CREATE_FOOTER:
+    name: Create footer
+    description: Add a footer of the given type to a document, by document id, optionally for one section only.
+  GOOGLEDOCS_CREATE_FOOTNOTE:
+    name: Create footnote
+    description: Add a footnote to a document, by document id, at a given position or at the end of the body.
+  GOOGLEDOCS_CREATE_HEADER:
+    name: Create header
+    description: Add a header to a document, by document id, optionally with text, a header type and the section it
+      applies to.
+  GOOGLEDOCS_CREATE_NAMED_RANGE:
+    name: Create named range
+    description: Give a name to a stretch of a document, by document id and start and end positions, so it can be found
+      and changed later by name.
+  GOOGLEDOCS_CREATE_PARAGRAPH_BULLETS:
+    name: Add bullets
+    description: Turn the paragraphs in a given range of a document into a bulleted or numbered list, by document id,
+      with a chosen bullet style.
+  GOOGLEDOCS_CREATE_TAB:
+    name: Create tab
+    description: Add a new tab to a document, by document id, with an optional title and other tab properties, to keep
+      content in separate sections.
+  GOOGLEDOCS_GET_DOCUMENT_BY_ID:
+    name: Get document
+    description: Get a document by its id, with its title and full structured content and, when asked, the content of
+      every tab.
+  GOOGLEDOCS_GET_DOCUMENT_END_INDEX:
+    name: Get document end position
+    description: Get the end position and paragraph layout of a document or one of its segments, by document id. Useful
+      for finding where to insert text.
+  GOOGLEDOCS_INSERT_IMAGE_IN_TABLE_CELL:
+    name: Insert image in table cell
+    description: Insert an image from a web address into one cell of a table in a document, by document id and cell
+      location, with an optional size.
+  GOOGLEDOCS_INSERT_INLINE_IMAGE:
+    name: Insert image
+    description: Insert an image from a web address into a document at a given position, by document id, with an optional
+      size.
+  GOOGLEDOCS_INSERT_PAGE_BREAK:
+    name: Insert page break
+    description: Insert a page break into a document at a given position, by document id, so what follows starts on
+      a new page.
+  GOOGLEDOCS_INSERT_TABLE_ACTION:
+    name: Insert table
+    description: Insert an empty table with a given number of rows and columns into a document, by document id, at a
+      position or at the end of the body, a header or a footer.
+  GOOGLEDOCS_INSERT_TABLE_COLUMN:
+    name: Insert table column
+    description: Insert a column into an existing table in a document, by document id, next to a given cell.
+  GOOGLEDOCS_INSERT_TABLE_ROW:
+    name: Insert table row
+    description: Insert a row into an existing table in a document, by document id, above or below a given cell.
+  GOOGLEDOCS_INSERT_TEXT_IN_TABLE_CELL:
+    name: Insert text in table cell
+    description: Insert text into one cell of a table in a document, by document id, the table's start position and
+      the cell's row and column.
+  GOOGLEDOCS_SEARCH_DOCUMENTS:
+    name: Search documents
+    description: Search the account's documents by name, content, dates, starred or shared-with-me status, a page at
+      a time. Returns the matching documents with their id, name and dates.
+  GOOGLEDOCS_UNMERGE_TABLE_CELLS:
+    name: Unmerge table cells
+    description: Split previously merged cells in a document's table back into single cells, by document id and the
+      cells' range.
+  GOOGLEDOCS_UPDATE_DOCUMENT_STYLE:
+    name: Update document style
+    description: Change a document's overall style by document id, such as page size, margins and default text direction.
+  GOOGLEDOCS_UPDATE_TABLE_ROW_STYLE:
+    name: Update table row style
+    description: Change the style of rows in a document's table, by document id, such as the minimum row height or marking
+      rows as header rows.
+  GOOGLEDOCS_UPDATE_TAB_PROPERTIES:
+    name: Update tab
+    description: Change a document tab's title, icon, position or parent tab, by document id and tab id.

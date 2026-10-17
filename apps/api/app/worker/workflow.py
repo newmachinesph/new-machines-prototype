@@ -96,6 +96,13 @@ def _output_truncated(max_turns: int) -> str:
     return f"OUTPUT_TRUNCATED: every answer was cut off at the output limit, {max_turns} model turns"
 
 
+def _output_invalid(max_turns: int, errors: list[str]) -> str:
+    return (
+        f"OUTPUT_INVALID: the last result did not match the output schema, {max_turns} model turns: "
+        + "; ".join(errors)
+    )
+
+
 def _activity_reason(node_id: str, err: ActivityError) -> str:
     """`<ErrorType>: <safe message>`; only messages written by our own activities are passed through."""
     cause = err.cause
@@ -364,15 +371,19 @@ class PackRunner:
             use = ToolUse(self._run_id, self._snapshot, node_id, attempt, self._next_step(), block, offered)
             return await self._act(PackActivities.tool_call, use, side_effects=True)
 
-        async def submit(value: Any) -> tuple[Any, str]:
+        async def submit(value: Any) -> tuple[Any, str] | adk_agent.Rejected:
             result = AgentResult(self._run_id, self._snapshot, node_id, attempt, self._next_step(), value)
             done = await self._act(PackActivities.finish_node, result)
+            if "rejected" in done:  # the model gets the errors back and may submit again
+                return adk_agent.Rejected(done["rejected"])
             return done["output"], done["route"]
 
         hooks = adk_agent.AgentHooks(model=model, tool=tool, submit=submit)
         try:
             return await adk_agent.run_agent(spec, hooks, session_user=self._run_id)
         except adk_agent.TurnsExhausted as exc:
+            if exc.rejected:
+                raise _NodeFailed(_output_invalid(spec["max_turns"], exc.rejected)) from exc
             raise _NodeFailed(f"TURNS_EXHAUSTED: no result after {spec['max_turns']} model turns") from exc
         except adk_agent.OutputTruncated as exc:
             raise _NodeFailed(_output_truncated(spec["max_turns"])) from exc
@@ -381,6 +392,7 @@ class PackRunner:
         messages: list[dict] = list(spec["messages"])
         offered = [t["name"] for t in spec["tools"]]
         kind = ""
+        rejected: list[str] = []
         for _ in range(spec["max_turns"]):
             call = ModelCall(
                 run_id=self._run_id,
@@ -402,8 +414,12 @@ class PackRunner:
             if kind == "submit":
                 result = AgentResult(self._run_id, self._snapshot, node_id, attempt, self._next_step(), value)
                 done = await self._act(PackActivities.finish_node, result)
-                return done["output"], done["route"]
-            if kind == "truncated":  # a call cut off at the output limit never runs: ask again, shorter
+                if "rejected" not in done:
+                    return done["output"], done["route"]
+                rejected = done["rejected"]  # the model gets the errors back and may submit again
+                feedback = agent.rejected_results(turn["content"], rejected)
+                messages.append({"role": "user", "content": feedback})
+            elif kind == "truncated":  # a call cut off at the output limit never runs: ask again, shorter
                 messages.append({"role": "user", "content": agent.cut_off_results(value)})
             elif kind == "tools":
                 blocks = []
@@ -417,6 +433,8 @@ class PackRunner:
                 messages.append({"role": "user", "content": agent.REPROMPT})
         if kind == "truncated":
             raise _NodeFailed(_output_truncated(spec["max_turns"]))
+        if rejected:
+            raise _NodeFailed(_output_invalid(spec["max_turns"], rejected))
         raise _NodeFailed(f"TURNS_EXHAUSTED: no result after {spec['max_turns']} model turns")
 
     # --- human tasks and approvals ----------------------------------------------------------------------

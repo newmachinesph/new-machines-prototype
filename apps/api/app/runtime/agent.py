@@ -13,6 +13,7 @@ CUT_OFF = (
     "Submit again, shorter: keep every text field to one short line."
 )
 SUBMIT_DESCRIPTION = "Submit the final result in the required shape. Call it once, when the work is done."
+RESUBMIT_HINT = "Fix these fields and call submit_result again with the whole result."
 _NAME_SEPARATOR = (
     "__"  # tool names allow [A-Za-z0-9_-] only, so "shopify.list_orders" -> "shopify__list_orders"
 )
@@ -76,6 +77,18 @@ def cut_off_results(uses: list[dict]) -> list[dict]:
         {"type": "tool_result", "tool_use_id": b.get("id"), "content": CUT_OFF, "is_error": True}
         for b in uses
     ]
+
+
+def rejection(errors: list[str]) -> dict:
+    """What submit_result answers when finish_node rejected the result: the schema errors, and what to do."""
+    return {"ok": False, "errors": list(errors), "hint": RESUBMIT_HINT}
+
+
+def rejected_results(content: list[dict], errors: list[str]) -> list[dict]:
+    """The error tool_result for the turn's submit_result call, carrying the schema errors."""
+    submit = next(b for b in content if b.get("type") == "tool_use" and b.get("name") == SUBMIT_TOOL)
+    payload = json.dumps(rejection(errors), ensure_ascii=False)
+    return [{"type": "tool_result", "tool_use_id": submit.get("id"), "content": payload, "is_error": True}]
 
 
 def next_step(turn: ModelTurn) -> tuple[str, Any]:

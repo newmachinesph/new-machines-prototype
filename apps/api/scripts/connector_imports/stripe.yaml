@@ -21,23 +21,204 @@ include:
 
 tools:
   STRIPE_CREATE_CUSTOMER:
+    name: Create customer
+    description: Create a new customer record with a name, email address, phone, address and description. Returns the
+      new customer and its id.
     action_class: write
     why: Adds a customer record; charges nothing.
   STRIPE_CREATE_PRODUCT:
+    name: Create product
+    description: Create a new product with a name and optional description, images, tax code, shipping details and default
+      price. Returns the new product and its id.
     action_class: write
     why: Adds a catalogue product; charges nothing.
   STRIPE_CREATE_PRICE:
+    name: Create price
+    description: Create a price for a product, by product id or new product details, with a currency and a one-time
+      or recurring amount, tiers or billing scheme. Returns the new price and its id.
     action_class: write
     why: Adds a price to a product; charges nothing.
     drop: [transfer_lookup_key]  # would move a live price's lookup key, and its checkouts, to the new price
   STRIPE_CREATE_CUSTOMER_TAX_ID:
+    name: Add customer tax ID
+    description: Add a tax identification number to a customer, by customer id, giving its type and value, for tax compliance
+      and invoicing.
     action_class: write
     why: Adds a tax id to a customer; charges nothing.
   STRIPE_WHO_AM_I:
     skip: Describes the connection itself, not the business.
   STRIPE_SEARCH_CUSTOMERS:
+    name: Search customers
+    description: Search customers with a query on fields such as email address, name or metadata, in the payment provider's
+      search syntax, a page at a time.
     id: search_customers
   STRIPE_GET_V1_CUSTOMERS_SEARCH_CUSTOMERS:
     skip: Same search as search_customers.
   STRIPE_POST_V1_CUSTOMERS_SEARCH_CUSTOMERS:
     skip: Same search as search_customers.
+
+  # Names and descriptions the Studio shows (its picker prefixes the app name) and agents read.
+  STRIPE_DOWNLOAD_FILE_CONTENTS:
+    name: Download file
+    description: Download the contents of a stored file by file id, when the file's purpose allows it.
+  STRIPE_DOWNLOAD_QUOTE_PDF:
+    name: Download quote PDF
+    description: Download the PDF of a finalized quote, by quote id.
+  STRIPE_GET_CHARGES_CHARGE_REFUNDS_REFUND:
+    name: Get charge refund
+    description: Get one refund on a charge, by charge id and refund id, with its amount, status, reason and date.
+  STRIPE_GET_CUSTOMERS_CUSTOMER_BANK_ACCOUNTS_ID:
+    name: Get customer bank account
+    description: Get one bank account saved on a customer, by customer id and bank account id, with its bank name, country,
+      currency, last digits and status.
+  STRIPE_GET_CUSTOMERS_CUSTOMER_CASH_BALANCE:
+    name: Get customer cash balance
+    description: 'Get a customer''s cash balance by customer id: the funds available to them, by currency, and the balance
+      settings.'
+  STRIPE_GET_CUSTOMERS_CUSTOMER_PAYMENT_METHODS:
+    name: List customer payment methods
+    description: List the payment methods saved on one customer, by customer id, optionally only those of one type,
+      a page at a time.
+  STRIPE_GET_CUSTOMERS_CUSTOMER_SUBS_SUB_EXPOSED_ID_DISCOUNT:
+    name: Get subscription discount
+    description: Get the discount currently applied to a customer's subscription, by customer id and subscription id,
+      with its coupon or promotion code.
+  STRIPE_GET_INVOICES_INVOICE:
+    name: Get invoice
+    description: Get one invoice by invoice id, with its number, customer, amounts, due date, status and line items.
+  STRIPE_GET_INVOICES_INVOICE_LINES:
+    name: List invoice line items
+    description: List the line items of one invoice, by invoice id, a page at a time, with each item's description,
+      quantity and amount.
+  STRIPE_GET_PAYMENT_LINK:
+    name: Get payment link
+    description: Get one payment link by its id, with its web address, whether it is active and its line items.
+  STRIPE_GET_PAYMENT_METHOD_CONFIGURATION:
+    name: Get payment method configuration
+    description: Get one payment method configuration by its id, showing which payment methods are turned on and available.
+  STRIPE_GET_PRICES_PRICE:
+    name: Get price
+    description: Get one price by price id, with its product, currency, amount, billing interval and whether it is active.
+  STRIPE_GET_PRODUCTS_ID:
+    name: Get product
+    description: Get one product by product id, with its name, description, images, default price and whether it is
+      active.
+  STRIPE_GET_PRODUCTS_PRODUCT_FEATURES_ID:
+    name: Get product feature
+    description: Get one feature attached to a product, by product id and feature id.
+  STRIPE_GET_REFUNDS_REFUND:
+    name: Get refund
+    description: Get one refund by refund id, with its amount, currency, status, reason and the charge it refunds.
+  STRIPE_GET_SUBSCRIPTION_SCHEDULES_SCHEDULE:
+    name: Get subscription schedule
+    description: Get one subscription schedule by its id, with its phases, settings and status.
+  STRIPE_GET_V1_PAYMENT_METHODS_PAYMENT_METHODS2:
+    name: List payment methods
+    description: List payment methods a page at a time, optionally only those of one customer or of one type.
+  STRIPE_LIST_BALANCE_TRANSACTIONS:
+    name: List balance transactions
+    description: 'List the movements of funds through the account a page at a time: charges, refunds, payouts, fees
+      and more, optionally only of one type, currency, payout or source, or in a date range.'
+  STRIPE_LIST_CHARGE_REFUNDS:
+    name: List charge refunds
+    description: List the refunds made on one charge, by charge id, a page at a time, with each refund's amount, status
+      and date.
+  STRIPE_LIST_CREDIT_NOTES:
+    name: List credit notes
+    description: List credit notes a page at a time, optionally only those of one customer or one invoice, or created
+      in a date range.
+  STRIPE_LIST_CUSTOMERS:
+    name: List customers
+    description: List customers a page at a time, optionally only those with a given email address or created in a date
+      range.
+  STRIPE_LIST_CUSTOMER_SUBSCRIPTIONS:
+    name: List customer subscriptions
+    description: List the subscriptions of one customer, by customer id, a page at a time, with each one's status, items
+      and billing period.
+  STRIPE_LIST_DISPUTES:
+    name: List disputes
+    description: List payment disputes a page at a time, optionally only those on one charge or payment, or created
+      in a date range, with each dispute's amount, reason and status.
+  STRIPE_LIST_INVOICEITEMS:
+    name: List invoice items
+    description: List invoice items a page at a time, optionally only those of one customer or invoice, created in a
+      date range or not yet attached to an invoice.
+  STRIPE_LIST_INVOICE_PAYMENTS:
+    name: List invoice payments
+    description: List payments made against invoices a page at a time, optionally only those of one invoice, with a
+      given status or created in a date range.
+  STRIPE_LIST_INVOICE_RENDERING_TEMPLATES:
+    name: List invoice templates
+    description: List the templates available for rendering invoices, newest first, a page at a time.
+  STRIPE_LIST_PAYMENT_INTENTS:
+    name: List payments
+    description: List payments (payment intents) a page at a time, optionally only those of one customer or created
+      in a date range, with each one's amount, currency and status.
+  STRIPE_LIST_PAYMENT_LINKS:
+    name: List payment links
+    description: List payment links a page at a time, newest first, optionally only active or only inactive ones.
+  STRIPE_LIST_PAYOUTS:
+    name: List payouts
+    description: List payouts to and from the account's bank, newest first, a page at a time, optionally only those
+      with a given status, destination, arrival date or creation date.
+  STRIPE_LIST_PRICES:
+    name: List prices
+    description: List prices a page at a time, optionally only those of one product, currency or type, active or not,
+      recurring or one-time, or with given lookup keys.
+  STRIPE_LIST_PRODUCTS:
+    name: List products
+    description: List products a page at a time, optionally only given ids, active or not, shippable or not, or created
+      in a date range.
+  STRIPE_LIST_QUOTES:
+    name: List quotes
+    description: List quotes a page at a time, optionally only those of one customer or with a given status.
+  STRIPE_LIST_REFUNDS:
+    name: List refunds
+    description: List refunds newest first, a page at a time, optionally only those on one charge or payment, with each
+      refund's amount, currency and status.
+  STRIPE_LIST_SUBSCRIPTIONS:
+    name: List subscriptions
+    description: List subscriptions a page at a time, optionally only those of one customer or price, with a given status
+      or collection method, or by billing period or creation date.
+  STRIPE_LIST_TAX_RATES:
+    name: List tax rates
+    description: List tax rates newest first, a page at a time, optionally only active or inactive ones, inclusive or
+      exclusive, or created in a date range.
+  STRIPE_LIST_TRANSFERS:
+    name: List transfers
+    description: List transfers sent to connected accounts, newest first, a page at a time, optionally only those to
+      one destination, in one transfer group or created in a date range.
+  STRIPE_RETRIEVE_BALANCE:
+    name: Get balance
+    description: 'Get the account''s current balance: the funds available and pending, by currency.'
+  STRIPE_RETRIEVE_CHARGE:
+    name: Get charge
+    description: Get one charge by charge id, with its amount, currency, status, customer, payment method and refunds.
+  STRIPE_RETRIEVE_CUSTOMER:
+    name: Get customer
+    description: Get one customer by customer id, with their name, email address, phone, address, balance and default
+      payment method.
+  STRIPE_RETRIEVE_PAYMENT_INTENT:
+    name: Get payment
+    description: Get one payment (payment intent) by its id, with its amount, currency, status, customer and payment
+      method.
+  STRIPE_RETRIEVE_UPCOMING_INVOICE:
+    name: Preview upcoming invoice
+    description: Preview the next invoice for a customer or subscription before it is created, showing pending charges
+      such as subscription renewals and invoice items, with optional changes to try out.
+  STRIPE_SEARCH_PAYMENT_INTENTS:
+    name: Search payments
+    description: Search payments (payment intents) with a query on status, amount, customer or metadata, in the payment
+      provider's search syntax, a page at a time.
+  STRIPE_SEARCH_PRICES:
+    name: Search prices
+    description: Search prices with a query on status, currency, product or metadata, in the payment provider's search
+      syntax, a page at a time.
+  STRIPE_SEARCH_PRODUCTS:
+    name: Search products
+    description: Search products with a query on status, name or metadata, in the payment provider's search syntax,
+      a page at a time.
+  STRIPE_SEARCH_SUBSCRIPTIONS:
+    name: Search subscriptions
+    description: Search subscriptions with a query on status, metadata, creation date or cancellation date, in the payment
+      provider's search syntax, a page at a time.

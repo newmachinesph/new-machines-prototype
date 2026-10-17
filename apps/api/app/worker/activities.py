@@ -1051,7 +1051,10 @@ class PackActivities:
 
     @activity.defn
     def finish_node(self, call: AgentResult) -> dict:
-        """Validate the submitted result against the node's output schema; invalid output fails for good."""
+        """Validate the submitted result against the node's output schema. A result that does not match is
+        rejected, not failed: `{"rejected": [errors]}` (capped) goes back to the model, which may correct it
+        and submit again within its turns; nothing is recorded for that attempt. A valid result completes
+        the node."""
         with _config_errors():
             node = _node(call.snapshot, call.node_id)
             cfg = node.get("config") or {}
@@ -1061,7 +1064,7 @@ class PackActivities:
             )
         errors = _schema_errors(schema, call.result)
         if errors:
-            raise _fatal("OutputInvalid", "the result does not match the output schema: " + "; ".join(errors))
+            return {"rejected": errors}
         route = _success_route(node)
         done = {"route": route, "summary": _summary(call.result)}
         _commit(call, [("node.completed", _compact(done))])

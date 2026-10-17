@@ -10,10 +10,11 @@ tools:
   - id: copy_document
     slug: GOOGLEDOCS_COPY_DOCUMENT
     version: '20261008_00'
+    name: Copy document
     action_class: write
     capability: docs.write
-    description: Tool to create a copy of an existing Google Document. Use this to duplicate a document, for example,
-      when using an existing document as a template.
+    description: Make a copy of an existing document by document id, with an optional new title. Useful for starting
+      from a template. Returns the new document's id.
     input_schema:
       type: object
       required:
@@ -33,10 +34,11 @@ tools:
   - id: create_and_populate_table
     slug: GOOGLEDOCS_CREATE_AND_POPULATE_TABLE
     version: '20261008_00'
+    name: Create table with content
     action_class: write
     capability: docs.write
-    description: Creates a new table in a Google Document and populates its cells with provided text data in a single
-      operation. Use this action when you need to insert a structured table with predefined content into a document.
+    description: Insert a table with a given number of rows and columns into a document, by document id, and fill its
+      cells with text in one step, at a position or at the end.
     input_schema:
       type: object
       required:
@@ -88,10 +90,11 @@ tools:
   - id: create_document
     slug: GOOGLEDOCS_CREATE_DOCUMENT
     version: '20261008_00'
+    name: Create document
     action_class: write
     capability: docs.write
-    description: Creates a new Google Docs document using the provided title as filename and inserts the initial text
-      at the beginning if non-empty, returning the document's ID and metadata (excluding body content).
+    description: Create a new document with the given title and optional opening text. Returns the new document's id
+      and details.
     input_schema:
       type: object
       required:
@@ -109,10 +112,11 @@ tools:
   - id: create_document_markdown
     slug: GOOGLEDOCS_CREATE_DOCUMENT_MARKDOWN
     version: '20261008_00'
+    name: Create document from markdown
     action_class: write
     capability: docs.write
-    description: Creates a new Google Docs document, optionally initializing it with a title and content provided
-      as Markdown text.
+    description: Create a new document with the given title and, optionally, content written in Markdown, which becomes
+      formatted text. Returns the new document's id.
     input_schema:
       type: object
       required:
@@ -132,10 +136,10 @@ tools:
   - id: create_footer
     slug: GOOGLEDOCS_CREATE_FOOTER
     version: '20261008_00'
+    name: Create footer
     action_class: write
     capability: docs.write
-    description: Tool to create a new footer in a Google Document. Use when you need to add a footer, optionally specifying
-      its type and the section it applies to.
+    description: Add a footer of the given type to a document, by document id, optionally for one section only.
     input_schema:
       type: object
       required:
@@ -171,10 +175,10 @@ tools:
   - id: create_footnote
     slug: GOOGLEDOCS_CREATE_FOOTNOTE
     version: '20261008_00'
+    name: Create footnote
     action_class: write
     capability: docs.write
-    description: Tool to create a new footnote in a Google Document. Use this when you need to add a footnote at a
-      specific location or at the end of the document body.
+    description: Add a footnote to a document, by document id, at a given position or at the end of the body.
     input_schema:
       type: object
       required:
@@ -217,10 +221,11 @@ tools:
   - id: create_header
     slug: GOOGLEDOCS_CREATE_HEADER
     version: '20261008_00'
+    name: Create header
     action_class: write
     capability: docs.write
-    description: Tool to create a new header in a Google Document, optionally with text content. Use this tool when
-      you need to add a header to a document.
+    description: Add a header to a document, by document id, optionally with text, a header type and the section it
+      applies to.
     input_schema:
       type: object
       required:
@@ -260,10 +265,11 @@ tools:
   - id: create_named_range
     slug: GOOGLEDOCS_CREATE_NAMED_RANGE
     version: '20261008_00'
+    name: Create named range
     action_class: write
     capability: docs.write
-    description: Tool to create a new named range in a Google Document. Use this to assign a name to a specific part
-      of the document for easier reference or programmatic manipulation.
+    description: Give a name to a stretch of a document, by document id and start and end positions, so it can be found
+      and changed later by name.
     input_schema:
       type: object
       required:
@@ -299,10 +305,11 @@ tools:
   - id: create_paragraph_bullets
     slug: GOOGLEDOCS_CREATE_PARAGRAPH_BULLETS
     version: '20261008_00'
+    name: Add bullets
     action_class: write
     capability: docs.write
-    description: Tool to add bullets to paragraphs within a specified range in a Google Document. Use when you need
-      to format a list or a set of paragraphs as bullet points.
+    description: Turn the paragraphs in a given range of a document into a bulleted or numbered list, by document id,
+      with a chosen bullet style.
     input_schema:
       type: object
       required:
@@ -370,10 +377,11 @@ tools:
   - id: create_document_tab
     slug: GOOGLEDOCS_CREATE_TAB
     version: '20261008_00'
+    name: Create tab
     action_class: write
     capability: docs.write
-    description: Creates a new tab in a Google Docs document. Tabs allow you to organize document content into separate
-      sections within a single document. Use this action when you need to add a new organizational tab to a document.
+    description: Add a new tab to a document, by document id, with an optional title and other tab properties, to keep
+      content in separate sections.
     input_schema:
       type: object
       required:
@@ -405,11 +413,11 @@ tools:
   - id: export_pdf
     slug: GOOGLEDOCS_EXPORT_DOCUMENT_AS_PDF
     version: '20261008_00'
+    name: Export as PDF
     action_class: read
     capability: docs.read
-    description: 'Tool to export a Google Docs file as PDF using the Google Drive API. Use when you need to generate
-      a PDF version of a Google Docs document for download or distribution. Note: Google Drive enforces a 10MB limit
-      on export content.'
+    description: Export a document as a PDF file, by file id, with an optional file name. Documents over 10 MB cannot
+      be exported.
     input_schema:
       type: object
       required:
@@ -428,9 +436,11 @@ tools:
   - id: get_document_by_id
     slug: GOOGLEDOCS_GET_DOCUMENT_BY_ID
     version: '20261008_00'
+    name: Get document
     action_class: read
     capability: docs.read
-    description: Retrieves an existing Google Document by its ID; will error if the document is not found.
+    description: Get a document by its id, with its title and full structured content and, when asked, the content of
+      every tab.
     input_schema:
       type: object
       required:
@@ -451,11 +461,11 @@ tools:
   - id: get_document_end_index
     slug: GOOGLEDOCS_GET_DOCUMENT_END_INDEX
     version: '20261008_00'
+    name: Get document end position
     action_class: read
     capability: docs.read
-    description: Retrieves the end index and paragraph structure of a Google Document or specific segment. Use this
-      action when you need to determine valid insertion points for text operations, especially before using insertText
-      requests.
+    description: Get the end position and paragraph layout of a document or one of its segments, by document id. Useful
+      for finding where to insert text.
     input_schema:
       type: object
       required:
@@ -476,11 +486,11 @@ tools:
   - id: get_document_text
     slug: GOOGLEDOCS_GET_DOCUMENT_PLAINTEXT
     version: '20261008_00'
+    name: Get document text
     action_class: read
     capability: docs.read
-    description: Retrieve a Google Doc by ID and return a best-effort plain-text rendering. Converts document structure
-      into plain text including paragraphs, lists, and tables without requiring clients to traverse complex Docs API
-      JSON.
+    description: Get a document's content as plain text, by document id, including paragraphs, lists and tables, with
+      options for headers, footers, footnotes and tabs.
     input_schema:
       type: object
       required:
@@ -529,10 +539,11 @@ tools:
   - id: insert_image_in_table_cell
     slug: GOOGLEDOCS_INSERT_IMAGE_IN_TABLE_CELL
     version: '20261008_00'
+    name: Insert image in table cell
     action_class: write
     capability: docs.write
-    description: Inserts an image from a given URI into a specific table cell in a Google Document. Use this action
-      when you need to add an image to a particular cell within a table.
+    description: Insert an image from a web address into one cell of a table in a document, by document id and cell
+      location, with an optional size.
     input_schema:
       type: object
       required:
@@ -623,10 +634,11 @@ tools:
   - id: insert_inline_image
     slug: GOOGLEDOCS_INSERT_INLINE_IMAGE
     version: '20261008_00'
+    name: Insert image
     action_class: write
     capability: docs.write
-    description: Tool to insert an image from a given URI at a specified location in a Google Document as an inline
-      image. Use when you need to add an image to a document programmatically.
+    description: Insert an image from a web address into a document at a given position, by document id, with an optional
+      size.
     input_schema:
       type: object
       required:
@@ -697,10 +709,11 @@ tools:
   - id: insert_page_break
     slug: GOOGLEDOCS_INSERT_PAGE_BREAK
     version: '20261008_00'
+    name: Insert page break
     action_class: write
     capability: docs.write
-    description: Tool to insert a page break into a Google Document. Use when you need to start new content on a fresh
-      page, such as at the end of a chapter or section.
+    description: Insert a page break into a document at a given position, by document id, so what follows starts on
+      a new page.
     input_schema:
       type: object
       required:
@@ -745,10 +758,11 @@ tools:
   - id: insert_table
     slug: GOOGLEDOCS_INSERT_TABLE_ACTION
     version: '20261008_00'
+    name: Insert table
     action_class: write
     capability: docs.write
-    description: Tool to insert a table into a Google Document. Use when you need to add a new table at a specific
-      location or at the end of a segment (like document body, header, or footer) in a document.
+    description: Insert an empty table with a given number of rows and columns into a document, by document id, at a
+      position or at the end of the body, a header or a footer.
     input_schema:
       type: object
       required:
@@ -791,10 +805,10 @@ tools:
   - id: insert_table_column
     slug: GOOGLEDOCS_INSERT_TABLE_COLUMN
     version: '20261008_00'
+    name: Insert table column
     action_class: write
     capability: docs.write
-    description: Tool to insert a new column into a table in a Google Document. Use this tool when you need to add
-      a column to an existing table at a specific location.
+    description: Insert a column into an existing table in a document, by document id, next to a given cell.
     input_schema:
       type: object
       required:
@@ -865,10 +879,10 @@ tools:
   - id: insert_table_row
     slug: GOOGLEDOCS_INSERT_TABLE_ROW
     version: '20261008_00'
+    name: Insert table row
     action_class: write
     capability: docs.write
-    description: Inserts a new row into a table in a Google Document at a specified location. Use this action when
-      you need to add a row to an existing table, either above or below a reference cell location.
+    description: Insert a row into an existing table in a document, by document id, above or below a given cell.
     input_schema:
       type: object
       required:
@@ -939,10 +953,10 @@ tools:
   - id: insert_text
     slug: GOOGLEDOCS_INSERT_TEXT_ACTION
     version: '20261008_00'
+    name: Insert text
     action_class: write
     capability: docs.write
-    description: 'Tool to insert a string of text at a specified location within a Google Document. Use when you need
-      to add new text content to an existing document. IMPORTANT: Two ways to specify insertion location: 1.'
+    description: Insert text into a document, by document id, either at a given position or appended to the end.
     input_schema:
       type: object
       required:
@@ -983,10 +997,11 @@ tools:
   - id: insert_text_in_table_cell
     slug: GOOGLEDOCS_INSERT_TEXT_IN_TABLE_CELL
     version: '20261008_00'
+    name: Insert text in table cell
     action_class: write
     capability: docs.write
-    description: Inserts text into a specific cell of a table in a Google Document by row and column position. Use
-      this action when you need to add or update text content in a table cell at a known row and column index.
+    description: Insert text into one cell of a table in a document, by document id, the table's start position and
+      the cell's row and column.
     input_schema:
       type: object
       required:
@@ -1024,10 +1039,11 @@ tools:
   - id: replace_all_text_in_document
     slug: GOOGLEDOCS_REPLACE_ALL_TEXT
     version: '20261008_00'
+    name: Find and replace text
     action_class: write
     capability: docs.write
-    description: Tool to replace all occurrences of a specified text string with another text string throughout a
-      Google Document. Use when you need to perform a global find and replace operation within a document.
+    description: Find every occurrence of a piece of text in a document, by document id, and replace it with other text,
+      optionally matching case. Returns how many were replaced.
     input_schema:
       type: object
       required:
@@ -1059,10 +1075,11 @@ tools:
   - id: replace_image
     slug: GOOGLEDOCS_REPLACE_IMAGE
     version: '20261008_00'
+    name: Replace image
     action_class: write
     capability: docs.write
-    description: Tool to replace a specific image in a document with a new image from a URI. Use when you need to
-      update an existing image within a Google Doc.
+    description: Replace an existing image in a document with a new one from a web address, by document id and the image's
+      object id.
     input_schema:
       type: object
       required:
@@ -1105,9 +1122,11 @@ tools:
   - id: search_documents
     slug: GOOGLEDOCS_SEARCH_DOCUMENTS
     version: '20261008_00'
+    name: Search documents
     action_class: read
     capability: docs.read
-    description: Search for Google Documents using various filters including name, content, date ranges, and more.
+    description: Search the account's documents by name, content, dates, starred or shared-with-me status, a page at
+      a time. Returns the matching documents with their id, name and dates.
     input_schema:
       type: object
       properties:
@@ -1161,10 +1180,11 @@ tools:
   - id: unmerge_table_cells
     slug: GOOGLEDOCS_UNMERGE_TABLE_CELLS
     version: '20261008_00'
+    name: Unmerge table cells
     action_class: write
     capability: docs.write
-    description: Tool to unmerge previously merged cells in a table. Use this when you need to revert merged cells
-      in a Google Document table back to their individual cell states.
+    description: Split previously merged cells in a document's table back into single cells, by document id and the
+      cells' range.
     input_schema:
       type: object
       required:
@@ -1229,11 +1249,11 @@ tools:
   - id: update_document_section_markdown
     slug: GOOGLEDOCS_UPDATE_DOCUMENT_SECTION_MARKDOWN
     version: '20261008_00'
+    name: Replace section with markdown
     action_class: write
     capability: docs.write
-    description: Tool to insert or replace a section of a Google Docs document with Markdown content. Use when you
-      need to update only a section of a document by specifying start and optional end indices. Supports full Markdown
-      formatting.
+    description: Insert or replace one section of a document, by document id and start and optional end positions, with
+      content written in Markdown, which becomes formatted text.
     input_schema:
       type: object
       required:
@@ -1279,10 +1299,10 @@ tools:
   - id: update_document_style
     slug: GOOGLEDOCS_UPDATE_DOCUMENT_STYLE
     version: '20261008_00'
+    name: Update document style
     action_class: write
     capability: docs.write
-    description: Tool to update the overall document style, such as page size, margins, and default text direction.
-      Use when you need to modify the global style settings of a Google Document.
+    description: Change a document's overall style by document id, such as page size, margins and default text direction.
     input_schema:
       type: object
       required:
@@ -1388,10 +1408,11 @@ tools:
   - id: update_table_row_style
     slug: GOOGLEDOCS_UPDATE_TABLE_ROW_STYLE
     version: '20261008_00'
+    name: Update table row style
     action_class: write
     capability: docs.write
-    description: Tool to update the style of a table row in a Google Document. Use when you need to modify the appearance
-      of specific rows within a table, such as setting minimum row height or marking rows as headers.
+    description: Change the style of rows in a document's table, by document id, such as the minimum row height or marking
+      rows as header rows.
     input_schema:
       type: object
       required:
@@ -1464,10 +1485,10 @@ tools:
   - id: update_tab_properties
     slug: GOOGLEDOCS_UPDATE_TAB_PROPERTIES
     version: '20261008_00'
+    name: Update tab
     action_class: write
     capability: docs.write
-    description: Updates properties of a document tab such as title, parent tab, index, and icon emoji. Use this action
-      when you need to rename a tab, change its emoji icon, move it within the tab hierarchy, or reorganize tab structure.
+    description: Change a document tab's title, icon, position or parent tab, by document id and tab id.
     input_schema:
       type: object
       required:

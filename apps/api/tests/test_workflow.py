@@ -4,6 +4,7 @@ Every test needs the local Postgres (`db` fixture) and downloads the Temporal te
 """
 
 import asyncio
+import dataclasses
 import json
 import uuid
 from concurrent.futures import ThreadPoolExecutor
@@ -22,7 +23,7 @@ from app.defs import registry
 from app.defs.loader import load_bundle
 from app.defs.snapshot import build_snapshot
 from app.models.runs import Run
-from app.runtime import adk_agent, projection, providers, receipt
+from app.runtime import adk_agent, agent, projection, providers, receipt
 from app.runtime.providers import SUBMIT_TOOL, FakeProvider, ModelTurn
 from app.worker import activities
 from app.worker.activities import PackActivities
@@ -393,24 +394,6 @@ def test_the_run_budget_caps_ai_spend_below_the_contract_maximum(runtime_env):
     [failed] = [e for e in _entries(conn, run_id) if e["type"] == "run.failed"]
     assert failed["data"]["reason"].startswith("BUDGET_EXCEEDED")
     assert "budget of 1000 minor units" in failed["data"]["reason"]
-
-
-def test_invalid_agent_output_fails_the_run_without_retrying(runtime_env):
-    conn = runtime_env
-    run_id, snapshot = _new_run(conn)
-    bad = {"type": "tool_use", "id": "toolu_1", "name": SUBMIT_TOOL, "input": {"matched": "nope"}}
-
-    async def scenario(env):
-        handle = await _start(env.client, run_id, snapshot)
-        return await handle.result()
-
-    provider = FakeProvider(script={"finance-agent": [_turn([bad])]})
-    assert asyncio.run(_drive(provider, scenario)) == "FAILED"
-    entries = _entries(conn, run_id)
-    [failed] = [e for e in entries if e["type"] == "node.failed"]
-    assert failed["node_id"] == "match" and failed["data"]["error"].startswith("OutputInvalid")
-    assert _nodes(_run_row(conn, run_id)["projection"])["match"]["status"] == "FAILED"
-    assert [e["data"]["reason"] for e in entries if e["type"] == "run.failed"]
 
 
 def test_a_signal_of_the_wrong_kind_never_blocks_the_right_one(runtime_env):
@@ -844,6 +827,82 @@ def test_an_agent_cut_off_on_every_turn_fails_with_output_truncated(runtime_env,
     assert failed["data"]["reason"].startswith("OUTPUT_TRUNCATED")
     usage = [e for e in entries if e["type"] == "model.usage" and e["node_id"] == "match"]
     assert len(usage) == snapshot["defs"]["agent"]["finance-agent"]["body"]["runtime"]["max_turns"]
+    _assert_sealed(conn, run_id, snapshot, "FAILED")
+
+
+def _with_timestamps(result: dict) -> dict:
+    """The production slip: full timestamps where the schema wants YYYY-MM-DD dates."""
+    matched = [{**r, "date": f"{r['date']}T09:12:00Z"} for r in result["matched"]]
+    mismatches = [{**r, "date": f"{r['date']}T09:12:00Z"} for r in result["mismatches"]]
+    assert matched or mismatches
+    return {**result, "matched": matched, "mismatches": mismatches}
+
+
+class _RejectedProvider(_RecordingProvider):
+    """finance-agent's first `invalid` submits carry timestamps where the schema wants dates, as the model
+    did in production; later turns are the fake's valid result."""
+
+    def __init__(self, invalid: int) -> None:
+        super().__init__()
+        self.invalid = invalid
+
+    def call(self, **kwargs) -> ModelTurn:
+        turn = super().call(**kwargs)
+        turns_so_far = sum(1 for m in kwargs["messages"] if m["role"] == "assistant")
+        if not kwargs["system"].startswith("agent:finance-agent") or turns_so_far >= self.invalid:
+            return turn
+        [submit] = turn.content
+        bad = {**submit, "id": f"toolu_bad_{turns_so_far}", "input": _with_timestamps(submit["input"])}
+        return dataclasses.replace(turn, content=[bad])
+
+
+@pytest.mark.parametrize("edit", [None, _hosted], ids=["google_adk", "hosted"])
+def test_a_result_off_the_schema_goes_back_to_the_model_and_the_corrected_one_completes_the_run(
+    runtime_env, edit
+):
+    conn = runtime_env
+    run_id, snapshot = _new_run(conn, edit=edit)
+    provider = _RejectedProvider(invalid=1)
+
+    async def scenario(env):
+        return await _run_to_end(env, run_id, snapshot)
+
+    assert asyncio.run(_drive(provider, scenario)) == "COMPLETED"
+    retry = next(c for c in provider.conversations if "toolu_bad_0" in str(c))
+    [feedback] = retry[-1]["content"]
+    assert feedback["type"] == "tool_result" and feedback["tool_use_id"] == "toolu_bad_0"
+    answer = json.loads(feedback["content"])
+    assert answer["ok"] is False and answer["hint"] == agent.RESUBMIT_HINT
+    assert answer["errors"] and all("/date: " in e and "does not match" in e for e in answer["errors"])
+    entries = _entries(conn, run_id)
+    match = [e for e in entries if e["node_id"] == "match"]
+    assert [e["type"] for e in match if e["type"] == "node.completed"] == ["node.completed"]
+    assert len([e for e in match if e["type"] == "model.usage"]) == 2  # the rejected turn and the good one
+    assert not [e for e in entries if e["type"] in ("node.failed", "result.rejected")]
+    assert _nodes(_run_row(conn, run_id)["projection"])["match"]["status"] == "COMPLETED"
+    _assert_sealed(conn, run_id, snapshot, "COMPLETED")
+
+
+@pytest.mark.parametrize("edit", [None, _hosted], ids=["google_adk", "hosted"])
+def test_an_agent_whose_every_result_is_off_the_schema_fails_with_the_errors(runtime_env, edit):
+    conn = runtime_env
+    run_id, snapshot = _new_run(conn, edit=edit)
+
+    async def scenario(env):
+        handle = await _start(env.client, run_id, snapshot)
+        return await handle.result()
+
+    assert asyncio.run(_drive(_RejectedProvider(invalid=99), scenario)) == "FAILED"
+    entries = _entries(conn, run_id)
+    [failed] = [e for e in entries if e["type"] == "node.failed"]
+    reason = failed["data"]["error"]
+    assert failed["node_id"] == "match" and reason.startswith("OUTPUT_INVALID")
+    assert "did not match the output schema" in reason and "/date: " in reason and "does not match" in reason
+    assert [e["data"]["reason"] for e in entries if e["type"] == "run.failed"] == [reason]
+    usage = [e for e in entries if e["type"] == "model.usage" and e["node_id"] == "match"]
+    assert len(usage) == snapshot["defs"]["agent"]["finance-agent"]["body"]["runtime"]["max_turns"]
+    assert not [e for e in entries if e["type"] == "node.completed" and e["node_id"] == "match"]
+    assert _nodes(_run_row(conn, run_id)["projection"])["match"]["status"] == "FAILED"
     _assert_sealed(conn, run_id, snapshot, "FAILED")
 
 

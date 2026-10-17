@@ -23,16 +23,114 @@ tools:
   GOOGLECALENDAR_EVENTS_MOVE:
     skip: Moves an event to another calendar, which can share it with that calendar's members.
   GOOGLECALENDAR_PATCH_EVENT:
+    name: Change event
+    description: 'Change some details of an existing event, by event id and calendar id: title, times, location, description,
+      attendees and more. Details left out stay as they are; a list given, such as attendees, replaces the old one.'
     restrict:
       status: {enum: [confirmed, tentative]}  # "cancelled" would delete the event
   GOOGLECALENDAR_EVENTS_IMPORT:
+    name: Import event
+    description: Add a private copy of an event from elsewhere to a calendar, given its original event uid and its start
+      and end times, with optional title, location and attendees.
     restrict:
       status: {enum: [confirmed, tentative]}
   GOOGLECALENDAR_CREATE_CALENDAR:
+    name: Create calendar
+    description: Create a new secondary calendar with the given title and optional description, location and time zone.
+      Returns the new calendar and its id.
     id: create_calendar
   GOOGLECALENDAR_UPDATE_EVENT:
+    name: Update event
+    description: Update an existing event by event id and calendar id, with a new start time and optional end time or
+      duration, title, location, description, attendees and recurrence. Find the event id with a list or search first.
     id: update_event
   GOOGLECALENDAR_GET_CALENDAR:
+    name: Get calendar
+    description: 'Get one calendar''s details by calendar id, or the account''s primary calendar: its title, description,
+      location and time zone.'
     id: get_calendar
   GOOGLECALENDAR_LIST_CALENDARS:
+    name: List calendars
+    description: List the calendars in the account's calendar list a page at a time, with each one's id, title, access
+      role, color and whether it is selected. Hidden calendars are left out unless asked for.
     id: list_calendars
+
+  # Names and descriptions the Studio shows (its picker prefixes the app name) and agents read.
+  GOOGLECALENDAR_CALENDARS_UPDATE:
+    name: Update calendar
+    description: 'Replace a calendar''s details by calendar id: its title and optional description, location and time
+      zone. Details left out are cleared, so give every one the calendar should keep.'
+  GOOGLECALENDAR_CALENDAR_LIST_GET:
+    name: Get calendar list entry
+    description: Get one calendar from the account's calendar list, by calendar id, with its title, color, access role
+      and whether it is selected or hidden.
+  GOOGLECALENDAR_CALENDAR_LIST_INSERT:
+    name: Add calendar to list
+    description: Add an existing calendar to the account's calendar list so it shows alongside the others, by calendar
+      id, with optional color, visibility and reminder settings.
+  GOOGLECALENDAR_CALENDAR_LIST_PATCH:
+    name: Change calendar list entry
+    description: 'Change how one calendar appears in the account''s calendar list, by calendar id: color, whether it
+      is hidden or selected, reminders and notifications. Settings left out stay as they are.'
+  GOOGLECALENDAR_CALENDAR_LIST_UPDATE:
+    name: Update calendar list entry
+    description: 'Replace how one calendar appears in the account''s calendar list, by calendar id: color, whether it
+      is hidden or selected, reminders and notifications. The calendar itself does not change.'
+  GOOGLECALENDAR_COLORS_GET:
+    name: List colors
+    description: List the colors available for calendars and events, with each color's id and its background and foreground
+      values.
+  GOOGLECALENDAR_CREATE_EVENT:
+    name: Create event
+    description: Create an event on a calendar from a start time and an end time or duration, or an all-day event from
+      start and end dates, with optional title, location, attendees and recurrence. Attendees are emailed by default.
+  GOOGLECALENDAR_EVENTS_GET:
+    name: Get event
+    description: Get one event by its event id and calendar id, with its title, times, location, description and attendees.
+  GOOGLECALENDAR_EVENTS_INSTANCES:
+    name: List event occurrences
+    description: List the occurrences of a recurring event, by event id and calendar id, within an optional time window,
+      a page at a time, with each occurrence's start and end.
+  GOOGLECALENDAR_EVENTS_LIST_ALL_CALENDARS:
+    name: List events across calendars
+    description: List events from every calendar in the account's calendar list, or from chosen ones, between two times,
+      with optional text search, in one combined list.
+  GOOGLECALENDAR_FIND_EVENT:
+    name: Find events
+    description: Search a calendar's events by text, time range, last change and event type, a page at a time. Returns
+      the matching events with their title, times and attendees.
+  GOOGLECALENDAR_FIND_FREE_SLOTS:
+    name: Find free slots
+    description: Find free and busy time slots across one or more calendars within a time range, in a given time zone.
+      Returns when each calendar is free and when it is booked.
+  GOOGLECALENDAR_FREE_BUSY_QUERY:
+    name: Check availability
+    description: Check when one or more calendars or groups are busy within an exact time range. Returns the busy intervals
+      per calendar, without event titles or details.
+  GOOGLECALENDAR_GET_CURRENT_DATE_TIME:
+    name: Get current date and time
+    description: Get the current date and time in a given time zone. Useful before working out relative dates such as
+      tomorrow or next Monday.
+  GOOGLECALENDAR_LIST_BUILDINGS:
+    name: List buildings
+    description: List the organization's buildings a page at a time, with each one's address, coordinates and floor
+      names.
+  GOOGLECALENDAR_LIST_CALENDAR_RESOURCES:
+    name: List rooms and resources
+    description: List the organization's bookable rooms and other resources, with optional text search, a page at a
+      time, with each one's name, type, capacity and building.
+  GOOGLECALENDAR_PATCH_CALENDAR:
+    name: Change calendar details
+    description: 'Change some of a calendar''s details by calendar id: title, description, location or time zone. Details
+      left out stay as they are; an empty description or location clears it.'
+  GOOGLECALENDAR_QUICK_ADD:
+    name: Quick add event
+    description: Create a simple event on a calendar from a line of plain text giving its title, date and time. Returns
+      the event made from it.
+  GOOGLECALENDAR_SETTINGS_GET:
+    name: Get setting
+    description: Read one of the account's calendar settings by its name, such as the time zone or the default event
+      length.
+  GOOGLECALENDAR_SETTINGS_LIST:
+    name: List settings
+    description: List all of the account's calendar settings a page at a time, each with its name and value.

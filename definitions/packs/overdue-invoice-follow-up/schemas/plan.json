@@ -31,9 +31,9 @@
         "required": ["ref", "date", "amount_minor", "currency", "flag", "note"],
         "properties": {
           "ref": {"type": "string", "minLength": 1, "description": "The invoice number."},
-          "date": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$", "description": "The due date."},
+          "date": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$", "description": "The due date as YYYY-MM-DD (the date only, no time)."},
           "amount_minor": {"type": "integer", "description": "Amount due in minor units (cents)."},
-          "currency": {"type": "string", "pattern": "^[A-Z]{3}$"},
+          "currency": {"type": "string", "pattern": "^[A-Z]{3}$", "description": "Three-letter currency code in upper case, such as USD."},
           "flag": {"type": "string", "minLength": 1},
           "note": {"type": "string", "minLength": 1},
           "counterpart_ref": {"type": "string", "minLength": 1}

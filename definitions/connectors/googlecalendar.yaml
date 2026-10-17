@@ -45,10 +45,11 @@ tools:
   - id: update_calendar
     slug: GOOGLECALENDAR_CALENDARS_UPDATE
     version: '20261010_00'
+    name: Update calendar
     action_class: write
     capability: calendar.write
-    description: Full PUT-style update that overwrites all calendar metadata fields; unspecified optional fields are
-      cleared. Use GOOGLECALENDAR_PATCH_CALENDAR to update only a subset of fields.
+    description: 'Replace a calendar''s details by calendar id: its title and optional description, location and time
+      zone. Details left out are cleared, so give every one the calendar should keep.'
     input_schema:
       type: object
       required:
@@ -80,11 +81,11 @@ tools:
   - id: get_single_calendar_by_id
     slug: GOOGLECALENDAR_CALENDAR_LIST_GET
     version: '20261010_00'
+    name: Get calendar list entry
     action_class: read
     capability: calendar.read
-    description: 'Retrieves metadata for a SINGLE specific calendar from the user''s calendar list by its calendar
-      ID. This action requires a calendarId parameter and returns details about that one calendar only. NOTE: This
-      does NOT list all calendars.'
+    description: Get one calendar from the account's calendar list, by calendar id, with its title, color, access role
+      and whether it is selected or hidden.
     input_schema:
       type: object
       required:
@@ -99,10 +100,11 @@ tools:
   - id: insert_calendar_into_list
     slug: GOOGLECALENDAR_CALENDAR_LIST_INSERT
     version: '20261010_00'
+    name: Add calendar to list
     action_class: write
     capability: calendar.write
-    description: Inserts an existing calendar into the user's calendar list, making it visible in the UI. Calendars
-      (e.g., newly created ones) won't appear in the list or UI until explicitly inserted.
+    description: Add an existing calendar to the account's calendar list so it shows alongside the others, by calendar
+      id, with optional color, visibility and reminder settings.
     input_schema:
       type: object
       required:
@@ -180,10 +182,11 @@ tools:
   - id: patch_calendar_list_entry
     slug: GOOGLECALENDAR_CALENDAR_LIST_PATCH
     version: '20261010_00'
+    name: Change calendar list entry
     action_class: write
     capability: calendar.write
-    description: Updates an existing calendar on the user's calendar list using patch semantics. This method allows
-      partial updates, modifying only the specified fields.
+    description: 'Change how one calendar appears in the account''s calendar list, by calendar id: color, whether it
+      is hidden or selected, reminders and notifications. Settings left out stay as they are.'
     input_schema:
       type: object
       required:
@@ -255,10 +258,11 @@ tools:
   - id: update_calendar_list_entry
     slug: GOOGLECALENDAR_CALENDAR_LIST_UPDATE
     version: '20261010_00'
+    name: Update calendar list entry
     action_class: write
     capability: calendar.write
-    description: Updates a calendar list entry's display/subscription settings (color, visibility, reminders, selection)
-      for the authenticated user — does not modify the underlying calendar resource (title, timezone, etc.).
+    description: 'Replace how one calendar appears in the account''s calendar list, by calendar id: color, whether it
+      is hidden or selected, reminders and notifications. The calendar itself does not change.'
     input_schema:
       type: object
       required:
@@ -331,10 +335,11 @@ tools:
   - id: get_color_definitions
     slug: GOOGLECALENDAR_COLORS_GET
     version: '20261010_00'
+    name: List colors
     action_class: read
     capability: calendar.read
-    description: Returns the color definitions for calendars and events. Use when you need to retrieve the available
-      color palette for styling calendars or events.
+    description: List the colors available for calendars and events, with each color's id and its background and foreground
+      values.
     input_schema:
       type: object
       properties: {}
@@ -342,10 +347,11 @@ tools:
   - id: create_calendar
     slug: GOOGLECALENDAR_CREATE_CALENDAR
     version: '20261010_00'
+    name: Create calendar
     action_class: write
     capability: calendar.write
-    description: Creates a new secondary Google Calendar with the specified title and optional settings. Use this
-      action when you need to create a new calendar for organizing events separately from the primary calendar.
+    description: Create a new secondary calendar with the given title and optional description, location and time zone.
+      Returns the new calendar and its id.
     input_schema:
       type: object
       required:
@@ -369,11 +375,11 @@ tools:
   - id: create_event
     slug: GOOGLECALENDAR_CREATE_EVENT
     version: '20261010_00'
+    name: Create event
     action_class: write
     capability: calendar.write
-    description: Creates a timed event using start_datetime and either end_datetime or duration fields, or an all-day
-      event using an inclusive start_date and exclusive end_date. send_updates defaults to "all", which emails all
-      attendees;
+    description: Create an event on a calendar from a start time and an end time or duration, or an all-day event from
+      start and end dates, with optional title, location, attendees and recurrence. Attendees are emailed by default.
     input_schema:
       type: object
       properties:
@@ -635,10 +641,10 @@ tools:
   - id: get_event
     slug: GOOGLECALENDAR_EVENTS_GET
     version: '20261010_00'
+    name: Get event
     action_class: read
     capability: calendar.read
-    description: Retrieves a SINGLE event by its unique event_id (REQUIRED). This action does NOT list or search events
-      - it fetches ONE specific event when you already know its ID.
+    description: Get one event by its event id and calendar id, with its title, times, location, description and attendees.
     input_schema:
       type: object
       required:
@@ -666,10 +672,11 @@ tools:
   - id: import_event
     slug: GOOGLECALENDAR_EVENTS_IMPORT
     version: '20261010_00'
+    name: Import event
     action_class: write
     capability: calendar.write
-    description: Tool to import an event as a private copy to a calendar. Use when you need to add an existing event
-      to a calendar using its iCalUID. Only events with eventType='default' can be imported.
+    description: Add a private copy of an event from elsewhere to a calendar, given its original event uid and its start
+      and end times, with optional title, location and attendees.
     input_schema:
       type: object
       required:
@@ -883,10 +890,11 @@ tools:
   - id: get_event_instances
     slug: GOOGLECALENDAR_EVENTS_INSTANCES
     version: '20261010_00'
+    name: List event occurrences
     action_class: read
     capability: calendar.read
-    description: Returns instances of the specified recurring event. Use timeMin/timeMax to constrain the window;
-      omitting bounds can return large result sets and is quota-heavy.
+    description: List the occurrences of a recurring event, by event id and calendar id, within an optional time window,
+      a page at a time, with each occurrence's start and end.
     input_schema:
       type: object
       required:
@@ -938,10 +946,11 @@ tools:
   - id: list_events_from_all_calendars
     slug: GOOGLECALENDAR_EVENTS_LIST_ALL_CALENDARS
     version: '20261010_00'
+    name: List events across calendars
     action_class: read
     capability: calendar.read
-    description: Return a unified event list across all calendars in the user's calendar list for a given time range.
-      Use when you need a single view of all events across multiple calendars.
+    description: List events from every calendar in the account's calendar list, or from chosen ones, between two times,
+      with optional text search, in one combined list.
     input_schema:
       type: object
       required:
@@ -1006,11 +1015,11 @@ tools:
   - id: find_event
     slug: GOOGLECALENDAR_FIND_EVENT
     version: '20261010_00'
+    name: Find events
     action_class: read
     capability: calendar.read
-    description: Finds events in a specified Google Calendar using text query, time ranges (event start/end, last
-      modification), and event types. Ensure `timeMin` is not chronologically after `timeMax` if both are provided.
-      Results may span multiple pages;
+    description: Search a calendar's events by text, time range, last change and event type, a page at a time. Returns
+      the matching events with their title, times and attendees.
     input_schema:
       type: object
       properties:
@@ -1098,10 +1107,11 @@ tools:
   - id: find_free_slots
     slug: GOOGLECALENDAR_FIND_FREE_SLOTS
     version: '20261010_00'
+    name: Find free slots
     action_class: read
     capability: calendar.read
-    description: Finds both free and busy time slots in Google Calendars for specified calendars within a defined
-      time range. If `time_min` is not provided, defaults to the current timestamp in the specified timezone.
+    description: Find free and busy time slots across one or more calendars within a time range, in a given time zone.
+      Returns when each calendar is free and when it is booked.
     input_schema:
       type: object
       properties:
@@ -1153,10 +1163,11 @@ tools:
   - id: query_calendar_availability
     slug: GOOGLECALENDAR_FREE_BUSY_QUERY
     version: '20261010_00'
+    name: Check availability
     action_class: read
     capability: calendar.read
-    description: Queries raw busy intervals for one or more calendars or groups over an exact time range. Returns
-      per-calendar and per-group availability and errors, without event titles or details.
+    description: Check when one or more calendars or groups are busy within an exact time range. Returns the busy intervals
+      per calendar, without event titles or details.
     input_schema:
       type: object
       required:
@@ -1207,10 +1218,11 @@ tools:
   - id: get_calendar
     slug: GOOGLECALENDAR_GET_CALENDAR
     version: '20261010_00'
+    name: Get calendar
     action_class: read
     capability: calendar.read
-    description: Gets canonical metadata for one Google Calendar, defaulting to the authenticated user's primary calendar.
-      Returns its identifier, title, description, location, time zone, and conference properties.
+    description: 'Get one calendar''s details by calendar id, or the account''s primary calendar: its title, description,
+      location and time zone.'
     input_schema:
       type: object
       properties:
@@ -1225,10 +1237,11 @@ tools:
   - id: get_current_date_and_time
     slug: GOOGLECALENDAR_GET_CURRENT_DATE_TIME
     version: '20261010_00'
+    name: Get current date and time
     action_class: read
     capability: calendar.read
-    description: Gets the current date and time, allowing for a specific timezone offset. Call this tool first before
-      computing relative dates (e.g., 'tomorrow', 'next Monday') to avoid off-by-one-day errors across timezones.
+    description: Get the current date and time in a given time zone. Useful before working out relative dates such as
+      tomorrow or next Monday.
     input_schema:
       type: object
       properties:
@@ -1244,10 +1257,11 @@ tools:
   - id: list_buildings
     slug: GOOGLECALENDAR_LIST_BUILDINGS
     version: '20261010_00'
+    name: List buildings
     action_class: read
     capability: calendar.read
-    description: Lists all buildings for a Google Workspace customer account with full details including addresses,
-      coordinates, and floor names.
+    description: List the organization's buildings a page at a time, with each one's address, coordinates and floor
+      names.
     input_schema:
       type: object
       properties:
@@ -1268,11 +1282,11 @@ tools:
   - id: list_calendars
     slug: GOOGLECALENDAR_LIST_CALENDARS
     version: '20261010_00'
+    name: List calendars
     action_class: read
     capability: calendar.read
-    description: Lists calendars accessible through the connected user's CalendarList, returning IDs and user-specific
-      metadata such as access role, color, visibility, selection, and reminders. Hidden calendars are omitted unless
-      show_hidden is true;
+    description: List the calendars in the account's calendar list a page at a time, with each one's id, title, access
+      role, color and whether it is selected. Hidden calendars are left out unless asked for.
     input_schema:
       type: object
       properties:
@@ -1311,10 +1325,11 @@ tools:
   - id: list_calendar_resources
     slug: GOOGLECALENDAR_LIST_CALENDAR_RESOURCES
     version: '20261010_00'
+    name: List rooms and resources
     action_class: read
     capability: calendar.read
-    description: Retrieves calendar resources (such as conference rooms) from a Google Workspace domain using the
-      Admin SDK Directory API.
+    description: List the organization's bookable rooms and other resources, with optional text search, a page at a
+      time, with each one's name, type, capacity and building.
     input_schema:
       type: object
       properties:
@@ -1349,11 +1364,11 @@ tools:
   - id: patch_calendar
     slug: GOOGLECALENDAR_PATCH_CALENDAR
     version: '20261010_00'
+    name: Change calendar details
     action_class: write
     capability: calendar.write
-    description: Partially updates (PATCHes) an existing Google Calendar, modifying only the fields provided. At least
-      one of summary, description, location, or timezone must be provided. Empty strings for `description` or `location`
-      clear them.
+    description: 'Change some of a calendar''s details by calendar id: title, description, location or time zone. Details
+      left out stay as they are; an empty description or location clears it.'
     input_schema:
       type: object
       required:
@@ -1384,10 +1399,11 @@ tools:
   - id: patch_event
     slug: GOOGLECALENDAR_PATCH_EVENT
     version: '20261010_00'
+    name: Change event
     action_class: write
     capability: calendar.write
-    description: Update specified fields of an existing event in a Google Calendar using patch semantics (array fields
-      like `attendees` are fully replaced if provided);
+    description: 'Change some details of an existing event, by event id and calendar id: title, times, location, description,
+      attendees and more. Details left out stay as they are; a list given, such as attendees, replaces the old one.'
     input_schema:
       type: object
       required:
@@ -1719,10 +1735,11 @@ tools:
   - id: quick_add_event
     slug: GOOGLECALENDAR_QUICK_ADD
     version: '20261010_00'
+    name: Quick add event
     action_class: write
     capability: calendar.write
-    description: Parses natural language text to quickly create a basic Google Calendar event with its title, date,
-      and time, suitable for simple scheduling;
+    description: Create a simple event on a calendar from a line of plain text giving its title, date and time. Returns
+      the event made from it.
     input_schema:
       type: object
       required:
@@ -1748,10 +1765,11 @@ tools:
   - id: get_calendar_setting
     slug: GOOGLECALENDAR_SETTINGS_GET
     version: '20261010_00'
+    name: Get setting
     action_class: read
     capability: calendar.read
-    description: Tool to return a single user setting for the authenticated user. Use when you need to retrieve a
-      specific calendar setting value.
+    description: Read one of the account's calendar settings by its name, such as the time zone or the default event
+      length.
     input_schema:
       type: object
       required:
@@ -1766,10 +1784,10 @@ tools:
   - id: list_settings
     slug: GOOGLECALENDAR_SETTINGS_LIST
     version: '20261010_00'
+    name: List settings
     action_class: read
     capability: calendar.read
-    description: Returns all user settings for the authenticated user. Results include multiple settings keyed by
-      id (e.g., `timeZone`); locate a specific setting by its `id` field.
+    description: List all of the account's calendar settings a page at a time, each with its name and value.
     input_schema:
       type: object
       properties:
@@ -1792,10 +1810,11 @@ tools:
   - id: update_event
     slug: GOOGLECALENDAR_UPDATE_EVENT
     version: '20261010_00'
+    name: Update event
     action_class: write
     capability: calendar.write
-    description: Updates an existing event in Google Calendar. REQUIRES event_id - you MUST first search for the event
-      using GOOGLECALENDAR_FIND_EVENT or GOOGLECALENDAR_EVENTS_LIST to obtain the event_id.
+    description: Update an existing event by event id and calendar id, with a new start time and optional end time or
+      duration, title, location, description, attendees and recurrence. Find the event id with a list or search first.
     input_schema:
       type: object
       required:

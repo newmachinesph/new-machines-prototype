@@ -31,35 +31,44 @@ tools:
     action_class: money
     why: A created order can be marked paid, send receipts and move stock.
   SHOPIFY_CREATE_CUSTOMER:
+    name: Create customer
+    description: Create a new customer record in the store with contact details, addresses, a note and tags. Needs at
+      least an email address, a phone number or a first and last name.
     action_class: write
     why: Adds a customer record; charges nothing.
     drop: [password, password_confirmation, send_email_invite]
-    description: >-
-      Create a new customer in Shopify with contact details and addresses. Requires at least one of: email,
-      phone, or both first_name and last_name.
   SHOPIFY_UPDATE_CUSTOMER:
+    name: Update customer
+    description: Update an existing customer's name, phone, note, tags or addresses, by customer id. Email, tax status
+      and marketing consent cannot be changed here.
     action_class: write
     why: Edits a customer's name, phone, note, tags or addresses; charges nothing.
     # Email and sign-in, tax status and recorded marketing consent stay with a person in Shopify.
     drop: [email, multipass_identifier, send_email_invite, tax_exempt, tax_exemptions, email_marketing_consent,
       sms_marketing_consent]
-    description: >-
-      Update an existing customer in Shopify: name, phone, note, tags or addresses. Email, tax status and
-      marketing consent cannot be changed here.
   SHOPIFY_CREATE_CUSTOM_COLLECTION:
+    name: Create collection
+    description: Create a hand-picked collection of products in the store with a title and optional description, image,
+      products to include and sort order, published or not.
     action_class: write
     why: Groups products into a collection; charges nothing.
   SHOPIFY_UPDATE_METAFIELD_DEFINITION:
+    name: Update custom field definition
+    description: Update a custom field (metafield) definition's name, description, validation rules and capabilities,
+      by key, namespace and owner type. Who can see its values cannot be changed here.
     action_class: write
     why: Changes a custom field's definition; charges nothing.
     drop: [access]  # storefront access would publish the field's values, customer and order data included
-    description: >-
-      Update a Shopify metafield definition's name, description, validation rules and capabilities. Who can
-      see its values cannot be changed here.
   SHOPIFY_UPDATE_PRODUCT_VARIANTS_BULK:
+    name: Update many product variants
+    description: Update many product variants in one background job from a list of variant changes, prices included,
+      waiting for it to finish. Returns success or errors for each variant.
     action_class: write
     why: Edits variants, prices included; asks first and charges nobody.
   SHOPIFY_BULK_CREATE_PRODUCTS:
+    name: Create many products
+    description: Create many products in the store in one background job from a list of product details, waiting for
+      it to finish. Returns success or errors for each product.
     action_class: write
     why: Adds catalogue products; charges nothing.
   SHOPIFY_GRAPH_QL_CUSTOMERS:
@@ -82,3 +91,95 @@ tools:
     skip: Posts app feedback to Shopify; no pack needs it.
   SHOPIFY_QUERY_CURRENT_APP_INSTALLATION:
     skip: Describes the connection itself, not the store.
+
+  # Names and descriptions the Studio shows (its picker prefixes the app name) and agents read.
+  SHOPIFY_COUNT_PRODUCTS:
+    name: Count products
+    description: Count the products in the store, optionally only those in a collection, from a vendor, of a type, with
+      a status or created, updated or published in a date range.
+  SHOPIFY_COUNT_PRODUCT_IMAGES:
+    name: Count product images
+    description: Count the images attached to one product, by product id.
+  SHOPIFY_GET_CUSTOMER:
+    name: Get customer
+    description: Get one customer by customer id, with contact details, addresses, order count, total spent and tags,
+      or only the chosen fields.
+  SHOPIFY_GET_CUSTOMERS_SEARCH:
+    name: Search customers
+    description: Search the store's customers with a query on email, name, location, order count, spend or other details.
+      Returns the matching customers with the chosen fields.
+  SHOPIFY_GET_CUSTOMER_ORDERS:
+    name: List customer orders
+    description: List the orders of one customer, by customer id, optionally only those with a given status, a page
+      at a time.
+  SHOPIFY_GET_DRAFT_ORDER:
+    name: Get draft order
+    description: Get one draft order by its id, with its status, customer, line items, pricing and shipping, or only
+      the chosen fields.
+  SHOPIFY_GET_FULFILLMENT:
+    name: List fulfillment order shipments
+    description: List the shipments (fulfillments) made for one fulfillment order, by fulfillment order id, with each
+      one's status and tracking.
+  SHOPIFY_GET_FULFILLMENT_ORDERS_FOR_ORDER:
+    name: List fulfillment orders
+    description: 'List the fulfillment orders of one order, by order id: the groups of line items to be shipped from
+      each location, with their status, delivery method and assigned location.'
+  SHOPIFY_GET_INVENTORY_ITEM:
+    name: Get inventory item
+    description: Get one inventory item by its id, with its SKU, cost, whether it is tracked and its shipping requirements.
+  SHOPIFY_GET_INVENTORY_LEVELS:
+    name: List inventory levels
+    description: List stock levels for given inventory items or locations, at least one of which is needed, with the
+      quantity available at each location.
+  SHOPIFY_GET_ORDER:
+    name: Get order
+    description: Get one order by order id, with its line items, customer, addresses, payment and fulfillment status
+      and totals, or only the chosen fields.
+  SHOPIFY_GET_ORDER_FULFILLMENTS:
+    name: List order shipments
+    description: List the fulfillments (shipments) of one order, by order id, with their status and tracking details,
+      optionally only those created or updated in a date range.
+  SHOPIFY_GET_ORDER_REFUNDS:
+    name: List order refunds
+    description: List the refunds made on one order, by order id, with each refund's amount, line items and date, optionally
+      in the shop's currency.
+  SHOPIFY_GET_PRODUCT:
+    name: Get product
+    description: Get one product by product id, with its title, description, vendor, type, status, variants, images
+      and tags.
+  SHOPIFY_GET_PRODUCTS_PAGINATED:
+    name: List products
+    description: List the store's products a page at a time, with the chosen fields. Each page returns a cursor for
+      the next; keep going until there is none to see every product.
+  SHOPIFY_GET_PRODUCT_VARIANT:
+    name: Get product variant
+    description: Get one product variant by variant id, such as a specific size or color, with its price, SKU, stock
+      and options.
+  SHOPIFY_GET_TRANSACTION:
+    name: Get transaction
+    description: Get one payment transaction of an order, by order id and transaction id, with its kind, amount, currency,
+      status and gateway.
+  SHOPIFY_LIST_CUSTOMERS:
+    name: List customers
+    description: List the store's customers a page at a time, optionally only given ids, an account status or those
+      created or updated in a date range, with the chosen fields.
+  SHOPIFY_LIST_DRAFT_ORDERS:
+    name: List draft orders
+    description: List the store's draft orders a page at a time, optionally only given ids, a status or those updated
+      in a date range, with the chosen fields.
+  SHOPIFY_LIST_LOCATIONS:
+    name: List locations
+    description: 'List the store''s locations: the shops, warehouses and other places where stock is held and orders
+      are fulfilled, with each one''s address.'
+  SHOPIFY_LIST_PRODUCT_VARIANTS:
+    name: List product variants
+    description: List the variants of one product, by product id, a page at a time, with each one's price, SKU, stock
+      and options.
+  SHOPIFY_LIST_TRANSACTIONS:
+    name: List order transactions
+    description: 'List the payment transactions of one order, by order id: authorizations, sales, captures, voids and
+      refunds, with amount, currency and status.'
+  SHOPIFY_QUERY_SHOP:
+    name: Get store details
+    description: 'Get the store''s own details: name, email address, domain, currency settings, enabled features and
+      policies, or only the chosen fields.'

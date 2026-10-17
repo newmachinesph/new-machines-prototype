@@ -536,6 +536,32 @@ def test_the_studio_shows_every_connector_tool_under_a_name_of_its_own(bundle):
             names[shown] = where
 
 
+# A name in sentence case: a capital first word, then lower-case words or acronyms (IMAP, PDF, ID).
+SENTENCE_CASE = re.compile(r"[A-Z][a-z0-9]*(?:[ -](?:[a-z0-9][a-z0-9'-]*|[A-Z0-9]{2,}))*")
+ACTION_CODE = re.compile(r"[A-Z]{2,}_[A-Z_]{2,}")  # GMAIL_SEND_DRAFT and the like
+
+
+def test_connector_tool_copy_reads_as_plain_language(bundle):
+    """The Studio's picker shows each tool's name after the app's own ("Gmail: Get attachment") and its
+    description to a business user; agents read the description as the tool's documentation. Neither may carry
+    the upstream importer's leftovers: action codes, backticked parameter names, "Use this"/"Tool to"
+    boilerplate, or the app's name repeated in the tool's name."""
+    from app.defs.tool_names import tool_name
+
+    for connector in bundle.of("connector"):
+        app = str(connector.body["app"])
+        for tool in connector.body["tools"]:
+            where, shown, text = f"{connector.key}.{tool['id']}", tool_name(tool), str(tool["description"])
+            assert SENTENCE_CASE.fullmatch(shown), f"{where} is shown as {shown!r}: not sentence case"
+            assert app.lower() not in shown.lower(), f"{where} repeats the app in its name {shown!r}"
+            assert "`" not in text, f"{where} has backticks: {text!r}"
+            assert not ACTION_CODE.search(text), f"{where} names an action code: {text!r}"
+            assert "Use this" not in text and "Use when" not in text, f"{where} has boilerplate: {text!r}"
+            assert not text.startswith("Tool to"), f"{where} starts with 'Tool to': {text!r}"
+            assert app not in text, f"{where} names the app: {text!r}"
+            assert text.rstrip().endswith("."), f"{where} is not a sentence: {text!r}"
+
+
 def test_every_connector_tool_has_a_shared_sandbox_response(bundle):
     root = settings.defs_dir() / "connectors" / "sandbox"
     for connector in bundle.of("connector"):

@@ -37,11 +37,11 @@ tools:
   - id: bulk_create_products
     slug: SHOPIFY_BULK_CREATE_PRODUCTS
     version: '20261014_00'
+    name: Create many products
     action_class: write
     capability: store.write
-    description: Creates many products (20-50+) in one asynchronous Shopify bulk mutation job. Uses stagedUploadsCreate
-      for JSONL upload, then bulkOperationRunMutation with productCreate, polling until completion and returning per-row
-      success/errors.
+    description: Create many products in the store in one background job from a list of product details, waiting for
+      it to finish. Returns success or errors for each product.
     input_schema:
       type: object
       required:
@@ -92,10 +92,11 @@ tools:
   - id: count_products
     slug: SHOPIFY_COUNT_PRODUCTS
     version: '20261014_00'
+    name: Count products
     action_class: read
     capability: store.read
-    description: Retrieve a count of products in the Shopify store. Use when you need to get the total number of products,
-      optionally filtered by collection, vendor, product type, status, or date ranges.
+    description: Count the products in the store, optionally only those in a collection, from a vendor, of a type, with
+      a status or created, updated or published in a date range.
     input_schema:
       type: object
       properties:
@@ -136,10 +137,10 @@ tools:
   - id: count_product_images
     slug: SHOPIFY_COUNT_PRODUCT_IMAGES
     version: '20261014_00'
+    name: Count product images
     action_class: read
     capability: store.read
-    description: Retrieves the total count of images for a specific Shopify product. Use when you need to know how
-      many images are associated with a product.
+    description: Count the images attached to one product, by product id.
     input_schema:
       type: object
       required:
@@ -152,10 +153,11 @@ tools:
   - id: create_customer
     slug: SHOPIFY_CREATE_CUSTOMER
     version: '20261014_00'
+    name: Create customer
     action_class: write
     capability: store.write
-    description: 'Create a new customer in Shopify with contact details and addresses. Requires at least one of: email,
-      phone, or both first_name and last_name.'
+    description: Create a new customer record in the store with contact details, addresses, a note and tags. Needs at
+      least an email address, a phone number or a first and last name.
     input_schema:
       type: object
       properties:
@@ -252,10 +254,11 @@ tools:
   - id: create_custom_collection
     slug: SHOPIFY_CREATE_CUSTOM_COLLECTION
     version: '20261014_00'
+    name: Create collection
     action_class: write
     capability: store.write
-    description: Create a new custom (manually curated) collection in Shopify. Does not support smart collections.
-      Use when you need to manually curate and group products for easier store browsing.
+    description: Create a hand-picked collection of products in the store with a title and optional description, image,
+      products to include and sort order, published or not.
     input_schema:
       type: object
       required:
@@ -351,10 +354,11 @@ tools:
   - id: get_customer
     slug: SHOPIFY_GET_CUSTOMER
     version: '20261014_00'
+    name: Get customer
     action_class: read
     capability: store.read
-    description: Retrieve a single customer by their unique identifier. Use when you need to fetch detailed information
-      about a specific customer.
+    description: Get one customer by customer id, with contact details, addresses, order count, total spent and tags,
+      or only the chosen fields.
     input_schema:
       type: object
       required:
@@ -371,10 +375,11 @@ tools:
   - id: get_customers_search
     slug: SHOPIFY_GET_CUSTOMERS_SEARCH
     version: '20261014_00'
+    name: Search customers
     action_class: read
     capability: store.read
-    description: Search for customers matching a supplied query. Use when you need to find customers based on specific
-      criteria like email, name, location, order count, or spending.
+    description: Search the store's customers with a query on email, name, location, order count, spend or other details.
+      Returns the matching customers with the chosen fields.
     input_schema:
       type: object
       required:
@@ -405,9 +410,11 @@ tools:
   - id: get_customer_orders
     slug: SHOPIFY_GET_CUSTOMER_ORDERS
     version: '20261014_00'
+    name: List customer orders
     action_class: read
     capability: store.read
-    description: Retrieves all orders for a specific, existing customer in Shopify using their unique customer ID.
+    description: List the orders of one customer, by customer id, optionally only those with a given status, a page
+      at a time.
     input_schema:
       type: object
       required:
@@ -436,10 +443,11 @@ tools:
   - id: get_draft_order
     slug: SHOPIFY_GET_DRAFT_ORDER
     version: '20261014_00'
+    name: Get draft order
     action_class: read
     capability: store.read
-    description: Retrieve detailed information for a specific draft order from a Shopify store. Use when you need
-      to access a draft order's status, customer details, line items, pricing, or shipping information.
+    description: Get one draft order by its id, with its status, customer, line items, pricing and shipping, or only
+      the chosen fields.
     input_schema:
       type: object
       required:
@@ -455,10 +463,11 @@ tools:
   - id: get_fulfillment
     slug: SHOPIFY_GET_FULFILLMENT
     version: '20261014_00'
+    name: List fulfillment order shipments
     action_class: read
     capability: store.read
-    description: Retrieves all fulfillments (shipments) associated with a specific fulfillment order. A fulfillment
-      order represents a group of line items that are to be fulfilled from a specific location.
+    description: List the shipments (fulfillments) made for one fulfillment order, by fulfillment order id, with each
+      one's status and tracking.
     input_schema:
       type: object
       required:
@@ -473,10 +482,11 @@ tools:
   - id: get_fulfillment_orders_for_order
     slug: SHOPIFY_GET_FULFILLMENT_ORDERS_FOR_ORDER
     version: '20261014_00'
+    name: List fulfillment orders
     action_class: read
     capability: store.read
-    description: Retrieves a list of fulfillment orders for a specific order. Use when you need to get fulfillment
-      order details including line items, delivery method, assigned location, and fulfillment status for a given order.
+    description: 'List the fulfillment orders of one order, by order id: the groups of line items to be shipped from
+      each location, with their status, delivery method and assigned location.'
     input_schema:
       type: object
       required:
@@ -495,10 +505,10 @@ tools:
   - id: get_inventory_item
     slug: SHOPIFY_GET_INVENTORY_ITEM
     version: '20261014_00'
+    name: Get inventory item
     action_class: read
     capability: store.read
-    description: Retrieves a single inventory item by ID. Use when you need to get detailed information about an inventory
-      item including SKU, cost, tracking status, and shipping requirements.
+    description: Get one inventory item by its id, with its SKU, cost, whether it is tracked and its shipping requirements.
     input_schema:
       type: object
       required:
@@ -511,11 +521,11 @@ tools:
   - id: get_inventory_levels
     slug: SHOPIFY_GET_INVENTORY_LEVELS
     version: '20261014_00'
+    name: List inventory levels
     action_class: read
     capability: store.read
-    description: Retrieves a list of inventory levels for specified items and locations. Use when you need to check
-      inventory quantities at specific locations. At least one of inventory_item_ids or location_ids must be provided
-      as a filter parameter.
+    description: List stock levels for given inventory items or locations, at least one of which is needed, with the
+      quantity available at each location.
     input_schema:
       type: object
       properties:
@@ -539,10 +549,11 @@ tools:
   - id: get_order
     slug: SHOPIFY_GET_ORDER
     version: '20261014_00'
+    name: Get order
     action_class: read
     capability: store.read
-    description: Retrieve a specific order using its unique identifier. Returns detailed order information including
-      line items, customer data, addresses, financial status, fulfillment status, and more.
+    description: Get one order by order id, with its line items, customer, addresses, payment and fulfillment status
+      and totals, or only the chosen fields.
     input_schema:
       type: object
       required:
@@ -559,10 +570,11 @@ tools:
   - id: get_order_fulfillments
     slug: SHOPIFY_GET_ORDER_FULFILLMENTS
     version: '20261014_00'
+    name: List order shipments
     action_class: read
     capability: store.read
-    description: Retrieve fulfillments associated with a Shopify order. Use when you need to get delivery tracking
-      information, shipment status, or fulfillment details for a specific order.
+    description: List the fulfillments (shipments) of one order, by order id, with their status and tracking details,
+      optionally only those created or updated in a date range.
     input_schema:
       type: object
       required:
@@ -596,9 +608,11 @@ tools:
   - id: get_order_refunds
     slug: SHOPIFY_GET_ORDER_REFUNDS
     version: '20261014_00'
+    name: List order refunds
     action_class: read
     capability: store.read
-    description: Retrieves a list of all refunds for a specific order.
+    description: List the refunds made on one order, by order id, with each refund's amount, line items and date, optionally
+      in the shop's currency.
     input_schema:
       type: object
       required:
@@ -622,9 +636,11 @@ tools:
   - id: get_product
     slug: SHOPIFY_GET_PRODUCT
     version: '20261014_00'
+    name: Get product
     action_class: read
     capability: store.read
-    description: Retrieves details for an existing Shopify product using its unique product ID.
+    description: Get one product by product id, with its title, description, vendor, type, status, variants, images
+      and tags.
     input_schema:
       type: object
       required:
@@ -638,11 +654,11 @@ tools:
   - id: get_products_paginated
     slug: SHOPIFY_GET_PRODUCTS_PAGINATED
     version: '20261014_00'
+    name: List products
     action_class: read
     capability: store.read
-    description: List products with Shopify cursor-based pagination. Iterate until `next_page_info` is null; stopping
-      early silently truncates the product list. Products are at `data.response_data.products`; the next cursor is
-      at `data.next_page_info`.
+    description: List the store's products a page at a time, with the chosen fields. Each page returns a cursor for
+      the next; keep going until there is none to see every product.
     input_schema:
       type: object
       properties:
@@ -663,10 +679,11 @@ tools:
   - id: get_product_variant
     slug: SHOPIFY_GET_PRODUCT_VARIANT
     version: '20261014_00'
+    name: Get product variant
     action_class: read
     capability: store.read
-    description: Retrieves detailed information about a single product variant by its ID from Shopify. A product variant
-      represents a specific version of a product (e.g., different sizes, colors, or materials).
+    description: Get one product variant by variant id, such as a specific size or color, with its price, SKU, stock
+      and options.
     input_schema:
       type: object
       required:
@@ -683,10 +700,11 @@ tools:
   - id: get_transaction
     slug: SHOPIFY_GET_TRANSACTION
     version: '20261014_00'
+    name: Get transaction
     action_class: read
     capability: store.read
-    description: Retrieve a specific transaction for an order. Use when you need to get detailed information about
-      a payment transaction. Transactions in multi-currency orders are in presentment currency by default;
+    description: Get one payment transaction of an order, by order id and transaction id, with its kind, amount, currency,
+      status and gateway.
     input_schema:
       type: object
       required:
@@ -709,10 +727,11 @@ tools:
   - id: list_customers
     slug: SHOPIFY_LIST_CUSTOMERS
     version: '20261014_00'
+    name: List customers
     action_class: read
     capability: store.read
-    description: Retrieve a list of customers from a Shopify store. Use when you need to fetch customer data with
-      optional filtering by IDs, creation dates, update dates, or account status.
+    description: List the store's customers a page at a time, optionally only given ids, an account status or those
+      created or updated in a date range, with the chosen fields.
     input_schema:
       type: object
       properties:
@@ -751,10 +770,11 @@ tools:
   - id: list_draft_orders
     slug: SHOPIFY_LIST_DRAFT_ORDERS
     version: '20261014_00'
+    name: List draft orders
     action_class: read
     capability: store.read
-    description: Retrieve a list of draft orders from Shopify. Use when you need to fetch draft orders with optional
-      filtering by status, IDs, or update dates. Supports pagination via since_id and limit parameters.
+    description: List the store's draft orders a page at a time, optionally only given ids, a status or those updated
+      in a date range, with the chosen fields.
     input_schema:
       type: object
       properties:
@@ -783,10 +803,11 @@ tools:
   - id: list_locations
     slug: SHOPIFY_LIST_LOCATIONS
     version: '20261014_00'
+    name: List locations
     action_class: read
     capability: store.read
-    description: Retrieve a list of locations for a Shopify store. Use when you need to get physical or virtual places
-      where inventory is stocked and orders are fulfilled.
+    description: 'List the store''s locations: the shops, warehouses and other places where stock is held and orders
+      are fulfilled, with each one''s address.'
     input_schema:
       type: object
       properties:
@@ -797,11 +818,11 @@ tools:
   - id: list_product_variants
     slug: SHOPIFY_LIST_PRODUCT_VARIANTS
     version: '20261014_00'
+    name: List product variants
     action_class: read
     capability: store.read
-    description: 'Retrieve all variants for a specified product. Use when you need to list product variants with optional
-      filtering by fields or pagination. Note: As of API version 2019-10, pagination is implemented via Link headers
-      in the response.'
+    description: List the variants of one product, by product id, a page at a time, with each one's price, SKU, stock
+      and options.
     input_schema:
       type: object
       required:
@@ -831,10 +852,11 @@ tools:
   - id: list_transactions
     slug: SHOPIFY_LIST_TRANSACTIONS
     version: '20261014_00'
+    name: List order transactions
     action_class: read
     capability: store.read
-    description: Retrieves all transactions for a specific order. Use when you need to view payment exchanges for
-      an order. Transactions include authorization, sale, capture, void, and refund types.
+    description: 'List the payment transactions of one order, by order id: authorizations, sales, captures, voids and
+      refunds, with amount, currency and status.'
     input_schema:
       type: object
       required:
@@ -857,10 +879,11 @@ tools:
   - id: query_shop
     slug: SHOPIFY_QUERY_SHOP
     version: '20261014_00'
+    name: Get store details
     action_class: read
     capability: store.read
-    description: Retrieve shop information using the Shopify GraphQL Admin API. Use when you need shop-level configuration
-      such as name, email, domain, currency settings, enabled features, and policies.
+    description: 'Get the store''s own details: name, email address, domain, currency settings, enabled features and
+      policies, or only the chosen fields.'
     input_schema:
       type: object
       properties:
@@ -873,10 +896,11 @@ tools:
   - id: update_customer
     slug: SHOPIFY_UPDATE_CUSTOMER
     version: '20261014_00'
+    name: Update customer
     action_class: write
     capability: store.write
-    description: 'Update an existing customer in Shopify: name, phone, note, tags or addresses. Email, tax status
-      and marketing consent cannot be changed here.'
+    description: Update an existing customer's name, phone, note, tags or addresses, by customer id. Email, tax status
+      and marketing consent cannot be changed here.
     input_schema:
       type: object
       required:
@@ -969,10 +993,11 @@ tools:
   - id: update_metafield_definition
     slug: SHOPIFY_UPDATE_METAFIELD_DEFINITION
     version: '20261014_00'
+    name: Update custom field definition
     action_class: write
     capability: store.write
-    description: Update a Shopify metafield definition's name, description, validation rules and capabilities. Who
-      can see its values cannot be changed here.
+    description: Update a custom field (metafield) definition's name, description, validation rules and capabilities,
+      by key, namespace and owner type. Who can see its values cannot be changed here.
     input_schema:
       type: object
       required:
@@ -1093,9 +1118,11 @@ tools:
   - id: update_product_variants_bulk
     slug: SHOPIFY_UPDATE_PRODUCT_VARIANTS_BULK
     version: '20261014_00'
+    name: Update many product variants
     action_class: write
     capability: store.write
-    description: Updates many product variants (20-50+) in one asynchronous Shopify bulk mutation job.
+    description: Update many product variants in one background job from a list of variant changes, prices included,
+      waiting for it to finish. Returns success or errors for each variant.
     input_schema:
       type: object
       required:
