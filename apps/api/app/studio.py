@@ -24,6 +24,7 @@ from app.defs import owners, registry
 from app.defs import text as def_text
 from app.defs.digest import digest
 from app.defs.model import SHARED_SCHEMAS, Bundle, Definition, path_for
+from app.defs.tool_names import tool_name
 from app.defs.validate import validate_bundle
 from app.errors import ApiProblem, ProblemIssue
 from app.models.requests import StartRunRequest
@@ -265,7 +266,7 @@ def palette(actor: Actor) -> Palette:
             PaletteTool(
                 ref=ref,
                 app=t["app"],
-                name=str(t["id"]).replace("_", " ").capitalize(),
+                name=tool_name(t),
                 description=str(t.get("description") or ""),
                 action_class=t["action_class"],
                 capability=t["capability"],

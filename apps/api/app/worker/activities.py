@@ -19,6 +19,7 @@ from temporalio import activity
 from temporalio.exceptions import ApplicationError
 
 from app import db, fees, settings
+from app.defs.tool_names import action_name
 from app.runtime import (
     agent,
     cel,
@@ -346,7 +347,7 @@ def _tool_event(snapshot: dict, ref: str, call_id: str, decision, result: ToolRe
         "id": call_id,
         "tool_ref": ref,
         "app": connector.get("app", connector_key),
-        "action": tool_id.replace("_", " "),
+        "action": action_name(tool, tool_id),
         "capability": tool.get("capability", ""),
         "action_class": tool.get("action_class", ""),
         "policy": {"verdict": decision.verdict, "reason_codes": decision.reason_codes, "ref": decision.ref},

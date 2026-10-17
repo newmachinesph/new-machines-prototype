@@ -10,8 +10,9 @@ Composio tags (`only_tagged: important`) plus listed slugs (`include: [...]`), a
 write as money (`writes_are_money: true`, for payment apps), and name tools after Composio's slugs rather
 than its display names (`ids_from: slug`). Per action, `drop` removes optional arguments and `restrict`
 narrows one (`restrict: {status: {enum: [confirmed]}}`, with `items` stepping into an array) when an
-argument could otherwise delete, share or sign in. Tools already in the connector file are kept exactly as
-they are.
+argument could otherwise delete, share or sign in. `name` sets what the Studio shows for the tool (else its id
+as words): wanted when the id had to take a numeric suffix because a hand-written tool already had it. Tools
+already in the connector file are kept exactly as they are.
 
 From apps/api:
     uv run --env-file ../../.env python scripts/import_connector.py googlesheets          # proposal only
@@ -307,6 +308,9 @@ def plan(
             "id": tid,
             "slug": slug,
             "version": str(tool["version"]),
+            # A reviewed name is what the Studio shows; without one it shows the id as words, so an id that
+            # needed a numeric suffix wants a name (tests/test_defs_content checks).
+            **({"name": str(override["name"])} if override.get("name") else {}),
             "action_class": action_class,
             "capability": str(override.get("capability") or f"{prefix}.{action_class}"),
             "description": describe(description, tid),

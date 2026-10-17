@@ -4,6 +4,9 @@
 capability_prefix: mail
 
 tools:
+  GMAIL_LIST_THREADS:
+    name: List threads
+    why: Its id got a suffix (list_threads is the hand-written email search); the Studio shows this name instead.
   GMAIL_REPLY_TO_THREAD:
     capability: mail.send
   GMAIL_FORWARD_MESSAGE:

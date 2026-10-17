@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app import db, settings, workspace
 from app.auth import check_auth_config
+from app.defs import current
 from app.defs.loader import LoadError, load_bundle
 from app.defs.model import Bundle
 from app.defs.registry import apply_bundle
@@ -76,10 +77,13 @@ def _send_traces(worker_stopped: bool, budget_s: float) -> None:
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     """With NM_DEFS_AUTO_APPLY on, the server applies migrations and definition files before serving; with
-    NM_EMBEDDED_WORKER on (and the runtime on) it then starts the PackRunner worker in-process. On shutdown
-    the worker's model-call traces are sent, then the Postgres pool (opened on first use) is closed."""
+    NM_EMBEDDED_WORKER on (and the runtime on) it then starts the PackRunner worker in-process. With the
+    runtime off, the catalog's definition files are read on a background thread from the start, so the first
+    request does not wait for them while readiness does not wait for the read. On shutdown the worker's
+    model-call traces are sent, then the Postgres pool (opened on first use) is closed."""
     if settings.defs_auto_apply():
         apply_definitions()
+    current.warm_in_background()
     embedded = settings.runtime_enabled() and settings.embedded_worker()
     if embedded:
         from app.worker.embedded import start_embedded

@@ -321,6 +321,16 @@ export function StartRunFields({
     if (fallback === undefined || budgetKey.split(",").map(Number).includes(form.getValues("budgetMinor"))) return;
     form.setValue("budgetMinor", fallback);
   }, [budgetKey, fallback, form]);
+  // The pack's defaults fill its fields when they arrive and again when they change (the detail read again, the
+  // business day moved on), but only the fields nobody has touched: what was typed stays.
+  useEffect(() => {
+    if (!fields) return;
+    for (const f of fields) {
+      const name = `fields.${f.name}` as "fields";
+      const { isDirty, isTouched } = form.getFieldState(name, form.formState);
+      if (!isDirty && !isTouched) form.resetField(name, { defaultValue: f.initial as never });
+    }
+  }, [fields, form]);
 
   // Without a schema, the API's input errors belong to the free-text input when it is on screen.
   const onInput = !fields && !!pack?.inputs.length;

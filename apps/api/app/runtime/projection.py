@@ -13,6 +13,7 @@ from typing import Any
 from psycopg.types.json import Jsonb
 
 from app.defs import owners
+from app.defs.tool_names import id_words
 from app.runtime import cel
 
 X_STEP = 210
@@ -337,7 +338,7 @@ def _on_tool_call(p: dict, event: dict, data: dict) -> None:
     ok = bool(data.get("ok"))
     mocked = bool(data.get("mocked"))
     app = data.get("app") or str(data.get("tool_ref", "tool")).partition(".")[0]
-    action = data.get("action") or str(data.get("tool_ref", "call")).partition(".")[2].replace("_", " ")
+    action = data.get("action") or id_words(str(data.get("tool_ref", "call")).partition(".")[2])
     detail = data.get("detail") or data.get("error") or ", ".join(policy.get("reason_codes") or [])
     call = {
         "id": data.get("id") or f"tool_{event['seq']}",

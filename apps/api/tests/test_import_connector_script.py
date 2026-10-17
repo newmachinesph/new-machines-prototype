@@ -175,6 +175,20 @@ def test_plan_follows_the_reviewed_config():
     assert plans["PAY_SEND_NOTE"].tool_id == "send_note"  # from the slug, not the display name
 
 
+def test_a_reviewed_name_is_written_with_the_tool_for_the_studio_to_show():
+    existing = [{"id": "list_threads", "slug": "MAIL_FETCH_EMAILS"}]
+    config = {"tools": {"MAIL_LIST_THREADS": {"name": "List threads"}}}
+    tools = [
+        _tool("MAIL_LIST_THREADS", ["readOnlyHint"], name="List threads"),
+        _tool("MAIL_LIST_DRAFTS", ["readOnlyHint"]),
+    ]
+    plans = {p.slug: p for p in ic.plan("mail", tools, existing, config, "mail")}
+    # The id stays unique the importer's way; the name is what tells the two apart in the Studio.
+    assert plans["MAIL_LIST_THREADS"].tool_id == "list_threads_2"
+    assert plans["MAIL_LIST_THREADS"].entry["name"] == "List threads"
+    assert "name" not in plans["MAIL_LIST_DRAFTS"].entry
+
+
 def test_plan_refuses_an_override_id_already_in_use():
     existing = [{"id": "read_rows", "slug": "SHEETS_BATCH_GET"}]
     config = {"tools": {"SHEETS_VALUES_GET": {"id": "read_rows"}}}

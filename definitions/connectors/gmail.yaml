@@ -7,6 +7,8 @@ tools:
   - id: list_threads
     slug: GMAIL_FETCH_EMAILS
     version: "20261010_00"
+    # The id stays (packs and sandbox fixtures name it); the Studio shows the name, which says what it does.
+    name: List emails
     action_class: read
     capability: mail.read
     description: List recent emails in the inbox that match a search query, with sender, subject, date and text.
@@ -932,6 +934,7 @@ tools:
   - id: list_threads_2
     slug: GMAIL_LIST_THREADS
     version: '20261015_00'
+    name: List threads
     action_class: read
     capability: mail.read
     description: Retrieves a list of email threads from a Gmail account, identified by `user_id` (email address or

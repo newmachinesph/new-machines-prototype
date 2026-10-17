@@ -65,11 +65,13 @@ export async function startRun(page: Page, slug: string, inputs = RUN_INPUTS[slu
   for (const [label, value] of Object.entries(inputs)) {
     const field = page.getByLabel(new RegExp(`^${label}`, "i")).first();
     if (!(await field.isVisible().catch(() => false))) continue;
-    // The form takes the pack's defaults once the pack has loaded, which can undo a value typed just before.
-    for (let attempt = 0; attempt < 3 && (await field.inputValue()) !== value; attempt++) {
-      await field.fill(value);
-      await page.waitForTimeout(600);
-    }
+    await field.fill(value);
+  }
+  // What was typed must still be there once the page has settled: the form keeps typed values whatever loads after.
+  await page.waitForTimeout(600);
+  for (const [label, value] of Object.entries(inputs)) {
+    const field = page.getByLabel(new RegExp(`^${label}`, "i")).first();
+    if (await field.isVisible().catch(() => false)) await expect(field).toHaveValue(value);
   }
   const started = page.waitForResponse((r) => r.url().endsWith("/v1/workflow-runs") && r.request().method() === "POST", {
     timeout: 20_000,

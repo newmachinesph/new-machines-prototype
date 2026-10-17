@@ -22,10 +22,18 @@ def _read(path: Path) -> str:
     return _norm(path.read_bytes().decode("utf-8"))
 
 
+# The C loader where PyYAML has it (several times faster over the 87 definition files), the same safe schema.
+_YAML_LOADER = getattr(yaml, "CSafeLoader", yaml.SafeLoader)
+
+
+def _load_yaml(text: str):
+    return yaml.load(text, Loader=_YAML_LOADER)
+
+
 def parse_definition(kind: str, key: str, text: str, files: dict[str, str], path: str) -> Definition:
     """Parse YAML (JSON for kind `schema`) `text`; `kind`/`key` are stripped from the body if present."""
     try:
-        data = json.loads(text) if kind == "schema" else yaml.safe_load(text)
+        data = json.loads(text) if kind == "schema" else _load_yaml(text)
     except (yaml.YAMLError, json.JSONDecodeError) as exc:
         raise LoadError(f"{path}: cannot parse: {exc}") from exc
     if not isinstance(data, dict):
@@ -47,7 +55,7 @@ def _from_file(kind: str, path: Path, root: Path, files: dict[str, str] | None =
         key = f"{path.parent.parent.name if rel.startswith('packs/') else SHARED_SCHEMAS}/{path.stem}"
     else:
         try:
-            raw = yaml.safe_load(text)
+            raw = _load_yaml(text)
         except yaml.YAMLError as exc:
             raise LoadError(f"{rel}: cannot parse: {exc}") from exc
         if not isinstance(raw, dict) or not isinstance(raw.get("key"), str):
@@ -64,7 +72,7 @@ def _agent_files(agent_yaml: Path) -> dict[str, str]:
     Missing or out-of-folder paths are skipped here; validation reports them.
     """
     try:
-        runtime = (yaml.safe_load(_read(agent_yaml)) or {}).get("runtime") or {}
+        runtime = (_load_yaml(_read(agent_yaml)) or {}).get("runtime") or {}
     except yaml.YAMLError, AttributeError:
         return {}
     names = [runtime.get("instructions"), *(runtime.get("skills") or [])]

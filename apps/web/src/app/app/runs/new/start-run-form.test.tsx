@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Component, type ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
@@ -11,6 +11,9 @@ vi.mock("@/lib/queries/catalog", () => ({ usePack: () => detail.query }));
 const start = vi.hoisted(() => ({ mutate: vi.fn() }));
 vi.mock("@/lib/queries/runs", () => ({ useStartRun: () => ({ mutate: start.mutate, isPending: false }) }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
+// The demo clock by default (2026-10-12 09:40 Pacific, as the fixtures read); a test can move it.
+const clock = vi.hoisted(() => ({ now: "2026-10-12T16:40:00Z" }));
+vi.mock("@/lib/clock", () => ({ useNow: () => clock.now }));
 vi.mock("@/components/base", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/components/base")>()),
   useToast: () => vi.fn(),
@@ -502,5 +505,60 @@ describe("StartRunForm", () => {
       budgetMinor: 5000,
       note: undefined,
     });
+  });
+
+  it("keeps what was typed before the pack's detail arrived, and fills only untouched fields with its defaults", async () => {
+    // definitions/packs/weekly-expense-check/schemas/input.json, shortened
+    const expenseSchema = (summaryTab: string) => ({
+      type: "object",
+      additionalProperties: false,
+      required: ["week_start", "summary_tab", "email_to"],
+      properties: {
+        week_start: { type: "string", pattern: "^\\d{4}-\\d{2}-\\d{2}$" },
+        summary_tab: { type: "string", default: summaryTab },
+        email_to: { type: "string" },
+      },
+    });
+    const expense = [{ slug: "weekly-expense-check", name: "Weekly Expense Check", inputs: [] }];
+    detail.query = { isPending: true, isError: false };
+    const view = renderWithIntl(<StartRunForm packs={expense} />);
+    await userEvent.type(screen.getByLabelText(/^Note/), "Ask Alice first.");
+    await userEvent.click(screen.getByRole("radio", { name: "$20.00" }));
+    // The pack's detail arrives, with its input schema: the fields appear with their defaults, the rest stays.
+    detail.query = { isPending: false, isError: false, data: { inputSchema: expenseSchema("Summary") } };
+    act(() => view.rerender(<StartRunForm packs={expense} />));
+    expect(screen.getByLabelText(/^Note/)).toHaveValue("Ask Alice first.");
+    expect(screen.getByRole("radio", { name: "$20.00" })).toBeChecked();
+    expect(screen.getByLabelText("Week start")).toHaveValue("2026-10-06"); // the demo clock's week, as the default
+    expect(screen.getByLabelText("Summary tab")).toHaveValue("Summary");
+    fireEvent.change(screen.getByLabelText("Week start"), { target: { value: "2026-10-05" } });
+    await userEvent.type(screen.getByLabelText("Email to"), "alice@qa.example");
+    // The detail is read again with a changed default: the fields someone touched keep their values.
+    detail.query = { isPending: false, isError: false, data: { inputSchema: expenseSchema("Weekly") } };
+    act(() => view.rerender(<StartRunForm packs={expense} />));
+    expect(screen.getByLabelText("Week start")).toHaveValue("2026-10-05");
+    expect(screen.getByLabelText("Email to")).toHaveValue("alice@qa.example");
+    expect(screen.getByLabelText("Summary tab")).toHaveValue("Weekly");
+  });
+
+  it("keeps a typed field when the clock moves on after the form rendered (a live workspace's /v1/me landing late)", async () => {
+    // In a live workspace the clock follows the real day only once /v1/me has answered; until then it reads the
+    // demo's pinned day. A form rendered before that answer sees its date defaults change when it arrives.
+    const schema = {
+      type: "object",
+      required: ["week_start", "email_to"],
+      properties: { week_start: { type: "string", pattern: "^\\d{4}-\\d{2}-\\d{2}$" }, email_to: { type: "string" } },
+    };
+    const expense = [{ slug: "weekly-expense-check", name: "Weekly Expense Check", inputs: [] }];
+    detail.query = { isPending: false, isError: false, data: { inputSchema: schema } };
+    clock.now = "2026-10-12T16:40:00Z";
+    const view = renderWithIntl(<StartRunForm packs={expense} />);
+    expect(screen.getByLabelText("Week start")).toHaveValue("2026-10-06");
+    await userEvent.type(screen.getByLabelText("Email to"), "alice@qa.example");
+    clock.now = "2026-10-17T16:40:00Z";
+    act(() => view.rerender(<StartRunForm packs={expense} />));
+    expect(screen.getByLabelText("Email to")).toHaveValue("alice@qa.example");
+    expect(screen.getByLabelText("Week start")).toHaveValue("2026-10-11"); // untouched: follows the real week
+    clock.now = "2026-10-12T16:40:00Z";
   });
 });

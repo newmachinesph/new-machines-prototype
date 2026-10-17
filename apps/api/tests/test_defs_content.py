@@ -521,6 +521,21 @@ def test_a_tool_capability_matches_its_class(bundle):
             assert action in allowed, f"{where} is {tool['action_class']}: {tool['capability']}"
 
 
+def test_the_studio_shows_every_connector_tool_under_a_name_of_its_own(bundle):
+    """The Studio's tool picker names a tool by its `name`, else by its id as words. Within an app no two
+    tools may read the same, and none may be told apart by a number: a tool whose id took a numeric suffix
+    (the importer's way around a taken id) carries a name that says what it does instead."""
+    from app.defs.tool_names import tool_name
+
+    for connector in bundle.of("connector"):
+        names: dict[str, str] = {}
+        for tool in connector.body["tools"]:
+            where, shown = f"{connector.key}.{tool['id']}", tool_name(tool)
+            assert not re.search(r"\s\d+$", shown), f"{where} is shown as {shown!r}: give it a name"
+            assert shown not in names, f"{where} and {names[shown]} are both shown as {shown!r}"
+            names[shown] = where
+
+
 def test_every_connector_tool_has_a_shared_sandbox_response(bundle):
     root = settings.defs_dir() / "connectors" / "sandbox"
     for connector in bundle.of("connector"):
