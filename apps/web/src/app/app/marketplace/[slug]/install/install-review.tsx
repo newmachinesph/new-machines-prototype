@@ -95,7 +95,7 @@ export function InstallReview({ pack, settings = false }: { pack: Pack; settings
   const caps = capChoices(capTerms, firstCap);
   const ceiling = capCeiling(capTerms);
   const [cap, setCap] = useState(firstCap);
-  const [pool, setPool] = useState<Pool>(p.reviewerPool ?? "team_then_network");
+  const [chosenPool, setChosenPool] = useState<Pool | null>(null);
   const [agree, setAgree] = useState(false);
   const [hired, setHired] = useState<string | null>(null);
   const agentById = useAgentById();
@@ -105,8 +105,10 @@ export function InstallReview({ pack, settings = false }: { pack: Pack; settings
   const toast = useToast();
   const orgId = useOrgId();
   const reviewers = useOrgReviewers();
-  // With the org's network switch off, a pool that names the network still routes to the team alone.
-  const networkOff = live && reviewers.data?.allowNetwork === false && pool !== "team";
+  // With the org's network switch off, a pool that names the network still routes to the team alone, so
+  // adding a pack starts from "Your team only" (QA3 #11); saved settings keep the pool that was chosen.
+  const networkOff = live && reviewers.data?.allowNetwork === false;
+  const pool: Pool = chosenPool ?? (networkOff && !settings ? "team" : (p.reviewerPool ?? "team_then_network"));
 
   const needsReviewers = p.estimate.humanMax.amountMinor > 0;
   const hire = () =>
@@ -214,7 +216,7 @@ export function InstallReview({ pack, settings = false }: { pack: Pack; settings
               <Choices
                 label={t("reviewers")}
                 value={pool}
-                onValueChange={setPool}
+                onValueChange={setChosenPool}
                 options={POOLS.map((v) => ({ value: v, label: t(`pool.${v}`), description: t(`pool.${v}Note`) }))}
               />
               {networkOff ? (
@@ -321,6 +323,12 @@ export function InstallReview({ pack, settings = false }: { pack: Pack; settings
             >
               {settings ? t("saveSettings") : t("hire", { name: p.name })}
             </Button>
+            {/* Why the button is disabled, next to it (QA3 #11): the agreement first, else the workspace loading. */}
+            {!settings && !agree ? (
+              <p className="text-center text-sm text-muted">{t("addLocked")}</p>
+            ) : !orgId ? (
+              <p className="text-center text-sm text-muted">{t("addLoading")}</p>
+            ) : null}
           </div>
         </Section>
       </div>

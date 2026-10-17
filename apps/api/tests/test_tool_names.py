@@ -1,6 +1,7 @@
 """A connector tool is shown by its `name` where the connector file gives one, else by its id as words: in
 the Studio's palette and in the run timeline's tool calls."""
 
+from datetime import UTC, datetime
 from types import SimpleNamespace
 
 from app.defs.tool_names import action_name, id_words, tool_name
@@ -34,3 +35,46 @@ def test_a_tool_call_event_carries_the_tools_name_and_falls_back_to_the_id():
     assert plain["action"] == "create draft"
     unknown = _tool_event(SNAPSHOT, "gmail.send_sms", "c3", PERMIT, None)
     assert (unknown["app"], unknown["action"]) == ("gmail", "send sms")  # the connector key, as before
+
+
+def _approval_row(tool_ref: str, unlocked: list[dict] | None = None) -> dict:
+    return {
+        "id": "apr_1",
+        "run_id": "run_1",
+        "run_title": "Inbox triage",
+        "node_id": "approve",
+        "status": "pending",
+        "decided_by": None,
+        "created_at": datetime(2026, 10, 17, 9, 0, tzinfo=UTC),
+        "payload": {"tool_ref": tool_ref, "unlocked": unlocked or []},
+        "connectors": SNAPSHOT["defs"]["connector"],
+        "run_nodes": [
+            {"id": "approve", "label": "Approve the drafts"},
+            {"id": "send", "label": "Gmail: send"},
+        ],
+    }
+
+
+def test_an_approval_names_its_step_as_the_timeline_does():
+    from app.routers.approvals import real_approval
+
+    named = real_approval(_approval_row("gmail.list_threads_2", [{"tool_ref": "gmail.list_threads"}]))
+    assert named.action.operation == "List threads"
+    assert named.action.unlocked[0].operation == "List emails"
+    assert real_approval(_approval_row("gmail.create_draft")).action.operation == "create draft"
+    assert real_approval(_approval_row("")).action.operation is None
+
+
+def test_an_approval_names_its_steps_by_their_run_page_labels():
+    from app.routers.approvals import POLICY_LINE, real_approval
+
+    row = _approval_row("gmail.create_draft", [{"node": "send", "tool_ref": "gmail.create_draft"}])
+    row["payload"]["target_node"] = "approve"
+    approval = real_approval(row)
+    assert approval.action.step == "Approve the drafts"
+    assert approval.action.unlocked[0].step == "Gmail: send"
+    assert {d.label: d.value for d in approval.digest}["Policy"] == POLICY_LINE
+    # A node the projection does not know, or a row without one, keeps the id.
+    row["payload"]["target_node"] = "other"
+    assert real_approval(row).action.step == "other"
+    assert real_approval({**row, "run_nodes": None}).action.step == "other"

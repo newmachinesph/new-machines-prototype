@@ -394,15 +394,22 @@ def _org_of(call: NodeCall) -> str | None:
     return call.snapshot.get("org_id") or None
 
 
+def _space_name(snapshot: dict, space: str) -> str:
+    """A memory space as the memory page names it: the pinned definition's `name`, else its key."""
+    body = (((snapshot.get("defs") or {}).get("memory_space") or {}).get(space) or {}).get("body") or {}
+    return str(body.get("name") or "").strip() or space
+
+
 def _memory(call: NodeCall, node: dict) -> Step:
     cfg = node.get("config") or {}
     space, route = cfg["space"], _success_route(node)
+    name = _space_name(call.snapshot, space)
     if cfg.get("op", "recall") == "recall":
         query = str(cel.resolve(cfg.get("query", ""), call.state) or "")
         with db.connect() as conn:
             items = memory.recall(conn, space, query, int(cfg.get("limit", 8)), org_id=_org_of(call))
         output = [{"id": i["id"], "text": i["text"]} for i in items]
-        summary = f"Recalled {len(output)} items from {space}."
+        summary = f"Recalled {len(output)} items from {name}."
         return Step(output, route, [("node.completed", {"route": route, "summary": summary})])
     if cfg["op"] != "remember":
         raise ValueError(f"unknown memory op {cfg['op']!r}")
@@ -413,7 +420,7 @@ def _memory(call: NodeCall, node: dict) -> Step:
         if not conn.execute("SELECT 1 FROM memory_items WHERE source = %s", (source,)).fetchone():
             memory.remember(conn, space, text, source, cfg.get("actor", "workflow"), org_id=_org_of(call))
 
-    summary = f"Remembered one item in {space}."
+    summary = f"Remembered one item in {name}."
     return Step({"text": text}, route, [("node.completed", {"route": route, "summary": summary})], write)
 
 

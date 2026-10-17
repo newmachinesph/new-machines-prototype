@@ -151,7 +151,11 @@ describe("InstallReview adding a pack", () => {
   it("adds the pack to the signed-in user's org with the team first, then the network", async () => {
     renderWithIntl(<InstallReview pack={pack} />);
     expect(screen.getByRole("radio", { name: /^Your team first, then the network/ })).toBeChecked();
+    // QA3 #11: a disabled Add says why, and the reason goes away once the terms are agreed.
+    expect(screen.getByRole("button", { name: /^Add / })).toBeDisabled();
+    expect(screen.getByText("Agree to the terms above to add this pack.")).toBeInTheDocument();
     await userEvent.click(screen.getByRole("checkbox", { name: /agree/i }));
+    expect(screen.queryByText("Agree to the terms above to add this pack.")).toBeNull();
     await userEvent.click(screen.getByRole("button", { name: /^Add / }));
     expect(install).toHaveBeenCalledWith(body(), expect.anything());
   });
@@ -178,13 +182,27 @@ describe("InstallReview adding a pack", () => {
     expect(screen.getByRole("link", { name: "Open Reviewers" })).toHaveAttribute("href", "/app/reviewers");
   });
 
-  it("says nothing about the network being off when the team reviews alone", async () => {
+  it("starts from the team when the network is off, and adds with that choice", async () => {
+    // QA3 #11: the default must be a choice that can be added, with the reason the network is not offered.
     state.live = true;
     state.allowNetwork = false;
     renderWithIntl(<InstallReview pack={pack} />);
-    await userEvent.click(screen.getByRole("radio", { name: /^Your team only/ }));
-    expect(screen.queryByText(/The reviewer network is off/)).toBeNull();
     expect(screen.getByRole("radio", { name: /^Your team only/ })).toBeChecked();
+    expect(screen.getByText(/The reviewer network is off for your workspace/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("checkbox", { name: /agree/i }));
+    const add = screen.getByRole("button", { name: /^Add / });
+    expect(add).toBeEnabled();
+    await userEvent.click(add);
+    expect(install).toHaveBeenCalledWith(body({ reviewerPool: "team" }), expect.anything());
+  });
+
+  it("keeps a chosen pool once the person picks one", async () => {
+    state.live = true;
+    state.allowNetwork = false;
+    renderWithIntl(<InstallReview pack={pack} />);
+    await userEvent.click(screen.getByRole("radio", { name: /^Your team first, then the network/ }));
+    expect(screen.getByRole("radio", { name: /^Your team first, then the network/ })).toBeChecked();
+    expect(screen.getByText(/The reviewer network is off for your workspace/)).toBeInTheDocument();
   });
 
   it("does not say the network is off in the demo", () => {

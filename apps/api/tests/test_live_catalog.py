@@ -3,6 +3,7 @@ definitions, hires and app connections per org, real runs gated on both, and run
 memory and earnings without fixture data. Every org-scoped table is checked across orgs."""
 
 import json
+from contextlib import nullcontext
 from datetime import UTC, datetime
 
 import pytest
@@ -705,6 +706,27 @@ def test_runs_recall_and_remember_within_their_org(db, starts):
     db.commit()
     [row] = _rows(db, "SELECT org_id FROM memory_items WHERE source = 'run:run_a:learn:1'")
     assert row["org_id"] == "org_a"
+    # Without the space's definition in the snapshot, the summary falls back to its key.
+    assert step.events[0][1]["summary"] == "Remembered one item in retail-commerce."
+
+
+def test_memory_steps_name_the_space_as_the_memory_page_does(db, starts, monkeypatch):
+    """QA3 #5: the run timeline says "Retail & Commerce company knowledge", not the space's key."""
+    monkeypatch.setattr(activities.db, "connect", lambda: nullcontext(db))
+    space = {"body": {"key": "retail-commerce", "name": "Retail & Commerce company knowledge"}}
+    snapshot = {"org_id": "org_a", "defs": {"memory_space": {"retail-commerce": space}}}
+    call = activities.NodeCall(run_id="run_a", snapshot=snapshot, node_id="recall", state={})
+    node = {
+        "id": "recall",
+        "type": "memory",
+        "config": {"op": "recall", "space": "retail-commerce", "query": "refunds", "limit": 3},
+        "routes": {"next": "x"},
+    }
+    step = activities._memory(call, node)
+    summary = step.events[0][1]["summary"]
+    assert summary.startswith("Recalled ")
+    assert summary.endswith(" items from Retail & Commerce company knowledge.")
+    assert "retail-commerce" not in summary
 
 
 def test_migration_003_gives_old_run_items_their_org_and_quarantines_the_rest(db):

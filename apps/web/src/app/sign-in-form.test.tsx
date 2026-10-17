@@ -194,6 +194,7 @@ describe("SignInForm creating an account", () => {
   it("switches to the create form and back", async () => {
     await openCreate();
     expect(screen.getByRole("textbox", { name: "Name" })).toHaveAttribute("autocomplete", "name");
+    expect(screen.getByRole("textbox", { name: "Email" })).toHaveAttribute("autocomplete", "username");
     const password = screen.getByLabelText("Password");
     expect(password).toHaveAttribute("autocomplete", "new-password");
     expect(password).toHaveAccessibleDescription("At least 8 characters.");

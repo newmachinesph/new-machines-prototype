@@ -225,7 +225,7 @@ describe("PackPage costs", () => {
         "About $0.60 to $2.40 of AI work per run, plus up to $7.50 of reviewer time when a mismatch needs a person.",
     };
     const { unmount } = renderWithIntl(<PackPage slug="order-payment-reconciliation" />);
-    expect(within(costs()).getByText("Reviewer pay cap").parentElement).toHaveTextContent("up to $20.00 per run");
+    expect(within(costs()).getByText("Reviewer pay cap").parentElement).toHaveTextContent("Up to $20.00 per run");
     expect(within(costs()).queryByText("Reviewer pay")).toBeNull();
     unmount();
     renderWithIntl(<PackPage slug="order-payment-reconciliation" />, { locale: "ja" });

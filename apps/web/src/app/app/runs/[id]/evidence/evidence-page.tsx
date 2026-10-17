@@ -23,7 +23,7 @@ import { INTL_TAGS, resolveLocale } from "@/i18n/locales";
 import { ApiError } from "@/lib/api/errors";
 import { sumMoney } from "@/lib/format";
 import { useReceipt, useRun } from "@/lib/queries/runs";
-import type { Run } from "@/lib/types";
+import { isFinishedRun, type Run } from "@/lib/types";
 import { useFormat } from "@/lib/use-format";
 import { RECONCILIATION_PACK, changed, moneyText, toolKey, toolUse } from "./run-facts";
 
@@ -48,7 +48,7 @@ export function EvidencePage({ id }: { id: string }) {
 /** A run that exists but has not produced its deliverable yet: the page says so instead of a 404. */
 function EvidencePending({ run }: { run: Run }) {
   const t = useTranslations("run.evidence");
-  const ended = ["COMPLETED", "FAILED", "CANCELLED"].includes(run.status);
+  const ended = isFinishedRun(run.status);
   return (
     <>
       <title>{`${t("pageTitle")} | New Machines`}</title>

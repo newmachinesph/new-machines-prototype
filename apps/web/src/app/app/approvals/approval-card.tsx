@@ -2,10 +2,11 @@
 
 import { useTranslations } from "next-intl";
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { useToast } from "@/components/base";
 import { Button, Callout, Id, KeyValues, Pill, Section, SimTag } from "@/components/ui";
 import { useErrorText } from "@/lib/api/use-error-text";
-import type { ApprovalAction, EmailPreview } from "@/lib/api/gen/types.gen";
+import type { ApprovalAction, DigestRow, EmailPreview } from "@/lib/api/gen/types.gen";
 import { useIsDemo } from "@/lib/queries/me";
 import { useDecideApproval } from "@/lib/queries/workspace";
 import { useFormat } from "@/lib/use-format";
@@ -89,7 +90,7 @@ export function ApprovalCard({ approval: a, onDecide }: { approval: Approval; on
         </div>
         <div className="bg-paper px-5 py-4">
           <h3 className="label mb-1">{t("digestHeading")}</h3>
-          <KeyValues rows={a.digest.map((d) => ({ label: d.label, value: d.mono ? <Id>{d.value}</Id> : d.value }))} />
+          <KeyValues rows={a.digest.map((d) => digestRow(d, Boolean(action), t))} />
         </div>
       </div>
       <div className="border-t border-rule px-5 py-4">
@@ -112,7 +113,7 @@ export function ApprovalCard({ approval: a, onDecide }: { approval: Approval; on
         ) : state === "approved" ? (
           <Callout tone="info" title={action ? t("actionApprovedTitle") : t("approvedTitle")}>
             {action
-              ? t.rich("actionRecorded", { id: a.id, mono: (chunks) => <Id>{chunks}</Id> })
+              ? t("actionRecorded")
               : t.rich("recorded", { id: a.id, hash: "sha256:9f2c…41ad", mono: (chunks) => <Id>{chunks}</Id> })}{" "}
             {backToRun}
           </Callout>
@@ -126,12 +127,36 @@ export function ApprovalCard({ approval: a, onDecide }: { approval: Approval; on
   );
 }
 
+type CardT = ReturnType<typeof useTranslations<"approvals.card">>;
+// The API's digest labels (English) that have a translation; a real approval's policy line is rendered from a key.
+const DIGEST_KEYS = { Run: "digest.Run", Policy: "digest.Policy", "Decided by": "digest.Decided by" } as const;
+
+/** A digest row in the interface language where the API's label is a known one, else as the API wrote it. */
+function digestRow(d: DigestRow, real: boolean, t: CardT): { label: ReactNode; value: ReactNode } {
+  const key = DIGEST_KEYS[d.label as keyof typeof DIGEST_KEYS];
+  const label = key ? t(key) : d.label;
+  if (real && d.label === "Policy") return { label, value: t("policyLine") };
+  return { label, value: d.mono ? <Id>{d.value}</Id> : d.value };
+}
+
+/** The action in words: "Google Sheets: Append rows" (the app, then the tool's name as a sentence). */
+function actionText(app: string, operation: string | null | undefined): string {
+  const words = (operation ?? "").trim();
+  return words ? `${app}: ${words.charAt(0).toUpperCase()}${words.slice(1)}` : app;
+}
+
+/** Whether the step is the app's own step: the run page labels such a step "App: …", so the action names it. */
+function namesAction(step: string, app: string): boolean {
+  return step.trim().toLowerCase().startsWith(`${app.toLowerCase()}:`);
+}
+
 function ActionPreview({ action }: { action: ApprovalAction }) {
   const t = useTranslations("approvals.card");
+  const text = actionText(action.app, action.operation);
+  // The step's label from the run page, then the action; one row when the step is the app's own step.
   const rows = [
-    { label: t("app"), value: action.app },
-    { label: t("step"), value: <Id>{action.step}</Id> },
-    ...(action.tool ? [{ label: t("tool"), value: <Id>{action.tool}</Id> }] : []),
+    ...(namesAction(action.step, action.app) ? [] : [{ label: t("step"), value: action.step }]),
+    { label: t("tool"), value: text },
     ...(action.count != null ? [{ label: t("calls"), value: t("times", { count: action.count }) }] : []),
     ...(action.summary ? [{ label: t("does"), value: action.summary }] : []),
   ];
@@ -147,16 +172,21 @@ function ActionPreview({ action }: { action: ApprovalAction }) {
         <>
           <h3 className="label mt-4 mb-1">{t("alsoHeading")}</h3>
           <KeyValues
-            rows={action.unlocked.map((u) => ({
-              label: <Id>{u.step}</Id>,
-              value: (
-                <span className="inline-flex flex-wrap items-center gap-2">
-                  <Id>{u.tool}</Id> · {u.app}
-                  {u.count != null ? <span className="text-muted">{t("times", { count: u.count })}</span> : null}
-                  {u.mocked ? <SimTag /> : null}
-                </span>
-              ),
-            }))}
+            rows={action.unlocked.map((u) => {
+              // An app's own step is named once, by its action; any other step keeps its label, then the action.
+              const unlockedText = actionText(u.app, u.operation);
+              const own = namesAction(u.step, u.app);
+              return {
+                label: own ? unlockedText : u.step,
+                value: (
+                  <span className="inline-flex flex-wrap items-center gap-2">
+                    {own ? null : <span>{unlockedText}</span>}
+                    {u.count != null ? <span className="text-muted">{t("times", { count: u.count })}</span> : null}
+                    {u.mocked ? <SimTag /> : null}
+                  </span>
+                ),
+              };
+            })}
           />
           {[...new Set(action.unlocked.filter((u) => u.mocked).map((u) => u.app))].map((app) => (
             <p key={app} className="mt-2 text-xs text-muted">

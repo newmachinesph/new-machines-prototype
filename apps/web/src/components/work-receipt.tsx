@@ -3,7 +3,7 @@
 import { ShieldAlert, ShieldCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { FeeItem } from "@/lib/api/gen";
-import type { RunStatus } from "@/lib/types";
+import { isFinishedRun, type RunStatus } from "@/lib/types";
 import { useReceipt } from "@/lib/queries/runs";
 import { useFormat } from "@/lib/use-format";
 import { PublisherFeeRows } from "./publisher-fee-rows";
@@ -59,6 +59,8 @@ export function WorkReceipt({ runId, status, id }: { runId: string; status: RunS
   if (!r) return null;
   // A kind the interface has no words for yet (added to the API later) shows as sent.
   const kindLabel = (kind: string) => (isKnownKind(kind) ? t(`kinds.${kind}`) : kind);
+  // `verified` is the chain recomputed now: while the run still writes to it, that is the chain so far.
+  const verified = isFinishedRun(status) ? t("verified") : t("verifiedSoFar");
 
   return (
     <CollapsibleSection
@@ -68,7 +70,7 @@ export function WorkReceipt({ runId, status, id }: { runId: string; status: RunS
       aside={
         <Pill tone={r.verified ? "machine" : "blocked"}>
           {r.verified ? <ShieldCheck className="size-3" aria-hidden /> : <ShieldAlert className="size-3" aria-hidden />}
-          {r.verified ? t("verified") : t("notVerified")}
+          {r.verified ? verified : t("notVerified")}
         </Pill>
       }
     >

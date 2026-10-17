@@ -11,6 +11,7 @@ import {
   usePackText,
   useSeedText,
   useSpaceName,
+  useStepText,
 } from "./content-text";
 
 const hook = <T,>(use: () => T, locale: Locale = "ja") =>
@@ -142,6 +143,39 @@ describe("useSeedText", () => {
     expect(seedKey(seed.text)).toMatch(/^[0-9a-f]{8}$/);
     expect(seedKey(`${seed.text} `)).not.toBe(seedKey(seed.text));
     expect(seedKey("")).toBe("811c9dc5");
+  });
+});
+
+describe("useStepText", () => {
+  const pack = { slug: "order-payment-reconciliation", certified: true };
+  const orders = { id: "orders", label: "Shopify: list orders" };
+
+  it("labels a first-party pack's step in Japanese by its node id, when the record's label is the mirror's", () => {
+    const step = hook(useStepText);
+    expect(step(pack, orders)).toBe("Shopify：注文の一覧を取得");
+    expect(step(pack, { id: "check", label: "Do the orders and payments match?" })).toBe(
+      "注文と入金は一致しているか？",
+    );
+    expect(step(pack, { id: "review", label: "Resolve order and payment mismatches" })).toBe(
+      "注文と入金の不一致を解決",
+    );
+    expect(step(pack, { id: "match", label: "Finance agent" })).toBe("財務エージェント");
+  });
+
+  it("gives nothing where the record's words should stand: English, another pack, an unknown step or pack", () => {
+    expect(hook(useStepText, "en")(pack, orders)).toBeUndefined();
+    expect(hook(useStepText)({ ...pack, certified: false }, orders)).toBeUndefined();
+    expect(hook(useStepText)({ slug: "org-5c81-recon", certified: true }, orders)).toBeUndefined();
+    expect(hook(useStepText)(pack, { id: "added_later", label: "Gmail: send email" })).toBeUndefined();
+    expect(hook(useStepText)(pack, { id: "constructor", label: "constructor" })).toBeUndefined();
+    expect(hook(useStepText)(undefined, orders)).toBeUndefined();
+  });
+
+  it("keeps the English of a step whose recorded label is not today's: an older or an edited pack version", () => {
+    const step = hook(useStepText);
+    expect(step(pack, { id: "orders", label: "Shopify: list open orders" })).toBeUndefined();
+    expect(step(pack, { id: "review", label: "Resolve mismatches" })).toBeUndefined();
+    expect(step(pack, { id: "orders", label: "shopify: list orders" })).toBeUndefined();
   });
 });
 

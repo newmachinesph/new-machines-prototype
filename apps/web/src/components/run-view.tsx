@@ -1,13 +1,14 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRef, useState } from "react";
+import { DEFAULT_LOCALE, resolveLocale } from "@/i18n/locales";
 import { cn } from "@/lib/cn";
 import { sumMoney } from "@/lib/format";
 import { useIsDemo } from "@/lib/queries/me";
 import { useReceipt } from "@/lib/queries/runs";
-import type { NodeType, Run } from "@/lib/types";
+import { isFinishedRun, type NodeType, type Run } from "@/lib/types";
 import { useFormat } from "@/lib/use-format";
 import { Checkbox } from "./base";
 import { NodeInspector } from "./node-inspector";
@@ -51,6 +52,8 @@ export function RunView({ run }: { run: Run }) {
   const { money, dateTime, timeSec } = useFormat();
   const { line } = useCodes();
   const who = useWho();
+  // The run record is written in English (the API's words) and shown as recorded: another language says so.
+  const recordedLanguage = resolveLocale(useLocale()) !== DEFAULT_LOCALE;
   const [selected, setSelected] = useState(() => defaultNode(run));
   const inspector = useRef<HTMLElement>(null);
   // On a phone the chosen step's details are far below the list or timeline: bring them into view.
@@ -219,6 +222,9 @@ export function RunView({ run }: { run: Run }) {
               {t("showTechnical")}
             </Checkbox>
           </div>
+          {recordedLanguage ? (
+            <p className="border-b border-rule px-5 py-2 text-xs leading-relaxed text-muted">{t("timelineNote")}</p>
+          ) : null}
           <ol className="relative px-5 py-4">
             {events.map((e, i) => (
               <li key={i} className="relative grid grid-cols-[72px_16px_1fr] gap-x-3 pb-4 last:pb-0">
@@ -293,7 +299,11 @@ export function RunView({ run }: { run: Run }) {
                   ...(fees.length
                     ? [{ label: t("publisherFees"), value: <span className="tnum">{money(feeTotal)}</span> }]
                     : []),
-                  { label: t("totalSoFar"), value: <span className="tnum font-semibold">{money(total)}</span> },
+                  {
+                    // A finished run's spend is its total; one still going shows what it has spent so far.
+                    label: isFinishedRun(run.status) ? t("total") : t("totalSoFar"),
+                    value: <span className="tnum font-semibold">{money(total)}</span>,
+                  },
                   {
                     label: t("budget"),
                     value: <span className="tnum">{t("upTo", { amount: money(run.budget) })}</span>,

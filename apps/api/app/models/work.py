@@ -88,7 +88,7 @@ class UnlockedAction(Model):
     it acts on. `mocked` is true when that call would run against sandbox data."""
 
     app: str
-    step: str
+    step: str  # the step's label on the run page, else its node id
     tool: str  # "<connector>.<tool id>"
     operation: str  # the tool id in words, e.g. "add ledger note"
     mocked: bool
@@ -100,7 +100,7 @@ class ApprovalAction(Model):
     call. `mocked` is true when that call would run against sandbox data instead of the connected app."""
 
     app: str
-    step: str
+    step: str  # the step's label on the run page, else its node id
     tool: str | Opt = None  # "<connector>.<tool id>"
     operation: str | Opt = None  # the tool id in words, e.g. "append rows"
     summary: str | Opt = None

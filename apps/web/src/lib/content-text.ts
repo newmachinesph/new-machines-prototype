@@ -3,8 +3,8 @@
 import { useLocale, useMessages, useTranslations } from "next-intl";
 import { useCallback, useMemo } from "react";
 import { DEFAULT_LOCALE, resolveLocale } from "@/i18n/locales";
-import type en from "../../messages/en.json";
-import type { Agent, MemoryItem, Pack } from "./types";
+import en from "../../messages/en.json";
+import type { Agent, MemoryItem, Pack, RunNode } from "./types";
 
 type AgentSkill = Agent["skills"][number];
 
@@ -26,9 +26,12 @@ type SpaceKey = keyof Content["memorySpaces"];
 type PackField = keyof Content["packs"][PackSlug];
 type SkilledAgentId = keyof Content["skills"];
 type SeededSpaceKey = keyof Content["seeds"];
-/** `skills.<agent id>.<skill key>` and `seeds.<space key>.<text hash>`, each agent's and space's own keys only. */
+type SteppedPackSlug = keyof Content["steps"];
+/** `skills.<agent id>.<skill key>`, `seeds.<space key>.<text hash>` and `steps.<pack slug>.<node id>`, each agent's,
+ * space's and pack's own keys only. */
 type SkillMessageKey = { [I in SkilledAgentId]: `skills.${I}.${keyof Content["skills"][I] & string}` }[SkilledAgentId];
 type SeedMessageKey = { [S in SeededSpaceKey]: `seeds.${S}.${keyof Content["seeds"][S] & string}` }[SeededSpaceKey];
+type StepMessageKey = { [P in SteppedPackSlug]: `steps.${P}.${keyof Content["steps"][P] & string}` }[SteppedPackSlug];
 
 /** The API's source label for a memory that comes with a memory space's definition (`live_work.SOURCES`). */
 export const SEED_SOURCE = "Definitions seed";
@@ -88,12 +91,13 @@ function useOverlay() {
 // Own keys only: a slug such as "constructor" must never resolve through the prototype chain.
 const isPackSlug = (content: Content, value: string): value is PackSlug => Object.hasOwn(content.packs, value);
 const isAgentId = (content: Content, value: string): value is AgentId => Object.hasOwn(content.agents, value);
-const isSpaceKey = (content: Content, value: string): value is SpaceKey =>
-  Object.hasOwn(content.memorySpaces, value);
+const isSpaceKey = (content: Content, value: string): value is SpaceKey => Object.hasOwn(content.memorySpaces, value);
 const isSkilledAgentId = (content: Content, value: string): value is SkilledAgentId =>
   Object.hasOwn(content.skills, value);
 const isSeededSpaceKey = (content: Content, value: string): value is SeededSpaceKey =>
   Object.hasOwn(content.seeds, value);
+const isSteppedPackSlug = (content: Content, value: string): value is SteppedPackSlug =>
+  Object.hasOwn(content.steps, value);
 
 type PackRef = Pick<Pack, "slug" | "name"> &
   Partial<Pick<Pack, "certified" | "outcome" | "description" | "humanReview" | "priceNote">>;
@@ -170,6 +174,33 @@ export function useSeedText() {
       if (space === undefined || !isSeededSpaceKey(content, space)) return item.text;
       const key = seedKey(item.text);
       return Object.hasOwn(content.seeds[space], key) ? t(`seeds.${space}.${key}` as SeedMessageKey) : item.text;
+    },
+    [t, content, on],
+  );
+}
+
+type StepPackRef = Pick<Pack, "slug" | "certified">;
+
+/**
+ * A workflow step's label in the interface language, for a step of one of our own packs: the run record labels
+ * its steps in English (the API's projection of the workflow definition) and the messages carry each first-party
+ * pack's steps by node id, with English mirroring the projection (`content-messages.test.ts`). As with a seed
+ * memory, the overlay holds only where the record's label is the English mirror, word for word: a run pinned to
+ * an older pack version, or to one edited in the console, keeps its own English. Gives `undefined` where the
+ * label is not overlaid: in English, for a pack that is not ours or not yet known (`pack` undefined while the
+ * catalog loads), for a node the messages do not name (added to the workflow since) and for a label that has
+ * moved on, so the caller keeps the record's own words.
+ */
+export function useStepText() {
+  const { t, content, on } = useOverlay();
+  return useCallback(
+    (pack: StepPackRef | undefined, node: Pick<RunNode, "id" | "label">): string | undefined => {
+      if (!on || !pack?.certified) return undefined;
+      const slug = pack.slug;
+      if (!isSteppedPackSlug(content, slug) || !Object.hasOwn(content.steps[slug], node.id)) return undefined;
+      const mirror: Record<string, string> = en.content.steps[slug];
+      if (mirror[node.id] !== node.label) return undefined;
+      return t(`steps.${slug}.${node.id}` as StepMessageKey);
     },
     [t, content, on],
   );

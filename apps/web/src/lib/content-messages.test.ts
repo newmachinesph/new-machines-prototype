@@ -83,6 +83,57 @@ function skillTitle(stem: string, text: string): string {
   return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
+/**
+ * A workflow's nodes as `runtime/projection._node_text` labels them: each `  - id:` item of the top-level
+ * `nodes:` list with its `type:` and the label-bearing scalars of its `config:` (`tool`, `agent`, `rules`,
+ * `title`, `op`, `status`), read at their exact indents so `inputs.rules` or `args.status` deeper down never
+ * count. The API's YAML loader is the authority.
+ */
+type WorkflowNode = { id: string; type: string; config: Record<string, string> };
+function workflowNodes(text: string): WorkflowNode[] {
+  const nodes: WorkflowNode[] = [];
+  let current: WorkflowNode | undefined;
+  for (const line of text.split("\n")) {
+    const start = /^ {2}- id: (\S+)\s*$/.exec(line);
+    if (start) {
+      current = { id: start[1]!, type: "", config: {} };
+      nodes.push(current);
+      continue;
+    }
+    if (!current) continue;
+    const type = /^ {4}type: (\S+)\s*$/.exec(line);
+    if (type) current.type = type[1]!;
+    const field = /^ {6}(tool|agent|rules|title|op|status): (.+?)\s*$/.exec(line);
+    if (field) current.config[field[1]!] = /^".*"$/.test(field[2]!) ? JSON.parse(field[2]!) : field[2]!;
+  }
+  return nodes;
+}
+
+/** A platform agent's step label: its key in words, as Python's `str.capitalize` writes it. */
+const agentLabel = (key: string) => {
+  const words = key.replace(/-/g, " ").toLowerCase();
+  return words.charAt(0).toUpperCase() + words.slice(1);
+};
+
+/** The label the projection gives a node (`_node_text`), from the definitions it reads. */
+function stepLabel(node: WorkflowNode, apps: Record<string, string>, questions: Record<string, string>): string {
+  const cfg = node.config;
+  if (node.type === "connector") {
+    const [connector, tool = ""] = (cfg.tool ?? "").split(".", 2);
+    return `${apps[connector!] ?? connector}: ${tool.replace(/_/g, " ")}`;
+  }
+  if (node.type === "agent") return agentLabel(cfg.agent ?? "agent");
+  if (node.type === "decision") return questions[cfg.rules ?? ""] ?? "Decide";
+  if (cfg.title) return cfg.title;
+  const fixed: Record<string, string> = {
+    trigger: "Start",
+    memory: cfg.op === "recall" ? "Recall company knowledge" : "Remember what was learned",
+    verification: "Verify the result",
+    end: cfg.status === "COMPLETED" ? "Done" : "Stopped",
+  };
+  return fixed[node.type] ?? node.id;
+}
+
 const read = (...path: string[]) => readFileSync(join(DEFINITIONS, ...path), "utf8");
 const definition = (...path: string[]) => topLevelFields(read(...path));
 const dirs = (...path: string[]) =>
@@ -122,6 +173,37 @@ const skills = Object.fromEntries(
     ),
   ]),
 );
+/** Each connector's app name and each decision's question, as the projection labels the steps that use them. */
+const apps = Object.fromEntries(
+  files(".yaml", "connectors")
+    .map((f) => definition("connectors", f))
+    .map((c) => [c.key, c.app ?? c.key]),
+);
+const questions = Object.fromEntries(
+  files(".yaml", "decisions")
+    .map((f) => definition("decisions", f))
+    .map((d) => [d.key, d.question ?? "Decide"]),
+);
+/** Every pack's workflow steps by node id, labelled as the run record labels them. */
+const steps = Object.fromEntries(
+  dirs("packs").map((slug) => {
+    const nodes = workflowNodes(read("packs", slug, "workflow.yaml"));
+    if (nodes.length === 0) throw new Error(`${slug}: no workflow nodes parsed`);
+    return [slug, Object.fromEntries(nodes.map((n) => [n.id, stepLabel(n, apps, questions)]))];
+  }),
+);
+/** Each pack's agent steps: node id to agent key, so their Japanese can be held to the agent's name. */
+const agentSteps = Object.fromEntries(
+  dirs("packs").map((slug) => [
+    slug,
+    Object.fromEntries(
+      workflowNodes(read("packs", slug, "workflow.yaml"))
+        .filter((n) => n.type === "agent")
+        .map((n) => [n.id, n.config.agent!]),
+    ),
+  ]),
+);
+
 /** Every capability id a first-party agent declares, as the key `useCapabilityLabel` looks up. */
 const capabilityKeys = [
   ...new Set(
@@ -210,6 +292,20 @@ describe("first-party content messages", () => {
     }
   });
 
+  it("labels every step of every pack's workflow as the run record does, and translates each", () => {
+    expect(en.content.steps).toEqual(steps);
+    expect(Object.values(steps).flatMap(Object.keys).length).toBeGreaterThan(0);
+    for (const [slug, own] of Object.entries(steps)) {
+      const jaSteps: Record<string, string> | undefined = ja.content.steps[slug as keyof typeof ja.content.steps];
+      translated(own, jaSteps, `steps.${slug}`);
+      // The record names an agent step by its key in words; the Japanese step is the agent's own name.
+      for (const [node, agent] of Object.entries(agentSteps[slug]!)) {
+        const name = ja.content.agents[agent as keyof typeof ja.content.agents]?.name;
+        expect(jaSteps?.[node], `steps.${slug}.${node} should read as ${agent}'s name`).toBe(name);
+      }
+    }
+  });
+
   it("labels every capability a first-party agent declares, in both languages", () => {
     expect(capabilityKeys.length).toBeGreaterThan(0);
     const enLabels: Record<string, string> = en.agents.capability;
@@ -236,6 +332,7 @@ describe("first-party content messages", () => {
       ...Object.values(ja.content.agents).flatMap((a) => Object.values(a)),
       ...Object.values(ja.content.skills).flatMap((s) => Object.values(s)),
       ...Object.values(ja.content.seeds).flatMap((s) => Object.values(s)),
+      ...Object.values(ja.content.steps).flatMap((s) => Object.values(s)),
     ];
     for (const text of texts) expect(text).not.toMatch(/採用|雇用/);
   });

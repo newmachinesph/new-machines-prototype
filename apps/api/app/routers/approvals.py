@@ -1,5 +1,6 @@
 from app import db, run_tasks, settings, temporal_client, workspace
 from app.auth import DEMO_ORG_ID, Actor, CurrentActor
+from app.defs.tool_names import action_name
 from app.errors import ApiProblem
 from app.models.work import Approval, ApprovalAction, DigestRow, UnlockedAction
 from app.routing import ApiRouter
@@ -11,6 +12,8 @@ router = ApiRouter(prefix="/v1", tags=["approvals"])
 STATUSES = {"pending": "PENDING", "granted": "GRANTED", "denied": "DECLINED", "timeout": "EXPIRED"}
 DECISIONS = {"GRANTED": "granted", "DECLINED": "denied"}
 DEFAULT_POLICY_REF = "policy/default"
+# The digest's policy line, in words a business user reads; the policy's id stays in `policy_ref`.
+POLICY_LINE = "Your workspace's policy requires approval before this step writes to your apps."
 # Who decided, when the account that did is no longer a member of the org: never the account id itself.
 FORMER_MEMBER = "A former member of your workspace"
 # The shared demo org has no member rows for its deciders; they are other people, not former members.
@@ -44,10 +47,28 @@ def find_approval(approval_id: str) -> Approval:
     return found
 
 
+def _connector_body(row: dict, connector_key: str) -> dict:
+    return ((row.get("connectors") or {}).get(connector_key) or {}).get("body") or {}
+
+
 def _target_app(row: dict, connector_key: str) -> str:
     """The app the approved step acts on, from the run's pinned connector definition."""
-    body = ((row.get("connectors") or {}).get(connector_key) or {}).get("body") or {}
-    return str(body.get("app") or connector_key or "Your workspace")
+    return str(_connector_body(row, connector_key).get("app") or connector_key or "Your workspace")
+
+
+def _operation(row: dict, connector_key: str, tool_id: str) -> str:
+    """What the approved step does, named as the run timeline names it: the pinned tool's `name`, else its id
+    as words."""
+    tools = _connector_body(row, connector_key).get("tools") or []
+    tool = next((t for t in tools if isinstance(t, dict) and t.get("id") == tool_id), None)
+    return action_name(tool, tool_id)
+
+
+def _step_label(row: dict, node_id: str) -> str:
+    """The step as the run page names it: the node's label in the run's projection, else its id."""
+    nodes = row.get("run_nodes") or []
+    node = next((n for n in nodes if isinstance(n, dict) and n.get("id") == node_id), None)
+    return str((node or {}).get("label") or node_id)
 
 
 def _unlocked(row: dict, payload: dict) -> list[UnlockedAction]:
@@ -59,9 +80,9 @@ def _unlocked(row: dict, payload: dict) -> list[UnlockedAction]:
         out.append(
             UnlockedAction(
                 app=_target_app(row, connector_key),
-                step=str(item.get("node") or ""),
+                step=_step_label(row, str(item.get("node") or "")),
                 tool=tool_ref,
-                operation=tool_id.replace("_", " "),
+                operation=_operation(row, connector_key, tool_id),
                 mocked=bool(item.get("mocked")),
                 count=item.get("count"),
             )
@@ -80,17 +101,17 @@ def real_approval(row: dict, names: dict[str, str] | None = None) -> Approval:
     policy_ref = str(payload.get("policy_ref") or DEFAULT_POLICY_REF)
     action = ApprovalAction(
         app=_target_app(row, connector_key),
-        step=str(payload.get("target_node") or row["node_id"]),
+        step=_step_label(row, str(payload.get("target_node") or row["node_id"])),
         tool=tool_ref or None,
-        operation=tool_id.replace("_", " ") or None,
+        operation=_operation(row, connector_key, tool_id) if tool_id else None,
         summary=summary,
         mocked=bool(payload.get("mocked")),
         count=payload.get("count"),
         unlocked=_unlocked(row, payload) or None,
     )
     digest = [
-        DigestRow(label="Run", value=row["run_id"], mono=True),
-        DigestRow(label="Policy", value=f"{policy_ref} requires approval (APPROVAL_REQUIRED)"),
+        DigestRow(label="Run", value=row["run_title"] or "Workflow Pack"),
+        DigestRow(label="Policy", value=POLICY_LINE),
     ]
     if row["decided_by"]:
         decided_by = (names or {}).get(row["decided_by"], FORMER_MEMBER)

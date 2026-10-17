@@ -565,15 +565,21 @@ def test_a_real_approval_is_listed_first_and_approving_signals_the_workflow(api,
     assert first["summary"] == APPROVAL_PAYLOAD["summary"]
     # A real approval is the step it lets the run take, not an email.
     assert "preview" not in first
+    # The step is named as the run page names it (the node's label), not by its id.
     assert first["action"] == {
         "app": "Google Sheets",
-        "step": "write",
+        "step": "Google Sheets: append rows",
         "tool": "googlesheets.append_rows",
         "operation": "append rows",
         "summary": APPROVAL_PAYLOAD["summary"],
         "mocked": False,
     }
     assert [d["label"] for d in first["digest"]] == ["Run", "Policy"]
+    # The run is named by its title, not its id.
+    assert first["digest"][0]["value"] == run["title"] and "mono" not in first["digest"][0]
+    policy = first["digest"][1]["value"]
+    assert policy == "Your workspace's policy requires approval before this step writes to your apps."
+    assert "policy/default" not in policy and "APPROVAL_REQUIRED" not in policy
     assert first["expiresAt"] == "2026-10-14T10:00:00Z" and first["policyRef"] == "policy/default"
     assert len(listed) == len(get_store().approvals) + 1
 

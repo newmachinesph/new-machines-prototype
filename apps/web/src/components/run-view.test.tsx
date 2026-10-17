@@ -63,11 +63,36 @@ describe("RunView", () => {
       data: { fees: [{ ...fee, quantity: 1, unit: usd(250), amount: usd(250) }] },
     };
     renderWithIntl(<RunView run={live} />);
-    const cost = screen.getByText("Total so far").closest("section") as HTMLElement;
+    const cost = screen.getByText("Total").closest("section") as HTMLElement;
     const row = within(cost).getByText("Publisher fees").parentElement as HTMLElement;
     expect(row).toHaveTextContent("$2.50");
     const total = sumMoney(live.spent.ai, live.spent.human, live.spent.tools, usd(250));
-    expect(within(cost).getByText("Total so far").parentElement).toHaveTextContent(money(total));
+    expect(within(cost).getByText("Total").parentElement).toHaveTextContent(money(total));
+  });
+
+  // QA3 #6: the card said "Total so far" after the run had completed.
+  it("calls the spend a total once the run is finished, and the total so far while it runs", () => {
+    const { unmount } = renderWithIntl(<RunView run={live} />);
+    expect(screen.getByText("Total")).toBeInTheDocument();
+    expect(screen.queryByText("Total so far")).not.toBeInTheDocument();
+    unmount();
+    renderWithIntl(<RunView run={{ ...live, status: "RUNNING" }} />);
+    expect(screen.getByText("Total so far")).toBeInTheDocument();
+    expect(screen.queryByText("Total")).not.toBeInTheDocument();
+  });
+
+  // QA3 #1: the record is written in English; Japanese says so above the timeline, English needs no note.
+  it("says in Japanese, and only in Japanese, that the timeline reads as recorded", () => {
+    const note = "実行記録は記録された言語のまま表示されます。";
+    const { unmount } = renderWithIntl(<RunView run={live} />, { locale: "ja" });
+    expect(screen.getByText(note)).toBeInTheDocument();
+    expect(screen.getByText("ワークフローエンジン")).toBeInTheDocument();
+    expect(screen.getByText("判定ステップ")).toBeInTheDocument();
+    unmount();
+    renderWithIntl(<RunView run={live} />);
+    expect(screen.queryByText(note)).not.toBeInTheDocument();
+    expect(screen.queryByText(/read as the run recorded/)).not.toBeInTheDocument();
+    expect(screen.getByText("Workflow engine")).toBeInTheDocument();
   });
 
   it("shows no publisher fee row for a run without fees", () => {

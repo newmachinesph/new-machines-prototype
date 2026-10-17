@@ -186,4 +186,34 @@ describe("useWho", () => {
     expect(result.current("Gemini Reyes", "human")).toBe("Gemini Reyes");
     expect(result.current("Gemini Reyes", "buyer")).toBe("Gemini Reyes");
   });
+
+  // QA3 #1: the platform's own names in the timeline stayed English in Japanese.
+  it("reads the record's fixed names in Japanese, by the actor the record gives them", () => {
+    const jp = renderHook(() => useWho(), { wrapper: ja }).result.current;
+    expect(jp("Workflow engine", "system")).toBe("ワークフローエンジン");
+    expect(jp("Policy engine", "policy")).toBe("ポリシーエンジン");
+    expect(jp("Human workforce", "system")).toBe("人間の作業者");
+    expect(jp("Decision step", "machine")).toBe("判定ステップ");
+    expect(jp("You", "buyer")).toBe("あなた");
+    expect(jp("Reviewer", "human")).toBe("レビュアー");
+    // The record writes a timed-out approval or task on the system, in the words of the person who did not act.
+    expect(jp("You", "system")).toBe("あなた");
+    expect(jp("Reviewer", "system")).toBe("レビュアー");
+    // A person who happens to carry such a name, or a line without its actor, keeps the words as sent.
+    expect(jp("Workflow engine", "human")).toBe("Workflow engine");
+    expect(jp("You", "human")).toBe("You");
+    expect(jp("Reviewer", "buyer")).toBe("Reviewer");
+    expect(jp("Policy engine")).toBe("Policy engine");
+  });
+
+  it("keeps the record's fixed names word for word in English", () => {
+    const { result } = renderHook(() => useWho(), { wrapper });
+    expect(result.current("Workflow engine", "system")).toBe("Workflow engine");
+    expect(result.current("Policy engine", "policy")).toBe("Policy engine");
+    expect(result.current("Decision step", "machine")).toBe("Decision step");
+    expect(result.current("You", "buyer")).toBe("You");
+    expect(result.current("You", "system")).toBe("You");
+    expect(result.current("Reviewer", "human")).toBe("Reviewer");
+    expect(result.current("Reviewer", "system")).toBe("Reviewer");
+  });
 });

@@ -12,6 +12,7 @@ vi.mock("@/lib/queries/runs", () => ({
 const AGENT_KEY = "org-5c8192d7129c2fa2-qa-inbox-reader-a2";
 vi.mock("@/lib/queries/catalog", () => ({
   usePackName: () => "Overdue invoice follow-up",
+  usePacks: () => ({ data: undefined }),
   useAgentById: () => (id: string) => (id === AGENT_KEY ? { id, name: "QA inbox reader" } : undefined),
 }));
 vi.mock("next/navigation", () => ({ notFound: vi.fn() }));

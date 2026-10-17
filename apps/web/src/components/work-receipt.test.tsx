@@ -63,7 +63,28 @@ describe("WorkReceipt", () => {
   it("keeps showing the receipt when a background refetch fails", () => {
     state.query = { isError: true, data: receipt };
     renderWithIntl(<WorkReceipt runId="run_9" status="RUNNING" />);
-    expect(screen.getByText("Verified")).toBeInTheDocument();
+    expect(screen.getByText("Verified so far")).toBeInTheDocument();
+  });
+
+  // QA3 #6: the chip read "Verified" while the run was still writing to the chain.
+  it("says the chain is verified so far while the run is going, and verified once it is finished", () => {
+    state.query = { data: receipt };
+    for (const status of ["RUNNING", "WAITING_FOR_HUMAN", "WAITING_FOR_EVENT", "VERIFYING"] as const) {
+      const { unmount } = renderWithIntl(<WorkReceipt runId="run_9" status={status} />);
+      expect(screen.getByText("Verified so far")).toBeInTheDocument();
+      unmount();
+    }
+    for (const status of ["COMPLETED", "FAILED", "CANCELLED"] as const) {
+      const { unmount } = renderWithIntl(<WorkReceipt runId="run_9" status={status} />);
+      expect(screen.getByText("Verified")).toBeInTheDocument();
+      unmount();
+    }
+    const { unmount } = renderWithIntl(<WorkReceipt runId="run_9" status="RUNNING" />, { locale: "ja" });
+    expect(screen.getByText("ここまで検証済み")).toBeInTheDocument();
+    unmount();
+    state.query = { data: { ...receipt, verified: false } };
+    renderWithIntl(<WorkReceipt runId="run_9" status="RUNNING" />);
+    expect(screen.getByText("Not verified")).toBeInTheDocument();
   });
 
   it("names each pinned kind in words, and shows an unknown kind as sent", () => {

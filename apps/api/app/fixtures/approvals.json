@@ -18,16 +18,11 @@
       },
       {
         "label": "Acting",
-        "value": "Finance Agent 1.0.0, installation inst_finance_01"
-      },
-      {
-        "label": "Contract",
-        "value": "contract_followup@1",
-        "mono": true
+        "value": "Finance Agent 1.0.0"
       },
       {
         "label": "Action",
-        "value": "Send email (gmail.send_email)"
+        "value": "Gmail: Send email"
       },
       {
         "label": "Recipient",
@@ -39,7 +34,7 @@
       },
       {
         "label": "Data region",
-        "value": "us-central1"
+        "value": "Iowa, US (us-central1)"
       },
       {
         "label": "Risk",
@@ -47,12 +42,7 @@
       },
       {
         "label": "Policy",
-        "value": "tool_actions@3 requires approval (EXTERNAL_MESSAGE)"
-      },
-      {
-        "label": "Content digest",
-        "value": "sha256:9f2c…41ad",
-        "mono": true
+        "value": "Your workspace's policy requires approval before an email leaves your company."
       }
     ],
     "preview": {

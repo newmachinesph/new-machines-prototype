@@ -153,11 +153,28 @@ export function useCodes() {
 const ID_LIKE = /^[A-Za-z0-9_-]{20,}$/;
 
 /**
+ * The fixed names the run record writes as `who` (the API's projection), each with a message (`run.who`), by
+ * the actor the record gives them: the platform's own parts, and the words it uses for a person it cannot name.
+ * English keeps the record's wording; a person's actual name never matches here, since only "You" (the buyer,
+ * or the system when their approval timed out) and "Reviewer" (a reviewer the record did not name, or the
+ * system when their task timed out) are read on a person's line.
+ */
+const FIXED_WHO: Record<
+  string,
+  { key: "engine" | "policyEngine" | "humanWorkforce" | "decisionStep"; actors: Actor[] }
+> = {
+  "Workflow engine": { key: "engine", actors: ["system"] },
+  "Policy engine": { key: "policyEngine", actors: ["policy"] },
+  "Human workforce": { key: "humanWorkforce", actors: ["system"] },
+  "Decision step": { key: "decisionStep", actors: ["machine"] },
+};
+
+/**
  * Who did something, as the viewer should read it. Only a person (the actor `buyer` or `human`) can be an
  * account id: the viewer's own is "You", a workspace member's is unnamed (the member list carries no ids to
  * match it against) and a reviewer's is "A reviewer". A person's name passes through as it is (a reviewer may
  * well be called Gemini); machine or system names pass through with any model vendor in them named as "the AI
- * model".
+ * model". The platform's own fixed names (`FIXED_WHO`) read in the interface language.
  */
 export function useWho() {
   const t = useTranslations("run.who");
@@ -167,6 +184,10 @@ export function useWho() {
     const person = actor === "buyer" || actor === "human";
     // The viewer's own account id is "You" whatever it looks like (a short dev sign-in's "qa_alice" too).
     if ((actor === undefined || person) && who === me.data?.userId) return t("you");
+    if (who === "You" && (actor === "buyer" || actor === "system")) return t("you");
+    if (who === "Reviewer" && (actor === "human" || actor === "system")) return t("reviewerDefault");
+    const fixed = Object.hasOwn(FIXED_WHO, who) ? FIXED_WHO[who] : undefined;
+    if (fixed && actor !== undefined && fixed.actors.includes(actor)) return t(fixed.key);
     if (!ID_LIKE.test(who) || (actor !== undefined && !person)) return person ? who : clean(who);
     if (who === me.data?.userId) return t("you");
     return actor === "human" ? t("reviewer") : t("member");

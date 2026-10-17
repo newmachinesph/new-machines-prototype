@@ -55,12 +55,45 @@ describe("ApprovalCard", () => {
   it("shows a real run's step as an action, not an email", () => {
     renderWithIntl(<ApprovalCard approval={real(false)} onDecide={() => {}} />);
     expect(screen.getByRole("heading", { name: "Action" })).toBeInTheDocument();
-    expect(screen.getByText("Google Sheets")).toBeInTheDocument();
+    // QA3 #2: the action reads "App: Tool name", never the tool's id.
+    expect(screen.getByText("Google Sheets: Append rows")).toBeInTheDocument();
+    expect(screen.queryByText("googlesheets.append_rows")).not.toBeInTheDocument();
     expect(screen.getByText("write")).toBeInTheDocument();
     expect(screen.getByText("12 orders reconciled.")).toBeInTheDocument();
     expect(screen.queryByText(/email/i)).not.toBeInTheDocument();
     expect(screen.queryByText("Simulated")).not.toBeInTheDocument();
     expect(screen.getByText(/Declining stops the run/)).toBeInTheDocument();
+  });
+
+  it("drops the step row when the step is the app's own step", () => {
+    // The run page labels an app step "App: <tool id as words>", which need not match the tool's name.
+    const approval = real(false);
+    approval.action = { ...approval.action!, step: "Google Sheets: append rows", operation: "Add rows" };
+    renderWithIntl(<ApprovalCard approval={approval} onDecide={() => {}} />);
+    expect(screen.queryByText("Step")).not.toBeInTheDocument();
+    expect(screen.queryByText("Google Sheets: append rows")).not.toBeInTheDocument();
+    expect(screen.getByText("Google Sheets: Add rows")).toBeInTheDocument();
+  });
+
+  it("names the digest in the interface language, with the policy line from a key", () => {
+    const approval = real(false);
+    approval.digest = [
+      { label: "Run", value: "October reconciliation" },
+      { label: "Policy", value: "Your workspace's policy requires approval before this step writes to your apps." },
+      { label: "Decided by", value: "Ana" },
+    ];
+    const { unmount } = renderWithIntl(<ApprovalCard approval={approval} onDecide={() => {}} />);
+    expect(screen.getByText("Run").nextElementSibling).toHaveTextContent("October reconciliation");
+    expect(screen.getByText("Policy").nextElementSibling).toHaveTextContent(/^Your workspace's policy requires/);
+    expect(screen.getByText("Decided by").nextElementSibling).toHaveTextContent("Ana");
+    unmount();
+    renderWithIntl(<ApprovalCard approval={approval} onDecide={() => {}} />, { locale: "ja" });
+    expect(screen.getByText("実行").nextElementSibling).toHaveTextContent("October reconciliation");
+    expect(screen.getByText("ポリシー").nextElementSibling).toHaveTextContent(
+      "ワークスペースのポリシーにより、このステップがアプリに書き込む前に承認が必要です。",
+    );
+    expect(screen.getByText("決定者").nextElementSibling).toHaveTextContent("Ana");
+    expect(screen.queryByText(/policy\/default|APPROVAL_REQUIRED/)).not.toBeInTheDocument();
   });
 
   it("labels the step simulated only when its call is mocked", () => {
@@ -82,17 +115,28 @@ describe("ApprovalCard", () => {
           mocked: true,
           count: 3,
         },
-        { app: "Gmail", step: "other_step", tool: "gmail.create_draft", operation: "create draft", mocked: false },
+        {
+          app: "Gmail",
+          step: "Gmail: create draft",
+          tool: "gmail.create_draft",
+          operation: "create draft",
+          mocked: false,
+        },
       ],
     };
     renderWithIntl(<ApprovalCard approval={approval} onDecide={() => {}} />);
     expect(screen.getByRole("heading", { name: "Also covered by this approval" })).toBeInTheDocument();
     const row = screen.getByText("ledger_notes").closest("div")!;
-    expect(within(row).getByText(/Custom business app/)).toBeInTheDocument();
+    expect(within(row).getByText("Custom business app: Add ledger note")).toBeInTheDocument();
     expect(within(row).getByText(/× 3/)).toBeInTheDocument();
+    expect(screen.queryByText("x.add_ledger_note")).not.toBeInTheDocument();
     expect(screen.getByText("Runs against sandbox data. Nothing changes in Custom business app.")).toBeInTheDocument();
     expect(within(row).getByText("Simulated")).toBeInTheDocument();
-    expect(within(screen.getByText("other_step").closest("div")!).queryByText("Simulated")).not.toBeInTheDocument();
+    // An app's own step is named once, by its action, with only the count and the Simulated tag as the value.
+    expect(screen.queryByText("Gmail: create draft")).not.toBeInTheDocument();
+    expect(screen.getAllByText(/Gmail: Create draft/)).toHaveLength(1);
+    const draft = screen.getByText("Gmail: Create draft").closest("div")!;
+    expect(within(draft).queryByText("Simulated")).not.toBeInTheDocument();
     expect(screen.getByText(/the 2 steps listed under it/)).toBeInTheDocument();
   });
 
@@ -128,6 +172,8 @@ describe("ApprovalCard", () => {
     renderWithIntl(<ApprovalCard approval={real(false, "GRANTED")} onDecide={() => {}} />);
     expect(screen.getByText("Approved. The run goes on with this step.")).toBeInTheDocument();
     expect(screen.queryByText(/sha256/)).not.toBeInTheDocument();
+    // No raw ids on the card: the approval's id is not shown.
+    expect(screen.queryByText(/apr_run_2001/)).not.toBeInTheDocument();
   });
 
   it("keeps the email preview for demo approvals", () => {

@@ -45,6 +45,9 @@ export type Connection = ApiConnection & { revoked: RevokedGrant[] };
 /** Who did a piece of work. Drives colour + glyph everywhere. */
 export type Actor = "machine" | "human" | "policy" | "system" | "buyer";
 export type RunStatus = Run["status"];
+/** The statuses a run never leaves: its record, its spend and its receipt are final. */
+const FINISHED_RUN_STATUSES: readonly RunStatus[] = ["COMPLETED", "FAILED", "CANCELLED"];
+export const isFinishedRun = (status: RunStatus): boolean => FINISHED_RUN_STATUSES.includes(status);
 export type NodeStatus = RunNode["status"];
 export type NodeType = RunNode["type"];
 export type HumanTaskState = HumanTask["state"];

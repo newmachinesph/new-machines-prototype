@@ -25,10 +25,14 @@ log = logging.getLogger(__name__)
 LIST_LIMIT = 100
 OPEN_STATUSES = {"human": "open", "approval": "pending"}
 LOST_REASON = "The workflow engine lost this run, so it could not continue."
-# The run's title and pinned connector definitions come along so a row maps onto the API models alone.
+# The run's title, its step labels and pinned connector definitions come along so a row maps onto the API
+# models alone.
 _SELECT = (
     "SELECT t.id, t.run_id, t.node_id, t.kind, t.status, t.payload, t.result, t.created_at, t.decided_by, "
-    "t.decided_at, r.projection->>'title' AS run_title, r.snapshot->'defs'->'connector' AS connectors "
+    "t.decided_at, r.projection->>'title' AS run_title, "
+    "(SELECT jsonb_agg(jsonb_build_object('id', n->'id', 'label', n->'label')) "
+    "FROM jsonb_array_elements(r.projection->'nodes') n) AS run_nodes, "
+    "r.snapshot->'defs'->'connector' AS connectors "
     "FROM run_tasks t JOIN runs r ON r.id = t.run_id WHERE r.org_id = %s AND t.kind = %s"
 )
 
