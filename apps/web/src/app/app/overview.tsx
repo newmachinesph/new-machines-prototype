@@ -20,6 +20,7 @@ import {
 } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useNow } from "@/lib/clock";
+import { usePackText } from "@/lib/content-text";
 import { sumMoney } from "@/lib/format";
 import { usePacks } from "@/lib/queries/catalog";
 import { missingApps, useAttention, useConnections } from "@/lib/queries/org";
@@ -211,6 +212,7 @@ export function Overview() {
   const runs = useRuns();
   const attention = useAttention();
   const packs = usePacks();
+  const packText = usePackText();
   // The welcome tour waits for the page's own data, so it never opens over a skeleton.
   useAutoTour("welcome", [usage, runs, attention, packs].every(isSettled));
 
@@ -277,7 +279,8 @@ export function Overview() {
                       <ul className="divide-y divide-rule">
                         {rows.map((r) => {
                           // The pack is named once: under the title only when the run is called something else.
-                          const packName = allPacks.find((p) => p.slug === r.packSlug)?.name;
+                          const found = allPacks.find((p) => p.slug === r.packSlug);
+                          const packName = found ? packText(found).name : undefined;
                           const sub = packName && packName !== r.title ? packName : undefined;
                           const when = ago(r.startedAt);
                           const body = (
@@ -377,7 +380,7 @@ export function Overview() {
                             >
                               <PackIcon slug={p.slug} className="size-7" />
                               <div className="min-w-0 flex-1">
-                                <div className="truncate text-sm">{p.name}</div>
+                                <div className="truncate text-sm">{packText(p).name}</div>
                                 {runs.data ? (
                                   <div className="text-xs text-muted">
                                     {last ? t("lastRun", { when: ago(last) }) : t("noRunsYet")}

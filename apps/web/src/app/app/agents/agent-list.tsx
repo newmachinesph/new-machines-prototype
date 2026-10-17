@@ -8,6 +8,7 @@ import { INTL_TAGS, resolveLocale } from "@/i18n/locales";
 import { QueryState } from "@/components/query-state";
 import { Skeleton } from "@/components/skeleton";
 import { ActorGlyph, Pill, SimTag } from "@/components/ui";
+import { useAgentText, usePackText } from "@/lib/content-text";
 import { useFeeLabel } from "@/lib/listing-fee";
 import { useAgents } from "@/lib/queries/catalog";
 import { shownVersion } from "@/lib/shown-version";
@@ -24,6 +25,7 @@ export function AgentList() {
   const t = useTranslations("agents.list");
   const agents = useAgents();
   const label = useCapabilityLabel();
+  const agentText = useAgentText();
   const [q, setQ] = useQueryState("q", parseAsString.withDefault(""));
 
   return (
@@ -31,7 +33,8 @@ export function AgentList() {
       {(all) => {
         if (all.length === 0) return <p className="panel px-5 py-10 text-center text-sm text-muted">{t("empty")}</p>;
         const needle = q.trim().toLowerCase();
-        const shown = all.filter((a) => matches(a, needle, label));
+        // A search matches the words on the card and the API's English behind them.
+        const shown = all.filter((a) => matches(a, needle, label) || matches(agentText(a), needle, label));
         return (
           <div className="space-y-4">
             <label className="flex h-9 max-w-xl items-center gap-2 rounded-md border border-rule bg-paper px-3 focus-within:border-grey-500">
@@ -71,12 +74,15 @@ export function AgentList() {
  * The name is the link and stretches over the whole card, so the packs that use the agent can be links of
  * their own (an anchor inside an anchor is not allowed).
  */
-function AgentCard({ agent: a }: { agent: Agent }) {
+function AgentCard({ agent }: { agent: Agent }) {
   const t = useTranslations("agents.list");
   const tl = useTranslations("listedMarket");
   const fee = useFeeLabel();
   const label = useCapabilityLabel();
   const locale = resolveLocale(useLocale());
+  // Our own agents read in the interface language, and so do the packs of ours that use them.
+  const a = useAgentText()(agent);
+  const packText = usePackText();
   return (
     <li className="panel relative flex h-full flex-col p-5 transition-colors hover:border-grey-300">
       <div className="flex items-start gap-2">
@@ -136,7 +142,7 @@ function AgentCard({ agent: a }: { agent: Agent }) {
                   href={`/app/marketplace/${encodeURIComponent(p.slug)}`}
                   className="link relative z-10 inline-block py-1 text-ink"
                 >
-                  {p.name}
+                  {packText({ ...p, certified: a.certified }).name}
                 </Link>
               );
             })}

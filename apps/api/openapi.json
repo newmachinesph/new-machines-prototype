@@ -2003,7 +2003,7 @@
           "memory"
         ],
         "summary": "Add Memory",
-        "description": "Add a memory of the org's own, in use from its agents' next run. Owners and admins only (403\nPOLICY_DENIED); 422 for a space the org cannot read.",
+        "description": "Add a memory of the org's own, in use from its agents' next run. Owners and admins only (403\nPOLICY_DENIED); 422 for a space the org cannot read or, in the live workspace, that none of its packs\nuses.",
         "operationId": "addMemory",
         "requestBody": {
           "content": {
@@ -2090,7 +2090,7 @@
           "memory"
         ],
         "summary": "List Memory Spaces",
-        "description": "The memory spaces the org may add its own memory to: the ones it may read, by name.",
+        "description": "The memory spaces the org may add its own memory to: in the live workspace, the readable ones a pack\nit has added uses (none until it adds a pack); in the demo, every one it may read.",
         "operationId": "listMemorySpaces",
         "responses": {
           "200": {

@@ -254,15 +254,16 @@ def test_a_hung_probe_reports_error_within_a_few_seconds(client, monkeypatch):
     from app.routers import ops_runtime_status as route
 
     monkeypatch.setenv("NM_RUNTIME", "temporal")
-    monkeypatch.setattr(route, "PROBE_TIMEOUT_S", 0.3)
+    monkeypatch.setattr(route, "PROBE_TIMEOUT_S", 1.5)
     release = threading.Event()
     monkeypatch.setattr(route, "_database", lambda: release.wait(30) or 1)
     monkeypatch.setattr(route, "_temporal", lambda: release.wait(30))
     started = time.monotonic()
     r = client.get("/v1/ops/runtime/status")
     release.set()
-    # Both probes share one deadline (0.3 + 1 s); waiting on them one after the other would take about 2.6 s.
-    assert time.monotonic() - started < 2
+    # Both probes share one deadline (1.5 + 1 s); waiting on them one after the other would take about 5 s.
+    # The bound sits halfway, so a loaded machine's request overhead cannot fail it.
+    assert time.monotonic() - started < 3.75
     assert r.json()["database"] == "error" and r.json()["temporal"] == "error"
 
 

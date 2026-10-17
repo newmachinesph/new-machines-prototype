@@ -8,6 +8,7 @@ import { ActorGlyph, Button, ButtonLink, Callout, EmptyState, Id, Pill, Section 
 import { QueryState } from "@/components/query-state";
 import { Skeleton } from "@/components/skeleton";
 import { useErrorText } from "@/lib/api/use-error-text";
+import { useSpaceName } from "@/lib/content-text";
 import type { MemoryItem } from "@/lib/types";
 import { useMe } from "@/lib/queries/me";
 import { useAddMemory, useMemory, useMemorySpaces, useRetractMemory, useReviewMemory } from "@/lib/queries/workspace";
@@ -42,6 +43,7 @@ function MemoryCandidate({
   const t = useTranslations("memory.candidate");
   const tc = useTranslations("common");
   const sourceLabel = useSourceLabel();
+  const spaceName = useSpaceName();
   const errorText = useErrorText();
   // The outcome comes from the cached item; only the fact that you edited is kept here.
   const [edited, setEdited] = useState(false);
@@ -93,7 +95,7 @@ function MemoryCandidate({
               sourceLabel(m.source)
             )}
           </span>
-          <span>{t("appliesTo", { name: m.scopeName })}</span>
+          <span>{t("appliesTo", { name: spaceName(m.scopeName) })}</span>
         </div>
         {conflict ? (
           <div className="mt-4 rounded-[10px] border border-rule bg-stage px-4 py-3 text-sm">
@@ -189,6 +191,7 @@ type Row = MemoryItem;
 function MemoryRow({ item: m, onRetract }: { item: Row; onRetract?: () => void }) {
   const t = useTranslations("memory.row");
   const sourceLabel = useSourceLabel();
+  const spaceName = useSpaceName();
   const { dateTime } = useFormat();
   const state = m.retracted ? "RETRACTED" : m.state;
   return (
@@ -196,7 +199,7 @@ function MemoryRow({ item: m, onRetract }: { item: Row; onRetract?: () => void }
       <div className="min-w-0">
         <p className="text-sm">{m.text}</p>
         <div className="mt-1 flex flex-wrap gap-x-3 text-xs text-muted">
-          <span>{t("appliesTo", { name: m.scopeName })}</span>
+          <span>{t("appliesTo", { name: spaceName(m.scopeName) })}</span>
           <span>{sourceLabel(m.source)}</span>
           <span>{dateTime(m.createdAt)}</span>
           {m.usedIn ? <span>{t("usedIn", { n: m.usedIn })}</span> : null}
@@ -233,8 +236,9 @@ function AddMemory() {
   const [space, setSpace] = useState("");
   const [text, setText] = useState("");
   const spaces = useMemorySpaces(open);
+  const spaceName = useSpaceName();
   const add = useAddMemory();
-  const items = (spaces.data ?? []).map((s) => ({ value: s.id, label: s.name }));
+  const items = (spaces.data ?? []).map((s) => ({ value: s.id, label: spaceName(s.name, s.id) }));
   // The first space applies until a person picks another.
   const chosen = items.some((s) => s.value === space) ? space : (items[0]?.value ?? "");
   const trimmed = text.trim();

@@ -20,9 +20,11 @@ import {
 import { ApiError } from "@/lib/api/errors";
 import type { MarketplaceListing } from "@/lib/api/gen/types.gen";
 import { useErrorText } from "@/lib/api/use-error-text";
+import { useAgentText, usePackText } from "@/lib/content-text";
 import { useFeeLabel } from "@/lib/listing-fee";
 import { useAgentById, useAgents, usePack, useUpgradePack } from "@/lib/queries/catalog";
 import { useIsLive } from "@/lib/queries/me";
+import { useRegionName } from "@/lib/region-name";
 import { shownVersion } from "@/lib/shown-version";
 import type { Pack } from "@/lib/types";
 import { useFormat } from "@/lib/use-format";
@@ -84,6 +86,9 @@ export function PackPage({ slug }: { slug: string }) {
   const fee = useFeeLabel();
   const { money, list } = useFormat();
   const label = useCapabilityLabel();
+  const packText = usePackText();
+  const agentText = useAgentText();
+  const regionName = useRegionName();
   const packQuery = usePack(slug);
   const agentsQuery = useAgents();
   const agentById = useAgentById();
@@ -93,9 +98,11 @@ export function PackPage({ slug }: { slug: string }) {
 
   return (
     <QueryState query={packQuery} skeleton={<Skeleton className="h-96" />}>
-      {(p) => (
+      {(pack) => (
         <QueryState query={agentsQuery} skeleton={<Skeleton className="h-96" />}>
           {() => {
+            // Our own pack reads in the interface language (its agents below too); any other as the API sent it.
+            const p = packText(pack);
             const passport = p.passport;
             const editCopy =
               live && canBuild && p.copyable ? (
@@ -152,8 +159,9 @@ export function PackPage({ slug }: { slug: string }) {
                     <Section title={t("whoWorks")}>
                       <ul className="divide-y divide-rule">
                         {p.agents.map((id) => {
-                          const a = agentById(id);
-                          if (!a) return null;
+                          const found = agentById(id);
+                          if (!found) return null;
+                          const a = agentText(found);
                           return (
                             <li key={id} className="px-5 py-4">
                               <div className="flex items-center gap-2 font-medium">
@@ -303,7 +311,7 @@ export function PackPage({ slug }: { slug: string }) {
                       <div className="px-5 py-2">
                         <KeyValues
                           rows={[
-                            { label: t("processedIn"), value: list(p.regions) },
+                            { label: t("processedIn"), value: list(p.regions.map(regionName)) },
                             {
                               label: t("riskClass"),
                               value: (

@@ -14,7 +14,14 @@ vi.mock("nuqs", () => ({
   },
 }));
 vi.mock("@/lib/queries/catalog", () => ({
-  usePacks: () => ({ isPending: false, isError: false, data: [{ slug: "org-a1--nudges", name: "Invoice nudges" }] }),
+  usePacks: () => ({
+    isPending: false,
+    isError: false,
+    data: [
+      { slug: "org-a1--nudges", name: "Invoice nudges" },
+      { slug: "order-payment-reconciliation", name: "Order & Payment Reconciliation", certified: true },
+    ],
+  }),
 }));
 
 const zero = { amountMinor: 0, currency: "USD" as const };
@@ -37,6 +44,22 @@ const table = () => within(screen.getByRole("table"));
 const cards = () => within(screen.getByRole("list"));
 
 describe("RunsBrowser", () => {
+  it("names our own pack in Japanese in the pack column and filter, and still finds it by its English", async () => {
+    const recon = run("run_1", { packSlug: "order-payment-reconciliation", title: "Reconcile Oct 6-12" });
+    renderWithIntl(<RunsBrowser runs={[recon, run("run_2")]} linkable={["run_1"]} />, { locale: "ja" });
+    expect(table().getByText("注文と入金の照合")).toBeInTheDocument();
+    expect(screen.queryByText("Order & Payment Reconciliation")).toBeNull();
+    // The team's own pack keeps its name.
+    expect(table().getByText("Invoice nudges")).toBeInTheDocument();
+    const search = screen.getByRole("searchbox");
+    await userEvent.type(search, "Payment");
+    expect(table().getByRole("link", { name: "Reconcile Oct 6-12" })).toBeInTheDocument();
+    expect(table().queryByText("Invoice nudges: run_2")).toBeNull();
+    await userEvent.clear(search);
+    await userEvent.type(search, "照合");
+    expect(table().getByRole("link", { name: "Reconcile Oct 6-12" })).toBeInTheDocument();
+  });
+
   it("labels a sandbox test run and only that run", () => {
     renderWithIntl(<RunsBrowser runs={[run("run_1", { sandboxTest: true }), run("run_2")]} linkable={["run_1"]} />);
     expect(table().getAllByText("Sandbox test")).toHaveLength(1);

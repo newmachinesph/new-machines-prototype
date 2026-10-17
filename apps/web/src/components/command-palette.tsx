@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { cn } from "@/lib/cn";
+import { useCategoryName, usePackText } from "@/lib/content-text";
 import { usePacks } from "@/lib/queries/catalog";
 import { useRuns } from "@/lib/queries/runs";
 import { useEligibleTasks } from "@/lib/queries/tasks";
@@ -55,6 +56,8 @@ type Records = {
   packs?: ListWorkflowPacksResponse;
   tasks?: ListEligibleHumanTasksResponse;
 };
+/** Our own packs and the taxonomy's names in the interface language (lib/content-text). */
+type ContentText = { pack: ReturnType<typeof usePackText>; category: ReturnType<typeof useCategoryName> };
 
 function buildGroups(
   pages: PageEntry[],
@@ -62,6 +65,7 @@ function buildGroups(
   { runs = [], approvals = [], packs = [], tasks = [] }: Records,
   t: Translate,
   runHint: (run: RunSummary) => string,
+  text: ContentText,
 ): Group[] {
   return [
     {
@@ -121,14 +125,18 @@ function buildGroups(
     {
       id: "packs",
       label: t("groups.packs"),
-      items: packs.map((p) => ({
-        id: p.slug,
-        label: p.name,
-        hint: p.installed ? t("hired") : p.category,
-        href: `/app/marketplace/${p.slug}`,
-        keywords: `${p.outcome} ${p.publisher} ${p.category}`,
-        pack: p.slug,
-      })),
+      items: packs.map((pack) => {
+        // The row reads in the interface language; a search still matches the API's English behind it.
+        const p = text.pack(pack);
+        return {
+          id: p.slug,
+          label: p.name,
+          hint: p.installed ? t("hired") : text.category(p.category),
+          href: `/app/marketplace/${p.slug}`,
+          keywords: `${pack.name} ${pack.outcome} ${p.outcome} ${p.publisher} ${p.category} ${text.category(p.category)}`,
+          pack: p.slug,
+        };
+      }),
     },
     {
       id: "tasks",
@@ -171,6 +179,8 @@ export function CommandPalette({ pages, actions = [] }: { pages: PageEntry[]; ac
   const t = useTranslations("nav.palette");
   const status = useTranslations("status");
   const { ago } = useFormat();
+  const packText = usePackText();
+  const categoryName = useCategoryName();
   const demo = useIsDemo();
   const open = useUi((s) => s.paletteOpen);
   const onOpenChange = useUi((s) => s.setPaletteOpen);
@@ -212,6 +222,7 @@ export function CommandPalette({ pages, actions = [] }: { pages: PageEntry[]; ac
     { runs: runs.data, approvals: approvals.data, packs: packs.data, tasks: tasks.data },
     t,
     (r) => t("runHint", { status: status(r.status), when: ago(r.startedAt) }),
+    { pack: packText, category: categoryName },
   );
   const close = () => onOpenChange(false);
 

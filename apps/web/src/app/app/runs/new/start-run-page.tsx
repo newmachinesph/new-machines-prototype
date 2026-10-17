@@ -5,6 +5,7 @@ import { useQueryState } from "nuqs";
 import { QueryState } from "@/components/query-state";
 import { Skeleton } from "@/components/skeleton";
 import { ButtonLink, Callout, PageHeader } from "@/components/ui";
+import { usePackText } from "@/lib/content-text";
 import { usePacks } from "@/lib/queries/catalog";
 import { isUsable, missingApps, useConnections, useOrg } from "@/lib/queries/org";
 import { packRunFee } from "@/lib/run-budget";
@@ -24,6 +25,7 @@ const INPUTS: Record<string, string[]> = {
 function useBlocked(hired: Pack[], conns: Connection[], org: Organization | undefined) {
   const t = useTranslations("runs.new");
   const { list, money } = useFormat();
+  const packText = usePackText();
   const capReached = org !== undefined && org.monthSpent.amountMinor >= org.monthlyCap.amountMinor;
   const blocked: Record<string, Refusal | undefined> = {};
   for (const p of hired) {
@@ -33,7 +35,7 @@ function useBlocked(hired: Pack[], conns: Connection[], org: Organization | unde
     );
     if (missing.length)
       blocked[p.slug] = {
-        text: t("appsMissing", { apps: list(missing), name: p.name }),
+        text: t("appsMissing", { apps: list(missing), name: packText(p).name }),
         href: "/app/connections",
         action: t("goConnections"),
       };
@@ -50,13 +52,14 @@ function useBlocked(hired: Pack[], conns: Connection[], org: Organization | unde
 function StartRunBody({ list, conns, pack }: { list: Pack[]; conns: Connection[]; pack: string | null }) {
   const t = useTranslations("runs.new");
   const org = useOrg();
+  const packText = usePackText();
   const hired = list.filter((p) => p.installed);
   const blocked = useBlocked(hired, conns, org.data);
   // Connected or sandbox: the API's start gate has the final say on which apps count.
   const connected = new Set(conns.filter(isUsable).map((c) => c.app));
   const startable = hired.map((p) => ({
     slug: p.slug,
-    name: p.name,
+    name: packText(p).name,
     inputs: p.connectors.filter((c) => connected.has(c.app)).flatMap((c) => INPUTS[c.app] ?? []),
     perRunCap: p.perRunCap,
     maxBudget: p.maxBudget,
@@ -66,7 +69,10 @@ function StartRunBody({ list, conns, pack }: { list: Pack[]; conns: Connection[]
   // A `?pack=` that can't be started (not hired, or unknown) is explained, and the form waits: another pack is
   // never chosen in its place.
   const unstartable = pack && !startable.some((p) => p.slug === pack) ? pack : null;
-  if (unstartable) return <UnstartablePack slug={unstartable} name={list.find((p) => p.slug === unstartable)?.name} />;
+  if (unstartable) {
+    const found = list.find((p) => p.slug === unstartable);
+    return <UnstartablePack slug={unstartable} name={found ? packText(found).name : undefined} />;
+  }
   return (
     <>
       {startable.length ? (

@@ -16,6 +16,7 @@ const data = vi.hoisted(() => ({
 const RECON = {
   slug: "order-payment-reconciliation",
   name: "Order & Payment Reconciliation",
+  certified: true,
   installed: true,
   connectors: [{ app: "Shopify" }, { app: "Stripe" }],
 };
@@ -40,6 +41,7 @@ vi.mock("./start-run-form", () => ({
   }: {
     packs: {
       slug: string;
+      name: string;
       inputs: string[];
       perRunCap?: { amountMinor: number };
       maxBudget?: { amountMinor: number };
@@ -60,6 +62,11 @@ vi.mock("./start-run-form", () => ({
       {packs.map((p) => (
         <p key={`${p.slug}-terms`}>
           {p.slug} max: {p.maxBudget?.amountMinor ?? "none"}; fee: {p.packFee?.amountMinor ?? "none"}
+        </p>
+      ))}
+      {packs.map((p) => (
+        <p key={`${p.slug}-name`}>
+          {p.slug} named {p.name}
         </p>
       ))}
       {Object.entries(blocked).map(([slug, r]) => (
@@ -145,6 +152,16 @@ describe("StartRunPage", () => {
     renderWithIntl(<StartRunPage />, { locale: "ja" });
     expect(screen.getByRole("status")).toHaveTextContent("Catalog Localizationはまだ追加されていないため");
     expect(screen.getByRole("link", { name: "このパックを追加" })).toBeInTheDocument();
+  });
+
+  it("gives the form our own pack's Japanese name, and names it so when its apps are missing", () => {
+    data.packs = [RECON, { ...LOCALIZATION, installed: true }];
+    data.conns = [];
+    renderWithIntl(<StartRunPage />, { locale: "ja" });
+    expect(screen.getByText("order-payment-reconciliation named 注文と入金の照合")).toBeInTheDocument();
+    // A pack that is not ours keeps the name the API sent.
+    expect(screen.getByText("catalog-localization-en-ja named Catalog Localization")).toBeInTheDocument();
+    expect(screen.getByText(/blocked order-payment-reconciliation: 注文と入金の照合/)).toBeInTheDocument();
   });
 
   it("passes each pack's maximum budget and its publisher's fee per run", () => {

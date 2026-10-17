@@ -40,6 +40,7 @@ const RECON = {
   slug: "order-payment-reconciliation",
   name: "Order & Payment Reconciliation",
   version: "1.0.0",
+  certified: true,
   installed: false,
   connectors: [{ app: "Shopify" }, { app: "Stripe" }],
 };
@@ -263,5 +264,14 @@ describe("Overview in the demo workspace", () => {
     data.demo = true;
     renderWithIntl(<Overview />, { locale: "ja" });
     expect(screen.getByText("10月は残り19日")).toBeInTheDocument();
+  });
+
+  it("names our own pack in Japanese under a recent run and in Your packs", () => {
+    data.runs = [RUN];
+    data.packs = [{ ...RECON, installed: true }];
+    renderWithIntl(<Overview />, { locale: "ja" });
+    // Under the run's title (the run is called something else) and as the added pack.
+    expect(screen.getAllByText("注文と入金の照合").length).toBeGreaterThanOrEqual(2);
+    expect(screen.queryByText("Order & Payment Reconciliation")).toBeNull();
   });
 });

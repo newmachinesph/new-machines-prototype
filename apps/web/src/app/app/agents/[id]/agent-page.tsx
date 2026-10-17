@@ -9,8 +9,10 @@ import { QueryState } from "@/components/query-state";
 import { Skeleton } from "@/components/skeleton";
 import { Id, KeyValues, PageHeader, Pill, Section, SimTag } from "@/components/ui";
 import { ApiError } from "@/lib/api/errors";
+import { useAgentText, usePackText } from "@/lib/content-text";
 import { useFeeLabel } from "@/lib/listing-fee";
 import { useAgent } from "@/lib/queries/catalog";
+import { useRegionName } from "@/lib/region-name";
 import { shownVersion } from "@/lib/shown-version";
 import { useFormat } from "@/lib/use-format";
 import type { Agent } from "@/lib/types";
@@ -26,12 +28,16 @@ export function AgentPage({ id }: { id: string }) {
   );
 }
 
-function AgentDetail({ agent: a }: { agent: Agent }) {
+function AgentDetail({ agent }: { agent: Agent }) {
   const t = useTranslations("agents.detail");
   const tl = useTranslations("listedMarket");
   const fee = useFeeLabel();
   const { list } = useFormat();
   const label = useCapabilityLabel();
+  // Our own agent reads in the interface language, with the packs of ours that use it and its regions.
+  const a = useAgentText()(agent);
+  const packText = usePackText();
+  const regionName = useRegionName();
   const muted = (text: string) => <span className="text-muted">{text}</span>;
 
   return (
@@ -112,7 +118,9 @@ function AgentDetail({ agent: a }: { agent: Agent }) {
                       className="flex items-center gap-3 rounded-md border border-rule p-3 transition-colors hover:border-grey-300"
                     >
                       <PackIcon slug={p.slug} />
-                      <span className="min-w-0 flex-1 text-sm font-medium">{p.name}</span>
+                      <span className="min-w-0 flex-1 text-sm font-medium">
+                        {packText({ ...p, certified: a.certified }).name}
+                      </span>
                       <ChevronRight className="size-4 shrink-0 text-grey-500" aria-hidden />
                     </Link>
                   </li>
@@ -142,7 +150,7 @@ function AgentDetail({ agent: a }: { agent: Agent }) {
                       muted(t("noTools"))
                     ),
                   },
-                  { label: t("regions"), value: list(a.regions) },
+                  { label: t("regions"), value: list(a.regions.map(regionName)) },
                 ]}
               />
             </div>

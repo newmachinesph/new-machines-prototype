@@ -53,7 +53,8 @@ describe("AgentPage", () => {
     expect(screen.getByText("Explain mismatch")).toBeInTheDocument();
     expect(screen.getByText("shopify.list_orders")).toBeInTheDocument();
     expect(screen.getByText("Reasoning model")).toBeInTheDocument();
-    expect(screen.getByText("asia-south1")).toBeInTheDocument();
+    // The region reads as Settings shows it, place first.
+    expect(screen.getByText("Mumbai (asia-south1)")).toBeInTheDocument();
     expect(screen.queryByText("Sample")).not.toBeInTheDocument();
   });
 

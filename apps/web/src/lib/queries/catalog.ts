@@ -15,6 +15,7 @@ import {
   suggestWorkflowPackMutation,
   upgradeWorkflowPackMutation,
 } from "@/lib/api/gen/@tanstack/react-query.gen";
+import { useAgentText, usePackText } from "../content-text";
 import { byOperation, useOrgId } from "./me";
 
 export const usePacks = (enabled = true) => useQuery({ ...listWorkflowPacksOptions(), enabled });
@@ -24,10 +25,14 @@ export const useAgents = () => useQuery({ ...listAgentsOptions(), staleTime: Inf
 
 export const useAgent = (id: string) => useQuery(getAgentOptions({ path: { agent_id: id } }));
 
-/** An agent's name for breadcrumbs; shares the agent page's query, so it costs no extra request there. */
+/**
+ * An agent's name for breadcrumbs, in the interface language for our own agents; shares the agent page's query,
+ * so it costs no extra request there.
+ */
 export function useAgentName(id: string | undefined) {
   const { data } = useQuery({ ...getAgentOptions({ path: { agent_id: id ?? "" } }), enabled: id !== undefined });
-  return id ? data?.name : undefined;
+  const agentText = useAgentText();
+  return id && data ? agentText(data).name : undefined;
 }
 
 export function useAgentById() {
@@ -35,10 +40,12 @@ export function useAgentById() {
   return useCallback((id: string) => data?.find((a) => a.id === id), [data]);
 }
 
-/** Pack names for breadcrumbs and rows, from the cached list. */
+/** Pack names for breadcrumbs and rows, from the cached list, in the interface language for our own packs. */
 export function usePackName(slug: string | undefined) {
   const { data } = usePacks();
-  return slug ? data?.find((p) => p.slug === slug)?.name : undefined;
+  const packText = usePackText();
+  const pack = slug ? data?.find((p) => p.slug === slug) : undefined;
+  return pack ? packText(pack).name : undefined;
 }
 
 /** What an add or an update of a pack changes: the lists and details, the Studio's pack list, the needed apps. */

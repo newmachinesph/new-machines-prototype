@@ -147,15 +147,24 @@ describe("AgentList", () => {
   });
 
   it("is translated into Japanese", () => {
+    state.result = ok([
+      ...(state.result.data as Agent[]),
+      agent({ id: "org-5c81-helper", name: "Helper", publisher: "Acme Labs", builtByTeam: true, certified: false, usedBy: [recon] }),
+    ]);
     renderWithIntl(<AgentList />, { locale: "ja" });
     expect(screen.getByRole("searchbox", { name: "エージェントを検索" })).toBeInTheDocument();
-    expect(screen.getByText(/1件のパックで使用：/)).toBeInTheDocument();
+    expect(screen.getAllByText(/1件のパックで使用：/)).toHaveLength(2);
     expect(screen.getByText("入金の照合")).toBeInTheDocument();
     // An id with no label stays the id, not half-English words; the pack list has no stray space after the colon.
     expect(screen.getByText("team.triage")).toBeInTheDocument();
     expect(screen.queryByText("Team triage")).toBeNull();
     expect(screen.getByText("チームの業務を支援")).toBeInTheDocument();
-    expect(card("Finance Agent").textContent).toMatch(/1件のパックで使用：Order & Payment Reconciliation/);
+    // Our own agent and the pack of ours that uses it read in Japanese; a sample agent keeps its English.
+    expect(card("財務エージェント").textContent).toMatch(/1件のパックで使用：注文と入金の照合/);
+    expect(screen.queryByText("Finance Agent")).toBeNull();
+    expect(card("Invoice Agent")).toBeInTheDocument();
+    // A team agent is not ours: neither it nor the packs it names are overlaid, whatever their slug.
+    expect(card("Helper").textContent).toMatch(/1件のパックで使用：Order & Payment Reconciliation/);
   });
 
   it("joins the packs with the language's own list format, each a link", () => {

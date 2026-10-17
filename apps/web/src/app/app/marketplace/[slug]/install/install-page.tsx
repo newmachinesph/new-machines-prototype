@@ -6,12 +6,14 @@ import { QueryState } from "@/components/query-state";
 import { Skeleton } from "@/components/skeleton";
 import { PageHeader } from "@/components/ui";
 import { ApiError } from "@/lib/api/errors";
+import { usePackText } from "@/lib/content-text";
 import { useAgents, usePack } from "@/lib/queries/catalog";
 import { useIsLive } from "@/lib/queries/me";
 import { InstallReview } from "./install-review";
 
 export function InstallPage({ slug }: { slug: string }) {
   const t = useTranslations("marketplace.install");
+  const packText = usePackText();
   const packQuery = usePack(slug);
   const agentsQuery = useAgents();
   const live = useIsLive();
@@ -22,7 +24,8 @@ export function InstallPage({ slug }: { slug: string }) {
       {(p) => {
         // Settings for an added pack are live only; the demo keeps the add flow for an added pack.
         const settings = p.installed && live;
-        const heading = settings ? t("settingsTitle", { name: p.name }) : t("hire", { name: p.name });
+        const { name } = packText(p);
+        const heading = settings ? t("settingsTitle", { name }) : t("hire", { name });
         return (
           <>
             <title>{`${heading} | New Machines`}</title>

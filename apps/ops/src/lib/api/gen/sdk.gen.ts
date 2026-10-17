@@ -432,7 +432,8 @@ export const listMemory = <ThrowOnError extends boolean = false>(options?: Optio
  * Add Memory
  *
  * Add a memory of the org's own, in use from its agents' next run. Owners and admins only (403
- * POLICY_DENIED); 422 for a space the org cannot read.
+ * POLICY_DENIED); 422 for a space the org cannot read or, in the live workspace, that none of its packs
+ * uses.
  */
 export const addMemory = <ThrowOnError extends boolean = false>(options: Options<AddMemoryData, ThrowOnError>): RequestResult<AddMemoryResponses, AddMemoryErrors, ThrowOnError> => (options.client ?? client).post<AddMemoryResponses, AddMemoryErrors, ThrowOnError>({
     requestValidator: async (data) => await z.object({
@@ -453,7 +454,8 @@ export const addMemory = <ThrowOnError extends boolean = false>(options: Options
 /**
  * List Memory Spaces
  *
- * The memory spaces the org may add its own memory to: the ones it may read, by name.
+ * The memory spaces the org may add its own memory to: in the live workspace, the readable ones a pack
+ * it has added uses (none until it adds a pack); in the demo, every one it may read.
  */
 export const listMemorySpaces = <ThrowOnError extends boolean = false>(options?: Options<ListMemorySpacesData, ThrowOnError>): RequestResult<ListMemorySpacesResponses, ListMemorySpacesErrors, ThrowOnError> => (options?.client ?? client).get<ListMemorySpacesResponses, ListMemorySpacesErrors, ThrowOnError>({
     requestValidator: async (data) => await z.object({

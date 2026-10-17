@@ -2450,5 +2450,126 @@
         "body": "A tamper-evident record of every step, with any publisher fees and the exact versions this run used."
       }
     }
+  },
+  "content": {
+    "packs": {
+      "inbox-lead-tracker": {
+        "name": "Inbox Lead Tracker",
+        "outcome": "Every real enquiry in your inbox added to your leads sheet, with who asked, what for and how soon.",
+        "description": "Checks the last week of your inbox and asks the decision model which emails are real enquiries from potential customers and how soon each sender wants an answer. It picks out the name, company and request of each enquiry and, once you approve, adds one row per lead to the Leads tab of your Google Sheet. It never replies to or changes your email. Each email's sender, subject and text are sent to the decision model to sort it; if the decision model is not available, nothing is added.",
+        "humanReview": "No reviewer. You approve the rows before anything is added to your sheet.",
+        "priceNote": "About $0.05 to $0.40 of AI work per run. No reviewer time."
+      },
+      "meeting-follow-ups": {
+        "name": "Meeting Follow-ups",
+        "outcome": "A short follow-up drafted for everyone outside your team you met with, ready for you to check and send.",
+        "description": "Reads one day of your Google Calendar, skips focus time, internal meetings, cancelled meetings and declined invitations, and plans a short follow-up for each guest from outside your team, using what the event says was agreed. Once you approve, it saves the follow-ups as Gmail drafts. Nothing is sent.",
+        "humanReview": "No reviewer. You approve the follow-ups before any draft is saved.",
+        "priceNote": "About $0.05 to $0.30 of AI work per run. No reviewer time."
+      },
+      "order-payment-reconciliation": {
+        "name": "Order & Payment Reconciliation",
+        "outcome": "Every order matched to a payment, with exceptions reviewed by a person.",
+        "description": "Reads your orders and payment records, matches them line by line, and sends anything that does not add up to a qualified reviewer. You get a reconciliation report with the evidence behind every match.",
+        "humanReview": "Mismatches go to an invoice reviewer. Policy requires a person for any payment mismatch.",
+        "priceNote": "About $0.60 to $2.40 of AI work per run, plus up to $7.50 of reviewer time when a mismatch needs a person."
+      },
+      "order-to-cash-exception-desk": {
+        "name": "Order-to-Cash Exception Desk",
+        "outcome": "Every order followed from store to warehouse to ledger, with each break found and acted on after one approval.",
+        "description": "Reads your orders, payments, invoices, deliveries and sales from the four sections of your business app (store, ledger, warehouse and sales app) and follows each order across them. It finds payments waiting to be confirmed, orders shipped but not paid past their terms, orders paid but not shipped and disputed invoices, and applies your collection policy to each. It drafts a collection reminder from each account manager for the largest overdue balances, then asks you once. On your approval it saves the reminders as Gmail drafts, flags the pending payments and disputes for finance and notes the waiting orders for the warehouse. Nothing is sent and no money moves.",
+        "humanReview": "One approval before anything is written. If it is not granted, the run ends with the report and nothing is sent or posted.",
+        "priceNote": "About $0.80 to $3.00 of AI work per run. No reviewer time: you approve the actions yourself."
+      },
+      "overdue-invoice-follow-up": {
+        "name": "Overdue Invoice Follow-up",
+        "outcome": "Every overdue invoice gets a reminder of the right firmness, drafted and ready for you to send.",
+        "description": "Reads your open invoices, works out how late each one is and how firm its reminder should be, and has a reviewer check the plan. Then it writes one short, polite reminder per invoice and saves them as email drafts once you approve. Nothing is sent without you.",
+        "humanReview": "A reviewer checks which invoices are overdue and how firm each reminder is before any draft is written.",
+        "priceNote": "About $0.20 to $1.00 of AI work per run, plus up to $5.00 of reviewer time to check the reminder plan."
+      },
+      "refund-triage": {
+        "name": "Refund Triage",
+        "outcome": "Every refund request matched to its order and payment, with a proposed decision and a reply drafted.",
+        "description": "Reads refund requests from your inbox, finds the order and payment each one is about, and proposes approve, partial or decline from your refund policy. A reviewer confirms every case, then it drafts a reply to each customer once you approve. It never issues a refund: a person does.",
+        "humanReview": "A reviewer confirms every proposed refund decision. Policy requires a person for any refund.",
+        "priceNote": "About $0.60 to $2.40 of AI work per run, plus up to $5.00 of reviewer time to confirm the decisions."
+      },
+      "support-inbox-triage": {
+        "name": "Support Inbox Triage",
+        "outcome": "Every customer email sorted, complaints and refund requests checked by a person, replies drafted and each case logged.",
+        "description": "Reads recent customer emails and asks the decision model whether each one is a question, a complaint, a refund request or spam, and leaves the spam out. A reviewer checks every complaint and refund request. It then drafts a reply to each customer and, once you approve, saves the replies as Gmail drafts and logs each case in your Google Sheet. It never sends an email or issues a refund. Each email's sender, subject and text are sent to the decision model to sort it; if the decision model is not available, a reviewer checks every case.",
+        "humanReview": "A reviewer checks every complaint and refund request before any reply is drafted, and every case when the decision model is not available.",
+        "priceNote": "About $0.30 to $1.50 of AI work per run, plus up to $5.00 of reviewer time for complaints and refund requests."
+      },
+      "weekly-expense-check": {
+        "name": "Weekly Expense Check",
+        "outcome": "A week of expenses sorted by category, anything unusual checked by a person, and a summary in your inbox.",
+        "description": "Reads one week of expenses from your Google Sheet, puts each one in a category and flags missing receipts, items over your limit and likely duplicates. A reviewer checks anything flagged. Once you approve, it adds the summary to a tab of the sheet and emails it. It never changes or deletes your expense rows.",
+        "humanReview": "A reviewer checks every flagged expense before the summary is written. A week with nothing unusual needs only your approval.",
+        "priceNote": "About $0.20 to $1.00 of AI work per run, plus up to $5.00 of reviewer time when expenses are flagged."
+      }
+    },
+    "agents": {
+      "collections-agent": {
+        "name": "Collections Agent",
+        "summary": "Finds the invoices that are past due, decides how firm each reminder should be from how late it is, and lists the facts each reminder should state, so a reviewer can check the plan before anything is drafted."
+      },
+      "collections-writer": {
+        "name": "Collections Writer",
+        "summary": "Writes one polite collection reminder per shipped-but-not-paid order, from the customer's account manager, stating the invoice, the peso amount, the delivery and the terms. It never offers discounts or new due dates, and it only drafts: a person sends."
+      },
+      "expense-agent": {
+        "name": "Expense Agent",
+        "summary": "Reads a week of expenses from your sheet, puts each one in a category and flags anything unusual against your expense policy: missing receipts, items over the limit and likely duplicates. It never changes your expense rows."
+      },
+      "finance-agent": {
+        "name": "Finance Agent",
+        "summary": "Matches each order to the payment that settled it, and explains in one plain sentence any order or payment that does not line up, so a reviewer can act on it."
+      },
+      "lead-agent": {
+        "name": "Lead Agent",
+        "summary": "Turns each enquiry email into one lead: who asked, their company, what they asked for and how soon they want an answer, ready to add to your leads sheet. It never replies to anyone."
+      },
+      "meeting-agent": {
+        "name": "Meeting Agent",
+        "summary": "Reads one day of your calendar and plans a short follow-up for each guest from outside your team, from what the event says was agreed. It skips internal, cancelled and declined meetings, and it only plans: a person sends."
+      },
+      "o2c-report-agent": {
+        "name": "Order-to-Cash Report Agent",
+        "summary": "Turns the exception triage, the drafts and the approval into the exception desk report: what broke across the business app's sections, what was drafted or posted, or that nothing was sent, with one row per exception."
+      },
+      "o2c-triage-agent": {
+        "name": "Order-to-Cash Triage Agent",
+        "summary": "Follows each order across the business app's store, ledger, warehouse and sales app sections, names every break with the evidence from each section and the action the collection policy calls for, so a reviewer can confirm it."
+      },
+      "ops-agent": {
+        "name": "Operations Agent",
+        "summary": "Turns checked reconciliation results into one row per order or payment for your team's sheet, with a short summary of what matched, what needed attention and the net difference."
+      },
+      "refunds-agent": {
+        "name": "Refunds Agent",
+        "summary": "Reads refund requests from your inbox, finds the order and payment each one is about, and proposes approve, partial or decline from your refund policy. It never issues a refund: a person confirms every case."
+      },
+      "retail-agent": {
+        "name": "Retail Agent",
+        "summary": "Reads your store's orders for a date range and points out the ones that look unusual, naming each order and why it stands out. It only reads orders and never changes them."
+      },
+      "support-agent": {
+        "name": "Support Agent",
+        "summary": "Turns each customer email into a case, plans a reply from your support policies and sends complaints and refund requests to a person. It never sends an email or issues a refund."
+      },
+      "writer-agent": {
+        "name": "Writer Agent",
+        "summary": "Writes one short, polite email draft per customer from the facts it is given, following any reviewer notes. It never promises refunds or payment terms that are not in the facts, and it only drafts: a person sends."
+      }
+    },
+    "memorySpaces": {
+      "customer-accounts": "Customer accounts policies",
+      "expense-policy": "Expense policy",
+      "o2c-policy": "Order-to-cash policy",
+      "retail-commerce": "Retail & Commerce company knowledge",
+      "support-policies": "Support policies"
+    }
   }
 }

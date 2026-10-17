@@ -37,6 +37,7 @@ import { Mark } from "@/design-system/logo/Mark";
 import { useSession } from "@/lib/auth/session";
 import { ClockProvider } from "@/lib/clock";
 import { cn } from "@/lib/cn";
+import { usePackText } from "@/lib/content-text";
 import { useAgentName, usePackName, usePacks } from "@/lib/queries/catalog";
 import { useCanBuild } from "@/app/studio/can-build";
 import { useIsDemo, useIsLive, useMe } from "@/lib/queries/me";
@@ -733,6 +734,7 @@ function TopBar({ mode, path }: { mode: ShellMode; path: string }) {
 export function StartRunMenu() {
   const t = useTranslations("nav");
   const hired = (usePacks().data ?? []).filter((p) => p.installed);
+  const packText = usePackText();
   return (
     <MenuRoot>
       {/* On a phone the button is its icon, so the page title in the top bar is not cut short. */}
@@ -745,7 +747,7 @@ export function StartRunMenu() {
         {hired.map((pack) => (
           <MenuLink key={pack.slug} href={`/app/runs/new?pack=${pack.slug}`}>
             <PackIcon slug={pack.slug} className="size-6 [&_svg]:size-3" />
-            {pack.name}
+            {packText(pack).name}
           </MenuLink>
         ))}
         <MenuSeparator />

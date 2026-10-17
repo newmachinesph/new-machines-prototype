@@ -7,6 +7,7 @@ import { PackIcon } from "@/components/pack-icon";
 import { Button, ButtonLink, SimTag } from "@/components/ui";
 import { useToast } from "@/components/base";
 import { useErrorText } from "@/lib/api/use-error-text";
+import { usePackText } from "@/lib/content-text";
 import { useSuggestPack } from "@/lib/queries/catalog";
 import { useMe } from "@/lib/queries/me";
 import { useMatches } from "@/lib/use-matches";
@@ -41,6 +42,7 @@ export function AskBox() {
   // Set when a chip fills the input: the English query to send while the input shows the translated label.
   const [chipQuery, setChipQuery] = useState<string | null>(null);
   const suggest = useSuggestPack();
+  const packText = usePackText();
   const toast = useToast();
   const errorText = useErrorText();
   const submit = (text = chipQuery ?? q) => {
@@ -99,7 +101,7 @@ export function AskBox() {
             <>
               <div className="flex items-center gap-2">
                 <PackIcon slug={suggest.data.pack.slug} className="size-6 [&_svg]:size-3" />
-                <span className="font-medium">{suggest.data.pack.name}</span>
+                <span className="font-medium">{packText(suggest.data.pack).name}</span>
                 {suggest.data.simulated ? <SimTag>{t("simulated")}</SimTag> : null}
               </div>
               <ol className="mt-2.5 list-decimal space-y-1 pl-5 text-grey-700">

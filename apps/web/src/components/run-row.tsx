@@ -7,6 +7,7 @@ import { parseAsString, useQueryState } from "nuqs";
 import { useMemo } from "react";
 import { cn } from "@/lib/cn";
 import { useNow } from "@/lib/clock";
+import { usePackText } from "@/lib/content-text";
 import { duration, sumMoney } from "@/lib/format";
 import { usePacks } from "@/lib/queries/catalog";
 import { useFormat } from "@/lib/use-format";
@@ -104,7 +105,13 @@ export function RunsBrowser({ runs, linkable }: { runs: RowRun[]; linkable: stri
   const [filter, setFilter] = useQueryState("status", parseAsString.withDefault("all"));
   const [pack, setPack] = useQueryState("pack", parseAsString.withDefault("all"));
   const catalog = usePacks();
-  const packName = (slug: string) => catalog.data?.find((p) => p.slug === slug)?.name ?? slug;
+  const packText = usePackText();
+  const packOf = (slug: string) => catalog.data?.find((p) => p.slug === slug);
+  // Our own packs read in the interface language; a search matches that and the API's English behind it.
+  const packName = (slug: string) => {
+    const found = packOf(slug);
+    return found ? packText(found).name : slug;
+  };
 
   const packs = useMemo(() => [...new Set(runs.map((r) => r.packSlug))], [runs]);
   const inFilter = (r: RowRun, key: string) => {
@@ -117,7 +124,10 @@ export function RunsBrowser({ runs, linkable }: { runs: RowRun[]; linkable: stri
   const scoped = runs.filter(
     (r) =>
       (pack === "all" || r.packSlug === pack) &&
-      (!needle || [r.title, r.id, r.summary, packName(r.packSlug)].some((t) => t.toLowerCase().includes(needle))),
+      (!needle ||
+        [r.title, r.id, r.summary, packName(r.packSlug), packOf(r.packSlug)?.name ?? ""].some((t) =>
+          t.toLowerCase().includes(needle),
+        )),
   );
   const shown = scoped.filter((r) => inFilter(r, filter));
   const total = (r: RowRun) => money(sumMoney(r.spent.ai, r.spent.human, r.spent.tools));

@@ -7,6 +7,7 @@ import { KeyValues, Section } from "@/components/ui";
 import { useIsLive } from "@/lib/queries/me";
 import { useOrg } from "@/lib/queries/org";
 import { usePolicies } from "@/lib/queries/workspace";
+import { isRegionCode, useRegionName } from "@/lib/region-name";
 import { useFormat } from "@/lib/use-format";
 
 /** The policies with a title of their own; any other name is shown as words. */
@@ -84,19 +85,12 @@ export function PoliciesSection() {
   );
 }
 
-/** The region codes the platform runs in; their place names are in messages. */
-const REGION_CODES = ["asia-south1", "asia-northeast1", "us-central1"] as const;
-const isRegionCode = (code: string): code is (typeof REGION_CODES)[number] =>
-  (REGION_CODES as readonly string[]).includes(code);
-
 export function WorkspaceSection() {
   const t = useTranslations("settings.workspace");
   const { money } = useFormat();
   const org = useOrg();
-  const regionValue = (code: string) => {
-    // Place names come from messages for the codes the platform runs in; any other code shows as it is.
-    return isRegionCode(code) ? t("regionValue", { place: t(`places.${code}`), code }) : code;
-  };
+  // Place names come from messages for the codes the platform runs in; any other code shows as it is.
+  const regionValue = useRegionName();
   return (
     <Section title={t("title")}>
       <QueryState query={org} skeleton={<Skeleton className="h-40 rounded-none" />}>

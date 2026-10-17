@@ -489,7 +489,8 @@ export const listMemoryOptions = (options?: Options<ListMemoryData>) => queryOpt
  * Add Memory
  *
  * Add a memory of the org's own, in use from its agents' next run. Owners and admins only (403
- * POLICY_DENIED); 422 for a space the org cannot read.
+ * POLICY_DENIED); 422 for a space the org cannot read or, in the live workspace, that none of its packs
+ * uses.
  */
 export const addMemoryMutation = (options?: Partial<Options<AddMemoryData>>): UseMutationOptions<AddMemoryResponse, AddMemoryError, Options<AddMemoryData>> => {
     const mutationOptions: UseMutationOptions<AddMemoryResponse, AddMemoryError, Options<AddMemoryData>> = {
@@ -510,7 +511,8 @@ export const listMemorySpacesQueryKey = (options?: Options<ListMemorySpacesData>
 /**
  * List Memory Spaces
  *
- * The memory spaces the org may add its own memory to: the ones it may read, by name.
+ * The memory spaces the org may add its own memory to: in the live workspace, the readable ones a pack
+ * it has added uses (none until it adds a pack); in the demo, every one it may read.
  */
 export const listMemorySpacesOptions = (options?: Options<ListMemorySpacesData>) => queryOptions<ListMemorySpacesResponse, ListMemorySpacesError, ListMemorySpacesResponse, ReturnType<typeof listMemorySpacesQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {

@@ -1,6 +1,9 @@
-import { describe, expect, it } from "vitest";
-import type { RunNode } from "@/lib/types";
-import { nameAgentSteps } from "./agent-steps";
+import { renderHook } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
+import type { Locale } from "@/i18n/locales";
+import type { Agent, Run, RunNode } from "@/lib/types";
+import { IntlWrapper } from "@/test/intl";
+import { nameAgentSteps, useRunWithAgentNames } from "./agent-steps";
 
 const node = (over: Partial<RunNode>): RunNode =>
   ({ id: "n", type: "agent", label: "", actor: "machine", status: "DONE", x: 0, y: 0, ...over }) as RunNode;
@@ -56,5 +59,30 @@ describe("nameAgentSteps", () => {
     const named = nameAgentSteps(steps, nameOf, "AI agent");
     expect(named[0]).not.toBe(steps[0]);
     expect(steps[0]!.label).toBe(ORG_KEY_IN_WORDS);
+  });
+});
+
+const catalog: Record<string, Pick<Agent, "id" | "name" | "certified">> = {
+  "finance-agent": { id: "finance-agent", name: "Finance Agent", certified: true },
+  [ORG_KEY]: { id: ORG_KEY, name: "QA inbox reader", certified: false },
+};
+vi.mock("@/lib/queries/catalog", () => ({ useAgentById: () => (key: string) => catalog[key] }));
+
+const named = (run: Run, locale: Locale) =>
+  renderHook(() => useRunWithAgentNames(run), {
+    wrapper: ({ children }) => <IntlWrapper locale={locale}>{children}</IntlWrapper>,
+  }).result.current;
+
+describe("useRunWithAgentNames", () => {
+  const run = {
+    nodes: [
+      node({ id: "a", label: "Finance agent", version: "finance-agent@3" }),
+      node({ id: "b", label: ORG_KEY_IN_WORDS, version: `${ORG_KEY}@1` }),
+    ],
+  } as unknown as Run;
+
+  it("names our own agent's step in the interface language, the team's as the catalog has it", () => {
+    expect(named(run, "ja").nodes.map((n) => n.label)).toEqual(["財務エージェント", "QA inbox reader"]);
+    expect(named(run, "en").nodes.map((n) => n.label)).toEqual(["Finance Agent", "QA inbox reader"]);
   });
 });

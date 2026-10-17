@@ -75,7 +75,7 @@ describe("MemoryBoard", () => {
   it("is translated", () => {
     renderWithIntl(<MemoryBoard />, { locale: "ja" });
     expect(screen.getByText("追加したパックに付属")).toBeInTheDocument();
-    expect(screen.getAllByText("適用先：Customer accounts policies")).toHaveLength(2);
+    expect(screen.getAllByText("適用先：顧客アカウントのポリシー")).toHaveLength(2);
     expect(screen.getByRole("button", { name: "メモリを追加" })).toBeInTheDocument();
   });
 

@@ -7,11 +7,13 @@ import { Checkbox, Choices, Modal, ModalClose, focusAfterClose, useToast } from 
 import { Button, ButtonLink, Callout, KeyValues, MockTag, Section, SimTag } from "@/components/ui";
 import { useErrorText } from "@/lib/api/use-error-text";
 import { cn } from "@/lib/cn";
+import { useAgentText, usePackText } from "@/lib/content-text";
 import { usd } from "@/lib/format";
 import { useFeeLabel } from "@/lib/listing-fee";
 import { useAgentById, useInstallPack } from "@/lib/queries/catalog";
 import { useIsLive, useOrgId } from "@/lib/queries/me";
 import { useOrgReviewers } from "@/lib/queries/reviewers";
+import { useRegionName } from "@/lib/region-name";
 import { capCeiling, capChoices, packRunFee, startCap } from "@/lib/run-budget";
 import { useFormat } from "@/lib/use-format";
 import type { Pack } from "@/lib/types";
@@ -73,9 +75,13 @@ function CapChoices({
  * Add a pack, or with `settings` (an added pack in the live workspace; the page decides) change its
  * settings: cap and reviewers, with no agreement step.
  */
-export function InstallReview({ pack: p, settings = false }: { pack: Pack; settings?: boolean }) {
+export function InstallReview({ pack, settings = false }: { pack: Pack; settings?: boolean }) {
   const t = useTranslations("marketplace.install");
   const tc = useTranslations("common");
+  // Our own pack reads in the interface language; what is sent to the API (its slug) is the same either way.
+  const p = usePackText()(pack);
+  const agentText = useAgentText();
+  const regionName = useRegionName();
   const tl = useTranslations("listedMarket");
   const feeLabel = useFeeLabel();
   const { money, list } = useFormat();
@@ -166,11 +172,14 @@ export function InstallReview({ pack: p, settings = false }: { pack: Pack; setti
             <li className="px-5 py-3.5 text-sm text-muted">
               {t("agents")}
               <span className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1.5">
-                {p.agents.map((id) => (
-                  <Link key={id} href={`/app/agents/${encodeURIComponent(id)}`} className="link text-ink">
-                    {agentById(id)?.name ?? id}
-                  </Link>
-                ))}
+                {p.agents.map((id) => {
+                  const agent = agentById(id);
+                  return (
+                    <Link key={id} href={`/app/agents/${encodeURIComponent(id)}`} className="link text-ink">
+                      {agent ? agentText(agent).name : id}
+                    </Link>
+                  );
+                })}
               </span>
             </li>
             <li className="px-5 py-3.5 text-sm text-muted">
@@ -273,7 +282,7 @@ export function InstallReview({ pack: p, settings = false }: { pack: Pack; setti
                       },
                     ]
                   : []),
-                { label: t("region"), value: list(p.regions) },
+                { label: t("region"), value: list(p.regions.map(regionName)) },
               ]}
             />
           </div>
@@ -296,7 +305,7 @@ export function InstallReview({ pack: p, settings = false }: { pack: Pack; setti
                     <li>{t("contract.pay")}</li>
                     <li>{t("contract.delivered")}</li>
                     <li>{t("contract.reviewers")}</li>
-                    <li>{t("contract.data", { regions: list(p.regions) })}</li>
+                    <li>{t("contract.data", { regions: list(p.regions.map(regionName)) })}</li>
                     <li>{t("contract.updates")}</li>
                   </ul>
                   <div className="mt-5 flex justify-end">

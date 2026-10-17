@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
+import { useAgentText } from "@/lib/content-text";
 import { useAgentById } from "@/lib/queries/catalog";
 import type { Run, RunNode } from "@/lib/types";
 
@@ -44,13 +45,21 @@ export function nameAgentSteps(
   });
 }
 
-/** The run with its agent steps named from the agent catalog (see `nameAgentSteps`). */
+/**
+ * The run with its agent steps named from the agent catalog (see `nameAgentSteps`), our own agents in the interface
+ * language.
+ */
 export function useRunWithAgentNames(run: Run): Run {
   const t = useTranslations("run.canvas.nodeType");
   const agentById = useAgentById();
+  const agentText = useAgentText();
   const fallback = t("agent");
   return useMemo(() => {
-    const nodes = nameAgentSteps(run.nodes, (key) => agentById(key)?.name, fallback);
+    const nameOf = (key: string) => {
+      const agent = agentById(key);
+      return agent ? agentText(agent).name : undefined;
+    };
+    const nodes = nameAgentSteps(run.nodes, nameOf, fallback);
     return nodes.every((n, i) => n === run.nodes[i]) ? run : { ...run, nodes };
-  }, [run, agentById, fallback]);
+  }, [run, agentById, agentText, fallback]);
 }
