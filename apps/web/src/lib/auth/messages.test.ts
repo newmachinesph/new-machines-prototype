@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { signInMessage } from "./messages";
+import { createAccountMessage, signInMessage } from "./messages";
 
 const err = (code: string) => ({ code });
 
@@ -26,5 +26,23 @@ describe("signInMessage", () => {
   it("falls back per method for unknown errors", () => {
     expect(signInMessage("google", err("auth/whatever"))).toBe("googleIncomplete");
     expect(signInMessage("email", new Error("boom"))).toBe("mismatch");
+  });
+});
+
+describe("createAccountMessage", () => {
+  it.each([
+    ["auth/email-already-in-use", "emailInUse"],
+    ["auth/invalid-email", "invalidEmail"],
+    ["auth/weak-password", "weakPassword"],
+    ["auth/too-many-requests", "tooManyAttempts"],
+    ["auth/network-request-failed", "offline"],
+  ])("maps %s to %s", (code, key) => {
+    expect(createAccountMessage(err(code))).toBe(key);
+  });
+
+  it("says no more than 'failed' for anything else", () => {
+    expect(createAccountMessage(err("auth/operation-not-allowed"))).toBe("failed");
+    expect(createAccountMessage(new Error("boom"))).toBe("failed");
+    expect(createAccountMessage(undefined)).toBe("failed");
   });
 });

@@ -21,7 +21,7 @@ import { definitionHref } from "../../definitions/_components/definition-logic";
 /** The API's bounds for an item's text, after trimming. */
 export const ITEM_MAX = 2000;
 
-const SOURCE: Record<string, string> = { seed: "Seed", console: "Console", agent: "Agent" };
+const SOURCE: Record<string, string> = { seed: "Seed", console: "Console", agent: "Agent", team: "Team" };
 const sourceLabel = (s: string) => SOURCE[s] ?? s.charAt(0).toUpperCase() + s.slice(1);
 const short = (text: string, n = 60) => (text.length > n ? `${text.slice(0, n - 1)}…` : text);
 

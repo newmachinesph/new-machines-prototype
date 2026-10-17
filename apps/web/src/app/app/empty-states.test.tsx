@@ -8,9 +8,17 @@ import { RunsList } from "./runs/runs-list";
 const empty = { isPending: false, isError: false, data: [] };
 
 vi.mock("@/lib/queries/runs", () => ({ useRuns: () => empty }));
+vi.mock("@/lib/queries/me", () => ({ useMe: () => ({ data: { role: "owner" } }) }));
+// The owner's "Add a memory" action sits above the empty list; its toasts need no provider here.
+vi.mock("@/components/base", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/components/base")>()),
+  useToast: () => vi.fn(),
+}));
 vi.mock("@/lib/queries/workspace", () => ({
   useApprovals: () => empty,
   useMemory: () => empty,
+  useMemorySpaces: () => empty,
+  useAddMemory: () => ({ mutate: vi.fn() }),
   useRetractMemory: () => ({ mutate: vi.fn() }),
   useReviewMemory: () => ({ mutate: vi.fn() }),
   useDecideApproval: () => ({ mutate: vi.fn() }),

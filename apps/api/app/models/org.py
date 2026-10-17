@@ -68,6 +68,13 @@ class MemoryItem(Model):
     retracted: bool | Opt = None
 
 
+class MemorySpaceOption(Model):
+    """A memory space the org may add its own memory to."""
+
+    id: str
+    name: str
+
+
 class LedgerLine(Model):
     account: str
     debit: int | Opt = None

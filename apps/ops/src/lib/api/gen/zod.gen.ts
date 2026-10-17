@@ -33,6 +33,17 @@ export const zAddMemoryItemRequest = z.object({
 });
 
 /**
+ * AddMemoryRequest
+ *
+ * A memory of the org's own: `space` is one the org may read, `text` 1 to 2000 characters (the same
+ * limit as the operator console's).
+ */
+export const zAddMemoryRequest = z.object({
+    space: z.string().min(1).max(120),
+    text: z.string().min(1).max(2000)
+});
+
+/**
  * AddReviewerRequest
  */
 export const zAddReviewerRequest = z.object({
@@ -848,6 +859,16 @@ export const zMemorySpaceItem = z.object({
     source: z.string(),
     createdBy: z.string(),
     createdAt: z.string()
+});
+
+/**
+ * MemorySpaceOption
+ *
+ * A memory space the org may add its own memory to.
+ */
+export const zMemorySpaceOption = z.object({
+    id: z.string(),
+    name: z.string()
 });
 
 /**
@@ -3065,6 +3086,20 @@ export const zSubmitHumanTaskResponse = zHumanTask;
  * Successful Response
  */
 export const zListMemoryResponse = z.array(zMemoryItem);
+
+export const zAddMemoryBody = zAddMemoryRequest;
+
+/**
+ * Successful Response
+ */
+export const zAddMemoryResponse = zMemoryItem;
+
+/**
+ * Response Listmemoryspaces
+ *
+ * Successful Response
+ */
+export const zListMemorySpacesResponse = z.array(zMemorySpaceOption);
 
 export const zReviewMemoryCandidateBody = zMemoryReviewRequest;
 

@@ -14,12 +14,12 @@ from app.defs import registry
 from app.defs.current import latest_bodies
 from app.errors import ApiProblem, ProblemIssue
 from app.models.common import Money, money_text
-from app.models.org import MemoryItem
+from app.models.org import MemoryItem, MemorySpaceOption
 from app.models.requests import StartRunRequest
 from app.models.runs import Run
 from app.models.work import Earning
 from app.redaction import scrub
-from app.runtime import routes
+from app.runtime import memory, routes
 from app.runtime.memory import READABLE_BY_ORG, SHARED_SOURCES
 from app.store import iso
 from app.worker.activities import pay_minor  # one reading of a task's pay: earnings and the run's cost
@@ -28,8 +28,16 @@ log = logging.getLogger(__name__)
 
 MEMORY_LIMIT = 200
 EARNINGS_LIMIT = 100
+# The source of an item an owner or admin added by hand (`created_by` holds who); always org-scoped.
+TEAM_SOURCE = "team"
 # Memory item sources as the customer sees them (a run's items are labelled with the run).
-SOURCES = {"seed": "Definitions seed", "console": "New Machines"}
+SOURCES = {"seed": "Definitions seed", "console": "New Machines", TEAM_SOURCE: "Your team"}
+# Who adds to the org's memory (and retracts what the team added): the roles that invite and connect real
+# accounts.
+MANAGERS = workspace.INVITER_ROLES
+# Active team items per org; past it, retract one before adding another.
+MAX_TEAM_MEMORY = 100
+_TEAM_MEMORY_LOCK = "team-memory:"  # one add at a time per org, so the count is exact
 # A decided human task's outcome -> the reviewer's verdict, for tasks recorded without one.
 VERDICTS = {"resolved": "APPROVED", "rejected": "REJECTED"}
 
@@ -176,6 +184,48 @@ def readable_spaces(org_id: str) -> dict[str, dict]:
     }
 
 
+def readable_space(org_id: str, space: str) -> dict:
+    """The definition body of `space`; 422 unless the org may read it."""
+    body = readable_spaces(org_id).get(space)
+    if body is None:
+        raise ApiProblem(422, "SCHEMA_INVALID", f"space: no memory space called {space}.")
+    return body
+
+
+def space_name(space: str, body: dict) -> str:
+    return str(body.get("name") or space)
+
+
+def memory_spaces(org_id: str) -> list[MemorySpaceOption]:
+    """The spaces the org may add its own memory to: every space it may read, by name."""
+    return [
+        MemorySpaceOption(id=key, name=space_name(key, body)) for key, body in readable_spaces(org_id).items()
+    ]
+
+
+def require_manager(actor: Actor, action: str = "add a memory") -> None:
+    """403 POLICY_DENIED unless the actor is an owner or admin of the org."""
+    if actor.role not in MANAGERS:
+        raise ApiProblem(403, "POLICY_DENIED", f"Only owners and admins can {action}.")
+
+
+def _check_team_memory_cap(conn, org_id: str) -> None:
+    """409 CONFLICT once the org has `MAX_TEAM_MEMORY` active team items. Takes the org's add lock for the
+    transaction, so two adds at once cannot both pass the count."""
+    conn.execute("SELECT pg_advisory_xact_lock(hashtext(%s))", (_TEAM_MEMORY_LOCK + org_id,))
+    [row] = conn.execute(
+        "SELECT count(*) AS n FROM memory_items WHERE org_id = %s AND source = %s AND status = 'active'",
+        (org_id, TEAM_SOURCE),
+    ).fetchall()
+    if row["n"] >= MAX_TEAM_MEMORY:
+        raise ApiProblem(
+            409,
+            "CONFLICT",
+            f"Your workspace has {MAX_TEAM_MEMORY} memories added by your team. Retract one before adding "
+            "another.",
+        )
+
+
 def source_label(source: str) -> tuple[str, str | None]:
     """(label, run id) of an item's source; a run writes "run:<run id>:<node>:<attempt>"."""
     if source.startswith("run:"):
@@ -236,9 +286,24 @@ def memory_exists(org_id: str, item_id: str) -> bool:
         return _readable_item(conn, org_id, item_id) is not None
 
 
+def add_memory(actor: Actor, space: str, text: str) -> MemoryItem:
+    """Add an item of the org's own to `space` (422 unless the org may read it). Runs of the org recall it
+    from now on; no other org's do. The caller has checked the actor's role."""
+    body = readable_space(actor.org_id, space)
+    with db.connect() as conn:
+        _check_team_memory_cap(conn, actor.org_id)
+        item = memory.remember(conn, space, text, TEAM_SOURCE, actor.user_id, org_id=actor.org_id)
+        row = _readable_item(conn, actor.org_id, item["id"])
+        if row is None:  # the row was just written in this transaction
+            raise RuntimeError(f"memory item {item['id']} was not readable by its own org")
+        conn.commit()
+    return _memory_item(row, {space: body})
+
+
 def retract_memory(actor: Actor, item_id: str) -> MemoryItem:
     """Retract one of the org's own items: runs no longer recall it. Shared items belong to every org and
-    cannot be retracted from one. No receipt entry is written."""
+    cannot be retracted from one; what the team added, only an owner or admin retracts. No receipt entry is
+    written."""
     with db.connect() as conn:
         row = _readable_item(conn, actor.org_id, item_id, lock=True)
         if row is None:
@@ -249,6 +314,8 @@ def retract_memory(actor: Actor, item_id: str) -> MemoryItem:
                 "POLICY_DENIED",
                 "This is shared knowledge from New Machines; it can't be retracted here.",
             )
+        if row["source"] == TEAM_SOURCE:
+            require_manager(actor, "retract a memory added by your team")
         if row["status"] != "retracted":
             conn.execute(
                 "UPDATE memory_items SET status = 'retracted', retracted_by = %s, retracted_at = now() "

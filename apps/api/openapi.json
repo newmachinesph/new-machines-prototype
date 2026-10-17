@@ -1997,6 +1997,172 @@
             "HTTPBearer": []
           }
         ]
+      },
+      "post": {
+        "tags": [
+          "memory"
+        ],
+        "summary": "Add Memory",
+        "description": "Add a memory of the org's own, in use from its agents' next run. Owners and admins only (403\nPOLICY_DENIED); 422 for a space the org cannot read.",
+        "operationId": "addMemory",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddMemoryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemoryItem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v1/memory/spaces": {
+      "get": {
+        "tags": [
+          "memory"
+        ],
+        "summary": "List Memory Spaces",
+        "description": "The memory spaces the org may add its own memory to: the ones it may read, by name.",
+        "operationId": "listMemorySpaces",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MemorySpaceOption"
+                  },
+                  "type": "array",
+                  "title": "Response Listmemoryspaces"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/v1/memory-candidates/{memory_id}:review": {
@@ -2102,7 +2268,7 @@
           "memory"
         ],
         "summary": "Retract Memory",
-        "description": "In the live workspace: retract one of the org's own items, so runs no longer recall it.",
+        "description": "In the live workspace: retract one of the org's own items, so runs no longer recall it. What the team\nadded, only an owner or admin retracts.",
         "operationId": "retractMemory",
         "security": [
           {
@@ -12870,6 +13036,30 @@
         ],
         "title": "AddMemoryItemRequest"
       },
+      "AddMemoryRequest": {
+        "properties": {
+          "space": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Space"
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Text"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "space",
+          "text"
+        ],
+        "title": "AddMemoryRequest",
+        "description": "A memory of the org's own: `space` is one the org may read, `text` 1 to 2000 characters (the same\nlimit as the operator console's)."
+      },
       "AddReviewerRequest": {
         "properties": {
           "email": {
@@ -16280,6 +16470,25 @@
           "createdAt"
         ],
         "title": "MemorySpaceItem"
+      },
+      "MemorySpaceOption": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "MemorySpaceOption",
+        "description": "A memory space the org may add its own memory to."
       },
       "Money": {
         "properties": {

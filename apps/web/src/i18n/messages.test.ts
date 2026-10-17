@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { SIGN_IN_ERRORS } from "@/lib/auth/messages";
+import { CREATE_ACCOUNT_ERRORS, SIGN_IN_ERRORS } from "@/lib/auth/messages";
 import en from "../../messages/en.json";
 import ja from "../../messages/ja.json";
 
@@ -46,5 +46,10 @@ describe("messages", () => {
   });
   it("has a message for every sign-in error", () => {
     for (const code of SIGN_IN_ERRORS) expect(valueAt(en, `errors.signIn.${code}`), code).toEqual(expect.any(String));
+  });
+  it("has a message for every create-account error", () => {
+    for (const code of CREATE_ACCOUNT_ERRORS) {
+      expect(valueAt(en, `errors.createAccount.${code}`), code).toEqual(expect.any(String));
+    }
   });
 });

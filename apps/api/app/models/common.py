@@ -1,6 +1,7 @@
-from typing import Literal
+import re
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import AfterValidator, BaseModel, ConfigDict, StringConstraints
 from pydantic.alias_generators import to_camel
 from pydantic.json_schema import SkipJsonSchema
 
@@ -38,3 +39,21 @@ Actor = Literal["machine", "human", "policy", "system", "buyer"]
 OutcomeStage = Literal["executed", "verified", "accepted", "settlement"]
 StageState = Literal["done", "pending", "failed", "blocked", "not_required"]
 Opt = SkipJsonSchema[None]  # use as `str | Opt = None`: optional in the schema, never null
+
+# A memory item's text, as the operator console and a workspace's owners add it.
+MAX_MEMORY_TEXT = 2000
+_CONTROL_CHARS = re.compile(r"[\x00-\x08\x0b-\x1f\x7f]")  # every control character but tab and newline
+
+
+def _printable(text: str) -> str:
+    """NUL cannot be stored in Postgres text, and no other control character belongs in a rule."""
+    if _CONTROL_CHARS.search(text):
+        raise ValueError("control characters are not allowed")
+    return text
+
+
+MemoryText = Annotated[
+    str,
+    StringConstraints(strip_whitespace=True, min_length=1, max_length=MAX_MEMORY_TEXT),
+    AfterValidator(_printable),
+]

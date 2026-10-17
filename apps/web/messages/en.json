@@ -522,10 +522,17 @@
       "tooManyAttempts": "Too many attempts. Wait a minute and try again.",
       "offline": "Can't reach the sign-in service. Check your connection and try again.",
       "googleIncomplete": "Google sign-in did not finish. Try again."
+    },
+    "createAccount": {
+      "emailInUse": "An account with that email already exists. Sign in instead.",
+      "invalidEmail": "That email address does not look right. Check it and try again.",
+      "weakPassword": "That password is too easy to guess. Choose a longer one.",
+      "tooManyAttempts": "Too many attempts. Wait a minute and try again.",
+      "offline": "Can't reach the sign-in service. Check your connection and try again.",
+      "failed": "Your account could not be created. Try again."
     }
   },
   "landing": {
-    "private": "Private demo with synthetic data",
     "headline": "Work you can check before you pay for it.",
     "lede": "Agents handle routine operations such as order reconciliation and refund triage. When a call needs judgement, a vetted reviewer makes it. An independent check verifies the result, and nothing is paid until you accept it.",
     "recordSummary": "Yesterday’s reconciliation of 31 orders",
@@ -562,6 +569,21 @@
       "submit": "Sign in",
       "joinNoteMember": "Signing in with Google opens your own workspace, or the one you were invited to.",
       "joinNoteReviewer": "Reviewers: after signing in, open the reviewer portal from the menu."
+    },
+    "createAccount": {
+      "switchPrompt": "New here?",
+      "switch": "Create an account",
+      "backPrompt": "Already have an account?",
+      "back": "Sign in",
+      "orEmail": "or use your email",
+      "name": "Name",
+      "nameRequired": "Enter your name.",
+      "emailInvalid": "Enter a valid email address.",
+      "passwordHint": "At least 8 characters.",
+      "passwordShort": "Use at least 8 characters.",
+      "submit": "Create account",
+      "creating": "Creating your account…",
+      "invitationNote": "To accept an invitation to another workspace, sign in with Google instead."
     },
     "record": {
       "title": "Yesterday’s reconciliation at Harbor & Pine",
@@ -898,6 +920,23 @@
     "retractedToast": "Memory retracted",
     "retractedToastBody": "Agents stop using it from their next run.",
     "retractFailed": "Could not retract memory",
+    "add": {
+      "action": "Add a memory",
+      "title": "Add a memory",
+      "description": "Tell your agents one thing about how your business works. Keep it to one rule and say when it applies. Your systems of record still win over memory.",
+      "space": "Applies to",
+      "spacesLoading": "Loading where a memory can apply…",
+      "spacesFailed": "Could not load where a memory can apply. Close this and try again.",
+      "noSpaces": "There is nowhere for a memory to apply yet.",
+      "text": "Memory",
+      "textPlaceholder": "For example: never refund an opened item without a person's approval.",
+      "count": "{n} of {max} characters",
+      "atLimit": "That is the limit. Keep it to one rule.",
+      "save": "Save memory",
+      "addedToast": "Memory added",
+      "addedToastBody": "Your agents use it from their next run.",
+      "addFailed": "Could not add memory"
+    },
     "candidate": {
       "title": "Waiting for your decision",
       "approvedToast": "Memory approved",
@@ -928,6 +967,7 @@
     "source": {
       "seed": "Set up with your workspace",
       "console": "Added by New Machines",
+      "team": "Added by your team",
       "run": "From run {n}",
       "other": "From {source}"
     },

@@ -62,6 +62,23 @@ export type AddMemoryItemRequest = {
 };
 
 /**
+ * AddMemoryRequest
+ *
+ * A memory of the org's own: `space` is one the org may read, `text` 1 to 2000 characters (the same
+ * limit as the operator console's).
+ */
+export type AddMemoryRequest = {
+    /**
+     * Space
+     */
+    space: string;
+    /**
+     * Text
+     */
+    text: string;
+};
+
+/**
  * AddReviewerRequest
  */
 export type AddReviewerRequest = {
@@ -2247,6 +2264,22 @@ export type MemorySpaceItem = {
      * Createdat
      */
     createdAt: string;
+};
+
+/**
+ * MemorySpaceOption
+ *
+ * A memory space the org may add its own memory to.
+ */
+export type MemorySpaceOption = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Name
+     */
+    name: string;
 };
 
 /**
@@ -6259,6 +6292,90 @@ export type ListMemoryResponses = {
 };
 
 export type ListMemoryResponse = ListMemoryResponses[keyof ListMemoryResponses];
+
+export type AddMemoryData = {
+    body: AddMemoryRequest;
+    path?: never;
+    query?: never;
+    url: '/v1/memory';
+};
+
+export type AddMemoryErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type AddMemoryError = AddMemoryErrors[keyof AddMemoryErrors];
+
+export type AddMemoryResponses = {
+    /**
+     * Successful Response
+     */
+    201: MemoryItem;
+};
+
+export type AddMemoryResponse = AddMemoryResponses[keyof AddMemoryResponses];
+
+export type ListMemorySpacesData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/memory/spaces';
+};
+
+export type ListMemorySpacesErrors = {
+    /**
+     * Sign in required
+     */
+    401: Problem;
+    /**
+     * Not allowed
+     */
+    403: Problem;
+    /**
+     * Not found
+     */
+    404: Problem;
+    /**
+     * Conflict
+     */
+    409: Problem;
+    /**
+     * Invalid request
+     */
+    422: Problem;
+};
+
+export type ListMemorySpacesError = ListMemorySpacesErrors[keyof ListMemorySpacesErrors];
+
+export type ListMemorySpacesResponses = {
+    /**
+     * Response Listmemoryspaces
+     *
+     * Successful Response
+     */
+    200: Array<MemorySpaceOption>;
+};
+
+export type ListMemorySpacesResponse = ListMemorySpacesResponses[keyof ListMemorySpacesResponses];
 
 export type ReviewMemoryCandidateData = {
     body: MemoryReviewRequest;

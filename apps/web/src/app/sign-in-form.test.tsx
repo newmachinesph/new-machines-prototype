@@ -8,10 +8,13 @@ import { SignInForm } from "./sign-in-form";
 const push = vi.fn();
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push, replace: vi.fn() }) }));
 vi.mock("@/lib/env", () => ({ env: { NEXT_PUBLIC_AUTH_MOCK: true } }));
-const session = { status: "signed-in" };
-vi.mock("@/lib/auth/session", () => ({
-  useSession: () => ({ ...session, signInWithGoogle: vi.fn(), signInWithEmail: vi.fn() }),
-}));
+const session = {
+  status: "signed-in",
+  signInWithGoogle: vi.fn(),
+  signInWithEmail: vi.fn(),
+  createAccountWithEmail: vi.fn(),
+};
+vi.mock("@/lib/auth/session", () => ({ useSession: () => session }));
 const me: { isPending: boolean; isError: boolean; error?: unknown; data?: { role: string } } = {
   isPending: true,
   isError: false,
@@ -80,6 +83,7 @@ describe("SignInForm after sign-in", () => {
     renderWithIntl(<SignInForm />);
     expect(screen.getByRole("button", { name: "Continue with Google" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Sign in" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Create an account" })).toBeDisabled();
   });
 
   it("does not go anywhere on a 401 from /v1/me, and leaves the form usable", async () => {
@@ -141,5 +145,97 @@ describe("SignInForm fields", () => {
       screen.getByText("Reviewers: after signing in, open the reviewer portal from the menu."),
     ).toBeInTheDocument();
     expect(screen.queryByText(/paying/)).not.toBeInTheDocument();
+  });
+});
+
+describe("SignInForm creating an account", () => {
+  const openCreate = async () => {
+    renderWithIntl(<SignInForm />);
+    await userEvent.click(screen.getByRole("button", { name: "Create an account" }));
+  };
+  const fill = async (name: string, email: string, password: string) => {
+    if (name) await userEvent.type(screen.getByRole("textbox", { name: "Name" }), name);
+    if (email) await userEvent.type(screen.getByRole("textbox", { name: "Email" }), email);
+    if (password) await userEvent.type(screen.getByLabelText("Password"), password);
+    await userEvent.click(screen.getByRole("button", { name: "Create account" }));
+  };
+
+  beforeEach(() => {
+    session.status = "signed-out";
+    session.createAccountWithEmail.mockReset().mockResolvedValue(undefined);
+    session.signInWithEmail.mockReset();
+    Object.assign(me, { isPending: true, isError: false, error: undefined, data: undefined });
+  });
+
+  it("switches to the create form and back", async () => {
+    await openCreate();
+    expect(screen.getByRole("textbox", { name: "Name" })).toHaveAttribute("autocomplete", "name");
+    const password = screen.getByLabelText("Password");
+    expect(password).toHaveAttribute("autocomplete", "new-password");
+    expect(password).toHaveAccessibleDescription("At least 8 characters.");
+    expect(screen.getByRole("button", { name: "Create account" })).toBeInTheDocument();
+    expect(screen.getByText("or use your email")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Create an account" })).toBeNull();
+
+    await userEvent.click(screen.getByRole("button", { name: "Sign in" }));
+    expect(screen.queryByRole("textbox", { name: "Name" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Sign in" })).toHaveAttribute("type", "submit");
+    expect(screen.getByLabelText("Password")).toHaveAttribute("autocomplete", "current-password");
+    expect(screen.getByRole("button", { name: "Create an account" })).toBeInTheDocument();
+  });
+
+  it("asks for a name, a real email and a longer password before creating anything", async () => {
+    await openCreate();
+    await fill("", "nora", "short");
+    const name = screen.getByRole("textbox", { name: "Name" });
+    expect(name).toHaveAttribute("aria-invalid", "true");
+    expect(name).toHaveAccessibleDescription("Enter your name.");
+    expect(name).toHaveFocus();
+    const email = screen.getByRole("textbox", { name: "Email" });
+    expect(email).toHaveAccessibleDescription("Enter a valid email address.");
+    const password = screen.getByLabelText("Password");
+    expect(password).toHaveAccessibleDescription("Use at least 8 characters. At least 8 characters.");
+    expect(session.createAccountWithEmail).not.toHaveBeenCalled();
+
+    await userEvent.type(name, "Nora");
+    expect(name).not.toHaveAttribute("aria-invalid");
+    expect(screen.queryByText("Enter your name.")).toBeNull();
+  });
+
+  it("creates the account with the trimmed name and email, then shows it is under way", async () => {
+    let finish = () => {};
+    session.createAccountWithEmail.mockReturnValue(new Promise<void>((r) => (finish = r)));
+    await openCreate();
+    await fill("  Nora Ito ", " nora@example.com ", "longenough1");
+    expect(session.createAccountWithEmail).toHaveBeenCalledWith("Nora Ito", "nora@example.com", "longenough1");
+    expect(session.signInWithEmail).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Creating your account…" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Sign in" })).toBeDisabled();
+    finish();
+  });
+
+  it.each([
+    ["auth/email-already-in-use", "An account with that email already exists. Sign in instead."],
+    ["auth/invalid-email", "That email address does not look right. Check it and try again."],
+    ["auth/weak-password", "That password is too easy to guess. Choose a longer one."],
+    ["auth/too-many-requests", "Too many attempts. Wait a minute and try again."],
+    ["auth/network-request-failed", "Can't reach the sign-in service. Check your connection and try again."],
+    ["auth/internal-error", "Your account could not be created. Try again."],
+  ])("explains %s and gives the form back", async (code, message) => {
+    session.createAccountWithEmail.mockRejectedValue({ code });
+    await openCreate();
+    await fill("Nora", "nora@example.com", "longenough1");
+    expect(await screen.findByRole("alert")).toHaveTextContent(message);
+    expect(screen.getByRole("button", { name: "Create account" })).toBeEnabled();
+  });
+
+  it("says that invitations need Google, and drops the note when switching back", async () => {
+    await openCreate();
+    const note = "To accept an invitation to another workspace, sign in with Google instead.";
+    expect(screen.getByText(note)).toBeInTheDocument();
+    expect(screen.queryByText(/Reviewers:/)).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Sign in" }));
+    expect(screen.queryByText(note)).toBeNull();
+    expect(screen.getByText(/Reviewers:/)).toBeInTheDocument();
   });
 });

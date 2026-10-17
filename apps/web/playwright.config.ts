@@ -31,7 +31,7 @@ export default defineConfig({
     },
     {
       name: "demo",
-      testMatch: "demo-path.spec.ts",
+      testMatch: ["demo-path.spec.ts", "create-account.spec.ts"],
       dependencies: ["readonly"],
       use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 } },
     },

@@ -15,9 +15,8 @@ export default async function LandingPage({ searchParams }: { searchParams: Sear
   const area = signedInArea(safeNext(Array.isArray(next) ? next[0] : next) ?? "");
   return (
     <div className="min-h-dvh bg-paper">
-      <header className="mx-auto flex max-w-[1600px] items-center justify-between gap-4 px-5 pt-6 sm:px-10 lg:px-16 lg:pt-8">
+      <header className="mx-auto flex max-w-[1600px] items-center px-5 pt-6 sm:px-10 lg:px-16 lg:pt-8">
         <Lockup trim className="h-9 w-auto text-ink sm:h-10" />
-        <p className="text-right text-[13px] text-muted">{t("private")}</p>
       </header>
 
       <main id="main">

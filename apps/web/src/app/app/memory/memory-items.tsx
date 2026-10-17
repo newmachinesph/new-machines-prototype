@@ -2,19 +2,23 @@
 
 import { useTranslations } from "next-intl";
 import Link from "next/link";
-import { useRef, useState } from "react";
-import { Confirm, Modal, ModalClose, focusAfterClose, sameOrLast, useToast } from "@/components/base";
+import { useId, useRef, useState } from "react";
+import { Confirm, Modal, ModalClose, Select, focusAfterClose, sameOrLast, useToast } from "@/components/base";
 import { ActorGlyph, Button, ButtonLink, Callout, EmptyState, Id, Pill, Section } from "@/components/ui";
 import { QueryState } from "@/components/query-state";
 import { Skeleton } from "@/components/skeleton";
 import { useErrorText } from "@/lib/api/use-error-text";
 import type { MemoryItem } from "@/lib/types";
-import { useMemory, useRetractMemory, useReviewMemory } from "@/lib/queries/workspace";
+import { useMe } from "@/lib/queries/me";
+import { useAddMemory, useMemory, useMemorySpaces, useRetractMemory, useReviewMemory } from "@/lib/queries/workspace";
+import { isManager } from "@/lib/roles";
 import { useFormat } from "@/lib/use-format";
 
 /** The API's source labels as whole phrases; a run's label ("Run run_2011") becomes "From run 2011". */
-const SOURCE_KEYS = { "Definitions seed": "seed", "New Machines": "console" } as const;
+const SOURCE_KEYS = { "Definitions seed": "seed", "New Machines": "console", "Your team": "team" } as const;
 const RUN_SOURCE = /^Run (run_(\w+))$/;
+/** The API's limit on a memory's text. */
+const TEXT_MAX = 2000;
 
 function useSourceLabel() {
   const t = useTranslations("memory.source");
@@ -219,12 +223,155 @@ function MemoryRow({ item: m, onRetract }: { item: Row; onRetract?: () => void }
   );
 }
 
+/** An owner or admin tells the agents something: one rule, in one of the spaces the workspace reads. */
+function AddMemory() {
+  const t = useTranslations("memory.add");
+  const tc = useTranslations("common");
+  const toast = useToast();
+  const errorText = useErrorText();
+  const [open, setOpen] = useState(false);
+  const [space, setSpace] = useState("");
+  const [text, setText] = useState("");
+  const spaces = useMemorySpaces(open);
+  const add = useAddMemory();
+  const items = (spaces.data ?? []).map((s) => ({ value: s.id, label: s.name }));
+  // The first space applies until a person picks another.
+  const chosen = items.some((s) => s.value === space) ? space : (items[0]?.value ?? "");
+  const trimmed = text.trim();
+  const valid = chosen !== "" && trimmed.length > 0 && trimmed.length <= TEXT_MAX;
+  const atLimit = text.length >= TEXT_MAX;
+  const countId = useId();
+  const spacesNoteId = useId();
+  // What the space field says about its list: failed, still loading, or nothing to choose from.
+  const spacesNote = spaces.isError
+    ? t("spacesFailed")
+    : spaces.isPending
+      ? t("spacesLoading")
+      : items.length
+        ? null
+        : t("noSpaces");
+
+  // Closing (Cancel, Escape, the X, or a saved memory) starts the next one afresh.
+  const change = (o: boolean) => {
+    setOpen(o);
+    if (!o) {
+      setText("");
+      setSpace("");
+    }
+  };
+
+  const submit = () => {
+    add.mutate(
+      { body: { space: chosen, text: trimmed } },
+      {
+        onSuccess: () => {
+          toast(t("addedToast"), t("addedToastBody"));
+          change(false);
+        },
+        onError: (e) => toast(t("addFailed"), errorText(e), "blocked"),
+      },
+    );
+  };
+
+  return (
+    <Modal
+      open={open}
+      onOpenChange={change}
+      trigger={
+        <Button variant="secondary" className="h-10 sm:h-8">
+          {t("action")}
+        </Button>
+      }
+      title={t("title")}
+      description={t("description")}
+    >
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (valid) submit();
+        }}
+        className="mt-4"
+      >
+        {/* Nothing changes under a person's hands while the memory is being saved. */}
+        <fieldset disabled={add.isPending} className="space-y-4">
+          <div>
+            <label htmlFor="mem-space" className="mb-1.5 block text-sm font-medium">
+              {t("space")}
+            </label>
+            <Select
+              id="mem-space"
+              label={t("space")}
+              value={chosen}
+              onValueChange={setSpace}
+              items={items}
+              disabled={!items.length || add.isPending}
+              invalid={spaces.isError}
+              describedBy={spacesNote ? spacesNoteId : undefined}
+              className="w-full"
+            />
+            {spacesNote ? (
+              <p
+                id={spacesNoteId}
+                role={spaces.isError ? "alert" : "status"}
+                className={`mt-1.5 text-xs ${spaces.isError ? "text-blocked" : "text-muted"}`}
+              >
+                {spacesNote}
+              </p>
+            ) : null}
+          </div>
+          <div>
+            <label htmlFor="mem-text" className="mb-1.5 block text-sm font-medium">
+              {t("text")}
+            </label>
+            <textarea
+              id="mem-text"
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              rows={4}
+              maxLength={TEXT_MAX}
+              placeholder={t("textPlaceholder")}
+              aria-describedby={countId}
+              className="w-full rounded-md border border-grey-300 px-3 py-2 text-sm leading-relaxed outline-none focus:border-ink"
+            />
+            <p id={countId} className="mt-1.5 text-xs text-muted">
+              {t("count", { n: text.length, max: TEXT_MAX })}
+            </p>
+            {/* Always in the tree, so the limit is announced the moment it is reached. */}
+            <p aria-live="polite" className={atLimit ? "mt-1 text-xs text-muted" : "sr-only"}>
+              {atLimit ? t("atLimit") : ""}
+            </p>
+          </div>
+          <div className="flex justify-end gap-2">
+            <ModalClose render={<Button variant="ghost" />}>{tc("cancel")}</ModalClose>
+            <Button type="submit" disabled={!valid || add.isPending}>
+              {t("save")}
+            </Button>
+          </div>
+        </fieldset>
+      </form>
+    </Modal>
+  );
+}
+
+/** A memory an owner or admin added by hand (the API labels its source "Your team"). */
+const isTeamMemory = (m: Row) => SOURCE_KEYS[m.source as keyof typeof SOURCE_KEYS] === "team";
+
 export function MemoryBoard() {
   const memory = useMemory();
+  // Owners and admins add memories and retract what the team added (the API's `require_manager`).
+  const canManage = isManager(useMe().data?.role);
   return (
-    <QueryState query={memory} skeleton={<Skeleton className="h-96" />}>
-      {(rows) => (rows.length ? <MemoryColumns rows={rows} /> : <NoMemory />)}
-    </QueryState>
+    <>
+      {/* Above the lists, whatever they hold, so the trigger keeps focus after a memory is added. */}
+      {canManage ? (
+        <div className="mb-4 flex justify-end">
+          <AddMemory />
+        </div>
+      ) : null}
+      <QueryState query={memory} skeleton={<Skeleton className="h-96" />}>
+        {(rows) => (rows.length ? <MemoryColumns rows={rows} canManage={canManage} /> : <NoMemory />)}
+      </QueryState>
+    </>
   );
 }
 
@@ -246,7 +393,7 @@ function NoMemory() {
   );
 }
 
-function MemoryColumns({ rows }: { rows: Row[] }) {
+function MemoryColumns({ rows, canManage }: { rows: Row[]; canManage: boolean }) {
   const t = useTranslations("memory");
   const errorText = useErrorText();
   const retractMemory = useRetractMemory();
@@ -300,7 +447,12 @@ function MemoryColumns({ rows }: { rows: Row[] }) {
           {inUse.length ? (
             <ul className="divide-y divide-rule">
               {inUse.map((m) => (
-                <MemoryRow key={m.id} item={m} onRetract={() => retract(m.id)} />
+                <MemoryRow
+                  key={m.id}
+                  item={m}
+                  // Only an owner or admin retracts what the team added; a run's items keep today's rule.
+                  onRetract={canManage || !isTeamMemory(m) ? () => retract(m.id) : undefined}
+                />
               ))}
             </ul>
           ) : (

@@ -44,4 +44,10 @@ describe("landing page", () => {
     expect(screen.queryByText(/Builder Cup|Not indexed/)).not.toBeInTheDocument();
     expect(screen.getByText(/no money moves/)).toBeInTheDocument();
   });
+
+  it("carries no private-demo label in the header", async () => {
+    await page();
+    expect(screen.queryByText(/Private demo/)).not.toBeInTheDocument();
+    expect(screen.getByRole("banner")).not.toHaveTextContent(/synthetic/);
+  });
 });

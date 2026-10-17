@@ -66,6 +66,8 @@ function invalidateApprovalViews(qc: QueryClient) {
 export const useApprovals = (enabled = true) =>
   useQuery({ ...q.listApprovalsOptions(), refetchInterval: 10_000, enabled });
 export const useMemory = (enabled = true) => useQuery({ ...q.listMemoryOptions(), enabled });
+/** The memory spaces the workspace can add its own memory to. */
+export const useMemorySpaces = (enabled = true) => useQuery({ ...q.listMemorySpacesOptions(), enabled });
 export const useTokens = () => useQuery(q.listTokensOptions());
 
 export function useMembers() {
@@ -97,6 +99,19 @@ export const useRetractMemory = () =>
   useListMutation(q.retractMemoryMutation(), q.listMemoryQueryKey(), (old: ListMemoryResponse, vars) =>
     old.map((m) => (m.id === vars.path.memory_id ? { ...m, retracted: true } : m)),
   );
+
+/** The new memory heads the cached list at once, in use; the list is refetched when the mutation settles. */
+export function useAddMemory() {
+  const qc = useQueryClient();
+  return useMutation({
+    ...q.addMemoryMutation(),
+    onSuccess: (item) =>
+      qc.setQueryData<ListMemoryResponse>(q.listMemoryQueryKey(), (old) => (old ? [item, ...old] : old)),
+    onSettled: () => {
+      void qc.invalidateQueries({ queryKey: q.listMemoryQueryKey() });
+    },
+  });
+}
 
 export function useReviewMemory() {
   const qc = useQueryClient();

@@ -1,4 +1,4 @@
-import { screen, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { renderWithIntl } from "@/test/intl";
@@ -6,15 +6,23 @@ import en from "../../../../messages/en.json";
 import ja from "../../../../messages/ja.json";
 import { MemoryBoard } from "./memory-items";
 
-const data = vi.hoisted(() => ({ rows: [] as unknown[] }));
-const m = vi.hoisted(() => ({ retract: vi.fn(), review: vi.fn(), toast: vi.fn() }));
+const SPACES = [
+  { id: "retail-commerce", name: "Retail & Commerce company knowledge" },
+  { id: "customer-accounts", name: "Customer accounts policies" },
+];
+const loaded = { isPending: false, isError: false, data: SPACES };
+const data = vi.hoisted(() => ({ rows: [] as unknown[], role: "owner", spaces: {} as object }));
+const m = vi.hoisted(() => ({ add: vi.fn(), retract: vi.fn(), review: vi.fn(), toast: vi.fn() }));
 
 vi.mock("@/components/base", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/components/base")>()),
   useToast: () => m.toast,
 }));
+vi.mock("@/lib/queries/me", () => ({ useMe: () => ({ data: { role: data.role } }) }));
 vi.mock("@/lib/queries/workspace", () => ({
   useMemory: () => ({ isPending: false, isError: false, data: data.rows }),
+  useMemorySpaces: () => data.spaces,
+  useAddMemory: () => ({ mutate: m.add, isPending: false }),
   useRetractMemory: () => ({ mutate: m.retract, isPending: false }),
   useReviewMemory: () => ({ mutate: m.review, isPending: false }),
 }));
@@ -32,8 +40,15 @@ const memory = (id: string, source: string, text = "Orders over $500 need a pers
 
 beforeEach(() => {
   data.rows = [memory("mem_1", "Definitions seed"), memory("mem_2", "Run run_2011", "Fees of 2.9% are expected.")];
+  data.role = "owner";
+  data.spaces = loaded;
   for (const fn of Object.values(m)) fn.mockReset();
 });
+
+const openAddDialog = async () => {
+  await userEvent.click(screen.getByRole("button", { name: "Add a memory" }));
+  return screen.findByRole("dialog", { name: "Add a memory" });
+};
 
 describe("MemoryBoard", () => {
   it("labels where a memory came from and what it applies to in plain words", () => {
@@ -60,6 +75,111 @@ describe("MemoryBoard", () => {
     renderWithIntl(<MemoryBoard />, { locale: "ja" });
     expect(screen.getByText("ワークスペースの初期設定")).toBeInTheDocument();
     expect(screen.getAllByText("適用先：Customer accounts policies")).toHaveLength(2);
+    expect(screen.getByRole("button", { name: "メモリを追加" })).toBeInTheDocument();
+  });
+
+  it("labels a memory the team added", () => {
+    data.rows = [memory("mem_3", "Your team", "Never refund an opened item.")];
+    renderWithIntl(<MemoryBoard />);
+    expect(screen.getByText("Added by your team")).toBeInTheDocument();
+  });
+
+  it("lets an owner add a memory to the first space, with the text trimmed", { timeout: 20_000 }, async () => {
+    m.add.mockImplementation((_vars, opts) => opts?.onSuccess?.(memory("mem_9", "Your team")));
+    renderWithIntl(<MemoryBoard />);
+    const dialog = await openAddDialog();
+    await userEvent.type(within(dialog).getByLabelText("Memory"), "  Never refund an opened item.  ");
+    expect(within(dialog).getByText("32 of 2000 characters")).toBeInTheDocument();
+    await userEvent.click(within(dialog).getByRole("button", { name: "Save memory" }));
+    expect(m.add).toHaveBeenCalledWith(
+      { body: { space: "retail-commerce", text: "Never refund an opened item." } },
+      expect.anything(),
+    );
+    expect(m.toast).toHaveBeenCalledWith("Memory added", "Your agents use it from their next run.");
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  });
+
+  it("starts afresh after Cancel", { timeout: 20_000 }, async () => {
+    renderWithIntl(<MemoryBoard />);
+    let dialog = await openAddDialog();
+    await userEvent.type(within(dialog).getByLabelText("Memory"), "Half a rule");
+    await userEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    dialog = await openAddDialog();
+    expect(within(dialog).getByLabelText("Memory")).toHaveValue("");
+    expect(within(dialog).getByText("0 of 2000 characters")).toBeInTheDocument();
+  });
+
+  it("says when the text list of places cannot be loaded", { timeout: 20_000 }, async () => {
+    data.spaces = { isPending: false, isError: true, data: undefined, error: new Error("down") };
+    renderWithIntl(<MemoryBoard />);
+    const dialog = await openAddDialog();
+    expect(within(dialog).getByRole("alert")).toHaveTextContent(
+      "Could not load where a memory can apply. Close this and try again.",
+    );
+    expect(within(dialog).getByRole("button", { name: "Save memory" })).toBeDisabled();
+  });
+
+  it("says while the places load and when there are none", { timeout: 20_000 }, async () => {
+    data.spaces = { isPending: true, isError: false, data: undefined };
+    renderWithIntl(<MemoryBoard />);
+    const dialog = await openAddDialog();
+    expect(within(dialog).getByRole("status")).toHaveTextContent("Loading where a memory can apply…");
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    data.spaces = { isPending: false, isError: false, data: [] };
+    const again = await openAddDialog();
+    expect(within(again).getByRole("status")).toHaveTextContent("There is nowhere for a memory to apply yet.");
+  });
+
+  it("does not save an empty memory", { timeout: 20_000 }, async () => {
+    renderWithIntl(<MemoryBoard />);
+    const dialog = await openAddDialog();
+    const save = within(dialog).getByRole("button", { name: "Save memory" });
+    expect(save).toBeDisabled();
+    await userEvent.type(within(dialog).getByLabelText("Memory"), "   ");
+    expect(save).toBeDisabled();
+    await userEvent.click(save);
+    expect(m.add).not.toHaveBeenCalled();
+    await userEvent.type(within(dialog).getByLabelText("Memory"), "One rule.");
+    expect(save).toBeEnabled();
+  });
+
+  it("says what failed when the memory is not added", { timeout: 20_000 }, async () => {
+    const detail = "Your workspace has 100 memories added by your team. Retract one before adding another.";
+    m.add.mockImplementation((_vars, opts) =>
+      opts?.onError?.({ title: "Conflict", status: 409, code: "CONFLICT", detail }),
+    );
+    renderWithIntl(<MemoryBoard />);
+    const dialog = await openAddDialog();
+    await userEvent.type(within(dialog).getByLabelText("Memory"), "One rule.");
+    await userEvent.click(within(dialog).getByRole("button", { name: "Save memory" }));
+    expect(m.toast).toHaveBeenCalledWith("Could not add memory", detail, "blocked");
+    expect(screen.getByRole("dialog")).toBeInTheDocument(); // the text is kept for another try
+  });
+
+  it("does not offer a member the add action, with or without memories", () => {
+    data.role = "member";
+    const { unmount } = renderWithIntl(<MemoryBoard />);
+    expect(screen.queryByRole("button", { name: "Add a memory" })).toBeNull();
+    unmount();
+    data.rows = [];
+    renderWithIntl(<MemoryBoard />);
+    expect(screen.getByText(/No memories yet/)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Add a memory" })).toBeNull();
+  });
+
+  it("lets only owners and admins retract what the team added", () => {
+    data.rows = [memory("mem_1", "Definitions seed"), memory("mem_3", "Your team", "Never refund an opened item.")];
+    const { unmount } = renderWithIntl(<MemoryBoard />);
+    expect(screen.getAllByRole("button", { name: "Retract" })).toHaveLength(2);
+    unmount();
+    data.role = "member";
+    renderWithIntl(<MemoryBoard />);
+    const [retract] = screen.getAllByRole("button", { name: "Retract" });
+    expect(retract.closest("li")).toHaveTextContent("Set up with your workspace");
+    expect(screen.getByText("Never refund an opened item.").closest("li")).not.toContainElement(retract);
+    expect(screen.getAllByRole("button", { name: "Retract" })).toHaveLength(1);
   });
 
   // QA F-20: a new workspace starts with its packs' policies in use, which no person approved one by one.

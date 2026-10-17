@@ -29,10 +29,12 @@ export async function setLocale(context: BrowserContext, locale: "en" | "ja") {
   await context.addCookies([{ name: "NEXT_LOCALE", value: locale, url: "http://localhost:3100" }]);
 }
 
-/** Sign in through the landing page the way a person does. */
+/** Sign in through the landing page the way a person does. Mock auth takes any demo login, but the form wants one filled in. */
 export async function signInThroughLanding(page: Page) {
   await page.goto("/");
-  await page.getByRole("button", { name: "Sign in" }).click();
+  await page.getByRole("textbox", { name: "Email" }).fill("demo@newmachin.es");
+  await page.getByLabel("Password", { exact: true }).fill("demo-login");
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await page.waitForURL(/\/app$/);
 }
 

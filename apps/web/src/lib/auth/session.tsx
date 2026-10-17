@@ -2,7 +2,7 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, type ReactNode, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { setTokenSource, setUnauthorizedHandler } from "@/lib/api/client";
 import { env } from "@/lib/env";
 
@@ -13,6 +13,8 @@ type Session = {
   user: User | null;
   signInWithGoogle: () => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<void>;
+  /** Creates the account, names it, then signs in like `signInWithEmail`. No email is sent. */
+  createAccountWithEmail: (name: string, email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
 };
 
@@ -20,11 +22,20 @@ const SessionContext = createContext<Session | null>(null);
 const MOCK_USER: User = { uid: "user_demo", email: "demo@newmachin.es", name: "Demo operator" };
 const MOCK_KEY = "nm-mock-session";
 
+const toUser = (u: { uid: string; email: string | null; displayName: string | null }): User => ({
+  uid: u.uid,
+  email: u.email,
+  name: u.displayName,
+});
+
 export function SessionProvider({ children }: { children: ReactNode }) {
   const qc = useQueryClient();
   const router = useRouter();
   const [status, setStatus] = useState<Status>("loading");
   const [user, setUser] = useState<User | null>(null);
+  // While an account is being created it is signed in but nameless; the listener waits, or the first API call
+  // (which provisions the workspace) would go out before the name is on the token.
+  const creating = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -55,7 +66,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         unsubscribe = onIdTokenChanged(
           auth,
           (u) => {
-            setUser(u ? { uid: u.uid, email: u.email, name: u.displayName } : null);
+            if (creating.current) return;
+            setUser(u ? toUser(u) : null);
             setStatus(u ? "signed-in" : "signed-out");
           },
           fail,
@@ -93,6 +105,31 @@ export function SessionProvider({ children }: { children: ReactNode }) {
           import("firebase/auth"),
         ]);
         await signInWithEmailAndPassword(auth, email, password);
+      },
+      async createAccountWithEmail(name, email, password) {
+        if (mock) return mockIn();
+        const [{ auth }, { createUserWithEmailAndPassword, updateProfile }] = await Promise.all([
+          import("./firebase"),
+          import("firebase/auth"),
+        ]);
+        creating.current = true;
+        try {
+          const { user: created } = await createUserWithEmailAndPassword(auth, email, password);
+          try {
+            await updateProfile(created, { displayName: name });
+            // The token issued at creation has no name claim; a forced refresh puts it there before the API is asked.
+            await created.getIdToken(true);
+          } catch (e) {
+            // The account exists and is signed in either way; a name that did not stick is not a failed creation.
+            console.warn("The new account's name could not be saved", e);
+          }
+        } finally {
+          creating.current = false;
+          // The listener sat out the steps above, so whatever they left behind is reported by hand.
+          const u = auth.currentUser;
+          setUser(u ? toUser(u) : null);
+          setStatus(u ? "signed-in" : "signed-out");
+        }
       },
       async signOut() {
         await qc.cancelQueries();

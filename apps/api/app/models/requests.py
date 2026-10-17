@@ -2,7 +2,7 @@ from typing import Annotated, Any, Literal
 
 from pydantic import Field
 
-from app.models.common import Model, Opt, RequestModel
+from app.models.common import MemoryText, Model, Opt, RequestModel
 from app.models.org import McpToken
 from app.models.work import ReviewVerdict
 from app.models.workforce import DEFAULT_REVIEWER_POOL, ReviewerPool
@@ -49,6 +49,14 @@ class SubmitReviewRequest(RequestModel):
 class MemoryReviewRequest(RequestModel):
     decision: Literal["approve", "reject"]
     text: str | Opt = Field(default=None, max_length=1000)
+
+
+class AddMemoryRequest(RequestModel):
+    """A memory of the org's own: `space` is one the org may read, `text` 1 to 2000 characters (the same
+    limit as the operator console's)."""
+
+    space: str = Field(min_length=1, max_length=120)
+    text: MemoryText
 
 
 class InviteRequest(RequestModel):

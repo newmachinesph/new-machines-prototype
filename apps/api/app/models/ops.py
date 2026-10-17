@@ -6,7 +6,7 @@ from typing import Annotated, Any, Literal
 from pydantic import Field, StringConstraints, model_validator
 
 from app.models.catalog import Pack, TaxonomyEntry
-from app.models.common import Model, Money, Opt, RequestModel
+from app.models.common import MemoryText, Model, Money, Opt, RequestModel
 from app.models.org import Connection, Member
 from app.models.runs import Receipt, Run, RunStatus, RunSummary
 
@@ -622,11 +622,6 @@ class DefinitionExport(Model):
 
 # Memory ------------------------------------------------------------------------------------------------
 
-MAX_MEMORY_TEXT = 2000
-MemoryText = Annotated[
-    str, StringConstraints(strip_whitespace=True, min_length=1, max_length=MAX_MEMORY_TEXT)
-]
-
 
 class MemorySpace(Model):
     key: str
@@ -640,7 +635,7 @@ class MemorySpaceItem(Model):
     id: str
     space: str
     text: str
-    source: str  # "seed", "console" or "agent"
+    source: str  # "seed", "console", "team" (a workspace's owner or admin) or a run's "run:<id>:<node>:<n>"
     created_by: str
     created_at: str
 
