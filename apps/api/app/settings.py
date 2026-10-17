@@ -133,8 +133,16 @@ def schemas_dir() -> Path:
     return Path(raw) if raw else defs_dir() / "_schemas"
 
 
-def model_api_key() -> str | None:
-    return os.environ.get("MODEL_API_KEY") or None
+VERTEX_LOCATION = "global"  # the global endpoint serves every Gemini model and spreads load across regions
+
+
+def vertex_project() -> str | None:
+    """The Google Cloud project billed for model calls; unset means the project of the default credentials."""
+    return os.environ.get("GOOGLE_CLOUD_PROJECT") or None
+
+
+def vertex_location() -> str:
+    return os.environ.get("GOOGLE_CLOUD_LOCATION") or VERTEX_LOCATION
 
 
 def demo_user_uid() -> str | None:

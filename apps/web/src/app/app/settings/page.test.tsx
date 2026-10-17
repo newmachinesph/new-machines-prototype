@@ -42,7 +42,7 @@ vi.mock("@/lib/queries/workspace", () => ({
 }));
 
 // Product copy never names a model vendor or its tools.
-const VENDORS = /Gemini|Antigravity|model|provider|OpenAI|ChatGPT|GPT|Codex|Copilot/;
+const VENDORS = /Gemini|Vertex|Antigravity|OpenAI|ChatGPT|GPT|Codex|Copilot/;
 
 /** Every string in a message tree. */
 const strings = (node: unknown): string[] =>

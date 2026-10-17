@@ -103,7 +103,7 @@ describe("tour messages", () => {
 
   it("names no model vendor and hires no agent", () => {
     const text = JSON.stringify([en.tour, ja.tour]);
-    expect(text).not.toMatch(/model|provider|\bjev\b|typesafe|openai|gemini|\bgpt|\bhir(e|ed|ing)\b|雇/i);
+    expect(text).not.toMatch(/\bjev\b|typesafe|openai|gemini|vertex|\bgpt|\bhir(e|ed|ing)\b|雇/i);
   });
 });
 

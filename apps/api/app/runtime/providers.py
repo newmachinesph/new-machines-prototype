@@ -1,11 +1,13 @@
 """Model providers: one call = system + messages + tools -> content blocks + usage.
 
-`fake` is scripted per agent (tests and NM_MODEL_ENV=test); `provider` uses the official SDK. Profiles in
-models.yaml pick the provider and model per environment and carry the price used for spend.
+`fake` is scripted per agent (tests and NM_MODEL_ENV=test); `vertex` calls Gemini on Vertex AI through the
+google-genai SDK. Profiles in models.yaml pick the provider and model per environment and carry the price used
+for spend.
 """
 
 import json
 import re
+import uuid
 from dataclasses import dataclass
 from datetime import UTC, date, datetime
 from decimal import Decimal, InvalidOperation
@@ -66,8 +68,8 @@ def provider_for(profile: str, models_def: dict, env: str) -> tuple[ModelProvide
         raise ValueError(f"model profile {profile!r} has no entry for env {env!r}")
     if entry["provider"] == "fake":
         return FakeProvider(), entry["model"]
-    if entry["provider"] == "provider":
-        return HostedProvider(), entry["model"]
+    if entry["provider"] == "vertex":
+        return VertexProvider(), entry["model"]
     raise ValueError(f"unknown model provider {entry['provider']!r}")
 
 
@@ -78,29 +80,105 @@ def cost_minor(models_def: dict, profile: str, input_tokens: int, output_tokens:
     return -(-total // _TOKENS_PER_PRICE_UNIT)
 
 
-# --- provider -------------------------------------------------------------------------------------
+# --- vertex ----------------------------------------------------------------------------------------
+
+_MS_PER_S = 1000
 
 
 @cache
 def _shared_client():
-    import provider
+    from google import genai
+    from google.genai import types
 
-    # Retries belong to Temporal (activity retry policy), so the SDK must not retry on its own.
-    return provider.provider(
-        api_key=settings.model_api_key(), max_retries=0, timeout=float(MODEL_CALL_TIMEOUT_S)
+    # Retries belong to Temporal (activity retry policy): without retry_options the SDK never retries.
+    # Credentials are Application Default Credentials (the Cloud Run service account, or gcloud locally).
+    return genai.Client(
+        vertexai=True,
+        project=settings.vertex_project(),
+        location=settings.vertex_location(),
+        http_options=types.HttpOptions(timeout=MODEL_CALL_TIMEOUT_S * _MS_PER_S),
     )
 
 
-def _block(block: Any) -> dict | None:
-    if block.type == "text":
-        return {"type": "text", "text": block.text}
-    if block.type == "tool_use":
-        return {"type": "tool_use", "id": block.id, "name": block.name, "input": dict(block.input)}
+def _tool_names(messages: list[dict]) -> dict[str, str]:
+    """tool_use id -> tool name: a function response names its function, a tool_result only its call id."""
+    names: dict[str, str] = {}
+    for message in messages:
+        content = message.get("content")
+        for block in content if isinstance(content, list) else []:
+            if block.get("type") == "tool_use":
+                names[block["id"]] = block["name"]
+    return names
+
+
+def _part(block: dict, names: dict[str, str]) -> Any:
+    from google.genai import types
+
+    kind = block.get("type")
+    if kind == "text":
+        return types.Part(text=block["text"])
+    if kind == "tool_use":
+        return types.Part(
+            function_call=types.FunctionCall(
+                id=block["id"], name=block["name"], args=block.get("input") or {}
+            )
+        )
+    if kind == "tool_result":
+        key = "error" if block.get("is_error") else "output"
+        call_id = block.get("tool_use_id") or ""
+        return types.Part(
+            function_response=types.FunctionResponse(
+                id=call_id, name=names.get(call_id, "tool"), response={key: block.get("content", "")}
+            )
+        )
     return None  # other block types are not used by the agent loop
 
 
-class HostedProvider:
-    """Non-streaming Messages API call; the client is created once per process from MODEL_API_KEY."""
+def to_contents(messages: list[dict]) -> list[Any]:
+    """Provider-neutral messages (user | assistant, text or blocks) -> Gemini contents (user | model)."""
+    from google.genai import types
+
+    names = _tool_names(messages)
+    contents = []
+    for message in messages:
+        content = message.get("content")
+        blocks = [{"type": "text", "text": content}] if isinstance(content, str) else content or []
+        parts = [p for p in (_part(b, names) for b in blocks) if p is not None]
+        if parts:
+            role = "model" if message.get("role") == "assistant" else "user"
+            contents.append(types.Content(role=role, parts=parts))
+    return contents
+
+
+def _turn_blocks(response: Any) -> list[dict]:
+    candidate = (response.candidates or [None])[0]
+    parts = (candidate.content.parts if candidate and candidate.content else None) or []
+    blocks: list[dict] = []
+    for part in parts:
+        if part.function_call is not None:
+            call = part.function_call
+            call_id = call.id or f"call_{uuid.uuid4().hex[:16]}"
+            blocks.append(
+                {"type": "tool_use", "id": call_id, "name": call.name, "input": dict(call.args or {})}
+            )
+        elif part.text and not part.thought:
+            blocks.append({"type": "text", "text": part.text})
+    return blocks
+
+
+def _stop_reason(response: Any, blocks: list[dict]) -> str:
+    """The agent loop's stop reasons: max_tokens (cut off), tool_use, or end_turn."""
+    candidate = (response.candidates or [None])[0]
+    finish = getattr(getattr(candidate, "finish_reason", None), "name", "") if candidate else ""
+    if finish == "MAX_TOKENS":
+        return "max_tokens"
+    if any(b["type"] == "tool_use" for b in blocks):
+        return "tool_use"
+    return "end_turn"
+
+
+class VertexProvider:
+    """Non-streaming generate_content call to Gemini on Vertex AI; the client is created once per process."""
 
     def __init__(self, client: Any = None) -> None:
         self._client = client
@@ -108,24 +186,39 @@ class HostedProvider:
     def call(
         self, *, model: str, system: str, messages: list[dict], tools: list[ToolSpec], max_tokens: int
     ) -> ModelTurn:
+        from google.genai import types
+
         client = self._client or _shared_client()
-        params: dict[str, Any] = {
-            "model": model,
-            "system": system,
-            "messages": messages,
-            "max_tokens": min(max_tokens, MAX_TOKENS_CAP),
-        }
-        if tools:
-            params["tools"] = [
-                {"name": t.name, "description": t.description, "input_schema": t.input_schema} for t in tools
+        config = types.GenerateContentConfig(
+            system_instruction=system or None,
+            max_output_tokens=min(max_tokens, MAX_TOKENS_CAP),
+            automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True),
+            tools=[
+                types.Tool(
+                    function_declarations=[
+                        types.FunctionDeclaration(
+                            name=t.name, description=t.description, parameters_json_schema=t.input_schema
+                        )
+                        for t in tools
+                    ]
+                )
             ]
-        response = client.messages.create(**params)
+            if tools
+            else None,
+        )
+        response = client.models.generate_content(model=model, contents=to_contents(messages), config=config)
+        blocks = _turn_blocks(response)
+        usage = response.usage_metadata
+        # Thinking tokens are billed as output, so spend counts them with the visible answer.
+        output_tokens = (
+            ((usage.candidates_token_count or 0) + (usage.thoughts_token_count or 0)) if usage else 0
+        )
         return ModelTurn(
-            content=[b for b in (_block(x) for x in response.content) if b is not None],
-            stop_reason=response.stop_reason or "",
-            input_tokens=response.usage.input_tokens,
-            output_tokens=response.usage.output_tokens,
-            model=response.model,
+            content=blocks,
+            stop_reason=_stop_reason(response, blocks),
+            input_tokens=(usage.prompt_token_count or 0) if usage else 0,
+            output_tokens=output_tokens,
+            model=response.model_version or model,
         )
 
 

@@ -87,7 +87,7 @@ describe("AgentPage", () => {
 
   it("never names a model vendor", () => {
     renderWithIntl(<AgentPage id="finance-agent" />);
-    expect(document.body.textContent).not.toMatch(/model|provider|openai|gemini/i);
+    expect(document.body.textContent).not.toMatch(/openai|gemini|vertex/i);
   });
 
   it("shows a skeleton while loading", () => {

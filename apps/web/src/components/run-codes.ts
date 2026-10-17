@@ -82,7 +82,7 @@ const PINNED_VERSIONS = /^Pinned \S+@\S+ and \S+@\S+$/;
 const WAITING_ON_APPROVAL = /^Waiting on apr_\w+\.?/;
 /** A model vendor or product named in text the API sent (whole words, any case; "GPT-4" and "Jev-1.14" count as
  * one). The decision model's product and host names are covered too. */
-const VENDOR = /\b(?:gemini|model|gpt(?:-[\w.]+)?|openai|provider|jev(?:-[\w.]+)?|typesafe|openrouter)\b/gi;
+const VENDOR = /\b(?:gemini|vertex|gpt(?:-[\w.]+)?|openai|jev(?:-[\w.]+)?|typesafe|openrouter)\b/gi;
 
 /** Plain words for the codes and shorthand the run record carries. */
 export function useCodes() {
@@ -156,7 +156,7 @@ const ID_LIKE = /^[A-Za-z0-9_-]{20,}$/;
  * Who did something, as the viewer should read it. Only a person (the actor `buyer` or `human`) can be an
  * account id: the viewer's own is "You", a workspace member's is unnamed (the member list carries no ids to
  * match it against) and a reviewer's is "A reviewer". A person's name passes through as it is (a reviewer may
- * well be called model); machine or system names pass through with any model vendor in them named as "the AI
+ * well be called Gemini); machine or system names pass through with any model vendor in them named as "the AI
  * model".
  */
 export function useWho() {

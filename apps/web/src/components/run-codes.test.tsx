@@ -44,7 +44,7 @@ describe("useCodes", () => {
       "Rules and the AI model agree. Reason codes: amount delta.",
     );
     expect(line("Rules pass. Gemini approves.")).toBe("Rules pass. The AI model approves.");
-    expect(line("Asked GPT-4, OpenAI and provider.")).toBe("Asked the AI model, the AI model and the AI model.");
+    expect(line("Asked GPT-4, OpenAI and Vertex.")).toBe("Asked the AI model, the AI model and the AI model.");
     expect(line("Geminis are twins")).toBe("Geminis are twins");
     expect(subtitle({ type: "decision", subtitle: "Rules, then Gemini" })).toBe("Rules, then the AI model");
   });
@@ -183,7 +183,7 @@ describe("useWho", () => {
 
   it("leaves a person's name alone even when it matches a model vendor", () => {
     const { result } = renderHook(() => useWho(), { wrapper });
-    expect(result.current("model Martin", "human")).toBe("model Martin");
-    expect(result.current("model Martin", "buyer")).toBe("model Martin");
+    expect(result.current("Gemini Reyes", "human")).toBe("Gemini Reyes");
+    expect(result.current("Gemini Reyes", "buyer")).toBe("Gemini Reyes");
   });
 });

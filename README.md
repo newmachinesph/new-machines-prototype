@@ -19,7 +19,7 @@ the product. `NM_WORKSPACE` picks one per deployment.
 | Area | Status |
 |------|--------|
 | Workflow runtime: runs, retries, approvals, human tasks, budgets and caps | Live (Temporal + Postgres) |
-| Agent steps (agents built on Google ADK) | Live, on hosted models; a fake provider for tests and keyless local runs |
+| Agent steps (agents built on Google ADK) | Live, on Gemini models on Vertex AI; a fake provider for tests and keyless local runs |
 | Policy checks on every tool call (Tool Gateway) and decision rules | Live |
 | Work receipts (hash-chained, verified when a run page loads) | Live |
 | App connections: Gmail, Google Calendar, Docs and Sheets, Shopify, Stripe | Live per workspace through each app's own sign-in, or simulated data per app; each connection picks |
@@ -134,8 +134,10 @@ NEXT_PUBLIC_FIREBASE_APP_ID=local
 
 `AUTH_MODE=dev` makes every API request an owner, in the `demo` workspace by default. Add
 `NM_WORKSPACE=live` to run the live workspace locally (it needs `NM_RUNTIME=temporal`). Every API setting
-and its default is in `apps/api/app/settings.py`; keys for real models or real app connections go in a
-gitignored `.env` at the repo root and are never committed.
+and its default is in `apps/api/app/settings.py`, and `.env.example` lists them all: copy it to a gitignored
+`.env` at the repo root for the decision model, Temporal Cloud or real app connections, and never commit it.
+Real models are Gemini on Vertex AI (`definitions/models.yaml`): set `GOOGLE_CLOUD_PROJECT` and sign in with
+`gcloud auth application-default login`; no model API key is needed.
 
 On Windows, use `127.0.0.1` rather than `localhost` for Postgres and Temporal: the containers bind IPv4 only.
 
@@ -157,7 +159,7 @@ verifies the receipt. It exits non-zero if any step fails or the receipt does no
 
 ```bash
 uv run --project apps/api python scripts/smoke_recon.py --model-env test   # fake model provider, no keys
-uv run --project apps/api python scripts/smoke_recon.py --model-env dev    # real models; keys from .env
+uv run --project apps/api python scripts/smoke_recon.py --model-env dev    # Gemini on Vertex AI; GOOGLE_CLOUD_PROJECT in .env
 uv run --project apps/api python scripts/smoke_recon.py --pack refund-triage --model-env test
 ```
 

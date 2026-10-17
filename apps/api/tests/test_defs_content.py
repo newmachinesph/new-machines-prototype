@@ -137,8 +137,10 @@ def test_taxonomy_and_models(bundle):
     ]
     profiles = bundle.get("models", "default").body["profiles"]
     assert profiles["reasoning"]["envs"]["test"] == {"provider": "fake", "model": "fake-reasoning"}
-    assert profiles["reasoning"]["envs"]["prod"] == {"provider": "provider", "model": "gemini-2.5-pro"}
-    assert profiles["fast"]["envs"]["prod"] == {"provider": "provider", "model": "gemini-2.5-flash"}
+    assert profiles["reasoning"]["envs"]["prod"] == {"provider": "vertex", "model": "gemini-2.5-pro"}
+    assert profiles["fast"]["envs"]["prod"] == {"provider": "vertex", "model": "gemini-2.5-flash"}
+    providers = {entry["provider"] for profile in profiles.values() for entry in profile["envs"].values()}
+    assert providers == {"fake", "vertex"}
 
 
 def test_sandbox_counts_and_scenario():
@@ -352,7 +354,7 @@ def test_agents_follow_conventions(bundle):
 
 
 def test_no_vendor_names_in_agent_prose(bundle):
-    pattern = re.compile(r"model|provider|openai|gemini|composio", re.IGNORECASE)
+    pattern = re.compile(r"openai|gemini|vertex|composio", re.IGNORECASE)
     for agent in bundle.of("agent"):
         for path, text in agent.files.items():
             assert not pattern.search(text), f"{agent.key}/{path}"

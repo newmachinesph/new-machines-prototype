@@ -55,8 +55,6 @@
                   "provider": {
                     "enum": [
                       "fake",
-                      "provider",
-                      "gemini",
                       "vertex"
                     ]
                   },
@@ -77,8 +75,6 @@
                   "provider": {
                     "enum": [
                       "fake",
-                      "provider",
-                      "gemini",
                       "vertex"
                     ]
                   },

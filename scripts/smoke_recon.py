@@ -208,8 +208,11 @@ def main() -> int:
     os.environ["NM_DEFS_AUTO_APPLY"] = "1"
     os.environ["AUTH_MODE"] = "dev"
     os.environ["NM_TASK_QUEUE"] = f"nm-smoke-{uuid.uuid4().hex[:6]}"
-    if args.model_env == "dev" and not os.environ.get("MODEL_API_KEY"):
-        fail("MODEL_API_KEY is not set in demo-app/.env (needed for --model-env dev)")
+    if args.model_env != "test" and not os.environ.get("GOOGLE_CLOUD_PROJECT"):
+        fail(
+            "GOOGLE_CLOUD_PROJECT is not set in demo-app/.env (needed for Gemini on Vertex AI; "
+            "credentials come from `gcloud auth application-default login`)"
+        )
     connectors, queue = os.environ["NM_CONNECTOR_MODE"], os.environ["NM_TASK_QUEUE"]
     print(f"pack {args.pack}, model env {args.model_env}, connectors {connectors}, queue {queue}")
 

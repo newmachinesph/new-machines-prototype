@@ -448,8 +448,8 @@ def test_fake_provider_follows_script_by_turn():
 
 def test_cost_minor_rounds_up(snapshot):
     models = snapshot["defs"]["models"]["default"]["body"]
-    assert providers.cost_minor(models, "reasoning", 1200, 300) == 2  # 0.48 + 0.6 cents
-    assert providers.cost_minor(models, "fast", 1_000_000, 0) == 10
+    assert providers.cost_minor(models, "reasoning", 1200, 300) == 1  # 0.15 + 0.3 cents
+    assert providers.cost_minor(models, "fast", 1_000_000, 0) == 30
     assert providers.cost_minor(models, "fast", 1, 0) == 1
     assert providers.cost_minor(models, "fast", 0, 0) == 0
 
@@ -458,53 +458,121 @@ def test_provider_for_picks_by_env(snapshot, monkeypatch):
     models = snapshot["defs"]["models"]["default"]["body"]
     provider, model = providers.provider_for("reasoning", models, "test")
     assert isinstance(provider, FakeProvider) and model == "fake-reasoning"
-    monkeypatch.setenv("MODEL_API_KEY", "sk-test-not-real")
     provider, model = providers.provider_for("reasoning", models, "prod")
-    assert isinstance(provider, providers.HostedProvider) and model == "gemini-2.5-pro"
+    assert isinstance(provider, providers.VertexProvider) and model == "gemini-2.5-pro"
     with pytest.raises(ValueError):
         providers.provider_for("nope", models, "test")
 
 
-def test_hosted_provider_request_shape_with_stubbed_client():
+def _gemini_response(parts, finish="STOP", prompt=321, output=45, thoughts=None):
+    return SimpleNamespace(
+        candidates=[
+            SimpleNamespace(content=SimpleNamespace(parts=parts), finish_reason=SimpleNamespace(name=finish))
+        ],
+        usage_metadata=SimpleNamespace(
+            prompt_token_count=prompt, candidates_token_count=output, thoughts_token_count=thoughts
+        ),
+        model_version="gemini-2.5-flash",
+    )
+
+
+def _gemini_part(text=None, call=None, thought=None):
+    return SimpleNamespace(text=text, function_call=call, thought=thought)
+
+
+def _stub_client(response):
     sent: dict = {}
 
-    def create(**kwargs):
+    def generate_content(**kwargs):
         sent.update(kwargs)
-        return SimpleNamespace(
-            content=[
-                SimpleNamespace(type="text", text="Submitting."),
-                SimpleNamespace(type="tool_use", id="toolu_1", name="submit_result", input={"a": 1}),
-            ],
-            stop_reason="tool_use",
-            usage=SimpleNamespace(input_tokens=321, output_tokens=45),
-            model="gemini-2.5-flash",
-        )
+        return response
 
-    client = SimpleNamespace(messages=SimpleNamespace(create=create))
+    return SimpleNamespace(models=SimpleNamespace(generate_content=generate_content)), sent
+
+
+def test_vertex_provider_request_and_turn_shape_with_stubbed_client():
+    call = SimpleNamespace(id="call_1", name="submit_result", args={"a": 1})
+    response = _gemini_response(
+        [
+            _gemini_part(text="planning", thought=True),
+            _gemini_part(text="Submitting."),
+            _gemini_part(call=call),
+        ],
+        thoughts=30,
+    )
+    client, sent = _stub_client(response)
     spec = ToolSpec(name="submit_result", description="Submit.", input_schema={"type": "object"})
-    turn = providers.HostedProvider(client=client).call(
+    turn = providers.VertexProvider(client=client).call(
         model="gemini-2.5-flash",
         system="agent:x\n\nhi",
         messages=[{"role": "user", "content": "go"}],
         tools=[spec],
         max_tokens=20000,
     )
-    assert sent == {
-        "model": "gemini-2.5-flash",
-        "system": "agent:x\n\nhi",
-        "messages": [{"role": "user", "content": "go"}],
-        "tools": [{"name": "submit_result", "description": "Submit.", "input_schema": {"type": "object"}}],
-        "max_tokens": 16000,
-    }
+    config = sent["config"]
+    assert sent["model"] == "gemini-2.5-flash"
+    assert config.system_instruction == "agent:x\n\nhi" and config.max_output_tokens == 16000
+    assert config.automatic_function_calling.disable is True
+    declaration = config.tools[0].function_declarations[0]
+    assert (declaration.name, declaration.description) == ("submit_result", "Submit.")
+    assert declaration.parameters_json_schema == {"type": "object"}
+    assert [(c.role, c.parts[0].text) for c in sent["contents"]] == [("user", "go")]
     assert turn == ModelTurn(
         content=[
             {"type": "text", "text": "Submitting."},
-            {"type": "tool_use", "id": "toolu_1", "name": "submit_result", "input": {"a": 1}},
+            {"type": "tool_use", "id": "call_1", "name": "submit_result", "input": {"a": 1}},
         ],
         stop_reason="tool_use",
         input_tokens=321,
-        output_tokens=45,
+        output_tokens=75,  # thinking tokens are billed as output
         model="gemini-2.5-flash",
+    )
+
+
+def test_vertex_provider_maps_tool_results_and_stop_reasons():
+    messages = [
+        {"role": "user", "content": "go"},
+        {
+            "role": "assistant",
+            "content": [
+                {"type": "text", "text": "Looking."},
+                {"type": "tool_use", "id": "call_1", "name": "shopify_list_orders", "input": {"limit": 2}},
+            ],
+        },
+        {
+            "role": "user",
+            "content": [
+                {"type": "tool_result", "tool_use_id": "call_1", "content": "[]", "is_error": False},
+                {
+                    "type": "tool_result",
+                    "tool_use_id": "call_9",
+                    "content": "Not permitted",
+                    "is_error": True,
+                },
+            ],
+        },
+    ]
+    contents = providers.to_contents(messages)
+    assert [c.role for c in contents] == ["user", "model", "user"]
+    assert contents[1].parts[1].function_call.name == "shopify_list_orders"
+    ok, denied = (p.function_response for p in contents[2].parts)
+    assert (ok.id, ok.name, ok.response) == ("call_1", "shopify_list_orders", {"output": "[]"})
+    assert (denied.name, denied.response) == ("tool", {"error": "Not permitted"})
+
+    cut = SimpleNamespace(id=None, name="submit_result", args={"a": 1})
+    client, _ = _stub_client(_gemini_response([_gemini_part(call=cut)], finish="MAX_TOKENS"))
+    turn = providers.VertexProvider(client=client).call(
+        model="m", system="", messages=messages, tools=[], max_tokens=100
+    )
+    assert turn.stop_reason == "max_tokens" and turn.content[0]["id"].startswith("call_")
+    client, sent = _stub_client(_gemini_response([_gemini_part(text="done")]))
+    turn = providers.VertexProvider(client=client).call(
+        model="m", system="", messages=messages, tools=[], max_tokens=100
+    )
+    assert (
+        turn.stop_reason == "end_turn"
+        and sent["config"].tools is None
+        and sent["config"].system_instruction is None
     )
 
 
@@ -874,7 +942,7 @@ def test_projection_save_updates_run_row(db, snapshot):
 
 
 def test_model_http_timeout_is_shorter_than_the_model_activity_timeout(monkeypatch):
-    import provider
+    from google import genai
 
     captured = {}
 
@@ -882,11 +950,16 @@ def test_model_http_timeout_is_shorter_than_the_model_activity_timeout(monkeypat
         captured.update(kwargs)
         return SimpleNamespace()
 
-    monkeypatch.setattr(provider, "provider", fake_client)
+    monkeypatch.setattr(genai, "Client", fake_client)
+    monkeypatch.setenv("GOOGLE_CLOUD_PROJECT", "nm-test")
+    monkeypatch.delenv("GOOGLE_CLOUD_LOCATION", raising=False)
     providers._shared_client.cache_clear()
     try:
         providers._shared_client()
     finally:
         providers._shared_client.cache_clear()
-    assert captured["timeout"] == providers.MODEL_CALL_TIMEOUT_S < providers.MODEL_ACTIVITY_TIMEOUT_S
-    assert captured["max_retries"] == 0
+    assert captured["vertexai"] is True
+    assert (captured["project"], captured["location"]) == ("nm-test", "global")
+    http = captured["http_options"]
+    assert http.timeout == providers.MODEL_CALL_TIMEOUT_S * 1000 < providers.MODEL_ACTIVITY_TIMEOUT_S * 1000
+    assert http.retry_options is None  # retries belong to Temporal

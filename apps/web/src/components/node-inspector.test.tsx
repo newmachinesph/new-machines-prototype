@@ -90,14 +90,14 @@ describe("NodeInspector copy from the API", () => {
       decision: {
         ...live.decision!,
         chain: [{ kind: "gemini", verdict: "APPROVED", note: "Gemini checked the photo." }],
-        explanation: "Rules and model agree.",
+        explanation: "Rules and Vertex agree.",
       },
     };
     renderWithIntl(<NodeInspector node={node} />);
     expect(screen.getByText("Rules, then the AI model")).toBeInTheDocument();
     expect(screen.getByText("The AI model checked the photo.")).toBeInTheDocument();
     expect(screen.getByText("Rules and the AI model agree.")).toBeInTheDocument();
-    expect(document.body.textContent).not.toMatch(/gemini|model/i);
+    expect(document.body.textContent).not.toMatch(/gemini|vertex/i);
   });
 
   it("reads a waiting note without the approval id", () => {

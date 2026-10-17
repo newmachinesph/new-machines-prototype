@@ -121,7 +121,7 @@ describe("AgentsView", () => {
 
   it("never names the model vendor, only the profile", () => {
     renderView();
-    expect(document.body.textContent).not.toMatch(/model|provider/i);
+    expect(document.body.textContent).not.toMatch(/gemini|vertex/i);
   });
 
   it("explains that agents need the local runtime when it is off", () => {

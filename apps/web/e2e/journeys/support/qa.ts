@@ -125,7 +125,7 @@ export async function mainText(page: Page): Promise<string> {
 }
 
 /** Copy rules: product copy must not name model vendors, and agents are never "hired". */
-export const VENDOR_WORDS = /\b(model|provider|Jev|TypeSafe|OpenRouter|OpenAI|GPT|Gemini|Vertex)\b/;
+export const VENDOR_WORDS = /\b(Jev|TypeSafe|OpenRouter|OpenAI|GPT|Gemini|Vertex)\b/;
 export const HIRE_WORDS = /\bhir(e|ed|es|ing)\b/i;
 
 /** Append an observation (page text, issues) to test-results/qa/observations.jsonl for the findings write-up. */
