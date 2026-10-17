@@ -795,14 +795,22 @@
         "sheets": "スプレッドシート",
         "drive_file": "ドライブのファイル",
         "message": "メッセージ",
-        "refund": "返金"
+        "refund": "返金",
+        "payments": "支払い",
+        "invoices": "請求書",
+        "mail": "メール",
+        "docs": "ドキュメント",
+        "store": "ストアのデータ",
+        "calendar": "カレンダー",
+        "business": "業務アプリのデータ"
       },
       "actions": {
         "refund": "返金",
         "issue": "発行",
         "create": "作成",
         "create_draft": "下書き作成",
-        "propose": "提案"
+        "propose": "提案",
+        "send": "送信"
       }
     },
     "noPack": "この接続を使っているパックはありません。",

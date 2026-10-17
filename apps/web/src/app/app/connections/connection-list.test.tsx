@@ -484,6 +484,23 @@ describe("ConnectionList in a live workspace", () => {
     expect(within(stripe).getByText("widgets.frobnicate")).toBeInTheDocument();
   });
 
+  it("maps the capabilities first-party connectors declare to words", () => {
+    data.conns = [
+      {
+        ...live("Stripe", "stripe", "sandbox"),
+        grants: [
+          { install: "Order & Payment Reconciliation", capability: "payments.read", access: "read" },
+          { install: "Order & Payment Reconciliation", capability: "mail.send", access: "write" },
+        ],
+      },
+    ];
+    renderWithIntl(<ConnectionList />);
+    const stripe = card("Stripe");
+    expect(within(stripe).getByText("Read payments")).toBeInTheDocument();
+    expect(within(stripe).getByText("Send email")).toBeInTheDocument();
+    expect(within(stripe).queryByText("payments.read")).not.toBeInTheDocument();
+  });
+
   it("links an empty list to the marketplace", () => {
     data.conns = [];
     renderWithIntl(<ConnectionList />);

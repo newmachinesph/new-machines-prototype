@@ -81,8 +81,15 @@ const RESOURCES = [
   "drive_file",
   "message",
   "refund",
+  "payments",
+  "invoices",
+  "mail",
+  "docs",
+  "store",
+  "calendar",
+  "business",
 ] as const;
-const ACTIONS = ["refund", "issue", "create", "create_draft", "propose"] as const;
+const ACTIONS = ["refund", "issue", "create", "create_draft", "propose", "send"] as const;
 const isIn = <T extends string>(list: readonly T[], value: string): value is T =>
   (list as readonly string[]).includes(value);
 

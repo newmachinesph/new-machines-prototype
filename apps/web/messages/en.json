@@ -795,14 +795,22 @@
         "sheets": "sheets",
         "drive_file": "Drive files",
         "message": "messages",
-        "refund": "refunds"
+        "refund": "refunds",
+        "payments": "payments",
+        "invoices": "invoices",
+        "mail": "email",
+        "docs": "documents",
+        "store": "store data",
+        "calendar": "calendar",
+        "business": "business app data"
       },
       "actions": {
         "refund": "Refund",
         "issue": "Issue",
         "create": "Create",
         "create_draft": "Draft",
-        "propose": "Propose"
+        "propose": "Propose",
+        "send": "Send"
       }
     },
     "noPack": "No pack uses this connection.",
