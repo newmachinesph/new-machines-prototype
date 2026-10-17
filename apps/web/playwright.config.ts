@@ -52,7 +52,9 @@ export default defineConfig({
     {
       command: `uv run uvicorn app.main:app --port ${API_PORT}`,
       cwd: "../api",
-      url: `http://localhost:${API_PORT}/healthz`,
+      // Ready once the catalog has loaded, not just once the process answers: a cold API takes seconds to serve
+      // its first pack list, and the overview waits for it, so the first test would otherwise race that load.
+      url: `http://localhost:${API_PORT}/v1/workflow-packs`,
       reuseExistingServer: false,
       env: { ALLOWED_ORIGINS: WEB_URL },
     },

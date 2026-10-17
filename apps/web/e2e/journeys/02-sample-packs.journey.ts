@@ -37,8 +37,8 @@ for (const pack of SAMPLE_PACKS.filter((p) => BUDGET_BLOCKED.has(p.slug))) {
     const page = await context.newPage();
     await addPack(page, pack);
     await connectSimulated(page, pack.apps);
-    // $20 is the cap a pack is added with; set it back in case an earlier run lowered it.
-    await setPerRunCap(page, pack.slug, "$20.00");
+    // The caps offered stop at the pack's maximum; take the highest, in case an earlier run lowered it.
+    await setPerRunCap(page, pack.slug, "max");
     try {
       await startRun(page, pack.slug);
     } finally {

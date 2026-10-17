@@ -64,7 +64,12 @@ export async function startRun(page: Page, slug: string, inputs = RUN_INPUTS[slu
   await settle(page);
   for (const [label, value] of Object.entries(inputs)) {
     const field = page.getByLabel(new RegExp(`^${label}`, "i")).first();
-    if (await field.isVisible().catch(() => false)) await field.fill(value);
+    if (!(await field.isVisible().catch(() => false))) continue;
+    // The form takes the pack's defaults once the pack has loaded, which can undo a value typed just before.
+    for (let attempt = 0; attempt < 3 && (await field.inputValue()) !== value; attempt++) {
+      await field.fill(value);
+      await page.waitForTimeout(600);
+    }
   }
   const started = page.waitForResponse((r) => r.url().endsWith("/v1/workflow-runs") && r.request().method() === "POST", {
     timeout: 20_000,
@@ -87,11 +92,14 @@ export async function runOf(api: APIRequestContext, runId: string) {
   return (await api.get(`/v1/workflow-runs/${runId}`)).json();
 }
 
-/** Pack settings: choose a per-run spending cap (e.g. "$5.00") and save. */
+/** Pack settings: choose a per-run spending cap (e.g. "$5.00", or "max" for the highest one offered) and save. */
 export async function setPerRunCap(page: Page, slug: string, cap: string) {
   await page.goto(`/app/marketplace/${slug}/install`);
   await settle(page);
-  await page.getByRole("radio", { name: cap }).first().click();
+  // The caps offered stop at the pack's own maximum, so "max" is the last one in the group.
+  const group = page.getByRole("group", { name: "Spending cap per run" });
+  const radio = cap === "max" ? group.getByRole("radio").last() : page.getByRole("radio", { name: cap }).first();
+  await radio.click();
   await page.getByRole("button", { name: "Save pack settings" }).click();
   await expect(page.getByText("Pack settings saved").first()).toBeVisible();
 }

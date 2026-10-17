@@ -1,6 +1,7 @@
 import { expect, test, type Page, type Route } from "@playwright/test";
 import {
   zAgent,
+  zGetStudioListingPath,
   zPalette,
   zPublisherEarnings,
   zPublisherSettings,
@@ -19,7 +20,8 @@ type Money = { amountMinor: number; currency: "USD" };
 const usd = (amountMinor: number): Money => ({ amountMinor, currency: "USD" });
 
 const AGENT_KEY = "org-acme--matcher";
-const LISTING_ID = "lst_matcher";
+// Shaped like a real id: the client validates the path before it reads a listing (`lst_` and 12 hex digits).
+const LISTING_ID = "lst_0a1b2c3d4e5f";
 const SUBMITTED_AT = "2026-10-16T09:00:00Z";
 const PRICE = usd(30);
 const PUBLISHER_NAME = "Acme Labs";
@@ -265,6 +267,8 @@ test("the fake answers in the shapes the contract describes", () => {
   for (const status of ["checking", "in_review", "approved"] as const) {
     expect(zStudioListingDetail.safeParse(listingBody(status)).error).toBeUndefined();
   }
+  // The client refuses to read a listing whose id is not shaped like the API's, before any request goes out.
+  expect(zGetStudioListingPath.safeParse({ org_id: ACME.orgId, listing_id: LISTING_ID }).error).toBeUndefined();
   const profile = { name: PUBLISHER_NAME, description: "", payoutNote: "", updatedAt: SUBMITTED_AT };
   expect(zPublisherSettings.safeParse({ enabled: true, profile, simulated: true }).error).toBeUndefined();
   expect(zPublisherEarnings.safeParse({ month: usd(0), payouts: [], simulated: true }).error).toBeUndefined();

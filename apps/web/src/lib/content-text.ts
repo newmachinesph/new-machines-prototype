@@ -4,22 +4,51 @@ import { useLocale, useMessages, useTranslations } from "next-intl";
 import { useCallback, useMemo } from "react";
 import { DEFAULT_LOCALE, resolveLocale } from "@/i18n/locales";
 import type en from "../../messages/en.json";
-import type { Agent, Pack } from "./types";
+import type { Agent, MemoryItem, Pack } from "./types";
+
+type AgentSkill = Agent["skills"][number];
 
 /**
- * Our own packs, agents and memory spaces in the interface language.
+ * Our own packs, agents (with their skills), memory spaces and seed memories in the interface language.
  *
  * The API describes them in English (keyword matching and the Studio round-trip depend on it) and the messages
- * carry the same text in each other language under `content`, keyed by pack slug, agent id and memory space key,
- * with English mirroring the definitions. Only first-party content is overlaid: the API's `certified` flag marks
- * the platform's own packs and agents, never the team's or another workspace's listed ones, whatever their slug.
- * An item the messages do not name, and every item in English, shows the API's text.
+ * carry the same text in each other language under `content`, keyed by pack slug, agent id (and skill key),
+ * memory space key (and seed text hash), with English mirroring the definitions. Only first-party content is
+ * overlaid: the API's `certified` flag marks the platform's own packs and agents, never the team's or another
+ * workspace's listed ones, whatever their slug; a seed memory is one the API labels as a definitions seed whose
+ * text is a definition's, word for word. An item the messages do not name, and every item in English, shows the
+ * API's text.
  */
 type Content = typeof en.content;
 type PackSlug = keyof Content["packs"];
 type AgentId = keyof Content["agents"];
 type SpaceKey = keyof Content["memorySpaces"];
 type PackField = keyof Content["packs"][PackSlug];
+type SkilledAgentId = keyof Content["skills"];
+type SeededSpaceKey = keyof Content["seeds"];
+/** `skills.<agent id>.<skill key>` and `seeds.<space key>.<text hash>`, each agent's and space's own keys only. */
+type SkillMessageKey = { [I in SkilledAgentId]: `skills.${I}.${keyof Content["skills"][I] & string}` }[SkilledAgentId];
+type SeedMessageKey = { [S in SeededSpaceKey]: `seeds.${S}.${keyof Content["seeds"][S] & string}` }[SeededSpaceKey];
+
+/** The API's source label for a memory that comes with a memory space's definition (`live_work.SOURCES`). */
+export const SEED_SOURCE = "Definitions seed";
+
+/**
+ * A seed memory's message key: FNV-1a, 32-bit, over the UTF-16 code units of its exact English text (so the same
+ * in the test's Node and in the browser), as eight zero-padded hex digits. The API sends a seed's
+ * text and its space's name but no index into the definition, and a definition's seeds are reordered or reworded
+ * over time, so the text itself is the stable identity; the hash keeps the English out of the client bundle and
+ * `content-messages.test.ts` ties every key back to `definitions/memory`. A reworded seed gets a new key and
+ * shows its English until the messages catch up, never a stale translation.
+ */
+export function seedKey(text: string): string {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) {
+    hash ^= text.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+  return hash.toString(16).padStart(8, "0");
+}
 
 /** Memory items carry their space's name, not its key (MemoryItem.scopeName): the definitions' names, by key. */
 export const SPACE_KEYS: Record<string, SpaceKey> = {
@@ -61,6 +90,10 @@ const isPackSlug = (content: Content, value: string): value is PackSlug => Objec
 const isAgentId = (content: Content, value: string): value is AgentId => Object.hasOwn(content.agents, value);
 const isSpaceKey = (content: Content, value: string): value is SpaceKey =>
   Object.hasOwn(content.memorySpaces, value);
+const isSkilledAgentId = (content: Content, value: string): value is SkilledAgentId =>
+  Object.hasOwn(content.skills, value);
+const isSeededSpaceKey = (content: Content, value: string): value is SeededSpaceKey =>
+  Object.hasOwn(content.seeds, value);
 
 type PackRef = Pick<Pack, "slug" | "name"> &
   Partial<Pick<Pack, "certified" | "outcome" | "description" | "humanReview" | "priceNote">>;
@@ -92,9 +125,12 @@ export function usePackText() {
   );
 }
 
-type AgentRef = Pick<Agent, "id" | "name"> & Partial<Pick<Agent, "certified" | "summary">>;
+type AgentRef = Pick<Agent, "id" | "name"> & Partial<Pick<Agent, "certified" | "summary" | "skills">>;
 
-/** An agent as it is shown: a first-party agent's name and summary in the interface language, any other as sent. */
+/**
+ * An agent as it is shown: a first-party agent's name, summary and skill titles in the interface language, any
+ * other as sent. Skills are keyed by their file name (AgentSkill.key), so two agents' "Write report" differ.
+ */
 export function useAgentText() {
   const { t, content, on } = useOverlay();
   return useCallback(
@@ -102,11 +138,38 @@ export function useAgentText() {
       if (!on || !agent.certified) return agent;
       const id = agent.id;
       if (!isAgentId(content, id)) return agent;
+      // The own-key check is the runtime guard; the cast names what it proved.
+      const skillTitle = (skill: AgentSkill): AgentSkill =>
+        isSkilledAgentId(content, id) && Object.hasOwn(content.skills[id], skill.key)
+          ? { ...skill, title: t(`skills.${id}.${skill.key}` as SkillMessageKey) }
+          : skill;
       return {
         ...agent,
         name: t(`agents.${id}.name`),
         ...("summary" in agent ? { summary: t(`agents.${id}.summary`) } : {}),
+        ...(agent.skills ? { skills: agent.skills.map(skillTitle) } : {}),
       };
+    },
+    [t, content, on],
+  );
+}
+
+type SeedRef = Pick<MemoryItem, "text" | "source" | "scopeName">;
+
+/**
+ * A memory's text as it is shown: a seed that comes with one of our memory spaces reads in the interface
+ * language when its text is the definition's, word for word (see `seedKey`); a team's or a run's memory, a
+ * seed reworded since, and every memory in English show the text as stored.
+ */
+export function useSeedText() {
+  const { t, content, on } = useOverlay();
+  return useCallback(
+    (item: SeedRef): string => {
+      if (!on || item.source !== SEED_SOURCE) return item.text;
+      const space = Object.hasOwn(SPACE_KEYS, item.scopeName) ? SPACE_KEYS[item.scopeName] : undefined;
+      if (space === undefined || !isSeededSpaceKey(content, space)) return item.text;
+      const key = seedKey(item.text);
+      return Object.hasOwn(content.seeds[space], key) ? t(`seeds.${space}.${key}` as SeedMessageKey) : item.text;
     },
     [t, content, on],
   );

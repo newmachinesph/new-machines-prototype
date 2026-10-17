@@ -155,9 +155,9 @@ describe("AgentList", () => {
     expect(screen.getByRole("searchbox", { name: "エージェントを検索" })).toBeInTheDocument();
     expect(screen.getAllByText(/1件のパックで使用：/)).toHaveLength(2);
     expect(screen.getByText("入金の照合")).toBeInTheDocument();
-    // An id with no label stays the id, not half-English words; the pack list has no stray space after the colon.
-    expect(screen.getByText("team.triage")).toBeInTheDocument();
-    expect(screen.queryByText("Team triage")).toBeNull();
+    // An id with no label reads as its own words, never as the raw id; the pack list has no stray space after the colon.
+    expect(screen.getByText("Team triage")).toBeInTheDocument();
+    expect(screen.queryByText("team.triage")).toBeNull();
     expect(screen.getByText("チームの業務を支援")).toBeInTheDocument();
     // Our own agent and the pack of ours that uses it read in Japanese; a sample agent keeps its English.
     expect(card("財務エージェント").textContent).toMatch(/1件のパックで使用：注文と入金の照合/);

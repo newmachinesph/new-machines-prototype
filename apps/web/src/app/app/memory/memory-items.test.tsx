@@ -79,6 +79,19 @@ describe("MemoryBoard", () => {
     expect(screen.getByRole("button", { name: "メモリを追加" })).toBeInTheDocument();
   });
 
+  it("reads a seed that comes with one of our packs in Japanese, and every other memory as stored", () => {
+    const rule = "Orders over $500 need a person to confirm before they are reported as matched.";
+    data.rows = [
+      { ...memory("mem_1", "Definitions seed", rule), scopeName: "Retail & Commerce company knowledge" },
+      { ...memory("mem_3", "Your team", rule), scopeName: "Retail & Commerce company knowledge" },
+      memory("mem_2", "Run run_2011", "Fees of 2.9% are expected."),
+    ];
+    renderWithIntl(<MemoryBoard />, { locale: "ja" });
+    expect(screen.getByText("$500を超える注文は、一致として報告する前に担当者の確認が必要です。")).toBeInTheDocument();
+    expect(screen.getByText(rule)).toBeInTheDocument();
+    expect(screen.getByText("Fees of 2.9% are expected.")).toBeInTheDocument();
+  });
+
   it("labels a memory the team added", () => {
     data.rows = [memory("mem_3", "Your team", "Never refund an opened item.")];
     renderWithIntl(<MemoryBoard />);

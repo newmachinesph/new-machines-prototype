@@ -532,7 +532,7 @@
   },
   "landing": {
     "headline": "Work you can check before you pay for it.",
-    "lede": "Agents handle routine operations such as order reconciliation and refund triage. When a call needs judgement, a vetted reviewer makes it. An independent check verifies the result, and nothing is paid until you accept it.",
+    "lede": "Agents handle routine operations such as order reconciliation and refund triage. When a call needs judgement, a vetted reviewer makes it. An independent check verifies the result before it counts as delivered, and spending stops at the cap you set for each run.",
     "recordSummary": "Yesterday’s reconciliation of 31 orders",
     "strip": {
       "executed": "Executed",
@@ -1087,6 +1087,7 @@
       "perRun": "{price} per run",
       "perRunUnset": "Usage-based",
       "upTo": "up to {amount} per run",
+      "reviewerPayCap": "Reviewer pay cap",
       "noneByDefault": "None by default",
       "basis": "Basis",
       "basisValue": "Charged only for verified work. Reviewer pay is owed once a submission is accepted.",
@@ -1199,7 +1200,14 @@
       "dispute_draft": "Draft dispute evidence",
       "catalog_read": "Read the catalog",
       "catalog_draft": "Draft catalog text",
-      "team_assist": "Helps your team"
+      "team_assist": "Helps your team",
+      "finance_collections_draft": "Collections reminder drafts",
+      "finance_expenses": "Expense checks",
+      "sales_leads": "Sales leads",
+      "communications_plan": "Follow-up plans",
+      "finance_order_to_cash_report": "Order-to-cash reporting",
+      "finance_order_to_cash": "Order-to-cash triage",
+      "customer_support": "Customer support"
     },
     "detail": {
       "allAgents": "All agents",
@@ -2570,6 +2578,89 @@
       "o2c-policy": "Order-to-cash policy",
       "retail-commerce": "Retail & Commerce company knowledge",
       "support-policies": "Support policies"
+    },
+    "skills": {
+      "collections-agent": {
+        "stage-overdue": "Stage overdue"
+      },
+      "collections-writer": {
+        "write-reminders": "Write reminders"
+      },
+      "expense-agent": {
+        "check-expenses": "Check expenses"
+      },
+      "finance-agent": {
+        "explain-mismatch": "Explain mismatch",
+        "match-orders": "Match orders"
+      },
+      "lead-agent": {
+        "extract-leads": "Extract leads"
+      },
+      "meeting-agent": {
+        "plan-follow-ups": "Plan follow ups"
+      },
+      "o2c-report-agent": {
+        "write-report": "Write report"
+      },
+      "o2c-triage-agent": {
+        "classify-orders": "Classify orders"
+      },
+      "ops-agent": {
+        "write-report": "Write report"
+      },
+      "refunds-agent": {
+        "apply-refund-policy": "Apply refund policy",
+        "find-order": "Find order"
+      },
+      "retail-agent": {
+        "read-orders": "Read orders",
+        "spot-anomalies": "Spot anomalies"
+      },
+      "support-agent": {
+        "triage-support": "Triage support"
+      },
+      "writer-agent": {
+        "write-drafts": "Write drafts"
+      }
+    },
+    "seeds": {
+      "customer-accounts": {
+        "d27064cb": "Overdue invoice reminders stay polite at every stage. 1 to 14 days overdue gets a gentle reminder, 15 to 44 days a firm reminder, and 45 days or more a final notice.",
+        "cd714657": "Collections reminders never offer discounts, payment plans or new due dates; a person agrees those directly with the customer.",
+        "6a9d9c7d": "A refund request for an order that is found, paid and not already refunded is approved in full, up to the order total.",
+        "ed58a3b8": "When the customer's email contains the whole word \"opened\" or \"used\" (for example \"I opened the box\" or \"I used it once\"; \"unused\" does not count), the refund is partial - 50% of the amount asked for, at most the order total.",
+        "1e92aa3e": "A refund request is declined when its order cannot be found, its payment is already refunded, or it repeats an earlier request for the same order. A payment is already refunded when its charge is marked refunded or shows a refunded amount of at least the charge amount, or when the order's payment status is refunded; a refund is recorded on the original charge, not as a separate negative charge.",
+        "999cc864": "No refund is issued by a workflow. A person issues every refund after confirming the decision."
+      },
+      "expense-policy": {
+        "9a0f324e": "Every expense of 25.00 USD or more needs a receipt.",
+        "6ad65447": "A single expense over 500.00 USD needs a person's check before it is accepted.",
+        "4fa377d7": "Two expenses with the same description and the same amount within 7 days may be a duplicate, and a person checks the later one.",
+        "5b63ca4c": "Categories are Travel (flights, trains, taxis, hotels, parking), Meals (meals with clients or the team), Software (subscriptions, licences, plans), Office (supplies and equipment) and Other."
+      },
+      "o2c-policy": {
+        "9deecf2a": "Payment terms are per customer. An invoice is past its terms only when the days since its invoice date are more than the customer's payment terms in days; 0-day terms mean payment is due on delivery.",
+        "c2a8c2d5": "A delivered, unpaid invoice is chased only after a grace period past its terms (7 days, unless the run is set up with a different grace period); within the grace period it is clean and not listed.",
+        "aaa011ea": "Never chase a customer whose account notes mention a dispute or a pending credit memo. Flag the invoice for finance instead and send no reminder.",
+        "2f31b377": "A pending payment in the store means the customer says they have paid. Confirm it in the ledger first; do not remind the customer while a pending payment exists.",
+        "fe888dbb": "Balances above ₱20,000 need finance's sign-off before any message goes to the customer.",
+        "ded25671": "Collection messages come from the customer's account manager. The ledger rarely records one, so fall back to the sales app seller for the order, then to the store's seller email, and otherwise to this business's Accounts desk.",
+        "47ef65d3": "Collection messages are in a polite Filipino business tone and restate the invoice, the amount in pesos, the delivery date and the payment terms. They never offer discounts, instalments or new due dates.",
+        "b888f7f0": "A paid order that the warehouse has not released within 2 working days gets a warehouse note. Within 2 working days it is listed but not chased."
+      },
+      "retail-commerce": {
+        "f1167c06": "Card processing fees are 2.9% plus 30 cents per charge. A fee is expected and not a mismatch only when the merchant reports net amounts; this merchant reports gross amounts, so a charge that is short by the fee is a mismatch.",
+        "c47cc131": "Amounts that differ by 1 cent or less are rounding and count as a match.",
+        "e1b7a470": "A refund is recorded on the original charge (the charge is marked refunded, or shows a refunded amount above 0), not as a separate negative charge.",
+        "e51a877c": "Orders over $500 need a person to confirm before they are reported as matched."
+      },
+      "support-policies": {
+        "3841a60b": "A question gets a short, helpful reply; when the answer is not known, the reply says a person will answer within one working day.",
+        "94e825ff": "A complaint gets an apology and a promise that a person will look into it within one working day. The reply never admits fault or offers compensation.",
+        "e4a9d81c": "A refund request is acknowledged, and the reply says a person will check the order. It never promises a refund or an amount.",
+        "998d285e": "Spam gets no reply and no case.",
+        "f4f77733": "Support hours are Monday to Friday, 9:00 to 17:00."
+      }
     }
   }
 }

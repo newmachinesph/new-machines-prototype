@@ -19,7 +19,10 @@ test("build and save an agent from scratch", async ({ browser }) => {
   await page.getByLabel("Name", { exact: true }).fill(AGENT);
   await page.getByLabel("Summary").fill("Reads recent inbox emails and lists the ones that need an answer.");
   await page.getByLabel("Instructions").fill("List the last week's inbox emails. For each, say who sent it and whether it needs a reply.");
-  await page.getByRole("checkbox", { name: /Gmail: List threads/ }).click();
+  // The picker folds tools by app: open Gmail before its tools are on the page.
+  await page.getByRole("button", { name: /^Gmail / }).click();
+  // Two Gmail tools list threads; the sandbox one describes itself as listing recent inbox emails.
+  await page.getByRole("checkbox", { name: /^Gmail: List threads List recent emails/ }).click();
   await page.getByRole("button", { name: "Add a skill" }).click();
   await page.getByLabel("Skill 1 title").fill("Spot a question");
   await page.getByLabel("Skill 1 text").fill("An email needs a reply when it asks a question or requests something.");
@@ -53,6 +56,10 @@ test("build a pack that uses the agent, save it and run a sandbox test", async (
   await page.waitForTimeout(500);
   const task = page.getByLabel(/Task for the agent/);
   if (await task.isVisible().catch(() => false)) await task.fill("List the inbox emails that need an answer.");
+  // The server refuses an agent step that maps no inputs: give it the pack's search field.
+  await page.getByRole("button", { name: "Add a value" }).click();
+  await page.getByLabel("Name of value 1").fill("query");
+  await page.getByRole("textbox", { name: "Value 1", exact: true }).fill("=input.query");
   await page.getByRole("button", { name: "Pack details" }).click().catch(() => undefined);
   await page.getByLabel("Name", { exact: true }).fill(PACK);
   await page.getByLabel("Outcome").fill("A short list of inbox emails that need an answer, checked by a person.");

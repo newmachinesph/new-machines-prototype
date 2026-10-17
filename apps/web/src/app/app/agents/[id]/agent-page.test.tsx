@@ -109,6 +109,22 @@ describe("AgentPage", () => {
     expect(screen.getByText("高速モデル")).toBeInTheDocument();
   });
 
+  it("names our agent's skills and capabilities in Japanese, keeping the ids behind the disclosure", () => {
+    renderWithIntl(<AgentPage id="finance-agent" />, { locale: "ja" });
+    const skills = screen.getByRole("heading", { name: "スキル" }).closest("section")!;
+    expect(within(skills).getByText("注文の突き合わせ")).toBeInTheDocument();
+    expect(within(skills).getByText("不一致の説明")).toBeInTheDocument();
+    expect(screen.queryByText("Match orders")).toBeNull();
+    expect(screen.getByText("入金の照合")).toBeInTheDocument();
+    expect(screen.getByText("finance.reconcile").closest("details")).not.toBeNull();
+  });
+
+  it("keeps a team agent's skill titles as it wrote them", () => {
+    state.result = ok({ ...finance, id: "org-5c81-helper", certified: false, publisher: "Acme Labs" });
+    renderWithIntl(<AgentPage id="org-5c81-helper" />, { locale: "ja" });
+    expect(screen.getByText("Match orders")).toBeInTheDocument();
+  });
+
   it("names a listed agent's publisher once, with its fee", () => {
     state.result = ok({
       ...finance,

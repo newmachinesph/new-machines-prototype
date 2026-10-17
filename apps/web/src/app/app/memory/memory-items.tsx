@@ -8,7 +8,7 @@ import { ActorGlyph, Button, ButtonLink, Callout, EmptyState, Id, Pill, Section 
 import { QueryState } from "@/components/query-state";
 import { Skeleton } from "@/components/skeleton";
 import { useErrorText } from "@/lib/api/use-error-text";
-import { useSpaceName } from "@/lib/content-text";
+import { SEED_SOURCE, useSeedText, useSpaceName } from "@/lib/content-text";
 import type { MemoryItem } from "@/lib/types";
 import { useMe } from "@/lib/queries/me";
 import { useAddMemory, useMemory, useMemorySpaces, useRetractMemory, useReviewMemory } from "@/lib/queries/workspace";
@@ -16,7 +16,7 @@ import { isManager } from "@/lib/roles";
 import { useFormat } from "@/lib/use-format";
 
 /** The API's source labels as whole phrases; a run's label ("Run run_2011") becomes "From run 2011". */
-const SOURCE_KEYS = { "Definitions seed": "seed", "New Machines": "console", "Your team": "team" } as const;
+const SOURCE_KEYS = { [SEED_SOURCE]: "seed", "New Machines": "console", "Your team": "team" } as const;
 const RUN_SOURCE = /^Run (run_(\w+))$/;
 /** The API's limit on a memory's text. */
 const TEXT_MAX = 2000;
@@ -44,6 +44,7 @@ function MemoryCandidate({
   const tc = useTranslations("common");
   const sourceLabel = useSourceLabel();
   const spaceName = useSpaceName();
+  const seedText = useSeedText();
   const errorText = useErrorText();
   // The outcome comes from the cached item; only the fact that you edited is kept here.
   const [edited, setEdited] = useState(false);
@@ -100,7 +101,7 @@ function MemoryCandidate({
         {conflict ? (
           <div className="mt-4 rounded-[10px] border border-rule bg-stage px-4 py-3 text-sm">
             <div className="font-medium">{t("conflict")}</div>
-            <p className="mt-1 text-grey-700">“{conflict.text}”</p>
+            <p className="mt-1 text-grey-700">“{seedText(conflict)}”</p>
             <p className="mt-1 text-xs text-muted">
               {t.rich("conflictNote", {
                 id: conflict.id,
@@ -192,12 +193,14 @@ function MemoryRow({ item: m, onRetract }: { item: Row; onRetract?: () => void }
   const t = useTranslations("memory.row");
   const sourceLabel = useSourceLabel();
   const spaceName = useSpaceName();
+  const seedText = useSeedText();
   const { dateTime } = useFormat();
   const state = m.retracted ? "RETRACTED" : m.state;
   return (
     <li className="flex flex-col gap-2 px-5 py-3.5 sm:flex-row sm:items-start sm:justify-between">
       <div className="min-w-0">
-        <p className="text-sm">{m.text}</p>
+        {/* A seed that comes with one of our packs reads in the interface language; anything else as stored. */}
+        <p className="text-sm">{seedText(m)}</p>
         <div className="mt-1 flex flex-wrap gap-x-3 text-xs text-muted">
           <span>{t("appliesTo", { name: spaceName(m.scopeName) })}</span>
           <span>{sourceLabel(m.source)}</span>

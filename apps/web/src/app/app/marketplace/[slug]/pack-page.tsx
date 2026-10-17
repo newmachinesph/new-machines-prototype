@@ -276,14 +276,17 @@ export function PackPage({ slug }: { slug: string }) {
                                   { label: tl("fee"), value: <span className="tnum">{fee(p.listing)}</span> },
                                 ]
                               : []),
-                            {
-                              label: tc("reviewerPay"),
-                              value: p.estimate.humanMax.amountMinor ? (
-                                <span className="tnum">{t("upTo", { amount: money(p.estimate.humanMax) })}</span>
-                              ) : (
-                                t("noneByDefault")
-                              ),
-                            },
+                            // The contract's reviewer budget is a cap; the price note above names the typical
+                            // reviewer time, so the label says which this is. With no budget there is no cap to
+                            // name: "Reviewer pay: None by default", never a cap of none.
+                            p.estimate.humanMax.amountMinor
+                              ? {
+                                  label: t("reviewerPayCap"),
+                                  value: (
+                                    <span className="tnum">{t("upTo", { amount: money(p.estimate.humanMax) })}</span>
+                                  ),
+                                }
+                              : { label: tc("reviewerPay"), value: t("noneByDefault") },
                             {
                               label: t("basis"),
                               value: t("basisValue"),

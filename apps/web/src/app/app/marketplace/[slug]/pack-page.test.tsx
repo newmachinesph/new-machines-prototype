@@ -217,4 +217,29 @@ describe("PackPage costs", () => {
     renderWithIntl(<PackPage slug="order-to-cash-exception-desk" />, { locale: "ja" });
     expect(screen.getByText(/1回の実行あたり最大.*30\.00.*（上限）/)).toBeInTheDocument();
   });
+
+  it("names the contract's reviewer budget as a cap, apart from the price note's typical reviewer time", () => {
+    state.extra = {
+      estimate: { aiMin: usd(60), aiMax: usd(240), humanMax: usd(2000) },
+      priceNote:
+        "About $0.60 to $2.40 of AI work per run, plus up to $7.50 of reviewer time when a mismatch needs a person.",
+    };
+    const { unmount } = renderWithIntl(<PackPage slug="order-payment-reconciliation" />);
+    expect(within(costs()).getByText("Reviewer pay cap").parentElement).toHaveTextContent("up to $20.00 per run");
+    expect(within(costs()).queryByText("Reviewer pay")).toBeNull();
+    unmount();
+    renderWithIntl(<PackPage slug="order-payment-reconciliation" />, { locale: "ja" });
+    expect(screen.getByText("レビュアー報酬の上限").parentElement).toHaveTextContent(/1回の実行あたり最大.*20\.00/);
+  });
+
+  it("says there is no reviewer pay by default when the contract budgets none, naming no cap", () => {
+    state.extra = { estimate: { aiMin: usd(0), aiMax: usd(3000), humanMax: usd(0) } };
+    const { unmount } = renderWithIntl(<PackPage slug="order-to-cash-exception-desk" />);
+    expect(within(costs()).getByText("Reviewer pay").parentElement).toHaveTextContent("None by default");
+    expect(within(costs()).queryByText("Reviewer pay cap")).toBeNull();
+    unmount();
+    renderWithIntl(<PackPage slug="order-to-cash-exception-desk" />, { locale: "ja" });
+    expect(screen.getByText("レビュアー報酬").parentElement).toHaveTextContent("既定ではなし");
+    expect(screen.queryByText("レビュアー報酬の上限")).toBeNull();
+  });
 });
