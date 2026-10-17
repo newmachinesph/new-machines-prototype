@@ -79,7 +79,7 @@ def test_suggest_never_offers_another_orgs_pack(db, ana, ben):  # noqa: F811
     clashing = [
         v.key
         for v in platform.packs()
-        if live_catalog._words(title) & live_catalog._pack_words(platform, v.body)
+        if live_catalog._words(title) & live_catalog._pack_words(platform, v.body).keys()
     ]
     assert clashing == [], f"pick a title no platform pack uses a word of: {clashing}"
     key = clone_pack(db, PACK, ana.org_id, "recon", title=title)

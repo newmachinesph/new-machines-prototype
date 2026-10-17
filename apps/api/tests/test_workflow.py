@@ -342,8 +342,8 @@ def test_ai_spend_over_the_contract_budget_fails_the_run(runtime_env):
     conn = runtime_env
     run_id, snapshot = _new_run(conn)
     match = _all_matched_script()["finance-agent"][1]
-    # 10M input tokens at 400 minor units per million = 4000 > the 2500 budget.
-    script = {"finance-agent": [_turn(match.content, input_tokens=10_000_000)]}
+    # 30M input tokens at 125 minor units per million = 3750 > the 2500 budget.
+    script = {"finance-agent": [_turn(match.content, input_tokens=30_000_000)]}
 
     async def scenario(env):
         handle = await _start(env.client, run_id, snapshot)
@@ -382,8 +382,8 @@ def test_the_run_budget_caps_ai_spend_below_the_contract_maximum(runtime_env):
     run_id, snapshot = _new_run(conn)
     snapshot = {**snapshot, "budget_minor": 1000}
     match = _all_matched_script()["finance-agent"][1]
-    # 5M input tokens at 400 minor units per million = 2000: under the contract's 2500, over the run's 1000.
-    script = {"finance-agent": [_turn(match.content, input_tokens=5_000_000)]}
+    # 16M input tokens at 125 minor units per million = 2000: under the contract's 2500, over the run's 1000.
+    script = {"finance-agent": [_turn(match.content, input_tokens=16_000_000)]}
 
     async def scenario(env):
         handle = await _start(env.client, run_id, snapshot)

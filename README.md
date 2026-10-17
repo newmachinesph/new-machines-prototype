@@ -10,6 +10,9 @@ against a budget and a monthly cap, and ends with a deliverable, the evidence be
 This repository is the working product: the buyer workspace, the developer Studio, the reviewer portal, the
 operator console, and the API with its workflow runtime.
 
+**Related repository:** the public marketing site, which describes this product and lists the marketplace
+catalogue, is [newmachinesph/new-machines-biz-site](https://github.com/newmachinesph/new-machines-biz-site).
+
 ## What works today
 
 The hosted deployment runs the real runtime (Temporal, Postgres) in the `live` workspace: each business
