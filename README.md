@@ -267,3 +267,7 @@ npx -y firebase-tools@15.33.0 deploy --only apphosting --project nm-demo-iu7uo4
 New packs, agents and connectors are definition files: add them under `definitions/`, run
 `uv run python -m app.defs validate` from `apps/api`, and add a sandbox fixture so the pack runs without real
 accounts.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
